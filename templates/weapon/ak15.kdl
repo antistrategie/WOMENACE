@@ -1,11 +1,11 @@
 clone "WeaponTemplate" from="weapon.generic_assault_rifle_tier1_ARC_762" id="weapon.voymastina_ak15" {
-    set "Title" composite="LocalizedLine" {
+    set "Title" {
         set "m_DefaultTranslation" "Kalashnikova-15"
     }
-    set "ShortName" composite="LocalizedLine" {
+    set "ShortName" {
         set "m_DefaultTranslation" "Assault Rifle"
     }
-    set "Description" composite="LocalizedMultiLine" {
+    set "Description" {
         set "m_DefaultTranslation" "A firearm highly compatible with Voymastina. Modified based on her combat preferences. Its specialized internals have produced a qualitative increase in its killing power."
     }
     set "Model" asset="weapon/ak15/main"
@@ -17,7 +17,7 @@ clone "WeaponTemplate" from="weapon.generic_assault_rifle_tier1_ARC_762" id="wea
     set "IconEquipmentDisabled" asset="weapon/ak15/IconEquipmentDisabled"
     set "IconSkillBar" asset="weapon/ak15/IconSkillBar"
     set "IconSkillBarDisabled" asset="weapon/ak15/IconSkillBarDisabled"
-    append "OnlyEquipableBy" ref="TagTemplate" "voymastina"
+    append "OnlyEquipableBy" "voymastina"
 }
 
 // AK-15's fire skill. Swaps the burst + distant audio layers (from the

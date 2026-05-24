@@ -1,18 +1,19 @@
-clone "TagTemplate" from="unique" id="voymastina" {}
-clone "TagTemplate" from="unique" id="armor_restricted" {}
+clone "TagTemplate" from="unique" id="voymastina"
+
+clone "TagTemplate" from="unique" id="armor_restricted"
 
 clone "SpeakerTemplate" from="sy" id="voymastina_speaker" {
     set "Tags" "voymastina pirate_sl female infantry waybacker"
-    set "Nickname"  {
+    set "Nickname" {
         set "m_DefaultTranslation" "Voymastina"
     }
-    set "Forename"  {
+    set "Forename" {
         set "m_DefaultTranslation" "Voymastina"
     }
-    set "Surname"  {
+    set "Surname" {
         set "m_DefaultTranslation" ""
     }
-    set "Description"  {
+    set "Description" {
         set "m_DefaultTranslation" """
             Name: Voymastina (AK-15)
 
@@ -25,6 +26,7 @@ clone "SpeakerTemplate" from="sy" id="voymastina_speaker" {
             Affiliation(s): Task Force DEFY
             """
     }
+
     set "BarkImage" asset="voymastina/bark"
     set "StandLookLeftImage" asset="voymastina/stand_look_left"
     set "StandLookRightImage" asset="voymastina/stand_look_right"
@@ -32,12 +34,12 @@ clone "SpeakerTemplate" from="sy" id="voymastina_speaker" {
 }
 
 clone "EntityTemplate" from="player_squad.sy" id="player_squad.voymastina" {
-    append "Tags" ref="TagTemplate" "voymastina"
-    append "Tags" ref="TagTemplate" "armor_restricted"
-    set "Title"  {
+    append "Tags" "voymastina"
+    append "Tags" "armor_restricted"
+    set "Title" {
         set "m_DefaultTranslation" "Task Force DEFY"
     }
-    set "Description"  {
+    set "Description" {
         set "m_DefaultTranslation" """
             Like AN-94/Alva, AK-15 changed her name because of the renewed scrutiny over Task Force DEFY by various interest groups after they became semi-independent from Statesec.
 
@@ -46,22 +48,23 @@ clone "EntityTemplate" from="player_squad.sy" id="player_squad.voymastina" {
             Her appreciation for strong drinks like pepper vodka remains unchanged. She thinks the only human left worthy of commanding DEFY is the Commander.
             """
     }
+
     set "Badge" asset="voymastina/badge_mini"
     set "BadgeWhite" asset="voymastina/badge_mini"
     clear "Items"
-    append "Items" ref="ItemTemplate" "armor.voymastina_default"
-    append "Items" ref="ItemTemplate" "armor.voymastina_erwin"
-    append "Items" ref="ItemTemplate" "weapon.voymastina_ak15"
+    append "Items" "armor.voymastina_default"
+    append "Items" "armor.voymastina_erwin"
+    append "Items" "weapon.voymastina_ak15"
 }
 
 clone "UnitLeaderTemplate" from="squad_leader.sy" id="squad_leader.voymastina" {
     set "InfantryUnitTemplate" "player_squad.voymastina"
     set "SpeakerTemplate" "voymastina_speaker"
     set "CustomHead" #null
-    set "UnitTitle"  {
+    set "UnitTitle" {
         set "m_DefaultTranslation" "Tactical Doll"
     }
-    set "UnitDescription"  {
+    set "UnitDescription" {
         set "m_DefaultTranslation" """
             Like AN-94/Alva, AK-15 changed her name because of the renewed scrutiny over Task Force DEFY by various interest groups after they became semi-independent from Statesec.
 
@@ -70,6 +73,7 @@ clone "UnitLeaderTemplate" from="squad_leader.sy" id="squad_leader.voymastina" {
             Her appreciation for strong drinks like pepper vodka remains unchanged. She thinks the only human left worthy of commanding DEFY is the Commander.
             """
     }
+
     set "InitialAttributes" index=0 88
     set "InitialAttributes" index=1 80
     set "InitialAttributes" index=2 80
@@ -99,28 +103,28 @@ clone "UnitLeaderTemplate" from="squad_leader.sy" id="squad_leader.voymastina" {
         set "bankId" "tactical_barks_voymastina_va"
         set "itemId" "ChosenAuto"
     }
-    set "PromotionBarkSounds" index=0 composite="PromotionBarkSound" {
+    set "PromotionBarkSounds" index=0 {
         set "PerkTier" 1
         set "Sound" {
             set "bankId" "tactical_barks_voymastina_va"
             set "itemId" "Up2"
         }
     }
-    set "PromotionBarkSounds" index=1 composite="PromotionBarkSound" {
+    set "PromotionBarkSounds" index=1 {
         set "PerkTier" 2
         set "Sound" {
             set "bankId" "tactical_barks_voymastina_va"
             set "itemId" "Up3"
         }
     }
-    set "PromotionBarkSounds" index=2 composite="PromotionBarkSound" {
+    set "PromotionBarkSounds" index=2 {
         set "PerkTier" 3
         set "Sound" {
             set "bankId" "tactical_barks_voymastina_va"
             set "itemId" "Up4"
         }
     }
-    set "PromotionBarkSounds" index=3 composite="PromotionBarkSound" {
+    set "PromotionBarkSounds" index=3 {
         set "PerkTier" 4
         set "Sound" {
             set "bankId" "tactical_barks_voymastina_va"

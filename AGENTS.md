@@ -77,6 +77,7 @@ Several badge/portrait fields exist on both `UnitLeaderTemplate` and `EntityTemp
 - British English in code, comments, docs (analyse, colour, organisation).
 - No em dashes. No semicolons in prose, comments, or string literals. Use periods, commas, colons.
 - Docs describe the current working state only. No past-tense framing ("used to", "previously", "earlier attempts"). No future-tense framing ("not yet", "TODO", "in progress"). If something doesn't work, fix it or leave it out.
+- Run `mise format` (or `jiangyu templates format`) before committing template edits. It rewrites every `templates/*.kdl` through the same parse → validate → normalise → serialise pipeline Studio uses on save, so diffs only show real authoring changes — not the kind of churn that creeps in from hand-edits (redundant `composite=` attributes, stale shorthand forms, blank-line drift). `mise format --check` is the CI-equivalent: exits non-zero if anything would change.
 - Bundle build target is `StandaloneWindows64` so the bundle ships D3D11 shader variants matching MENACE's Proton/DXVK runtime.
 - gltfast is pinned in `unity/Packages/manifest.json` to a version known to import multi-primitive skinned meshes without the bone-weights Jobs race.
 - The dumped `Menace_character.shader` stub in `unity/Assets/Imported/<reference soldier>/Shader/` is essential. The Editor renders it magenta, but bundled materials carry its shader name and `Jiangyu.Loader.dll` rebinds the name to MENACE's vanilla shader at load time.

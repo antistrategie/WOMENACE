@@ -2,6 +2,10 @@
 description = "Compile the mod with Jiangyu (override JIANGYU_DIR or JIANGYU_BUILD to point at a different local build)"
 run = "dotnet ${JIANGYU_DIR:-../jiangyu}/src/Jiangyu.Cli/bin/${JIANGYU_BUILD:-Debug}/net10.0/jiangyu.dll compile"
 
+[tasks.format]
+description = "Canonicalise every templates/*.kdl through Jiangyu's editor pipeline. Pass --check for CI."
+run = "dotnet ${JIANGYU_DIR:-../jiangyu}/src/Jiangyu.Cli/bin/${JIANGYU_BUILD:-Debug}/net10.0/jiangyu.dll templates format"
+
 [tasks.deploy]
 description = "Deploy the compiled mod into the MENACE Mods directory"
 run = "mkdir -p ~/.steam/steam/steamapps/common/Menace/Mods/WOMENACE && cp compiled/jiangyu.json ~/.steam/steam/steamapps/common/Menace/Mods/WOMENACE/jiangyu.json && cp compiled/*.bundle ~/.steam/steam/steamapps/common/Menace/Mods/WOMENACE/"

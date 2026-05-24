@@ -93,7 +93,7 @@ clone "ConversationTemplate" from="JeanSy/construct_first_sighting_jeansy" id="V
             set "Tags" "voymastina"
         }
     }
-    set "Condition" composite="ConversationCondition" {
+    set "Condition" {
         set "ExpressionStr" "story_constructs_01_state = 1 & construct_first_sighting_voymastina_played=0"
     }
     set "Nodes" {
