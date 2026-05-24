@@ -1,0 +1,87 @@
+clone "ConversationTemplate" from="JeanSy/arrival_jeansy" id="Voymastina/arrival_jeansy" {
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Obtain"
+                    }
+                    set "RoleGuid" "JeanSy"
+                    set "Text" "It has been some time, Commander. From here on, attend not to the title 'strongest second-generation Doll', but to the abilities themselves."
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Login"
+                    }
+                    set "RoleGuid" "JeanSy"
+                    set "Text" "Punctual as always. The schedule is already sent. If there are no objections, let us begin at once."
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/arrival_jeansy_mock" id="Voymastina/arrival_voymastina_mock" {
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=1 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Condition" composite="ConversationCondition" {
+        set "ExpressionStr" "ROUND = 1 & PLANET_IS_MOCK & arrival_voymastina_mock_played = 0"
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="ACTION" {
+            set "m_SerAction" composite="SetFlag" {
+                set "FlagName" "arrival_voymastina_mock_played"
+                set "FlagValue" #true
+            }
+        }
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Birthday"
+                    }
+                    set "RoleGuid" "SL"
+                    set "Text" "Today is a special day. Is there anything you wish for? Even if it is to skip training — for today, I will turn a blind eye."
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/last_man_standing1" id="Voymastina/last_man_standing1" {
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Lose"
+                    }
+                    set "RoleGuid" "Entity"
+                    set "Text" "All of this is my responsibility."
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}

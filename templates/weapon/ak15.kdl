@@ -1,0 +1,69 @@
+clone "WeaponTemplate" from="weapon.generic_assault_rifle_tier1_ARC_762" id="weapon.voymastina_ak15" {
+    set "Title" composite="LocalizedLine" {
+        set "m_DefaultTranslation" "Kalashnikova-15"
+    }
+    set "ShortName" composite="LocalizedLine" {
+        set "m_DefaultTranslation" "Assault Rifle"
+    }
+    set "Description" composite="LocalizedMultiLine" {
+        set "m_DefaultTranslation" "A firearm highly compatible with Voymastina. Modified based on her combat preferences. Its specialized internals have produced a qualitative increase in its killing power."
+    }
+    set "Model" asset="weapon/ak15/main"
+    set "SkillsGranted" index=0 "active.fire_voymastina_ak15"
+    set "SkillsGranted" index=1 "active.fire_voymastina_ak15_sustained"
+    set "Icon" asset="weapon/ak15/Icon"
+    set "IconEquipment" asset="weapon/ak15/IconEquipment"
+    // disabled = colours -> desaturate -> desaturate; colours -> desaturate -> mono mixer -> red channel multiplier -> 1.2
+    set "IconEquipmentDisabled" asset="weapon/ak15/IconEquipmentDisabled"
+    set "IconSkillBar" asset="weapon/ak15/IconSkillBar"
+    set "IconSkillBarDisabled" asset="weapon/ak15/IconSkillBarDisabled"
+    append "OnlyEquipableBy" ref="TagTemplate" "voymastina"
+}
+
+// AK-15's fire skill. Swaps the burst + distant audio layers (from the
+// AR mod soundbank) while keeping the vanilla brass-clatter layer.
+// Extend here with damage / accuracy / AP / range tweaks as needed.
+clone "SkillTemplate" from="active.fire_assault_rifle_tier1_762" id="active.fire_voymastina_ak15" {
+    clear "SoundsOnAttack"
+    append "SoundsOnAttack" {
+        set "bankId" "weapons_ar_addition_bank"
+        set "itemId" "ar_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "weapons_soundbank"
+        set "itemId" "small_caliber_brass_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "weapons_ar_addition_bank"
+        set "itemId" "ar_burst_distant"
+    }
+    clear "SoundsOnAttackFar"
+    append "SoundsOnAttackFar" {
+        set "bankId" "weapons_ar_addition_bank"
+        set "itemId" "ar_burst_distant"
+    }
+}
+
+// Sustained-fire skill — same audio swap pattern, but with single-shot
+// sounds (one bang per round at the engine's ~600 RPM tick rate) since
+// piling bursts on bursts would muddy the audio.
+clone "SkillTemplate" from="active.fire_assault_rifle_sustained_fire_tier1_762" id="active.fire_voymastina_ak15_sustained" {
+    clear "SoundsOnAttack"
+    append "SoundsOnAttack" {
+        set "bankId" "weapons_ar_addition_bank"
+        set "itemId" "ar_single"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "weapons_soundbank"
+        set "itemId" "small_caliber_brass_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "weapons_ar_addition_bank"
+        set "itemId" "ar_single_distant"
+    }
+    clear "SoundsOnAttackFar"
+    append "SoundsOnAttackFar" {
+        set "bankId" "weapons_ar_addition_bank"
+        set "itemId" "ar_single_distant"
+    }
+}

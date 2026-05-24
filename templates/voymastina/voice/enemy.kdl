@@ -1,0 +1,1102 @@
+clone "ConversationTemplate" from="JeanSy/building_destroyed" id="Voymastina/building_destroyed" {
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Ultimate"
+                    }
+                    set "RoleGuid" "Killer"
+                    set "Text" "Terminator, maximum output."
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Up4"
+                    }
+                    set "RoleGuid" "Killer"
+                    set "Text" "Dr. Shaw's design, as expected."
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/building_destroyed_neighborhood" id="Voymastina/building_destroyed_neighborhood" {
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Ultimate"
+                    }
+                    set "RoleGuid" "Entity"
+                    set "Text" "Terminator, maximum output."
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/construct_bodypart_damaged" id="Voymastina/construct_bodypart_damaged" {
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Skill01"
+                    }
+                    set "RoleGuid" "Attacker"
+                    set "Text" "Why don't you just fall already?"
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Skill02"
+                    }
+                    set "RoleGuid" "Attacker"
+                    set "Text" "You think you can escape?"
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/construct_first_sighting_jeansy" id="Voymastina/construct_first_sighting_voymastina" {
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=3 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Condition" composite="ConversationCondition" {
+        set "ExpressionStr" "story_constructs_01_state = 1 & construct_first_sighting_voymastina_played=0"
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="ACTION" {
+            set "m_SerAction" composite="SetFlag" {
+                set "FlagName" "construct_first_sighting_voymastina_played"
+                set "FlagValue" #true
+            }
+        }
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "BattleStart"
+                    }
+                    set "RoleGuid" "Explorer"
+                    set "Text" "Is that your full strength?"
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/construct_first_sighting_kill" id="Voymastina/construct_first_sighting_kill" {
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Skill02"
+                    }
+                    set "RoleGuid" "Killer"
+                    set "Text" "You think you can escape?"
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/construct_first_sighting_personal" id="Voymastina/construct_first_sighting_personal" {
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=3 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "BattleStart"
+                    }
+                    set "RoleGuid" "Explorer"
+                    set "Text" "Is that your full strength?"
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/construct_killed" id="Voymastina/construct_killed" {
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Kill"
+                    }
+                    set "RoleGuid" "Killer"
+                    set "Text" "Next."
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Attack"
+                    }
+                    set "RoleGuid" "Killer"
+                    set "Text" "Tch."
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/construct_killed_boss" id="Voymastina/construct_killed_boss" {
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Up5"
+                    }
+                    set "RoleGuid" "Killer"
+                    set "Text" "Let us clear every obstacle in our path."
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/construct_killed_master" id="Voymastina/construct_killed_master" {
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Ultimate"
+                    }
+                    set "RoleGuid" "Killer"
+                    set "Text" "Terminator, maximum output."
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/construct_sighted" id="Voymastina/construct_sighted" {
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=3 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Hit"
+                    }
+                    set "RoleGuid" "Explorer"
+                    set "Text" "A futile struggle."
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "BattleStart"
+                    }
+                    set "RoleGuid" "Explorer"
+                    set "Text" "Is that your full strength?"
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Up1"
+                    }
+                    set "RoleGuid" "Explorer"
+                    set "Text" "Is this all?"
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/construct_sighted1" id="Voymastina/construct_sighted1" {
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=3 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Hit"
+                    }
+                    set "RoleGuid" "Explorer"
+                    set "Text" "A futile struggle."
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/construct_sighted_boss" id="Voymastina/construct_sighted_boss" {
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=3 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "BattleStart"
+                    }
+                    set "RoleGuid" "Explorer"
+                    set "Text" "Is that your full strength?"
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/construct_sighted_master" id="Voymastina/construct_sighted_master" {
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=3 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Ultimate"
+                    }
+                    set "RoleGuid" "Explorer"
+                    set "Text" "Terminator, maximum output."
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/construct_sighted_master_quiet" id="Voymastina/construct_sighted_master_quiet" {
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=3 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "MmInspect"
+                    }
+                    set "RoleGuid" "Explorer"
+                    set "Text" "Mm."
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/construct_sighted_quiet" id="Voymastina/construct_sighted_quiet" {
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=3 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "MmGun"
+                    }
+                    set "RoleGuid" "Explorer"
+                    set "Text" "Mm."
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/enemy_damage_blocked" id="Voymastina/enemy_damage_blocked" {
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=1 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "HittedLast"
+                    }
+                    set "RoleGuid" "Attacker"
+                    set "Text" "Hngh."
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/enemy_damaged" id="Voymastina/enemy_damaged" {
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Skill01"
+                    }
+                    set "RoleGuid" "Attacker"
+                    set "Text" "Why don't you just fall already?"
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Skill02"
+                    }
+                    set "RoleGuid" "Attacker"
+                    set "Text" "You think you can escape?"
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "ShieldBroken"
+                    }
+                    set "RoleGuid" "Attacker"
+                    set "Text" "Is that all?"
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Hit"
+                    }
+                    set "RoleGuid" "Attacker"
+                    set "Text" "A futile struggle."
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Attack"
+                    }
+                    set "RoleGuid" "Attacker"
+                    set "Text" "Tch."
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/enemy_damaged_vehicle" id="Voymastina/enemy_damaged_vehicle" {
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Skill02"
+                    }
+                    set "RoleGuid" "Attacker"
+                    set "Text" "You think you can escape?"
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "SetFall"
+                    }
+                    set "RoleGuid" "Attacker"
+                    set "Text" "No need to hold back."
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Skill01"
+                    }
+                    set "RoleGuid" "Attacker"
+                    set "Text" "Why don't you just fall already?"
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/enemy_fleeing" id="Voymastina/enemy_fleeing" {
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Skill02"
+                    }
+                    set "RoleGuid" "JeanSy"
+                    set "Text" "You think you can escape?"
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/enemy_killed" id="Voymastina/enemy_killed" {
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Attack"
+                    }
+                    set "RoleGuid" "Killer"
+                    set "Text" "Tch."
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Kill"
+                    }
+                    set "RoleGuid" "Killer"
+                    set "Text" "Next."
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/enemy_killed_aimedshot" id="Voymastina/enemy_killed_aimedshot" {
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Kill"
+                    }
+                    set "RoleGuid" "Killer"
+                    set "Text" "Next."
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/enemy_killed_aimedshot1" id="Voymastina/enemy_killed_aimedshot1" {
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Kill"
+                    }
+                    set "RoleGuid" "Killer"
+                    set "Text" "Next."
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/enemy_killed_bugs11" id="Voymastina/enemy_killed_bugs11" {
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Kill"
+                    }
+                    set "RoleGuid" "Killer"
+                    set "Text" "Next."
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Attack"
+                    }
+                    set "RoleGuid" "Killer"
+                    set "Text" "Tch."
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/enemy_killed_heavy" id="Voymastina/enemy_killed_heavy" {
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Kill"
+                    }
+                    set "RoleGuid" "Killer"
+                    set "Text" "Next."
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/enemy_killed_sniper" id="Voymastina/enemy_killed_sniper" {
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Kill"
+                    }
+                    set "RoleGuid" "Killer"
+                    set "Text" "Next."
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/enemy_sighted_bugs1" id="Voymastina/enemy_sighted_bugs1" {
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=3 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Hit"
+                    }
+                    set "RoleGuid" "Explorer"
+                    set "Text" "A futile struggle."
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "BattleStart"
+                    }
+                    set "RoleGuid" "Explorer"
+                    set "Text" "Is that your full strength?"
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/enemy_sighted_emp" id="Voymastina/enemy_sighted_emp" {
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=3 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Hit"
+                    }
+                    set "RoleGuid" "Explorer"
+                    set "Text" "A futile struggle."
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/enemy_sighted_heavy" id="Voymastina/enemy_sighted_heavy" {
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=3 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Hit"
+                    }
+                    set "RoleGuid" "Explorer"
+                    set "Text" "A futile struggle."
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/enemy_sighted_heavy_quietly" id="Voymastina/enemy_sighted_heavy_quietly" {
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=3 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "MmGun"
+                    }
+                    set "RoleGuid" "Explorer"
+                    set "Text" "Mm."
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/enemy_sighted_jeansy" id="Voymastina/enemy_sighted_jeansy" {
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=3 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Hit"
+                    }
+                    set "RoleGuid" "Explorer"
+                    set "Text" "A futile struggle."
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "BattleStart"
+                    }
+                    set "RoleGuid" "Explorer"
+                    set "Text" "Is that your full strength?"
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Up1"
+                    }
+                    set "RoleGuid" "Explorer"
+                    set "Text" "Is this all?"
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Hit"
+                    }
+                    set "RoleGuid" "Explorer"
+                    set "Text" "A futile struggle."
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "BattleStart"
+                    }
+                    set "RoleGuid" "Explorer"
+                    set "Text" "Is that your full strength?"
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/enemy_sighted_jeansy_quietly" id="Voymastina/enemy_sighted_jeansy_quietly" {
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=3 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "MmGun"
+                    }
+                    set "RoleGuid" "Explorer"
+                    set "Text" "Mm."
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "MmInspect"
+                    }
+                    set "RoleGuid" "Explorer"
+                    set "Text" "Mm."
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "MmGun"
+                    }
+                    set "RoleGuid" "Explorer"
+                    set "Text" "Mm."
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/enemy_sighted_sniper" id="Voymastina/enemy_sighted_sniper" {
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Hit"
+                    }
+                    set "RoleGuid" "Explorer"
+                    set "Text" "A futile struggle."
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/enemy_sighted_sniper_quietly" id="Voymastina/enemy_sighted_sniper_quietly" {
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "MmGun"
+                    }
+                    set "RoleGuid" "Explorer"
+                    set "Text" "Mm."
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/enemy_sighted_turret" id="Voymastina/enemy_sighted_turret" {
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Hit"
+                    }
+                    set "RoleGuid" "Explorer"
+                    set "Text" "A futile struggle."
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/enemy_sighted_vehicle" id="Voymastina/enemy_sighted_vehicle" {
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Hit"
+                    }
+                    set "RoleGuid" "Explorer"
+                    set "Text" "A futile struggle."
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/enemy_sighted_weakened" id="Voymastina/enemy_sighted_weakened" {
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Up1"
+                    }
+                    set "RoleGuid" "Explorer"
+                    set "Text" "Is this all?"
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/enemy_sighted_weapons" id="Voymastina/enemy_sighted_weapons" {
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=3 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Hit"
+                    }
+                    set "RoleGuid" "Explorer"
+                    set "Text" "A futile struggle."
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/enemy_suppressed" id="Voymastina/enemy_suppressed" {
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=3 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Hit"
+                    }
+                    set "RoleGuid" "JeanSy"
+                    set "Text" "A futile struggle."
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Skill01"
+                    }
+                    set "RoleGuid" "JeanSy"
+                    set "Text" "Why don't you just fall already?"
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "ShieldBroken"
+                    }
+                    set "RoleGuid" "JeanSy"
+                    set "Text" "Is that all?"
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}

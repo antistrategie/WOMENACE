@@ -1,0 +1,41 @@
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.voymastina_default" {
+    set "Title" composite="LocalizedLine" {
+        set "m_DefaultTranslation" "White Mastiff's Fang"
+    }
+    set "ShortName" composite="LocalizedLine" {
+        set "m_DefaultTranslation" "Combat Gear"
+    }
+    set "Description" composite="LocalizedMultiLine" {
+        set "m_DefaultTranslation" "Voymastina's usual outfit. Its simple desgin has nothing in the way of personalization or decoration. It shows its true worth in battle, where it is like a sharp fang."
+    }
+    set "Icon" asset="voymastina/armor/default/Icon"
+    set "IconEquipment" asset="voymastina/armor/default/IconEquipment"
+    set "IconSkillBar" asset="voymastina/armor/default/IconSkillBar"
+    clear "MaleModels"
+    append "MaleModels" asset="Voymastina/Default/main"
+    clear "FemaleModels"
+    append "FemaleModels" asset="Voymastina/Default/main"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" ref="TagTemplate" "voymastina"
+}
+
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.voymastina_erwin" {
+    set "Title" composite="LocalizedLine" {
+        set "m_DefaultTranslation" "Erwin"
+    }
+    set "ShortName" composite="LocalizedLine" {
+        set "m_DefaultTranslation" "Formal Wear"
+    }
+    set "Description" composite="LocalizedMultiLine" {
+        set "m_DefaultTranslation" "\"I'm sorry I can't blend in like a normal agent... But I can ensure your safety.\"\nShe Stands by your side, her keen gaze sweeping over everyone who could possibly be suspicious."
+    }
+    set "Icon" asset="voymastina/armor/erwin/Icon"
+    set "IconEquipment" asset="voymastina/armor/erwin/IconEquipment"
+    set "IconSkillBar" asset="voymastina/armor/erwin/IconSkillBar"
+    clear "MaleModels"
+    append "MaleModels" asset="Voymastina/Erwin/main"
+    clear "FemaleModels"
+    append "FemaleModels" asset="Voymastina/Erwin/main"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" ref="TagTemplate" "voymastina"
+}

@@ -1,0 +1,78 @@
+clone "ConversationTemplate" from="JeanSy/response_kill" id="Voymastina/response_kill" {
+    set "Roles" index=2 {
+        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Kill"
+                    }
+                    set "RoleGuid" "JeanSy"
+                    set "Text" "Next."
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Attack"
+                    }
+                    set "RoleGuid" "JeanSy"
+                    set "Text" "Tch."
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/response_miss" id="Voymastina/response_miss" {
+    set "Roles" index=2 {
+        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Attack"
+                    }
+                    set "RoleGuid" "JeanSy"
+                    set "Text" "Tch."
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/response_taking_fire_anyone" id="Voymastina/response_taking_fire_anyone" {
+    set "Roles" index=2 {
+        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
+            set "Tags" "voymastina"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_voymastina_va"
+                        set "itemId" "Attack"
+                    }
+                    set "RoleGuid" "JeanSy"
+                    set "Text" "Tch."
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
