@@ -50,7 +50,7 @@ namespace Jiangyu.Mod
         //         -gltfPath <Assets/Authored/.../raw.glb> \
         //         -referencePrefab <Assets/Imported/.../arc_assault_rifle_t1.prefab> \
         //         -outputDir <Assets/Prefabs> \
-        //         -outputName <voymastina/ak15> \
+        //         -outputName <weapon/ak15> \
         //         -textureBase <Assets/.../base.tga> \
         //         -textureNormal <Assets/.../normal.tga> \
         //         -textureMask <Assets/.../mask.png>   (optional)
@@ -156,7 +156,7 @@ namespace Jiangyu.Mod
                 _outputDir);
             _outputName = EditorGUILayout.TextField(
                 new GUIContent("Output name",
-                    "Sub-path under `output dir`. Supports `/` (e.g. `voymastina/ak15`). "
+                    "Sub-path under `output dir`. Supports `/` (e.g. `weapon/ak15`). "
                     + "KDL ref will be asset=\"<output name>/main\"."),
                 _outputName);
 
