@@ -15,22 +15,22 @@ clone "WeaponTemplate" from="weapon.generic_battle_rifle_tier1_crowbar_marksman"
     set "IconEquipmentDisabled" asset="weapon/m200/IconEquipmentDisabled"
     set "IconSkillBar" asset="weapon/m200/IconSkillBar"
     set "IconSkillBarDisabled" asset="weapon/m200/IconSkillBarDisabled"
-    append "OnlyEquipableBy" "cheyanne"
+    append "OnlyEquipableBy" "wmgfl_cheyanne"
 }
 
 clone "SkillTemplate" from="active.fire_battle_rifle_tier_1" id="active.fire_cheyanne_m200" {
     clear "SoundsOnAttack"
     append "SoundsOnAttack" {
-        set "bankId" "weapons_rf_addition_bank"
+        set "bankId" "wmgfl_weapons_rf_addition_bank"
         set "itemId" "rf_shot"
     }
     append "SoundsOnAttack" {
-        set "bankId" "weapons_rf_addition_bank"
+        set "bankId" "wmgfl_weapons_rf_addition_bank"
         set "itemId" "rf_shot_distant"
     }
     clear "SoundsOnAttackFar"
     append "SoundsOnAttackFar" {
-        set "bankId" "weapons_rf_addition_bank"
+        set "bankId" "wmgfl_weapons_rf_addition_bank"
         set "itemId" "rf_shot_distant"
     }
 }
@@ -38,16 +38,16 @@ clone "SkillTemplate" from="active.fire_battle_rifle_tier_1" id="active.fire_che
 clone "SkillTemplate" from="active.fire_battle_rifle_tier_1_aimed_fire_marksman" id="active.fire_cheyanne_m200_aimed" {
     clear "SoundsOnAttack"
     append "SoundsOnAttack" {
-        set "bankId" "weapons_rf_addition_bank"
+        set "bankId" "wmgfl_weapons_rf_addition_bank"
         set "itemId" "rf_shot"
     }
     append "SoundsOnAttack" {
-        set "bankId" "weapons_rf_addition_bank"
+        set "bankId" "wmgfl_weapons_rf_addition_bank"
         set "itemId" "rf_shot_distant"
     }
     clear "SoundsOnAttackFar"
     append "SoundsOnAttackFar" {
-        set "bankId" "weapons_rf_addition_bank"
+        set "bankId" "wmgfl_weapons_rf_addition_bank"
         set "itemId" "rf_shot_distant"
     }
 }

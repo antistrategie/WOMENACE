@@ -114,6 +114,7 @@ Run `jiangyu unity sync` from the repo root to refresh the managed scripts. The 
 
 ## Conventions
 
+- **Mod ID prefix `wmgfl_`** on collision-prone clone IDs: SoundBank names (`wmgfl_tactical_barks_<char>_va`, `wmgfl_weapons_ar_addition_bank`, `wmgfl_weapons_rf_addition_bank`), character TagTemplate IDs (`wmgfl_cheyanne`, `wmgfl_voymastina`), SpeakerTemplate IDs (`wmgfl_cheyanne_speaker`). Already-namespaced IDs (`armor.cheyanne_default`, `weapon.voymastina_ak15`, `Cheyanne/arrival_cheyanne` etc.) skip the prefix because the character segment carries equivalent namespacing. Jiangyu-contract tags (`armor_restricted`, `weapon_restricted`) skip it because they're a cross-mod protocol.
 - British English in code, comments, docs (analyse, colour, organisation).
 - No em dashes. No semicolons in prose, comments, or string literals. Use periods, commas, colons.
 - Docs describe the current working state only. No past-tense framing ("used to", "previously", "earlier attempts"). No future-tense framing ("not yet", "TODO", "in progress"). If something doesn't work, fix it or leave it out.

@@ -47,12 +47,12 @@ Sprite/texture assets live separately under `assets/additions/sprites/<character
 Five clones in one file:
 
 ```kdl
-clone "TagTemplate" from="unique" id="<character>"
+clone "TagTemplate" from="unique" id="wmgfl_<character>"
 
-clone "SpeakerTemplate" from="<parent_speaker>" id="<character>_speaker" { ... }
+clone "SpeakerTemplate" from="<parent_speaker>" id="wmgfl_<character>_speaker" { ... }
 
 clone "EntityTemplate" from="player_squad.<parent>" id="player_squad.<character>" {
-    append "Tags" "<character>"
+    append "Tags" "wmgfl_<character>"
     append "Tags" "armor_restricted"
     ...
     clear "Items"
@@ -62,7 +62,7 @@ clone "EntityTemplate" from="player_squad.<parent>" id="player_squad.<character>
 
 clone "UnitLeaderTemplate" from="squad_leader.<parent>" id="squad_leader.<character>" {
     set "InfantryUnitTemplate" "player_squad.<character>"
-    set "SpeakerTemplate" "<character>_speaker"
+    set "SpeakerTemplate" "wmgfl_<character>_speaker"
     set "InitialAttributes" index=0 ...   // 7 stats
     set "InitialPerk" "perk.<starting_perk>"
     set "PerkTrees" index=0 "perk_tree.<character>"
@@ -70,7 +70,7 @@ clone "UnitLeaderTemplate" from="squad_leader.<parent>" id="squad_leader.<charac
     set "BadgeMini" asset="<character>/badge_mini"
     ...
     set "HiringSelectBarkSound" {
-        set "bankId" "tactical_barks_<character>_va"
+        set "bankId" "wmgfl_tactical_barks_<character>_va"
         set "itemId" "<filename_of_chosen_clip>"   // see voice-pipeline
     }
     ...
@@ -128,7 +128,7 @@ clone "ArmorTemplate" from="armor.player_fatigues" id="armor.<character>_<varian
     clear "FemaleModels"
     append "FemaleModels" asset="<character>/<variant>/main"
     set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
-    append "OnlyEquipableBy" "<character>"
+    append "OnlyEquipableBy" "wmgfl_<character>"
 }
 ```
 
@@ -161,6 +161,7 @@ dotnet ../jiangyu/src/Jiangyu.Cli/bin/Debug/net10.0/jiangyu.dll templates search
 - **No em dashes**, **no semicolons** in prose / Title / Description / KDL string literals. Periods, commas, colons only.
 - **`mise run format`** before committing. Rewrites KDL through Jiangyu's parse → validate → normalise → serialise pipeline so diffs only show real authoring changes. `mise run format --check` exits non-zero in CI when files would change.
 - **KDL composite-over-dotted** — never `set "Type.field" v`. Always `set "Type" composite="X" { set "field" v }` or the bare-child-block form for monomorphic destinations.
+- **`wmgfl_` prefix** on collision-prone clone IDs: SoundBank names, character Tags (`wmgfl_cheyanne`), SpeakerTemplate IDs (`wmgfl_cheyanne_speaker`). Already-namespaced IDs like `armor.cheyanne_default` skip it. See `AGENTS.md` for the full rule and rationale.
 
 ## What inherits, what you override
 
@@ -173,7 +174,7 @@ A `clone` deep-copies the parent's typed state, then applies the patches in your
 ## Common shape mistakes
 
 - **Cloning the wrong parent class** — e.g. cloning from `specialweapon.X` if you don't want the unit to consume the specialweapon slot. For a sniper-style weapon in the normal slot, pick `weapon.generic_battle_rifle_tier1_crowbar_marksman` or similar.
-- **Forgetting `append "Tags" "<character>"`** on the EntityTemplate. The armor restriction silently fails (no match in `OnlyEquipableBy ∩ unit.Tags`).
+- **Forgetting `append "Tags" "wmgfl_<character>"`** on the EntityTemplate. The armor restriction silently fails (no match in `OnlyEquipableBy ∩ unit.Tags`).
 - **Forgetting `append "Tags" "armor_restricted"`** — the filter doesn't activate and the unit sees ALL armor.
 - **Wrong RoleGuid in cloned ConversationTemplates** — must match the role NAME in the actual parent template, which differs per-template (see [voice-pipeline](../voice-pipeline/SKILL.md)).
 

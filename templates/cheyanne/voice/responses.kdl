@@ -2,7 +2,7 @@ clone "ConversationTemplate" from="Carda_Early/response_taking_fire_anyone" id="
     set "Active" #true
     set "Roles" index=2 {
         set "m_SerializedRequirements" index=2 composite="HasOneTag" {
-            set "Tags" "cheyanne"
+            set "Tags" "wmgfl_cheyanne"
         }
     }
     set "Nodes" {
@@ -10,7 +10,7 @@ clone "ConversationTemplate" from="Carda_Early/response_taking_fire_anyone" id="
             append "Variations" {
                 append "m_SerializedNodes" composite="SAY" {
                     set "Sound" {
-                        set "bankId" "tactical_barks_cheyanne_va"
+                        set "bankId" "wmgfl_tactical_barks_cheyanne_va"
                         set "itemId" "Series_Skill02_Single_Skill_002"
                     }
                     set "RoleGuid" "SL"

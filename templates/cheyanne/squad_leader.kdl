@@ -1,7 +1,7 @@
-clone "TagTemplate" from="unique" id="cheyanne"
+clone "TagTemplate" from="unique" id="wmgfl_cheyanne"
 
-clone "SpeakerTemplate" from="carda" id="cheyanne_speaker" {
-    set "Tags" "cheyanne female infantry waybacker"
+clone "SpeakerTemplate" from="carda" id="wmgfl_cheyanne_speaker" {
+    set "Tags" "wmgfl_cheyanne female infantry waybacker"
     set "Nickname" {
         set "m_DefaultTranslation" "Cheyanne"
     }
@@ -32,7 +32,7 @@ clone "SpeakerTemplate" from="carda" id="cheyanne_speaker" {
 }
 
 clone "EntityTemplate" from="player_squad.carda" id="player_squad.cheyanne" {
-    append "Tags" "cheyanne"
+    append "Tags" "wmgfl_cheyanne"
     append "Tags" "armor_restricted"
     set "Title" {
         set "m_DefaultTranslation" "Elmo Combined Echelon"
@@ -50,7 +50,7 @@ clone "EntityTemplate" from="player_squad.carda" id="player_squad.cheyanne" {
 
 clone "UnitLeaderTemplate" from="squad_leader.carda" id="squad_leader.cheyanne" {
     set "InfantryUnitTemplate" "player_squad.cheyanne"
-    set "SpeakerTemplate" "cheyanne_speaker"
+    set "SpeakerTemplate" "wmgfl_cheyanne_speaker"
     set "CustomHead" #null
     set "UnitTitle" {
         set "m_DefaultTranslation" "Elmo Combined Echelon"
@@ -81,38 +81,38 @@ clone "UnitLeaderTemplate" from="squad_leader.carda" id="squad_leader.cheyanne" 
     set "BadgeUnitWindow" asset="cheyanne/badge_unit_window"
     set "BadgeMini" asset="cheyanne/badge_mini"
     set "HiringSelectBarkSound" {
-        set "bankId" "tactical_barks_cheyanne_va"
+        set "bankId" "wmgfl_tactical_barks_cheyanne_va"
         set "itemId" "Series_Chosen_Series_Tone_Positive_006"
     }
     set "HiredBarkSound" {
-        set "bankId" "tactical_barks_cheyanne_va"
+        set "bankId" "wmgfl_tactical_barks_cheyanne_va"
         set "itemId" "Series_Chosen_Auto_Series_Tone_Positive_007"
     }
     set "PromotionBarkSounds" index=0 {
         set "PerkTier" 1
         set "Sound" {
-            set "bankId" "tactical_barks_cheyanne_va"
+            set "bankId" "wmgfl_tactical_barks_cheyanne_va"
             set "itemId" "Series_Up_002"
         }
     }
     set "PromotionBarkSounds" index=1 {
         set "PerkTier" 2
         set "Sound" {
-            set "bankId" "tactical_barks_cheyanne_va"
+            set "bankId" "wmgfl_tactical_barks_cheyanne_va"
             set "itemId" "Series_Up_003"
         }
     }
     set "PromotionBarkSounds" index=2 {
         set "PerkTier" 3
         set "Sound" {
-            set "bankId" "tactical_barks_cheyanne_va"
+            set "bankId" "wmgfl_tactical_barks_cheyanne_va"
             set "itemId" "Series_Up_004"
         }
     }
     set "PromotionBarkSounds" index=3 {
         set "PerkTier" 4
         set "Sound" {
-            set "bankId" "tactical_barks_cheyanne_va"
+            set "bankId" "wmgfl_tactical_barks_cheyanne_va"
             set "itemId" "Series_Up_005"
         }
     }

@@ -2,7 +2,7 @@ clone "ConversationTemplate" from="JeanSy/arrival_jeansy" id="Voymastina/arrival
     set "Active" #true
     set "Roles" index=0 {
         set "m_SerializedRequirements" index=2 composite="HasOneTag" {
-            set "Tags" "voymastina"
+            set "Tags" "wmgfl_voymastina"
         }
     }
     set "Nodes" {
@@ -10,7 +10,7 @@ clone "ConversationTemplate" from="JeanSy/arrival_jeansy" id="Voymastina/arrival
             append "Variations" {
                 append "m_SerializedNodes" composite="SAY" {
                     set "Sound" {
-                        set "bankId" "tactical_barks_voymastina_va"
+                        set "bankId" "wmgfl_tactical_barks_voymastina_va"
                         set "itemId" "Single_Obtain_SSR_001"
                     }
                     set "RoleGuid" "JeanSy"
@@ -20,7 +20,7 @@ clone "ConversationTemplate" from="JeanSy/arrival_jeansy" id="Voymastina/arrival
             append "Variations" {
                 append "m_SerializedNodes" composite="SAY" {
                     set "Sound" {
-                        set "bankId" "tactical_barks_voymastina_va"
+                        set "bankId" "wmgfl_tactical_barks_voymastina_va"
                         set "itemId" "Single_Login_001"
                     }
                     set "RoleGuid" "JeanSy"
@@ -36,7 +36,7 @@ clone "ConversationTemplate" from="JeanSy/last_man_standing1" id="Voymastina/las
     set "Active" #true
     set "Roles" index=0 {
         set "m_SerializedRequirements" index=2 composite="HasOneTag" {
-            set "Tags" "voymastina"
+            set "Tags" "wmgfl_voymastina"
         }
     }
     set "Nodes" {
@@ -44,7 +44,7 @@ clone "ConversationTemplate" from="JeanSy/last_man_standing1" id="Voymastina/las
             append "Variations" {
                 append "m_SerializedNodes" composite="SAY" {
                     set "Sound" {
-                        set "bankId" "tactical_barks_voymastina_va"
+                        set "bankId" "wmgfl_tactical_barks_voymastina_va"
                         set "itemId" "Series_Lose_Single_Lose_001"
                     }
                     set "RoleGuid" "Entity"

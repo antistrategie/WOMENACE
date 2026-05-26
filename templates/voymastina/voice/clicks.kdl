@@ -2,7 +2,7 @@ clone "ConversationTemplate" from="JeanSy/click_bark" id="Voymastina/click_bark"
     set "Active" #true
     set "Roles" index=0 {
         set "m_SerializedRequirements" index=2 composite="HasOneTag" {
-            set "Tags" "voymastina"
+            set "Tags" "wmgfl_voymastina"
         }
     }
     set "Priority" 100
@@ -17,7 +17,7 @@ clone "ConversationTemplate" from="JeanSy/click_bark" id="Voymastina/click_bark"
             append "Variations" {
                 append "m_SerializedNodes" composite="SAY" {
                     set "Sound" {
-                        set "bankId" "tactical_barks_voymastina_va"
+                        set "bankId" "wmgfl_tactical_barks_voymastina_va"
                         set "itemId" "Series_Set_Click_Series_Tone_Positive_004"
                     }
                     set "RoleGuid" "Entity"
@@ -27,7 +27,7 @@ clone "ConversationTemplate" from="JeanSy/click_bark" id="Voymastina/click_bark"
             append "Variations" {
                 append "m_SerializedNodes" composite="SAY" {
                     set "Sound" {
-                        set "bankId" "tactical_barks_voymastina_va"
+                        set "bankId" "wmgfl_tactical_barks_voymastina_va"
                         set "itemId" "Series_Chosen_Series_Tone_Positive_006"
                     }
                     set "RoleGuid" "Entity"
@@ -43,7 +43,7 @@ clone "ConversationTemplate" from="JeanSy/click_bark_quiet1" id="Voymastina/clic
     set "Active" #true
     set "Roles" index=0 {
         set "m_SerializedRequirements" index=2 composite="HasOneTag" {
-            set "Tags" "voymastina"
+            set "Tags" "wmgfl_voymastina"
         }
     }
     set "Nodes" {
@@ -51,7 +51,7 @@ clone "ConversationTemplate" from="JeanSy/click_bark_quiet1" id="Voymastina/clic
             append "Variations" {
                 append "m_SerializedNodes" composite="SAY" {
                     set "Sound" {
-                        set "bankId" "tactical_barks_voymastina_va"
+                        set "bankId" "wmgfl_tactical_barks_voymastina_va"
                         set "itemId" "Series_Set_Fall_Series_Tone_Positive_005"
                     }
                     set "RoleGuid" "Entity"
@@ -67,7 +67,7 @@ clone "ConversationTemplate" from="JeanSy/click_enemy_threatening_obj_zone" id="
     set "Active" #true
     set "Roles" index=0 {
         set "m_SerializedRequirements" index=2 composite="HasOneTag" {
-            set "Tags" "voymastina"
+            set "Tags" "wmgfl_voymastina"
         }
     }
     set "Nodes" {
@@ -75,7 +75,7 @@ clone "ConversationTemplate" from="JeanSy/click_enemy_threatening_obj_zone" id="
             append "Variations" {
                 append "m_SerializedNodes" composite="SAY" {
                     set "Sound" {
-                        set "bankId" "tactical_barks_voymastina_va"
+                        set "bankId" "wmgfl_tactical_barks_voymastina_va"
                         set "itemId" "Series_Up_005"
                     }
                     set "RoleGuid" "Entity"
@@ -91,7 +91,7 @@ clone "ConversationTemplate" from="JeanSy/idle_bark_combat" id="Voymastina/idle_
     set "Active" #true
     set "Roles" index=0 {
         set "m_SerializedRequirements" index=2 composite="HasOneTag" {
-            set "Tags" "voymastina"
+            set "Tags" "wmgfl_voymastina"
         }
     }
     set "Nodes" {
@@ -99,7 +99,7 @@ clone "ConversationTemplate" from="JeanSy/idle_bark_combat" id="Voymastina/idle_
             append "Variations" {
                 append "m_SerializedNodes" composite="SAY" {
                     set "Sound" {
-                        set "bankId" "tactical_barks_voymastina_va"
+                        set "bankId" "wmgfl_tactical_barks_voymastina_va"
                         set "itemId" "Series_Set_Fall_Series_Tone_Positive_005"
                     }
                     set "RoleGuid" "JeanSy"

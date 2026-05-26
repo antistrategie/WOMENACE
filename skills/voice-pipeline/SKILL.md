@@ -76,7 +76,7 @@ Cost is pennies for 60-65 clips.
 `templates/<char>/voice/soundbank.kdl`:
 
 ```kdl
-clone "SoundBank" from="tactical_barks_carda_va_full_mid" id="tactical_barks_<character>_va" {
+clone "SoundBank" from="tactical_barks_carda_va_full_mid" id="wmgfl_tactical_barks_<character>_va" {
     clear "sounds"
     clear "busIndices"
 
@@ -106,7 +106,7 @@ clone "SoundBank" from="tactical_barks_carda_va_full_mid" id="tactical_barks_<ch
 
 Each `append "sounds"` must be followed by an `append "busIndices" 0` (zero = the default voice bus). Sound and bus arrays are parallel — if they desync the bank loader fails. There's an auto-extension that may save you, but don't rely on it.
 
-Mod-bank IDs are FNV-1a hashed from the clone-ID string at load time, then the loader binds them. Conversation/skill references use the string `"tactical_barks_<character>_va"`; the loader does the hash routing.
+Mod-bank IDs are FNV-1a hashed from the clone-ID string at load time, then the loader binds them. Conversation/skill references use the string `"wmgfl_tactical_barks_<character>_va"`; the loader does the hash routing.
 
 Cloning from a Speaker-specific bank (e.g. `tactical_barks_carda_va_full_mid`) inherits the bus/falloff defaults the speaker uses. If you can find a parent bank that matches your character's archetype, prefer that over `weapons_soundbank` or other class banks.
 
@@ -118,9 +118,10 @@ Each clone shape:
 
 ```kdl
 clone "ConversationTemplate" from="<Parent_Namespace>/<event_name>" id="<Character>/<event_name>" {
+    set "Active" #true
     set "Roles" index=<speaker_role_index> {
         set "m_SerializedRequirements" index=2 composite="HasOneTag" {
-            set "Tags" "<character>"
+            set "Tags" "wmgfl_<character>"
         }
     }
     set "Nodes" {
@@ -128,7 +129,7 @@ clone "ConversationTemplate" from="<Parent_Namespace>/<event_name>" id="<Charact
             append "Variations" {
                 append "m_SerializedNodes" composite="SAY" {
                     set "Sound" {
-                        set "bankId" "tactical_barks_<character>_va"
+                        set "bankId" "wmgfl_tactical_barks_<character>_va"
                         set "itemId" "<filename_from_bank>"
                     }
                     set "RoleGuid" "<role_name_in_parent>"
@@ -141,6 +142,8 @@ clone "ConversationTemplate" from="<Parent_Namespace>/<event_name>" id="<Charact
     }
 }
 ```
+
+**`Active #true`** is non-negotiable. Most base ConversationTemplates (e.g. `Carda_Early/arrival_carda`, `JeanSy/click_bark`) ship with `Active=False` — they're prototypes. Clones inherit the field, the bark dispatcher filters out Active=False entries, and the lines silently never fire. Set `Active #true` on every voice-clone block or you'll hear nothing in-game.
 
 **Parent namespace** — JeanSy templates live at `JeanSy/<event>` (sy's barks). Carda's at `Carda_Early/<event>` (her early-game progression bank). Pick the parent that matches your character's source archetype. Voymastina (cloned from sy) uses JeanSy parents; cheyanne (cloned from carda) uses Carda_Early parents.
 
@@ -195,7 +198,7 @@ Stdlib-only (no extra deps); auto-opens `http://127.0.0.1:8765/`.
 - `JeanSy/<event>` → `<Carda_Early_or_X>/<carda_event>` via a survey-built map
 - `Voymastina/X` → `<Cheyanne>/<carda_event>`
 - `voymastina` tag → `<character>` tag
-- `tactical_barks_voymastina_va` → `tactical_barks_<character>_va`
+- `wmgfl_tactical_barks_voymastina_va` → `wmgfl_tactical_barks_<character>_va`
 - `RoleGuid "JeanSy"` → role name at the matching index in the carda parent
 - `Text` body → looked up by itemId from the new character's `.trans.csv`
 

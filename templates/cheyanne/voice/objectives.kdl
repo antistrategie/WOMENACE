@@ -2,7 +2,7 @@ clone "ConversationTemplate" from="Carda_Early/objective_first" id="Cheyanne/obj
     set "Active" #true
     set "Roles" index=0 {
         set "m_SerializedRequirements" index=2 composite="HasOneTag" {
-            set "Tags" "cheyanne"
+            set "Tags" "wmgfl_cheyanne"
         }
     }
     set "Nodes" {
@@ -10,7 +10,7 @@ clone "ConversationTemplate" from="Carda_Early/objective_first" id="Cheyanne/obj
             append "Variations" {
                 append "m_SerializedNodes" composite="SAY" {
                     set "Sound" {
-                        set "bankId" "tactical_barks_cheyanne_va"
+                        set "bankId" "wmgfl_tactical_barks_cheyanne_va"
                         set "itemId" "Series_Win_Single_Win_001"
                     }
                     set "RoleGuid" "Entity"
@@ -26,7 +26,7 @@ clone "ConversationTemplate" from="Carda_Early/objective_second" id="Cheyanne/ob
     set "Active" #true
     set "Roles" index=0 {
         set "m_SerializedRequirements" index=2 composite="HasOneTag" {
-            set "Tags" "cheyanne"
+            set "Tags" "wmgfl_cheyanne"
         }
     }
     set "Nodes" {
@@ -34,7 +34,7 @@ clone "ConversationTemplate" from="Carda_Early/objective_second" id="Cheyanne/ob
             append "Variations" {
                 append "m_SerializedNodes" composite="SAY" {
                     set "Sound" {
-                        set "bankId" "tactical_barks_cheyanne_va"
+                        set "bankId" "wmgfl_tactical_barks_cheyanne_va"
                         set "itemId" "Series_Up_003"
                     }
                     set "RoleGuid" "Entity"
@@ -50,7 +50,7 @@ clone "ConversationTemplate" from="Carda_Early/objective_third" id="Cheyanne/obj
     set "Active" #true
     set "Roles" index=0 {
         set "m_SerializedRequirements" index=2 composite="HasOneTag" {
-            set "Tags" "cheyanne"
+            set "Tags" "wmgfl_cheyanne"
         }
     }
     set "Nodes" {
@@ -58,7 +58,7 @@ clone "ConversationTemplate" from="Carda_Early/objective_third" id="Cheyanne/obj
             append "Variations" {
                 append "m_SerializedNodes" composite="SAY" {
                     set "Sound" {
-                        set "bankId" "tactical_barks_cheyanne_va"
+                        set "bankId" "wmgfl_tactical_barks_cheyanne_va"
                         set "itemId" "Series_Up_002"
                     }
                     set "RoleGuid" "Entity"

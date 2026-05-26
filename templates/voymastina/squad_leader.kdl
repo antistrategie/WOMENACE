@@ -1,7 +1,7 @@
-clone "TagTemplate" from="unique" id="voymastina"
+clone "TagTemplate" from="unique" id="wmgfl_voymastina"
 
-clone "SpeakerTemplate" from="sy" id="voymastina_speaker" {
-    set "Tags" "voymastina pirate_sl female infantry waybacker"
+clone "SpeakerTemplate" from="sy" id="wmgfl_voymastina_speaker" {
+    set "Tags" "wmgfl_voymastina pirate_sl female infantry waybacker"
     set "Nickname" {
         set "m_DefaultTranslation" "Voymastina"
     }
@@ -32,7 +32,7 @@ clone "SpeakerTemplate" from="sy" id="voymastina_speaker" {
 }
 
 clone "EntityTemplate" from="player_squad.sy" id="player_squad.voymastina" {
-    append "Tags" "voymastina"
+    append "Tags" "wmgfl_voymastina"
     append "Tags" "armor_restricted"
     set "Title" {
         set "m_DefaultTranslation" "Task Force DEFY"
@@ -54,7 +54,7 @@ clone "EntityTemplate" from="player_squad.sy" id="player_squad.voymastina" {
 
 clone "UnitLeaderTemplate" from="squad_leader.sy" id="squad_leader.voymastina" {
     set "InfantryUnitTemplate" "player_squad.voymastina"
-    set "SpeakerTemplate" "voymastina_speaker"
+    set "SpeakerTemplate" "wmgfl_voymastina_speaker"
     set "CustomHead" #null
     set "UnitTitle" {
         set "m_DefaultTranslation" "Tactical Doll"
@@ -88,38 +88,38 @@ clone "UnitLeaderTemplate" from="squad_leader.sy" id="squad_leader.voymastina" {
     set "BadgeUnitWindow" asset="voymastina/badge_unit_window"
     set "BadgeMini" asset="voymastina/badge_mini"
     set "HiringSelectBarkSound" {
-        set "bankId" "tactical_barks_voymastina_va"
+        set "bankId" "wmgfl_tactical_barks_voymastina_va"
         set "itemId" "Series_Chosen_Series_Tone_Positive_006"
     }
     set "HiredBarkSound" {
-        set "bankId" "tactical_barks_voymastina_va"
+        set "bankId" "wmgfl_tactical_barks_voymastina_va"
         set "itemId" "Series_Chosen_Auto_Series_Tone_Positive_007"
     }
     set "PromotionBarkSounds" index=0 {
         set "PerkTier" 1
         set "Sound" {
-            set "bankId" "tactical_barks_voymastina_va"
+            set "bankId" "wmgfl_tactical_barks_voymastina_va"
             set "itemId" "Series_Up_002"
         }
     }
     set "PromotionBarkSounds" index=1 {
         set "PerkTier" 2
         set "Sound" {
-            set "bankId" "tactical_barks_voymastina_va"
+            set "bankId" "wmgfl_tactical_barks_voymastina_va"
             set "itemId" "Series_Up_003"
         }
     }
     set "PromotionBarkSounds" index=2 {
         set "PerkTier" 3
         set "Sound" {
-            set "bankId" "tactical_barks_voymastina_va"
+            set "bankId" "wmgfl_tactical_barks_voymastina_va"
             set "itemId" "Series_Up_004"
         }
     }
     set "PromotionBarkSounds" index=3 {
         set "PerkTier" 4
         set "Sound" {
-            set "bankId" "tactical_barks_voymastina_va"
+            set "bankId" "wmgfl_tactical_barks_voymastina_va"
             set "itemId" "Series_Up_005"
         }
     }

@@ -2,7 +2,7 @@ clone "ConversationTemplate" from="JeanSy/morale_recovery" id="Voymastina/morale
     set "Active" #true
     set "Roles" index=0 {
         set "m_SerializedRequirements" index=1 composite="HasOneTag" {
-            set "Tags" "voymastina"
+            set "Tags" "wmgfl_voymastina"
         }
     }
     set "Nodes" {
@@ -10,7 +10,7 @@ clone "ConversationTemplate" from="JeanSy/morale_recovery" id="Voymastina/morale
             append "Variations" {
                 append "m_SerializedNodes" composite="SAY" {
                     set "Sound" {
-                        set "bankId" "tactical_barks_voymastina_va"
+                        set "bankId" "wmgfl_tactical_barks_voymastina_va"
                         set "itemId" "Series_Up_002"
                     }
                     set "RoleGuid" "Recovered"
@@ -26,7 +26,7 @@ clone "ConversationTemplate" from="JeanSy/morale_wavering" id="Voymastina/morale
     set "Active" #true
     set "Roles" index=0 {
         set "m_SerializedRequirements" index=1 composite="HasOneTag" {
-            set "Tags" "voymastina"
+            set "Tags" "wmgfl_voymastina"
         }
     }
     set "Nodes" {
@@ -34,7 +34,7 @@ clone "ConversationTemplate" from="JeanSy/morale_wavering" id="Voymastina/morale
             append "Variations" {
                 append "m_SerializedNodes" composite="SAY" {
                     set "Sound" {
-                        set "bankId" "tactical_barks_voymastina_va"
+                        set "bankId" "wmgfl_tactical_barks_voymastina_va"
                         set "itemId" "Series_Lose_Single_Lose_001"
                     }
                     set "RoleGuid" "Wavering"
@@ -50,7 +50,7 @@ clone "ConversationTemplate" from="JeanSy/squaddie_death_bleed" id="Voymastina/s
     set "Active" #true
     set "Roles" index=0 {
         set "m_SerializedRequirements" index=1 composite="HasOneTag" {
-            set "Tags" "voymastina"
+            set "Tags" "wmgfl_voymastina"
         }
     }
     set "Nodes" {
@@ -58,7 +58,7 @@ clone "ConversationTemplate" from="JeanSy/squaddie_death_bleed" id="Voymastina/s
             append "Variations" {
                 append "m_SerializedNodes" composite="SAY" {
                     set "Sound" {
-                        set "bankId" "tactical_barks_voymastina_va"
+                        set "bankId" "wmgfl_tactical_barks_voymastina_va"
                         set "itemId" "Series_Lose_Single_Lose_001"
                     }
                     set "RoleGuid" "Victim"

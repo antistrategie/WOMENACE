@@ -16,7 +16,7 @@ clone "ArmorTemplate" from="armor.player_fatigues" id="armor.voymastina_default"
     clear "FemaleModels"
     append "FemaleModels" asset="voymastina/default/main"
     set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
-    append "OnlyEquipableBy" "voymastina"
+    append "OnlyEquipableBy" "wmgfl_voymastina"
 }
 
 clone "ArmorTemplate" from="armor.player_fatigues" id="armor.voymastina_erwin" {
@@ -40,5 +40,5 @@ clone "ArmorTemplate" from="armor.player_fatigues" id="armor.voymastina_erwin" {
     clear "FemaleModels"
     append "FemaleModels" asset="voymastina/erwin/main"
     set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
-    append "OnlyEquipableBy" "voymastina"
+    append "OnlyEquipableBy" "wmgfl_voymastina"
 }

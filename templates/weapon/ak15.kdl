@@ -16,13 +16,13 @@ clone "WeaponTemplate" from="weapon.generic_assault_rifle_tier1_ARC_762" id="wea
     set "IconEquipmentDisabled" asset="weapon/ak15/IconEquipmentDisabled"
     set "IconSkillBar" asset="weapon/ak15/IconSkillBar"
     set "IconSkillBarDisabled" asset="weapon/ak15/IconSkillBarDisabled"
-    append "OnlyEquipableBy" "voymastina"
+    append "OnlyEquipableBy" "wmgfl_voymastina"
 }
 
 clone "SkillTemplate" from="active.fire_assault_rifle_tier1_762" id="active.fire_voymastina_ak15" {
     clear "SoundsOnAttack"
     append "SoundsOnAttack" {
-        set "bankId" "weapons_ar_addition_bank"
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
         set "itemId" "ar_burst"
     }
     append "SoundsOnAttack" {
@@ -30,12 +30,12 @@ clone "SkillTemplate" from="active.fire_assault_rifle_tier1_762" id="active.fire
         set "itemId" "small_caliber_brass_burst"
     }
     append "SoundsOnAttack" {
-        set "bankId" "weapons_ar_addition_bank"
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
         set "itemId" "ar_burst_distant"
     }
     clear "SoundsOnAttackFar"
     append "SoundsOnAttackFar" {
-        set "bankId" "weapons_ar_addition_bank"
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
         set "itemId" "ar_burst_distant"
     }
 }
@@ -43,7 +43,7 @@ clone "SkillTemplate" from="active.fire_assault_rifle_tier1_762" id="active.fire
 clone "SkillTemplate" from="active.fire_assault_rifle_sustained_fire_tier1_762" id="active.fire_voymastina_ak15_sustained" {
     clear "SoundsOnAttack"
     append "SoundsOnAttack" {
-        set "bankId" "weapons_ar_addition_bank"
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
         set "itemId" "ar_single"
     }
     append "SoundsOnAttack" {
@@ -51,12 +51,12 @@ clone "SkillTemplate" from="active.fire_assault_rifle_sustained_fire_tier1_762" 
         set "itemId" "small_caliber_brass_burst"
     }
     append "SoundsOnAttack" {
-        set "bankId" "weapons_ar_addition_bank"
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
         set "itemId" "ar_single_distant"
     }
     clear "SoundsOnAttackFar"
     append "SoundsOnAttackFar" {
-        set "bankId" "weapons_ar_addition_bank"
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
         set "itemId" "ar_single_distant"
     }
 }

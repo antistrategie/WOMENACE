@@ -138,7 +138,7 @@ clone "WeaponTemplate" from="<parent_weapon>" id="weapon.<character>_<name>" {
     set "Icon" asset="weapon/<name>/Icon"
     set "IconEquipment" asset="weapon/<name>/IconEquipment"
     set "IconSkillBar" asset="weapon/<name>/IconSkillBar"
-    append "OnlyEquipableBy" "<character>"
+    append "OnlyEquipableBy" "wmgfl_<character>"
 }
 ```
 
@@ -252,7 +252,7 @@ templates/weapon/
 ## Common shape mistakes
 
 - **Cloning from `specialweapon.*`** when you wanted a normal-class weapon — consumes the squad's precious specialweapon slot. Swap to `weapon.generic_battle_rifle_*` or similar.
-- **Forgetting `OnlyEquipableBy`** — the weapon becomes equippable by anyone with the slot's restriction tag. Add `append "OnlyEquipableBy" "<character>"`.
+- **Forgetting `OnlyEquipableBy`** — the weapon becomes equippable by anyone with the slot's restriction tag. Add `append "OnlyEquipableBy" "wmgfl_<character>"`.
 - **Wrong attach-point rotation** on `weapon_hand_l` — left hand floats 180° around the barrel. Patch the rotation in `raw.glb` (see the IK nudge gotcha).
 - **Skipping `set "fixedPitch" 1.0`** on SoundBank sound entries — the engine may treat `fixedPitch=0` as muted. Vanilla weapons set it explicitly.
 - **Bank/skill name mismatch** — the SkillTemplate's `bankId` string must match the SoundBank's clone-ID exactly. The loader hashes (FNV-1a) the string at runtime; a typo silently misroutes.

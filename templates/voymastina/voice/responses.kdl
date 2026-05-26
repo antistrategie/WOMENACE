@@ -2,7 +2,7 @@ clone "ConversationTemplate" from="JeanSy/response_kill" id="Voymastina/response
     set "Active" #true
     set "Roles" index=2 {
         set "m_SerializedRequirements" index=2 composite="HasOneTag" {
-            set "Tags" "voymastina"
+            set "Tags" "wmgfl_voymastina"
         }
     }
     set "Nodes" {
@@ -10,7 +10,7 @@ clone "ConversationTemplate" from="JeanSy/response_kill" id="Voymastina/response
             append "Variations" {
                 append "m_SerializedNodes" composite="SAY" {
                     set "Sound" {
-                        set "bankId" "tactical_barks_voymastina_va"
+                        set "bankId" "wmgfl_tactical_barks_voymastina_va"
                         set "itemId" "Series_Kill_Single_Kill_001"
                     }
                     set "RoleGuid" "JeanSy"
@@ -26,7 +26,7 @@ clone "ConversationTemplate" from="JeanSy/response_miss" id="Voymastina/response
     set "Active" #true
     set "Roles" index=2 {
         set "m_SerializedRequirements" index=2 composite="HasOneTag" {
-            set "Tags" "voymastina"
+            set "Tags" "wmgfl_voymastina"
         }
     }
     set "Nodes" {
@@ -34,7 +34,7 @@ clone "ConversationTemplate" from="JeanSy/response_miss" id="Voymastina/response
             append "Variations" {
                 append "m_SerializedNodes" composite="SAY" {
                     set "Sound" {
-                        set "bankId" "tactical_barks_voymastina_va"
+                        set "bankId" "wmgfl_tactical_barks_voymastina_va"
                         set "itemId" "Series_Attack_Series_Tone_Positive_003"
                     }
                     set "RoleGuid" "JeanSy"
@@ -50,7 +50,7 @@ clone "ConversationTemplate" from="JeanSy/response_taking_fire_anyone" id="Voyma
     set "Active" #true
     set "Roles" index=2 {
         set "m_SerializedRequirements" index=2 composite="HasOneTag" {
-            set "Tags" "voymastina"
+            set "Tags" "wmgfl_voymastina"
         }
     }
     set "Nodes" {
@@ -58,7 +58,7 @@ clone "ConversationTemplate" from="JeanSy/response_taking_fire_anyone" id="Voyma
             append "Variations" {
                 append "m_SerializedNodes" composite="SAY" {
                     set "Sound" {
-                        set "bankId" "tactical_barks_voymastina_va"
+                        set "bankId" "wmgfl_tactical_barks_voymastina_va"
                         set "itemId" "Series_Attack_Series_Tone_Positive_003"
                     }
                     set "RoleGuid" "JeanSy"
