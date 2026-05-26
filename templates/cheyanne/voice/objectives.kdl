@@ -1,4 +1,5 @@
 clone "ConversationTemplate" from="Carda_Early/objective_first" id="Cheyanne/objective_first" {
+    set "Active" #true
     set "Roles" index=0 {
         set "m_SerializedRequirements" index=2 composite="HasOneTag" {
             set "Tags" "cheyanne"
@@ -22,6 +23,7 @@ clone "ConversationTemplate" from="Carda_Early/objective_first" id="Cheyanne/obj
 }
 
 clone "ConversationTemplate" from="Carda_Early/objective_second" id="Cheyanne/objective_second" {
+    set "Active" #true
     set "Roles" index=0 {
         set "m_SerializedRequirements" index=2 composite="HasOneTag" {
             set "Tags" "cheyanne"
@@ -45,6 +47,7 @@ clone "ConversationTemplate" from="Carda_Early/objective_second" id="Cheyanne/ob
 }
 
 clone "ConversationTemplate" from="Carda_Early/objective_third" id="Cheyanne/objective_third" {
+    set "Active" #true
     set "Roles" index=0 {
         set "m_SerializedRequirements" index=2 composite="HasOneTag" {
             set "Tags" "cheyanne"

@@ -1,4 +1,5 @@
 clone "ConversationTemplate" from="JeanSy/objective_first" id="Voymastina/objective_first" {
+    set "Active" #true
     set "Roles" index=0 {
         set "m_SerializedRequirements" index=2 composite="HasOneTag" {
             set "Tags" "voymastina"
@@ -22,6 +23,7 @@ clone "ConversationTemplate" from="JeanSy/objective_first" id="Voymastina/object
 }
 
 clone "ConversationTemplate" from="JeanSy/objective_second" id="Voymastina/objective_second" {
+    set "Active" #true
     set "Roles" index=0 {
         set "m_SerializedRequirements" index=2 composite="HasOneTag" {
             set "Tags" "voymastina"
@@ -45,6 +47,7 @@ clone "ConversationTemplate" from="JeanSy/objective_second" id="Voymastina/objec
 }
 
 clone "ConversationTemplate" from="JeanSy/objective_third" id="Voymastina/objective_third" {
+    set "Active" #true
     set "Roles" index=0 {
         set "m_SerializedRequirements" index=2 composite="HasOneTag" {
             set "Tags" "voymastina"
@@ -68,6 +71,7 @@ clone "ConversationTemplate" from="JeanSy/objective_third" id="Voymastina/object
 }
 
 clone "ConversationTemplate" from="JeanSy/success_any_jeansy" id="Voymastina/success_any_voymastina" {
+    set "Active" #true
     set "Roles" index=0 {
         set "m_SerializedRequirements" index=2 composite="HasOneTag" {
             set "Tags" "voymastina"

@@ -1,4 +1,5 @@
 clone "ConversationTemplate" from="Carda_Early/response_taking_fire_anyone" id="Cheyanne/response_taking_fire_anyone" {
+    set "Active" #true
     set "Roles" index=2 {
         set "m_SerializedRequirements" index=2 composite="HasOneTag" {
             set "Tags" "cheyanne"

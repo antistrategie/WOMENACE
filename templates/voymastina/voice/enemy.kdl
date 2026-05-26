@@ -1,4 +1,5 @@
 clone "ConversationTemplate" from="JeanSy/building_destroyed" id="Voymastina/building_destroyed" {
+    set "Active" #true
     set "Roles" index=1 {
         set "m_SerializedRequirements" index=2 composite="HasOneTag" {
             set "Tags" "voymastina"
@@ -32,6 +33,7 @@ clone "ConversationTemplate" from="JeanSy/building_destroyed" id="Voymastina/bui
 }
 
 clone "ConversationTemplate" from="JeanSy/building_destroyed_neighborhood" id="Voymastina/building_destroyed_neighborhood" {
+    set "Active" #true
     set "Roles" index=0 {
         set "m_SerializedRequirements" index=2 composite="HasOneTag" {
             set "Tags" "voymastina"
@@ -55,6 +57,7 @@ clone "ConversationTemplate" from="JeanSy/building_destroyed_neighborhood" id="V
 }
 
 clone "ConversationTemplate" from="JeanSy/enemy_damage_blocked" id="Voymastina/enemy_damage_blocked" {
+    set "Active" #true
     set "Roles" index=0 {
         set "m_SerializedRequirements" index=1 composite="HasOneTag" {
             set "Tags" "voymastina"
@@ -78,6 +81,7 @@ clone "ConversationTemplate" from="JeanSy/enemy_damage_blocked" id="Voymastina/e
 }
 
 clone "ConversationTemplate" from="JeanSy/enemy_damaged" id="Voymastina/enemy_damaged" {
+    set "Active" #true
     set "Roles" index=1 {
         set "m_SerializedRequirements" index=2 composite="HasOneTag" {
             set "Tags" "voymastina"
@@ -121,6 +125,7 @@ clone "ConversationTemplate" from="JeanSy/enemy_damaged" id="Voymastina/enemy_da
 }
 
 clone "ConversationTemplate" from="JeanSy/enemy_fleeing" id="Voymastina/enemy_fleeing" {
+    set "Active" #true
     set "Roles" index=1 {
         set "m_SerializedRequirements" index=2 composite="HasOneTag" {
             set "Tags" "voymastina"
@@ -144,6 +149,7 @@ clone "ConversationTemplate" from="JeanSy/enemy_fleeing" id="Voymastina/enemy_fl
 }
 
 clone "ConversationTemplate" from="JeanSy/enemy_killed" id="Voymastina/enemy_killed" {
+    set "Active" #true
     set "Roles" index=1 {
         set "m_SerializedRequirements" index=2 composite="HasOneTag" {
             set "Tags" "voymastina"
@@ -167,6 +173,7 @@ clone "ConversationTemplate" from="JeanSy/enemy_killed" id="Voymastina/enemy_kil
 }
 
 clone "ConversationTemplate" from="JeanSy/enemy_suppressed" id="Voymastina/enemy_suppressed" {
+    set "Active" #true
     set "Roles" index=1 {
         set "m_SerializedRequirements" index=3 composite="HasOneTag" {
             set "Tags" "voymastina"

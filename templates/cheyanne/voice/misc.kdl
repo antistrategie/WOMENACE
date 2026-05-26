@@ -1,4 +1,5 @@
 clone "ConversationTemplate" from="Carda_Early/ammo_depleted" id="Cheyanne/ammo_depleted" {
+    set "Active" #true
     set "Roles" index=0 {
         set "m_SerializedRequirements" index=2 composite="HasOneTag" {
             set "Tags" "cheyanne"
@@ -22,6 +23,7 @@ clone "ConversationTemplate" from="Carda_Early/ammo_depleted" id="Cheyanne/ammo_
 }
 
 clone "ConversationTemplate" from="Carda_Early/morale_recovery" id="Cheyanne/morale_recovery" {
+    set "Active" #true
     set "Roles" index=0 {
         set "m_SerializedRequirements" index=1 composite="HasOneTag" {
             set "Tags" "cheyanne"
@@ -45,6 +47,7 @@ clone "ConversationTemplate" from="Carda_Early/morale_recovery" id="Cheyanne/mor
 }
 
 clone "ConversationTemplate" from="Carda_Early/morale_wavering" id="Cheyanne/morale_wavering" {
+    set "Active" #true
     set "Roles" index=0 {
         set "m_SerializedRequirements" index=1 composite="HasOneTag" {
             set "Tags" "cheyanne"
@@ -68,6 +71,7 @@ clone "ConversationTemplate" from="Carda_Early/morale_wavering" id="Cheyanne/mor
 }
 
 clone "ConversationTemplate" from="Carda_Early/squaddie_death_bleed" id="Cheyanne/squaddie_death_bleed" {
+    set "Active" #true
     set "Roles" index=0 {
         set "m_SerializedRequirements" index=1 composite="HasOneTag" {
             set "Tags" "cheyanne"

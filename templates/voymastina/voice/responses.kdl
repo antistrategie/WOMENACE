@@ -1,4 +1,5 @@
 clone "ConversationTemplate" from="JeanSy/response_kill" id="Voymastina/response_kill" {
+    set "Active" #true
     set "Roles" index=2 {
         set "m_SerializedRequirements" index=2 composite="HasOneTag" {
             set "Tags" "voymastina"
@@ -22,6 +23,7 @@ clone "ConversationTemplate" from="JeanSy/response_kill" id="Voymastina/response
 }
 
 clone "ConversationTemplate" from="JeanSy/response_miss" id="Voymastina/response_miss" {
+    set "Active" #true
     set "Roles" index=2 {
         set "m_SerializedRequirements" index=2 composite="HasOneTag" {
             set "Tags" "voymastina"
@@ -45,6 +47,7 @@ clone "ConversationTemplate" from="JeanSy/response_miss" id="Voymastina/response
 }
 
 clone "ConversationTemplate" from="JeanSy/response_taking_fire_anyone" id="Voymastina/response_taking_fire_anyone" {
+    set "Active" #true
     set "Roles" index=2 {
         set "m_SerializedRequirements" index=2 composite="HasOneTag" {
             set "Tags" "voymastina"

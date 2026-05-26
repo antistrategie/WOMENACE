@@ -1,4 +1,5 @@
 clone "ConversationTemplate" from="Carda_Early/building_destroyed" id="Cheyanne/building_destroyed" {
+    set "Active" #true
     set "Roles" index=1 {
         set "m_SerializedRequirements" index=2 composite="HasOneTag" {
             set "Tags" "cheyanne"
@@ -22,6 +23,7 @@ clone "ConversationTemplate" from="Carda_Early/building_destroyed" id="Cheyanne/
 }
 
 clone "ConversationTemplate" from="Carda_Early/enemy_damage_blocked" id="Cheyanne/enemy_damage_blocked" {
+    set "Active" #true
     set "Roles" index=0 {
         set "m_SerializedRequirements" index=1 composite="HasOneTag" {
             set "Tags" "cheyanne"
@@ -45,6 +47,7 @@ clone "ConversationTemplate" from="Carda_Early/enemy_damage_blocked" id="Cheyann
 }
 
 clone "ConversationTemplate" from="Carda_Early/enemy_damaged" id="Cheyanne/enemy_damaged" {
+    set "Active" #true
     set "Roles" index=1 {
         set "m_SerializedRequirements" index=2 composite="HasOneTag" {
             set "Tags" "cheyanne"
@@ -78,6 +81,7 @@ clone "ConversationTemplate" from="Carda_Early/enemy_damaged" id="Cheyanne/enemy
 }
 
 clone "ConversationTemplate" from="Carda_Early/enemy_killed" id="Cheyanne/enemy_killed" {
+    set "Active" #true
     set "Roles" index=1 {
         set "m_SerializedRequirements" index=2 composite="HasOneTag" {
             set "Tags" "cheyanne"

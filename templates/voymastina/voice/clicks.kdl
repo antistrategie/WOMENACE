@@ -1,4 +1,5 @@
 clone "ConversationTemplate" from="JeanSy/click_bark" id="Voymastina/click_bark" {
+    set "Active" #true
     set "Roles" index=0 {
         set "m_SerializedRequirements" index=2 composite="HasOneTag" {
             set "Tags" "voymastina"
@@ -39,6 +40,7 @@ clone "ConversationTemplate" from="JeanSy/click_bark" id="Voymastina/click_bark"
 }
 
 clone "ConversationTemplate" from="JeanSy/click_bark_quiet1" id="Voymastina/click_bark_quiet1" {
+    set "Active" #true
     set "Roles" index=0 {
         set "m_SerializedRequirements" index=2 composite="HasOneTag" {
             set "Tags" "voymastina"
@@ -62,6 +64,7 @@ clone "ConversationTemplate" from="JeanSy/click_bark_quiet1" id="Voymastina/clic
 }
 
 clone "ConversationTemplate" from="JeanSy/click_enemy_threatening_obj_zone" id="Voymastina/click_enemy_threatening_obj_zone" {
+    set "Active" #true
     set "Roles" index=0 {
         set "m_SerializedRequirements" index=2 composite="HasOneTag" {
             set "Tags" "voymastina"
@@ -85,6 +88,7 @@ clone "ConversationTemplate" from="JeanSy/click_enemy_threatening_obj_zone" id="
 }
 
 clone "ConversationTemplate" from="JeanSy/idle_bark_combat" id="Voymastina/idle_bark_combat" {
+    set "Active" #true
     set "Roles" index=0 {
         set "m_SerializedRequirements" index=2 composite="HasOneTag" {
             set "Tags" "voymastina"

@@ -1,3 +1,22 @@
+// not used, here as an example for when we want to make new perks
+/-clone "PerkTemplate" from="perk.athletic" id="perk.voymastina_marathoner" {
+    set "Title" { set "m_DefaultTranslation" "Marathoner" }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            "I don't believe in roads."
+
+            – Voymastina, refusing to slow down
+            """
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "-3 AP cost per tile of movement."
+    }
+    clear "EventHandlers"
+    append "EventHandlers" handler="ChangeMovementCost" {
+        set "CostPerTile" -3
+    }
+}
+
 clone "PerkTreeTemplate" from="perk_tree.sy" id="perk_tree.voymastina" {
     clear "Perks"
     append "Perks" {

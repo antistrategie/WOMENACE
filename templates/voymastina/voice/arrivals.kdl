@@ -1,4 +1,5 @@
-clone "ConversationTemplate" from="JeanSy/arrival_jeansy" id="Voymastina/arrival_jeansy" {
+clone "ConversationTemplate" from="JeanSy/arrival_jeansy" id="Voymastina/arrival_voymastina" {
+    set "Active" #true
     set "Roles" index=0 {
         set "m_SerializedRequirements" index=2 composite="HasOneTag" {
             set "Tags" "voymastina"
@@ -32,6 +33,7 @@ clone "ConversationTemplate" from="JeanSy/arrival_jeansy" id="Voymastina/arrival
 }
 
 clone "ConversationTemplate" from="JeanSy/last_man_standing1" id="Voymastina/last_man_standing1" {
+    set "Active" #true
     set "Roles" index=0 {
         set "m_SerializedRequirements" index=2 composite="HasOneTag" {
             set "Tags" "voymastina"
