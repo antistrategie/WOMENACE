@@ -13,16 +13,12 @@ clone "WeaponTemplate" from="weapon.generic_assault_rifle_tier1_ARC_762" id="wea
     set "SkillsGranted" index=1 "active.fire_voymastina_ak15_sustained"
     set "Icon" asset="weapon/ak15/Icon"
     set "IconEquipment" asset="weapon/ak15/IconEquipment"
-    // disabled = colours -> desaturate -> desaturate; colours -> desaturate -> mono mixer -> red channel multiplier -> 1.2
     set "IconEquipmentDisabled" asset="weapon/ak15/IconEquipmentDisabled"
     set "IconSkillBar" asset="weapon/ak15/IconSkillBar"
     set "IconSkillBarDisabled" asset="weapon/ak15/IconSkillBarDisabled"
     append "OnlyEquipableBy" "voymastina"
 }
 
-// AK-15's fire skill. Swaps the burst + distant audio layers (from the
-// AR mod soundbank) while keeping the vanilla brass-clatter layer.
-// Extend here with damage / accuracy / AP / range tweaks as needed.
 clone "SkillTemplate" from="active.fire_assault_rifle_tier1_762" id="active.fire_voymastina_ak15" {
     clear "SoundsOnAttack"
     append "SoundsOnAttack" {
@@ -44,9 +40,6 @@ clone "SkillTemplate" from="active.fire_assault_rifle_tier1_762" id="active.fire
     }
 }
 
-// Sustained-fire skill — same audio swap pattern, but with single-shot
-// sounds (one bang per round at the engine's ~600 RPM tick rate) since
-// piling bursts on bursts would muddy the audio.
 clone "SkillTemplate" from="active.fire_assault_rifle_sustained_fire_tier1_762" id="active.fire_voymastina_ak15_sustained" {
     clear "SoundsOnAttack"
     append "SoundsOnAttack" {

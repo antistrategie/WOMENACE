@@ -1,0 +1,91 @@
+clone "ConversationTemplate" from="Carda_Early/ammo_depleted" id="Cheyanne/ammo_depleted" {
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
+            set "Tags" "cheyanne"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_cheyanne_va"
+                        set "itemId" "Series_Dying_Series_Tone_Negative_002"
+                    }
+                    set "RoleGuid" "Entity"
+                    set "Text" "Need backup!"
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="Carda_Early/morale_recovery" id="Cheyanne/morale_recovery" {
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=1 composite="HasOneTag" {
+            set "Tags" "cheyanne"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_cheyanne_va"
+                        set "itemId" "Series_Up_004"
+                    }
+                    set "RoleGuid" "Recovered"
+                    set "Text" "I will grow stronger through experience."
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="Carda_Early/morale_wavering" id="Cheyanne/morale_wavering" {
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=1 composite="HasOneTag" {
+            set "Tags" "cheyanne"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_cheyanne_va"
+                        set "itemId" "Series_Lose_Single_Lose_001"
+                    }
+                    set "RoleGuid" "Wavering"
+                    set "Text" "Please give me another chance."
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="Carda_Early/squaddie_death_bleed" id="Cheyanne/squaddie_death_bleed" {
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=1 composite="HasOneTag" {
+            set "Tags" "cheyanne"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_cheyanne_va"
+                        set "itemId" "Series_Dying_Series_Tone_Negative_002"
+                    }
+                    set "RoleGuid" "Victim"
+                    set "Text" "Need backup!"
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}

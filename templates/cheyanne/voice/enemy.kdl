@@ -1,0 +1,101 @@
+clone "ConversationTemplate" from="Carda_Early/building_destroyed" id="Cheyanne/building_destroyed" {
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
+            set "Tags" "cheyanne"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_cheyanne_va"
+                        set "itemId" "Series_Ultimate_Single_Ultimate_SSR_001"
+                    }
+                    set "RoleGuid" "Killer"
+                    set "Text" "It’s nothing serious."
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="Carda_Early/enemy_damage_blocked" id="Cheyanne/enemy_damage_blocked" {
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=1 composite="HasOneTag" {
+            set "Tags" "cheyanne"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_cheyanne_va"
+                        set "itemId" "End"
+                    }
+                    set "RoleGuid" "Attacker"
+                    set "Text" "Sigh..."
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="Carda_Early/enemy_damaged" id="Cheyanne/enemy_damaged" {
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
+            set "Tags" "cheyanne"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_cheyanne_va"
+                        set "itemId" "Series_Hit_Single_Hit_001"
+                    }
+                    set "RoleGuid" "Attacker"
+                    set "Text" "Warm-up complete."
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_cheyanne_va"
+                        set "itemId" "Series_Attack_Series_Tone_Positive_003"
+                    }
+                    set "RoleGuid" "Attacker"
+                    set "Text" "Hit."
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="Carda_Early/enemy_killed" id="Cheyanne/enemy_killed" {
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
+            set "Tags" "cheyanne"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_cheyanne_va"
+                        set "itemId" "Series_Kill_Single_Kill_001"
+                    }
+                    set "RoleGuid" "Killer"
+                    set "Text" "As expected."
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}

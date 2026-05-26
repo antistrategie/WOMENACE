@@ -6,13 +6,13 @@ clone "SoundBank" from="weapons_soundbank" id="weapons_ar_addition_bank" {
         set "name" "ar_burst"
         set "fixedPitch" 1.0
         append "variations" {
-            set "clip" asset="ar/ar_burst_01"
+            set "clip" asset="weapons/ar/ar_burst_01"
         }
         append "variations" {
-            set "clip" asset="ar/ar_burst_02"
+            set "clip" asset="weapons/ar/ar_burst_02"
         }
         append "variations" {
-            set "clip" asset="ar/ar_burst_03"
+            set "clip" asset="weapons/ar/ar_burst_03"
         }
     }
     append "busIndices" 0
@@ -21,13 +21,13 @@ clone "SoundBank" from="weapons_soundbank" id="weapons_ar_addition_bank" {
         set "name" "ar_burst_distant"
         set "fixedPitch" 1.0
         append "variations" {
-            set "clip" asset="ar/ar_burst_distant_01"
+            set "clip" asset="weapons/ar/ar_burst_distant_01"
         }
         append "variations" {
-            set "clip" asset="ar/ar_burst_distant_02"
+            set "clip" asset="weapons/ar/ar_burst_distant_02"
         }
         append "variations" {
-            set "clip" asset="ar/ar_burst_distant_03"
+            set "clip" asset="weapons/ar/ar_burst_distant_03"
         }
     }
     append "busIndices" 0
@@ -36,13 +36,13 @@ clone "SoundBank" from="weapons_soundbank" id="weapons_ar_addition_bank" {
         set "name" "ar_single"
         set "fixedPitch" 1.0
         append "variations" {
-            set "clip" asset="ar/ar_single_01"
+            set "clip" asset="weapons/ar/ar_single_01"
         }
         append "variations" {
-            set "clip" asset="ar/ar_single_02"
+            set "clip" asset="weapons/ar/ar_single_02"
         }
         append "variations" {
-            set "clip" asset="ar/ar_single_03"
+            set "clip" asset="weapons/ar/ar_single_03"
         }
     }
     append "busIndices" 0
@@ -51,13 +51,42 @@ clone "SoundBank" from="weapons_soundbank" id="weapons_ar_addition_bank" {
         set "name" "ar_single_distant"
         set "fixedPitch" 1.0
         append "variations" {
-            set "clip" asset="ar/ar_single_distant_01"
+            set "clip" asset="weapons/ar/ar_single_distant_01"
         }
         append "variations" {
-            set "clip" asset="ar/ar_single_distant_02"
+            set "clip" asset="weapons/ar/ar_single_distant_02"
         }
         append "variations" {
-            set "clip" asset="ar/ar_single_distant_03"
+            set "clip" asset="weapons/ar/ar_single_distant_03"
+        }
+    }
+    append "busIndices" 0
+}
+
+clone "SoundBank" from="weapons_soundbank" id="weapons_rf_addition_bank" {
+    clear "sounds"
+    clear "busIndices"
+
+    append "sounds" {
+        set "name" "rf_shot"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="weapons/rf/rf_shot_01"
+        }
+        append "variations" {
+            set "clip" asset="weapons/rf/rf_shot_02"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "rf_shot_distant"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="weapons/rf/rf_shot_distant_01"
+        }
+        append "variations" {
+            set "clip" asset="weapons/rf/rf_shot_distant_02"
         }
     }
     append "busIndices" 0

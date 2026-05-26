@@ -1,0 +1,119 @@
+clone "TagTemplate" from="unique" id="cheyanne"
+
+clone "SpeakerTemplate" from="carda" id="cheyanne_speaker" {
+    set "Tags" "cheyanne female infantry waybacker"
+    set "Nickname" {
+        set "m_DefaultTranslation" "Cheyanne"
+    }
+    set "Forename" {
+        set "m_DefaultTranslation" "Cheyanne"
+    }
+    set "Surname" {
+        set "m_DefaultTranslation" ""
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            Name: Cheyanne (M200)
+
+            Proficiency: Long Range Anti-Material
+
+            Birth: Unknown
+
+            Age: Classified
+
+            Affiliation(s): Elmo Combined Echelon
+            """
+    }
+
+    set "BarkImage" asset="cheyanne/bark"
+    set "StandLookLeftImage" asset="cheyanne/stand_look_left"
+    set "StandLookRightImage" asset="cheyanne/stand_look_right"
+    set "StandLookRightInactiveImage" asset="cheyanne/stand_look_right_inactive"
+}
+
+clone "EntityTemplate" from="player_squad.carda" id="player_squad.cheyanne" {
+    append "Tags" "cheyanne"
+    append "Tags" "armor_restricted"
+    set "Title" {
+        set "m_DefaultTranslation" "Elmo Combined Echelon"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "A tactical figure that is hidden and cautious in words and actions. She has a reserved personality, is not good at expressing itself, and is easily shy. Although it may not be related to her current functions, she still pursues unremitting enthusiasm to explore unknown areas and dabble in various skills. This enthusiasm was buried deep beneath her unperturbed appearance by the introverted her, like a pearl in the dust, and only the commander with unique wisdom discovered her unique brilliance. “...I just understand a little bit, no need to praise me...I'm just an ordinary tactical Doll.”"
+    }
+
+    set "Badge" asset="cheyanne/badge_mini"
+    set "BadgeWhite" asset="cheyanne/badge_mini"
+    clear "Items"
+    append "Items" "armor.cheyanne_default"
+    append "Items" "weapon.cheyanne_m200"
+}
+
+clone "UnitLeaderTemplate" from="squad_leader.carda" id="squad_leader.cheyanne" {
+    set "InfantryUnitTemplate" "player_squad.cheyanne"
+    set "SpeakerTemplate" "cheyanne_speaker"
+    set "CustomHead" #null
+    set "UnitTitle" {
+        set "m_DefaultTranslation" "Elmo Combined Echelon"
+    }
+    set "UnitDescription" {
+        set "m_DefaultTranslation" "A tactical figure that is hidden and cautious in words and actions. She has a reserved personality, is not good at expressing itself, and is easily shy. Although it may not be related to her current functions, she still pursues unremitting enthusiasm to explore unknown areas and dabble in various skills. This enthusiasm was buried deep beneath her unperturbed appearance by the introverted her, like a pearl in the dust, and only the commander with unique wisdom discovered her unique brilliance. “...I just understand a little bit, no need to praise me...I'm just an ordinary tactical Doll.”"
+    }
+
+    set "InitialAttributes" index=0 75
+    set "InitialAttributes" index=1 90
+    set "InitialAttributes" index=2 70
+    set "InitialAttributes" index=3 100
+    set "InitialAttributes" index=4 100
+    set "InitialAttributes" index=5 10
+    set "InitialAttributes" index=6 50
+    set "QualityLevel" 5
+    set "GrowthPotential" 5
+    set "FixedSupplyCost" 60
+    set "SquaddieTax" 60
+    set "Rarity" 5
+    set "InitialPerk" "perk.lucky_shot"
+    set "PerkTrees" index=0 "perk_tree.cheyanne"
+    set "Slot" asset="cheyanne/slot"
+    set "SlotInactive" asset="cheyanne/slot_inactive"
+    set "SlotBadge" asset="cheyanne/slot_badge"
+    set "BadgeDragged" asset="cheyanne/badge_dragged"
+    set "BigBadge" asset="cheyanne/big_badge"
+    set "BadgeUnitWindow" asset="cheyanne/badge_unit_window"
+    set "BadgeMini" asset="cheyanne/badge_mini"
+    set "HiringSelectBarkSound" {
+        set "bankId" "tactical_barks_cheyanne_va"
+        set "itemId" "Series_Chosen_Series_Tone_Positive_006"
+    }
+    set "HiredBarkSound" {
+        set "bankId" "tactical_barks_cheyanne_va"
+        set "itemId" "Series_Chosen_Auto_Series_Tone_Positive_007"
+    }
+    set "PromotionBarkSounds" index=0 {
+        set "PerkTier" 1
+        set "Sound" {
+            set "bankId" "tactical_barks_cheyanne_va"
+            set "itemId" "Series_Up_002"
+        }
+    }
+    set "PromotionBarkSounds" index=1 {
+        set "PerkTier" 2
+        set "Sound" {
+            set "bankId" "tactical_barks_cheyanne_va"
+            set "itemId" "Series_Up_003"
+        }
+    }
+    set "PromotionBarkSounds" index=2 {
+        set "PerkTier" 3
+        set "Sound" {
+            set "bankId" "tactical_barks_cheyanne_va"
+            set "itemId" "Series_Up_004"
+        }
+    }
+    set "PromotionBarkSounds" index=3 {
+        set "PerkTier" 4
+        set "Sound" {
+            set "bankId" "tactical_barks_cheyanne_va"
+            set "itemId" "Series_Up_005"
+        }
+    }
+}

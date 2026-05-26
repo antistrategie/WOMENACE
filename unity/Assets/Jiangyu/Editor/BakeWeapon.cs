@@ -27,7 +27,7 @@ namespace Jiangyu.Mod
     ///   <c>-textureNormal</c>, <c>-textureMask</c>.</item>
     /// </list>
     /// </summary>
-    public sealed class BakeWeapon : EditorWindow
+    internal sealed class BakeWeapon : EditorWindow
     {
         private GameObject _gltfAsset;
         private GameObject _referencePrefab;
@@ -50,11 +50,11 @@ namespace Jiangyu.Mod
         //         -gltfPath <Assets/Authored/.../raw.glb> \
         //         -referencePrefab <Assets/Imported/.../arc_assault_rifle_t1.prefab> \
         //         -outputDir <Assets/Prefabs> \
-        //         -outputName <weapon/ak15> \
+        //         -outputName <voymastina/ak15> \
         //         -textureBase <Assets/.../base.tga> \
         //         -textureNormal <Assets/.../normal.tga> \
         //         -textureMask <Assets/.../mask.png>   (optional)
-        // Texture flags are optional — when omitted, the bake slots a 1x1
+        // Texture flags are optional. When omitted, the bake slots a 1x1
         // neutral default in place of any missing slot.
         public static void BakeBatch()
         {
@@ -146,8 +146,8 @@ namespace Jiangyu.Mod
             _textureMask = (Texture2D)EditorGUILayout.ObjectField(
                 new GUIContent("Mask map (HDRP)",
                     "HDRP MaskMap convention: R=Metallic, G=AO, B=Detail, A=Smoothness. "
-                    + "Use the repacked output from `bake_weapon.py` — do NOT pass a raw "
-                    + "Sunborn _rmo file (channel order differs; would render chrome blue)."),
+                    + "Use the repacked output from `bake_weapon.py`, not a raw "
+                    + "Sunborn _rmo file. Channel order differs and would render chrome blue."),
                 _textureMask, typeof(Texture2D), false);
 
             EditorGUILayout.LabelField("Output", EditorStyles.boldLabel);
@@ -156,7 +156,7 @@ namespace Jiangyu.Mod
                 _outputDir);
             _outputName = EditorGUILayout.TextField(
                 new GUIContent("Output name",
-                    "Sub-path under `output dir`. Supports `/` (e.g. `weapon/ak15`). "
+                    "Sub-path under `output dir`. Supports `/` (e.g. `voymastina/ak15`). "
                     + "KDL ref will be asset=\"<output name>/main\"."),
                 _outputName);
 
@@ -195,7 +195,7 @@ namespace Jiangyu.Mod
                 .Select(r => r.sharedMaterial)
                 .FirstOrDefault(m => m != null);
             if (referenceMaterial == null)
-                throw new Exception("Reference prefab '" + _referencePrefab.name + "' has no MeshRenderer/material to sample.");
+                throw new InvalidOperationException("Reference prefab '" + _referencePrefab.name + "' has no MeshRenderer/material to sample.");
             Debug.Log("Jiangyu BakeWeapon: cloning material from reference shader '" + referenceMaterial.shader.name + "'.");
 
             var characterDir = (_outputDir.TrimEnd('/') + "/" + _outputName).Replace('\\', '/');
@@ -214,7 +214,7 @@ namespace Jiangyu.Mod
 
                 var renderers = instance.GetComponentsInChildren<MeshRenderer>(includeInactive: true);
                 if (renderers.Length == 0)
-                    throw new Exception("glTF prefab '" + _gltfAsset.name + "' has no MeshRenderer; weapon bake expects rigid meshes.");
+                    throw new InvalidOperationException("glTF prefab '" + _gltfAsset.name + "' has no MeshRenderer. Weapon bake expects rigid meshes.");
                 foreach (var renderer in renderers)
                 {
                     var slots = renderer.sharedMaterials;
@@ -225,15 +225,6 @@ namespace Jiangyu.Mod
 
                 var prefabPath = characterDir + "/main.prefab";
                 PrefabUtility.SaveAsPrefabAsset(instance, prefabPath);
-
-                // Bundle naming convention: per-prefab assetBundleName so
-                // BuildBundles emits one .bundle for the weapon.
-                var prefabImporter = AssetImporter.GetAtPath(prefabPath);
-                if (prefabImporter != null)
-                {
-                    var bundleName = _outputName.Replace('/', '_').Replace('\\', '_').ToLowerInvariant() + "__main";
-                    prefabImporter.assetBundleName = bundleName;
-                }
 
                 AssetDatabase.SaveAssets();
                 Debug.Log("Jiangyu BakeWeapon: wrote " + prefabPath + " (material: " + matPath + ").");
@@ -254,7 +245,16 @@ namespace Jiangyu.Mod
             // material falls back to Unity's magenta error shader. Shader.Find
             // pulls the currently-imported asset matching the name string,
             // which is the stable identifier.
-            var shader = Shader.Find(reference.shader.name) ?? reference.shader;
+            var shaderName = reference.shader.name;
+            var shader = Shader.Find(shaderName);
+            if (shader == null)
+            {
+                Debug.LogWarning(
+                    $"BakeWeapon: Shader.Find('{shaderName}') returned null; falling back to "
+                    + "the reference's GUID-bound shader. If the bundled material renders magenta, "
+                    + "the GUID has drifted since the last rip. Re-run Imported/ extraction.");
+                shader = reference.shader;
+            }
             var mat = new Material(shader)
             {
                 name = "baked",
@@ -285,7 +285,7 @@ namespace Jiangyu.Mod
                         mat.SetInt(name, reference.GetInt(name));
                         break;
                     case UnityEngine.Rendering.ShaderPropertyType.Texture:
-                        // Null all reference textures; they'd UV-map to the
+                        // Null all reference textures. They'd UV-map to the
                         // reference mesh, not ours. Slots below replace
                         // _BaseColorMap / _NormalMap / _MaskMap explicitly.
                         mat.SetTexture(name, null);
@@ -296,11 +296,11 @@ namespace Jiangyu.Mod
             AssignTexture(mat, baseColor, new[] { "_BaseMap", "_BaseColorMap", "_MainTex" });
 
             // Fall back to 1x1 neutral defaults when the modder hasn't
-            // supplied a mask/normal map (or supplied one in the wrong
-            // channel convention — Sunborn's _rmo is Roughness/Metallic/AO,
+            // supplied a mask/normal map, or supplied one in the wrong
+            // channel convention. Sunborn's _rmo is Roughness/Metallic/AO,
             // HDRP's MaskMap expects Metallic/AO/Detail/Smoothness, and the
             // shader's "white" default reads as Metallic=1 which renders
-            // chrome blue).
+            // chrome blue.
             var normalDefault = EnsureDefaultTexture(
                 "Assets/Materials/Jiangyu/_jiangyu_flat_normal.png",
                 new Color32(128, 128, 255, 255),
@@ -358,8 +358,11 @@ namespace Jiangyu.Mod
             var existing = AssetDatabase.LoadAssetAtPath<Texture2D>(assetPath);
             if (existing != null) return existing;
 
-            Directory.CreateDirectory(Path.GetDirectoryName(assetPath));
-            var tex = new Texture2D(1, 1, TextureFormat.RGBA32, mipChain: false, linear: !isNormalMap);
+            var dir = Path.GetDirectoryName(assetPath);
+            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                Directory.CreateDirectory(dir);
+
+            var tex = new Texture2D(1, 1, TextureFormat.RGBA32, mipChain: false, linear: isNormalMap);
             tex.SetPixels32(new[] { colour });
             tex.Apply();
             File.WriteAllBytes(assetPath, tex.EncodeToPNG());
@@ -369,8 +372,8 @@ namespace Jiangyu.Mod
             var importer = AssetImporter.GetAtPath(assetPath) as TextureImporter;
             if (importer != null)
             {
-                importer.sRGBTexture = false;
                 importer.textureType = isNormalMap ? TextureImporterType.NormalMap : TextureImporterType.Default;
+                importer.sRGBTexture = !isNormalMap;
                 importer.mipmapEnabled = false;
                 importer.SaveAndReimport();
             }

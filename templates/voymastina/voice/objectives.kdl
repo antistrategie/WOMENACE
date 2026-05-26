@@ -10,7 +10,7 @@ clone "ConversationTemplate" from="JeanSy/objective_first" id="Voymastina/object
                 append "m_SerializedNodes" composite="SAY" {
                     set "Sound" {
                         set "bankId" "tactical_barks_voymastina_va"
-                        set "itemId" "Win"
+                        set "itemId" "Series_Win_Single_Win_001"
                     }
                     set "RoleGuid" "Entity"
                     set "Text" "Tell me the next objective."
@@ -33,10 +33,10 @@ clone "ConversationTemplate" from="JeanSy/objective_second" id="Voymastina/objec
                 append "m_SerializedNodes" composite="SAY" {
                     set "Sound" {
                         set "bankId" "tactical_barks_voymastina_va"
-                        set "itemId" "Up2"
+                        set "itemId" "Series_Win_Single_Win_001"
                     }
                     set "RoleGuid" "Entity"
-                    set "Text" "I can grow stronger."
+                    set "Text" "Tell me the next objective."
                 }
             }
         }
@@ -56,7 +56,7 @@ clone "ConversationTemplate" from="JeanSy/objective_third" id="Voymastina/object
                 append "m_SerializedNodes" composite="SAY" {
                     set "Sound" {
                         set "bankId" "tactical_barks_voymastina_va"
-                        set "itemId" "Up5"
+                        set "itemId" "Series_Up_005"
                     }
                     set "RoleGuid" "Entity"
                     set "Text" "Let us clear every obstacle in our path."
@@ -67,7 +67,7 @@ clone "ConversationTemplate" from="JeanSy/objective_third" id="Voymastina/object
     }
 }
 
-clone "ConversationTemplate" from="JeanSy/success_any_jeansy" id="Voymastina/success_any_jeansy" {
+clone "ConversationTemplate" from="JeanSy/success_any_jeansy" id="Voymastina/success_any_voymastina" {
     set "Roles" index=0 {
         set "m_SerializedRequirements" index=2 composite="HasOneTag" {
             set "Tags" "voymastina"
@@ -79,212 +79,10 @@ clone "ConversationTemplate" from="JeanSy/success_any_jeansy" id="Voymastina/suc
                 append "m_SerializedNodes" composite="SAY" {
                     set "Sound" {
                         set "bankId" "tactical_barks_voymastina_va"
-                        set "itemId" "Up3"
-                    }
-                    set "RoleGuid" "JeanSy"
-                    set "Text" "Performance alone is never enough."
-                }
-            }
-            append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
-                    set "Sound" {
-                        set "bankId" "tactical_barks_voymastina_va"
-                        set "itemId" "Up4"
+                        set "itemId" "Series_Up_004"
                     }
                     set "RoleGuid" "JeanSy"
                     set "Text" "Dr. Shaw's design, as expected."
-                }
-            }
-        }
-        append "m_SerializedNodes" composite="EMPTY" {}
-    }
-}
-
-clone "ConversationTemplate" from="JeanSy/success_jeansy_1" id="Voymastina/success_voymastina_1" {
-    set "Roles" index=0 {
-        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
-            set "Tags" "voymastina"
-        }
-    }
-    set "Condition" {
-        set "ExpressionStr" "success_voymastina_1_played=0"
-    }
-    set "Nodes" {
-        append "m_SerializedNodes" composite="ACTION" {
-            set "m_SerAction" composite="SetFlag" {
-                set "FlagName" "success_voymastina_1_played"
-                set "FlagValue" #true
-            }
-        }
-        append "m_SerializedNodes" composite="VARIATION" {
-            append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
-                    set "Sound" {
-                        set "bankId" "tactical_barks_voymastina_va"
-                        set "itemId" "Up3"
-                    }
-                    set "RoleGuid" "JeanSy"
-                    set "Text" "Performance alone is never enough."
-                }
-            }
-        }
-        append "m_SerializedNodes" composite="EMPTY" {}
-    }
-}
-
-clone "ConversationTemplate" from="JeanSy/success_jeansy_2" id="Voymastina/success_voymastina_2" {
-    set "Roles" index=0 {
-        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
-            set "Tags" "voymastina"
-        }
-    }
-    set "Condition" {
-        set "ExpressionStr" "success_voymastina_2_played=0"
-    }
-    set "Nodes" {
-        append "m_SerializedNodes" composite="ACTION" {
-            set "m_SerAction" composite="SetFlag" {
-                set "FlagName" "success_voymastina_2_played"
-                set "FlagValue" #true
-            }
-        }
-        append "m_SerializedNodes" composite="VARIATION" {
-            append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
-                    set "Sound" {
-                        set "bankId" "tactical_barks_voymastina_va"
-                        set "itemId" "Up4"
-                    }
-                    set "RoleGuid" "JeanSy"
-                    set "Text" "Dr. Shaw's design, as expected."
-                }
-            }
-        }
-        append "m_SerializedNodes" composite="EMPTY" {}
-    }
-}
-
-clone "ConversationTemplate" from="JeanSy/success_jeansy_3" id="Voymastina/success_voymastina_3" {
-    set "Roles" index=0 {
-        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
-            set "Tags" "voymastina"
-        }
-    }
-    set "Condition" {
-        set "ExpressionStr" "success_voymastina_3_played=0"
-    }
-    set "Nodes" {
-        append "m_SerializedNodes" composite="ACTION" {
-            set "m_SerAction" composite="SetFlag" {
-                set "FlagName" "success_voymastina_3_played"
-                set "FlagValue" #true
-            }
-        }
-        append "m_SerializedNodes" composite="VARIATION" {
-            append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
-                    set "Sound" {
-                        set "bankId" "tactical_barks_voymastina_va"
-                        set "itemId" "SetClick"
-                    }
-                    set "RoleGuid" "JeanSy"
-                    set "Text" "A wise decision."
-                }
-            }
-        }
-        append "m_SerializedNodes" composite="EMPTY" {}
-    }
-}
-
-clone "ConversationTemplate" from="JeanSy/success_jeansy_4" id="Voymastina/success_voymastina_4" {
-    set "Roles" index=0 {
-        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
-            set "Tags" "voymastina"
-        }
-    }
-    set "Condition" {
-        set "ExpressionStr" "success_voymastina_4_played=0"
-    }
-    set "Nodes" {
-        append "m_SerializedNodes" composite="ACTION" {
-            set "m_SerAction" composite="SetFlag" {
-                set "FlagName" "success_voymastina_4_played"
-                set "FlagValue" #true
-            }
-        }
-        append "m_SerializedNodes" composite="VARIATION" {
-            append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
-                    set "Sound" {
-                        set "bankId" "tactical_barks_voymastina_va"
-                        set "itemId" "Up2"
-                    }
-                    set "RoleGuid" "JeanSy"
-                    set "Text" "I can grow stronger."
-                }
-            }
-        }
-        append "m_SerializedNodes" composite="EMPTY" {}
-    }
-}
-
-clone "ConversationTemplate" from="JeanSy/success_jeansy_5" id="Voymastina/success_voymastina_5" {
-    set "Roles" index=0 {
-        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
-            set "Tags" "voymastina"
-        }
-    }
-    set "Condition" {
-        set "ExpressionStr" "success_voymastina_5_played=0"
-    }
-    set "Nodes" {
-        append "m_SerializedNodes" composite="ACTION" {
-            set "m_SerAction" composite="SetFlag" {
-                set "FlagName" "success_voymastina_5_played"
-                set "FlagValue" #true
-            }
-        }
-        append "m_SerializedNodes" composite="VARIATION" {
-            append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
-                    set "Sound" {
-                        set "bankId" "tactical_barks_voymastina_va"
-                        set "itemId" "Win"
-                    }
-                    set "RoleGuid" "JeanSy"
-                    set "Text" "Tell me the next objective."
-                }
-            }
-        }
-        append "m_SerializedNodes" composite="EMPTY" {}
-    }
-}
-
-clone "ConversationTemplate" from="JeanSy/success_jeansy_6" id="Voymastina/success_voymastina_6" {
-    set "Roles" index=0 {
-        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
-            set "Tags" "voymastina"
-        }
-    }
-    set "Condition" {
-        set "ExpressionStr" "success_voymastina_6_played=0"
-    }
-    set "Nodes" {
-        append "m_SerializedNodes" composite="ACTION" {
-            set "m_SerAction" composite="SetFlag" {
-                set "FlagName" "success_voymastina_6_played"
-                set "FlagValue" #true
-            }
-        }
-        append "m_SerializedNodes" composite="VARIATION" {
-            append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
-                    set "Sound" {
-                        set "bankId" "tactical_barks_voymastina_va"
-                        set "itemId" "Up5"
-                    }
-                    set "RoleGuid" "JeanSy"
-                    set "Text" "Let us clear every obstacle in our path."
                 }
             }
         }

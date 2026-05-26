@@ -1,0 +1,32 @@
+clone "ConversationTemplate" from="Carda_Early/arrival_carda" id="Cheyanne/arrival_cheyanne" {
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
+            set "Tags" "cheyanne"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_cheyanne_va"
+                        set "itemId" "Series_Battle_Start_Series_Tone_Positive_002"
+                    }
+                    set "RoleGuid" "Carda"
+                    set "Text" "It’s been a while since real combat."
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_cheyanne_va"
+                        set "itemId" "Single_Login_001"
+                    }
+                    set "RoleGuid" "Carda"
+                    set "Text" "Commander, look at the camera. Okay, got it. Just for the record—don’t mind it."
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}

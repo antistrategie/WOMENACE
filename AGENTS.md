@@ -2,7 +2,12 @@
 
 A Girls' Frontline mod for MENACE, built with [Jiangyu](https://github.com/antistrategie/jiangyu). Characters are authored from PMX (MMD) sources, converted to Unity-native prefabs via a Blender + Unity pipeline, and shipped to MENACE through Jiangyu's KDL template system as squad-leader clones, armor clones, entity clones, and perk trees.
 
-This file is the agent-onboarding briefing. For SDK-level concepts (KDL templates, clone/patch grammar, addition vs replacement, asset bundle pipeline, loader hooks), read Jiangyu's own [AGENTS.md](https://github.com/antistrategie/jiangyu/blob/main/AGENTS.md) first. For the PMX-to-Unity pipeline (running the converter, config schema, stage-by-stage detail, gotchas), read [`skills/pmx-to-menace/SKILL.md`](skills/pmx-to-menace/SKILL.md).
+This file is the agent-onboarding briefing. For SDK-level concepts (KDL templates, clone/patch grammar, addition vs replacement, asset bundle pipeline, loader hooks), read Jiangyu's own [AGENTS.md](https://github.com/antistrategie/jiangyu/blob/main/AGENTS.md) first. For per-pipeline detail:
+
+- [`skills/character-authoring/SKILL.md`](skills/character-authoring/SKILL.md) — KDL spine (tag, speaker, entity, perk tree, armor, squad leader).
+- [`skills/pmx-to-menace/SKILL.md`](skills/pmx-to-menace/SKILL.md) — PMX → addition-prefab glTF.
+- [`skills/voice-pipeline/SKILL.md`](skills/voice-pipeline/SKILL.md) — voice transcription, SoundBank, ConversationTemplate clones.
+- [`skills/weapon-pipeline/SKILL.md`](skills/weapon-pipeline/SKILL.md) — weapon OBJ → prefab + custom gunshot SoundBank + Skill clones.
 
 ## What belongs in this file
 
@@ -15,11 +20,20 @@ WOMENACE/
 ├── jiangyu.json            mod manifest (name + Jiangyu version pin)
 ├── mise.toml               task runner: compile, deploy, unity-init, unity-open
 ├── templates/              KDL template patches and clones, one file per character
-├── scripts/                Blender pipeline (Python)
-│   ├── pmx_to_menace.py    PMX → glTF converter
-│   └── .config/            per-character pipeline configs (gitignored)
-├── skills/                 Claude Code skills used during authoring
-│   └── pmx-to-menace/
+├── scripts/                Authoring + asset pipelines (Python)
+│   ├── pmx_to_menace.py    PMX → glTF (humanoid characters)
+│   ├── bake_weapon.py      OBJ → glTF (weapons + attach-point empties)
+│   ├── render_weapon.py    glTF → transparent PNG (icon prep)
+│   ├── voice/
+│   │   ├── transcribe.py   OpenAI ASR + MT → per-character .trans.csv
+│   │   ├── serve.py        Local web utility: browse + play character voice lines
+│   │   └── normalize_audio.py  LUFS-normalise voice clips to vanilla MENACE
+│   └── .config/            per-character/weapon pipeline configs (gitignored)
+├── skills/                 Per-pipeline SKILL.md docs
+│   ├── character-authoring/
+│   ├── pmx-to-menace/
+│   ├── voice-pipeline/
+│   └── weapon-pipeline/
 ├── unity/                  Unity 6000.0.72f1 Editor project (URP)
 │   ├── Assets/
 │   │   ├── Authored/       PMX/OBJ-derived character + weapon assets (committed, one subdir per character or weapon)
@@ -34,13 +48,16 @@ WOMENACE/
 
 ## Per-character pipeline
 
-Three stages, end-to-end via `mise compile && mise deploy`:
+A full character ships four kinds of content end-to-end via `mise compile && mise deploy`:
 
-1. **PMX → glTF** (Blender headless). `scripts/pmx_to_menace.py` converts an MMD PMX into a humanoid-renamed, T-pose-calibrated glTF under `unity/Assets/Authored/<character>/`.
-2. **glTF → Unity prefab** (Unity Editor batchmode). `unity/Assets/Jiangyu/Editor/BakeHumanoid.cs` consumes the glTF + a reference vanilla soldier prefab and writes `unity/Assets/Prefabs/<character>/main.prefab` + per-source-texture baked materials + a humanoid avatar.
-3. **Mod → MENACE** (Jiangyu CLI). `mise compile` parses `templates/`, builds each `Assets/Prefabs/<character>/main.prefab` into its own asset bundle, writes `compiled/`. `mise deploy` copies into `~/.steam/.../Menace/Mods/WOMENACE/`. At MENACE startup, Jiangyu's loader rebinds bundled materials' shader names to MENACE's loaded shader catalogue via `Shader.Find`.
+1. **KDL spine** — TagTemplate, SpeakerTemplate, EntityTemplate, UnitLeaderTemplate, PerkTreeTemplate, ArmorTemplate clones at `templates/<character>/`. See [`skills/character-authoring/SKILL.md`](skills/character-authoring/SKILL.md).
+2. **3D model** — PMX source → glTF (Blender) → addition prefab (Unity). See [`skills/pmx-to-menace/SKILL.md`](skills/pmx-to-menace/SKILL.md).
+3. **Voice** — rip dir → normalised + transcribed WAVs at `assets/additions/audio/<character>/` → SoundBank + ConversationTemplate clones. See [`skills/voice-pipeline/SKILL.md`](skills/voice-pipeline/SKILL.md).
+4. **Weapon (optional)** — OBJ source → glTF (Blender) → addition prefab (Unity) + WeaponTemplate clone + custom gunshot SoundBank + Skill clones. See [`skills/weapon-pipeline/SKILL.md`](skills/weapon-pipeline/SKILL.md).
 
-Stage 1 + 2 commands and config schema live in [`skills/pmx-to-menace/SKILL.md`](skills/pmx-to-menace/SKILL.md).
+`mise compile` parses `templates/`, builds each `Assets/Prefabs/<...>/main.prefab` into the mod bundle, writes `compiled/`. `mise deploy` copies into `~/.steam/.../Menace/Mods/WOMENACE/`. At MENACE startup, Jiangyu's loader rebinds bundled materials' shader names to MENACE's loaded shader catalogue via `Shader.Find`.
+
+Voymastina is the reference end-to-end example covering all four. Cheyanne is a second reference with a different parent character (carda vs sy), which exposes more of the parent-namespace + role-mapping decisions.
 
 ## Asset paths
 
@@ -48,8 +65,11 @@ Jiangyu picks the Unity import type based on the directory under `assets/additio
 
 - `sprites/<character>/` becomes `Sprite` assets (Badge, SlotBadge, BadgeUnitWindow, etc.).
 - `textures/<character>/` becomes `Texture2D` assets (StandLookLeftImage, BigBackground, etc.).
+- `audio/<character>/` becomes `AudioClip` assets, force-imported as PCM + DecompressOnLoad (Vorbis defaults would smear transients on percussive content like gunshots).
 
-KDL references use `asset="<character>/<basename>"` regardless of source directory. Character prefabs ship in a separate per-character bundle built from `unity/Assets/Prefabs/<character>/main.prefab` and are referenced the same way (`asset="<character>/main"`).
+Logical asset names preserve nested subdirectories: `assets/additions/audio/weapons/rf/rf_shot_01.wav` → asset `weapons/rf/rf_shot_01`. KDL refs use the full nested path: `asset="weapons/rf/rf_shot_01"`. The first-level subdir under `audio/sprites/textures` is the modder's organising convention (per character, per weapon class, etc.); Jiangyu doesn't impose a layout, only preserves what's there.
+
+Character prefabs ship in the mod bundle built from `unity/Assets/Prefabs/<character>/<variant>/main.prefab` and are referenced as `asset="<character>/<variant>/main"`. Weapon prefabs at `unity/Assets/Prefabs/weapon/<name>/main.prefab` are referenced as `asset="weapon/<name>/main"`.
 
 ## Inspecting MENACE internals
 
@@ -71,6 +91,26 @@ Several badge/portrait fields exist on both `UnitLeaderTemplate` and `EntityTemp
 - `UnitLeaderTemplate.BadgeUnitWindow` drives the unit info window header. Read in `UnitLeaderUIExtensions.InitUnitWindowHeader`, an extension method on `BaseUnitLeader` that's easy to miss when sweeping UI class methods.
 - `UnitLeaderTemplate.BigBadge` drives the hiring info panel banner.
 - `UnitLeaderTemplate.SlotBadge` / `BadgeDragged` drive the hire-slot and drag visuals (BadgeDragged also serves as the mission-prep drag preview).
+
+## Loader + CLI version coupling
+
+The deployed `Jiangyu.Loader.dll` (under `~/.steam/.../Menace/Mods/`) and the Jiangyu CLI used by `mise compile` must come from the same Jiangyu commit. A stale loader silently misses pipeline changes — e.g. the addition-prefab build was folded into the mesh-replacement Unity batchmode pass at commit `bfd02ee`, so a pre-`bfd02ee` loader fails to load addition prefabs from the new combined bundle and the in-game models render as fallback.
+
+Deploy: build the loader release dll and copy to the Mods dir:
+
+```bash
+cd ~/dev/github.com/antistrategie/jiangyu
+dotnet build src/Jiangyu.Loader/Jiangyu.Loader.csproj -c Release
+cp src/Jiangyu.Loader/bin/Release/net6.0/Jiangyu.Loader.dll ~/.steam/steam/steamapps/common/Menace/Mods/Jiangyu.Loader.dll
+```
+
+Symptom of mismatch: `MelonLoader/Latest.log` shows `Template patch '…': AssetReference 'X/Y/main': no asset of type GameObject found in the mod bundle catalog or the live game-asset registry` even though the bundle exists in the Mods dir.
+
+## Editor-script drift check
+
+`jiangyu compile` checks whether the per-mod `unity/Assets/Jiangyu/Editor/*.cs` files match the embedded templates in the Jiangyu CLI build. When they drift (e.g. you've upgraded Jiangyu but haven't run `jiangyu unity sync`), compile emits a warning naming the drifted files. The compile still proceeds, but bundles may build wrong if the new CLI passes args (e.g. `-runPrefabs true`) that the stale Editor script doesn't understand.
+
+Run `jiangyu unity sync` from the repo root to refresh the managed scripts. The CLI command writes only to `unity/Assets/Jiangyu/Editor/` and `.gitignore` — modder content (under `Assets/Prefabs/`, etc.) is untouched.
 
 ## Conventions
 

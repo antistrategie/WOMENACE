@@ -17,33 +17,20 @@ clone "ConversationTemplate" from="JeanSy/click_bark" id="Voymastina/click_bark"
                 append "m_SerializedNodes" composite="SAY" {
                     set "Sound" {
                         set "bankId" "tactical_barks_voymastina_va"
-                        set "itemId" "Chosen"
+                        set "itemId" "Series_Set_Click_Series_Tone_Positive_004"
                     }
                     set "RoleGuid" "Entity"
-                    set "Text" "Your orders."
+                    set "Text" "A wise decision."
                 }
             }
-        }
-        append "m_SerializedNodes" composite="EMPTY" {}
-    }
-}
-
-clone "ConversationTemplate" from="JeanSy/click_bark_enemy_in_trees" id="Voymastina/click_bark_enemy_in_trees" {
-    set "Roles" index=1 {
-        set "m_SerializedRequirements" index=1 composite="HasOneTag" {
-            set "Tags" "voymastina"
-        }
-    }
-    set "Nodes" {
-        append "m_SerializedNodes" composite="VARIATION" {
             append "Variations" {
                 append "m_SerializedNodes" composite="SAY" {
                     set "Sound" {
                         set "bankId" "tactical_barks_voymastina_va"
-                        set "itemId" "BattleStart"
+                        set "itemId" "Series_Chosen_Series_Tone_Positive_006"
                     }
-                    set "RoleGuid" "Explorer"
-                    set "Text" "Is that your full strength?"
+                    set "RoleGuid" "Entity"
+                    set "Text" "Your orders."
                 }
             }
         }
@@ -63,56 +50,10 @@ clone "ConversationTemplate" from="JeanSy/click_bark_quiet1" id="Voymastina/clic
                 append "m_SerializedNodes" composite="SAY" {
                     set "Sound" {
                         set "bankId" "tactical_barks_voymastina_va"
-                        set "itemId" "SetFall"
+                        set "itemId" "Series_Set_Fall_Series_Tone_Positive_005"
                     }
                     set "RoleGuid" "Entity"
                     set "Text" "No need to hold back."
-                }
-            }
-        }
-        append "m_SerializedNodes" composite="EMPTY" {}
-    }
-}
-
-clone "ConversationTemplate" from="JeanSy/click_bark_suppressed" id="Voymastina/click_bark_suppressed" {
-    set "Roles" index=0 {
-        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
-            set "Tags" "voymastina"
-        }
-    }
-    set "Nodes" {
-        append "m_SerializedNodes" composite="VARIATION" {
-            append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
-                    set "Sound" {
-                        set "bankId" "tactical_barks_voymastina_va"
-                        set "itemId" "ShieldBroken"
-                    }
-                    set "RoleGuid" "Entity"
-                    set "Text" "Is that all?"
-                }
-            }
-        }
-        append "m_SerializedNodes" composite="EMPTY" {}
-    }
-}
-
-clone "ConversationTemplate" from="JeanSy/click_enemy_not_seen_for_x_turns" id="Voymastina/click_enemy_not_seen_for_x_turns" {
-    set "Roles" index=0 {
-        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
-            set "Tags" "voymastina"
-        }
-    }
-    set "Nodes" {
-        append "m_SerializedNodes" composite="VARIATION" {
-            append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
-                    set "Sound" {
-                        set "bankId" "tactical_barks_voymastina_va"
-                        set "itemId" "Up1"
-                    }
-                    set "RoleGuid" "Entity"
-                    set "Text" "Is this all?"
                 }
             }
         }
@@ -132,33 +73,10 @@ clone "ConversationTemplate" from="JeanSy/click_enemy_threatening_obj_zone" id="
                 append "m_SerializedNodes" composite="SAY" {
                     set "Sound" {
                         set "bankId" "tactical_barks_voymastina_va"
-                        set "itemId" "Up5"
+                        set "itemId" "Series_Up_005"
                     }
                     set "RoleGuid" "Entity"
                     set "Text" "Let us clear every obstacle in our path."
-                }
-            }
-        }
-        append "m_SerializedNodes" composite="EMPTY" {}
-    }
-}
-
-clone "ConversationTemplate" from="JeanSy/click_hurt" id="Voymastina/click_hurt" {
-    set "Roles" index=0 {
-        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
-            set "Tags" "voymastina"
-        }
-    }
-    set "Nodes" {
-        append "m_SerializedNodes" composite="VARIATION" {
-            append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
-                    set "Sound" {
-                        set "bankId" "tactical_barks_voymastina_va"
-                        set "itemId" "HittedLast"
-                    }
-                    set "RoleGuid" "Entity"
-                    set "Text" "Hngh."
                 }
             }
         }
@@ -178,33 +96,10 @@ clone "ConversationTemplate" from="JeanSy/idle_bark_combat" id="Voymastina/idle_
                 append "m_SerializedNodes" composite="SAY" {
                     set "Sound" {
                         set "bankId" "tactical_barks_voymastina_va"
-                        set "itemId" "Chosen"
+                        set "itemId" "Series_Set_Fall_Series_Tone_Positive_005"
                     }
                     set "RoleGuid" "JeanSy"
-                    set "Text" "Your orders."
-                }
-            }
-        }
-        append "m_SerializedNodes" composite="EMPTY" {}
-    }
-}
-
-clone "ConversationTemplate" from="JeanSy/idle_bark_quiet" id="Voymastina/idle_bark_quiet" {
-    set "Roles" index=0 {
-        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
-            set "Tags" "voymastina"
-        }
-    }
-    set "Nodes" {
-        append "m_SerializedNodes" composite="VARIATION" {
-            append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
-                    set "Sound" {
-                        set "bankId" "tactical_barks_voymastina_va"
-                        set "itemId" "MmBed2"
-                    }
-                    set "RoleGuid" "JeanSy"
-                    set "Text" "Mm."
+                    set "Text" "Need me to hold back?"
                 }
             }
         }

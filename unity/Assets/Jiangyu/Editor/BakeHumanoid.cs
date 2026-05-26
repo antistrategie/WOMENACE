@@ -410,7 +410,16 @@ namespace Jiangyu.Mod
             // material falls back to Unity's magenta error shader. Shader.Find
             // pulls the currently-imported asset matching the name string,
             // which is the stable identifier.
-            var shader = Shader.Find(reference.shader.name) ?? reference.shader;
+            var shaderName = reference.shader.name;
+            var shader = Shader.Find(shaderName);
+            if (shader == null)
+            {
+                Debug.LogWarning(
+                    $"BakeHumanoid: Shader.Find('{shaderName}') returned null; falling back to "
+                    + "the reference's GUID-bound shader. If the bundled material renders magenta, "
+                    + "the GUID has drifted since the last rip. Re-run Imported/ extraction.");
+                shader = reference.shader;
+            }
             var mat = new Material(shader)
             {
                 name = "baked",
@@ -627,7 +636,7 @@ namespace Jiangyu.Mod
             return avatar;
         }
 
-        private static Texture2D EnsureDefaultTexture(string assetPath, Color32 color, bool isNormalMap)
+        private static Texture2D EnsureDefaultTexture(string assetPath, Color32 colour, bool isNormalMap)
         {
             var existing = AssetDatabase.LoadAssetAtPath<Texture2D>(assetPath);
             if (existing != null) return existing;
@@ -637,7 +646,7 @@ namespace Jiangyu.Mod
                 Directory.CreateDirectory(dir);
 
             var tex = new Texture2D(1, 1, TextureFormat.RGBA32, mipChain: false, linear: isNormalMap);
-            tex.SetPixel(0, 0, new Color(color.r / 255f, color.g / 255f, color.b / 255f, color.a / 255f));
+            tex.SetPixel(0, 0, new Color(colour.r / 255f, colour.g / 255f, colour.b / 255f, colour.a / 255f));
             tex.Apply(updateMipmaps: false);
             File.WriteAllBytes(assetPath, tex.EncodeToPNG());
             Object.DestroyImmediate(tex);

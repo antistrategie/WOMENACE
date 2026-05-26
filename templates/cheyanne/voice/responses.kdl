@@ -1,0 +1,22 @@
+clone "ConversationTemplate" from="Carda_Early/response_taking_fire_anyone" id="Cheyanne/response_taking_fire_anyone" {
+    set "Roles" index=2 {
+        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
+            set "Tags" "cheyanne"
+        }
+    }
+    set "Nodes" {
+        append "m_SerializedNodes" composite="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" composite="SAY" {
+                    set "Sound" {
+                        set "bankId" "tactical_barks_cheyanne_va"
+                        set "itemId" "Series_Skill02_Single_Skill_002"
+                    }
+                    set "RoleGuid" "SL"
+                    set "Text" "Stay calm."
+                }
+            }
+        }
+        append "m_SerializedNodes" composite="EMPTY" {}
+    }
+}

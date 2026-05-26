@@ -1,0 +1,53 @@
+clone "WeaponTemplate" from="weapon.generic_battle_rifle_tier1_crowbar_marksman" id="weapon.cheyanne_m200" {
+    set "Title" {
+        set "m_DefaultTranslation" "M200"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Sniper Rifle"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Cheyanne's signature anti-material rifle. Chambered for extreme-range engagements where one shot has to count."
+    }
+    set "Model" asset="weapon/m200/main"
+    set "SkillsGranted" index=0 "active.fire_cheyanne_m200"
+    set "SkillsGranted" index=1 "active.fire_cheyanne_m200_aimed"
+    set "IconEquipment" asset="weapon/m200/IconEquipment"
+    set "IconEquipmentDisabled" asset="weapon/m200/IconEquipmentDisabled"
+    set "IconSkillBar" asset="weapon/m200/IconSkillBar"
+    set "IconSkillBarDisabled" asset="weapon/m200/IconSkillBarDisabled"
+    append "OnlyEquipableBy" "cheyanne"
+}
+
+clone "SkillTemplate" from="active.fire_battle_rifle_tier_1" id="active.fire_cheyanne_m200" {
+    clear "SoundsOnAttack"
+    append "SoundsOnAttack" {
+        set "bankId" "weapons_rf_addition_bank"
+        set "itemId" "rf_shot"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "weapons_rf_addition_bank"
+        set "itemId" "rf_shot_distant"
+    }
+    clear "SoundsOnAttackFar"
+    append "SoundsOnAttackFar" {
+        set "bankId" "weapons_rf_addition_bank"
+        set "itemId" "rf_shot_distant"
+    }
+}
+
+clone "SkillTemplate" from="active.fire_battle_rifle_tier_1_aimed_fire_marksman" id="active.fire_cheyanne_m200_aimed" {
+    clear "SoundsOnAttack"
+    append "SoundsOnAttack" {
+        set "bankId" "weapons_rf_addition_bank"
+        set "itemId" "rf_shot"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "weapons_rf_addition_bank"
+        set "itemId" "rf_shot_distant"
+    }
+    clear "SoundsOnAttackFar"
+    append "SoundsOnAttackFar" {
+        set "bankId" "weapons_rf_addition_bank"
+        set "itemId" "rf_shot_distant"
+    }
+}

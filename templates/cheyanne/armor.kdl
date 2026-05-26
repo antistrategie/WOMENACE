@@ -1,0 +1,20 @@
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.cheyanne_default" {
+    set "Title" {
+        set "m_DefaultTranslation" "Cheyanne's Fatigues"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Combat Gear"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Cheyanne's standard issue outfit."
+    }
+    set "Icon" asset="cheyanne/armor/default/Icon"
+    set "IconEquipment" asset="cheyanne/armor/default/IconEquipment"
+    set "IconSkillBar" asset="cheyanne/armor/default/IconSkillBar"
+    clear "MaleModels"
+    append "MaleModels" asset="cheyanne/default/main"
+    clear "FemaleModels"
+    append "FemaleModels" asset="cheyanne/default/main"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "cheyanne"
+}

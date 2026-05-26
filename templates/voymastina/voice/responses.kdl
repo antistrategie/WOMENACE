@@ -10,20 +10,10 @@ clone "ConversationTemplate" from="JeanSy/response_kill" id="Voymastina/response
                 append "m_SerializedNodes" composite="SAY" {
                     set "Sound" {
                         set "bankId" "tactical_barks_voymastina_va"
-                        set "itemId" "Kill"
+                        set "itemId" "Series_Kill_Single_Kill_001"
                     }
                     set "RoleGuid" "JeanSy"
                     set "Text" "Next."
-                }
-            }
-            append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
-                    set "Sound" {
-                        set "bankId" "tactical_barks_voymastina_va"
-                        set "itemId" "Attack"
-                    }
-                    set "RoleGuid" "JeanSy"
-                    set "Text" "Tch."
                 }
             }
         }
@@ -43,7 +33,7 @@ clone "ConversationTemplate" from="JeanSy/response_miss" id="Voymastina/response
                 append "m_SerializedNodes" composite="SAY" {
                     set "Sound" {
                         set "bankId" "tactical_barks_voymastina_va"
-                        set "itemId" "Attack"
+                        set "itemId" "Series_Attack_Series_Tone_Positive_003"
                     }
                     set "RoleGuid" "JeanSy"
                     set "Text" "Tch."
@@ -66,7 +56,7 @@ clone "ConversationTemplate" from="JeanSy/response_taking_fire_anyone" id="Voyma
                 append "m_SerializedNodes" composite="SAY" {
                     set "Sound" {
                         set "bankId" "tactical_barks_voymastina_va"
-                        set "itemId" "Attack"
+                        set "itemId" "Series_Attack_Series_Tone_Positive_003"
                     }
                     set "RoleGuid" "JeanSy"
                     set "Text" "Tch."

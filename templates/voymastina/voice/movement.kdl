@@ -10,20 +10,10 @@ clone "ConversationTemplate" from="JeanSy/missed_cover" id="Voymastina/missed_co
                 append "m_SerializedNodes" composite="SAY" {
                     set "Sound" {
                         set "bankId" "tactical_barks_voymastina_va"
-                        set "itemId" "Attack"
+                        set "itemId" "Series_Attack_Series_Tone_Positive_003"
                     }
                     set "RoleGuid" "Attacker"
                     set "Text" "Tch."
-                }
-            }
-            append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
-                    set "Sound" {
-                        set "bankId" "tactical_barks_voymastina_va"
-                        set "itemId" "Up3"
-                    }
-                    set "RoleGuid" "Attacker"
-                    set "Text" "Performance alone is never enough."
                 }
             }
         }
@@ -49,43 +39,10 @@ clone "ConversationTemplate" from="JeanSy/missed_open" id="Voymastina/missed_ope
                 append "m_SerializedNodes" composite="SAY" {
                     set "Sound" {
                         set "bankId" "tactical_barks_voymastina_va"
-                        set "itemId" "Attack"
+                        set "itemId" "Series_Attack_Series_Tone_Positive_003"
                     }
                     set "RoleGuid" "Attacker"
                     set "Text" "Tch."
-                }
-            }
-            append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
-                    set "Sound" {
-                        set "bankId" "tactical_barks_voymastina_va"
-                        set "itemId" "Up3"
-                    }
-                    set "RoleGuid" "Attacker"
-                    set "Text" "Performance alone is never enough."
-                }
-            }
-        }
-        append "m_SerializedNodes" composite="EMPTY" {}
-    }
-}
-
-clone "ConversationTemplate" from="JeanSy/missed_open_twice_in_a_row1" id="Voymastina/missed_open_twice_in_a_row1" {
-    set "Roles" index=0 {
-        set "m_SerializedRequirements" index=1 composite="HasOneTag" {
-            set "Tags" "voymastina"
-        }
-    }
-    set "Nodes" {
-        append "m_SerializedNodes" composite="VARIATION" {
-            append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
-                    set "Sound" {
-                        set "bankId" "tactical_barks_voymastina_va"
-                        set "itemId" "Up3"
-                    }
-                    set "RoleGuid" "Attacker"
-                    set "Text" "Performance alone is never enough."
                 }
             }
         }
@@ -105,96 +62,10 @@ clone "ConversationTemplate" from="JeanSy/moving_finished" id="Voymastina/moving
                 append "m_SerializedNodes" composite="SAY" {
                     set "Sound" {
                         set "bankId" "tactical_barks_voymastina_va"
-                        set "itemId" "TonePos1"
+                        set "itemId" "Series_Tone_Positive_001"
                     }
                     set "RoleGuid" "Entity"
                     set "Text" "Here."
-                }
-            }
-        }
-        append "m_SerializedNodes" composite="EMPTY" {}
-    }
-}
-
-clone "ConversationTemplate" from="JeanSy/moving_into_cover_jeansy" id="Voymastina/moving_into_cover_jeansy" {
-    set "Roles" index=0 {
-        set "m_SerializedRequirements" index=1 composite="HasOneTag" {
-            set "Tags" "voymastina"
-        }
-    }
-    set "Nodes" {
-        append "m_SerializedNodes" composite="VARIATION" {
-            append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
-                    set "Sound" {
-                        set "bankId" "tactical_barks_voymastina_va"
-                        set "itemId" "ChosenAuto"
-                    }
-                    set "RoleGuid" "Entity"
-                    set "Text" "Engine online."
-                }
-            }
-            append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
-                    set "Sound" {
-                        set "bankId" "tactical_barks_voymastina_va"
-                        set "itemId" "TonePos1"
-                    }
-                    set "RoleGuid" "Entity"
-                    set "Text" "Here."
-                }
-            }
-        }
-        append "m_SerializedNodes" composite="EMPTY" {}
-    }
-}
-
-clone "ConversationTemplate" from="JeanSy/moving_jeansy" id="Voymastina/moving_jeansy" {
-    set "Roles" index=0 {
-        set "m_SerializedRequirements" index=1 composite="HasOneTag" {
-            set "Tags" "voymastina"
-        }
-    }
-    set "Nodes" {
-        append "m_SerializedNodes" composite="VARIATION" {
-            append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
-                    set "Sound" {
-                        set "bankId" "tactical_barks_voymastina_va"
-                        set "itemId" "ChosenAuto"
-                    }
-                    set "RoleGuid" "Entity"
-                    set "Text" "Engine online."
-                }
-            }
-            append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
-                    set "Sound" {
-                        set "bankId" "tactical_barks_voymastina_va"
-                        set "itemId" "Chosen"
-                    }
-                    set "RoleGuid" "Entity"
-                    set "Text" "Your orders."
-                }
-            }
-            append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
-                    set "Sound" {
-                        set "bankId" "tactical_barks_voymastina_va"
-                        set "itemId" "TonePos1"
-                    }
-                    set "RoleGuid" "Entity"
-                    set "Text" "Here."
-                }
-            }
-            append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
-                    set "Sound" {
-                        set "bankId" "tactical_barks_voymastina_va"
-                        set "itemId" "ChosenAuto"
-                    }
-                    set "RoleGuid" "Entity"
-                    set "Text" "Engine online."
                 }
             }
         }
@@ -214,102 +85,10 @@ clone "ConversationTemplate" from="JeanSy/taking_fire" id="Voymastina/taking_fir
                 append "m_SerializedNodes" composite="SAY" {
                     set "Sound" {
                         set "bankId" "tactical_barks_voymastina_va"
-                        set "itemId" "HittedLast"
+                        set "itemId" "Series_Shield_Broken_Series_Tone_Negative_003"
                     }
                     set "RoleGuid" "Damaged"
-                    set "Text" "Hngh."
-                }
-            }
-        }
-        append "m_SerializedNodes" composite="EMPTY" {}
-    }
-}
-
-clone "ConversationTemplate" from="JeanSy/taking_fire1" id="Voymastina/taking_fire1" {
-    set "Roles" index=0 {
-        set "m_SerializedRequirements" index=1 composite="HasOneTag" {
-            set "Tags" "voymastina"
-        }
-    }
-    set "Nodes" {
-        append "m_SerializedNodes" composite="VARIATION" {
-            append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
-                    set "Sound" {
-                        set "bankId" "tactical_barks_voymastina_va"
-                        set "itemId" "HittedLast"
-                    }
-                    set "RoleGuid" "Damaged"
-                    set "Text" "Hngh."
-                }
-            }
-        }
-        append "m_SerializedNodes" composite="EMPTY" {}
-    }
-}
-
-clone "ConversationTemplate" from="JeanSy/taking_fire11" id="Voymastina/taking_fire11" {
-    set "Roles" index=0 {
-        set "m_SerializedRequirements" index=1 composite="HasOneTag" {
-            set "Tags" "voymastina"
-        }
-    }
-    set "Nodes" {
-        append "m_SerializedNodes" composite="VARIATION" {
-            append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
-                    set "Sound" {
-                        set "bankId" "tactical_barks_voymastina_va"
-                        set "itemId" "HittedLast"
-                    }
-                    set "RoleGuid" "Damaged"
-                    set "Text" "Hngh."
-                }
-            }
-        }
-        append "m_SerializedNodes" composite="EMPTY" {}
-    }
-}
-
-clone "ConversationTemplate" from="JeanSy/taking_fire111" id="Voymastina/taking_fire111" {
-    set "Roles" index=0 {
-        set "m_SerializedRequirements" index=1 composite="HasOneTag" {
-            set "Tags" "voymastina"
-        }
-    }
-    set "Nodes" {
-        append "m_SerializedNodes" composite="VARIATION" {
-            append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
-                    set "Sound" {
-                        set "bankId" "tactical_barks_voymastina_va"
-                        set "itemId" "HittedLast"
-                    }
-                    set "RoleGuid" "Damaged"
-                    set "Text" "Hngh."
-                }
-            }
-        }
-        append "m_SerializedNodes" composite="EMPTY" {}
-    }
-}
-
-clone "ConversationTemplate" from="JeanSy/taking_fire1111" id="Voymastina/taking_fire1111" {
-    set "Roles" index=0 {
-        set "m_SerializedRequirements" index=1 composite="HasOneTag" {
-            set "Tags" "voymastina"
-        }
-    }
-    set "Nodes" {
-        append "m_SerializedNodes" composite="VARIATION" {
-            append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
-                    set "Sound" {
-                        set "bankId" "tactical_barks_voymastina_va"
-                        set "itemId" "HittedLast"
-                    }
-                    set "RoleGuid" "Damaged"
-                    set "Text" "Hngh."
+                    set "Text" "That all you got?"
                 }
             }
         }

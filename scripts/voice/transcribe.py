@@ -1,36 +1,26 @@
 #!/usr/bin/env python3
 # /// script
 # requires-python = ">=3.10"
-# dependencies = [
-#     "torch>=2.4",
-#     "transformers>=4.45",
-#     "soundfile",
-#     "librosa",
-#     "accelerate",
-#     "sentencepiece",
-# ]
+# dependencies = ["openai>=1.50", "python-dotenv"]
 # ///
 """
-General-purpose Japanese audio transcription for character voice dumps.
+Transcribe + translate a directory of Japanese voice clips via OpenAI.
 
-Walks a directory of .wav files, runs each through Qwen3-ASR-1.7B for JP
-transcription, then through Helsinki-NLP/opus-mt-ja-en for English. Writes
-a CSV with one row per clip.
+Two API calls per clip:
+  1. Audio transcription via gpt-4o-transcribe (or override). language=ja.
+  2. Chat completion via gpt-5 (or override) to translate JP → EN.
+
+OpenAI's gpt-4o-transcribe hears 指揮官 ("commander") correctly where Qwen2-Audio
+phoneticised it to シキカん / Shyian. Translation through a frontier text model
+also reads better than the audio-LLM two-pass approach we were using.
+
+Reads OPENAI_API_KEY from the environment. Writes <source>/.trans.csv with
+columns: filename, transcript, english, note.
 
 Usage:
-    uv run --script transcribe.py /path/to/VO_Character_JP -o character.csv
-
-Output CSV columns:
-    source_dir   the immediate parent directory name (e.g. VO_Voymastina_JP)
-    filename     the .wav filename
-    transcript   the JP transcription
-    english      the EN translation
-    note         left blank (hand-annotate post-run if needed)
-
-Designed to be reusable across characters. The model weights are downloaded
-into ~/.cache/huggingface on first run.
+    uv run --script transcribe.py assets/additions/audio/cheyanne
+    uv run --script transcribe.py path/to/clips --asr-model gpt-4o-transcribe --translate-model gpt-5
 """
-
 from __future__ import annotations
 
 import argparse
@@ -39,71 +29,47 @@ import os
 import sys
 from pathlib import Path
 
-import librosa
-import soundfile as sf
-import torch
-from transformers import (
-    AutoModelForSeq2SeqLM,
-    AutoModelForSpeechSeq2Seq,
-    AutoProcessor,
-    AutoTokenizer,
+import openai
+from dotenv import load_dotenv
+
+# Load .env from repo root (parent of scripts/voice/) so OPENAI_API_KEY is picked up
+# without needing to export it in every shell.
+load_dotenv(Path(__file__).resolve().parents[2] / ".env")
+
+DEFAULT_OUTPUT_NAME = ".trans.csv"
+DEFAULT_ASR_MODEL = "gpt-4o-transcribe"
+DEFAULT_TRANSLATE_MODEL = "gpt-5"
+
+TRANSLATE_SYSTEM = (
+    "You are a translator. Translate the user's Japanese text into natural "
+    "conversational English. The input is a single voice line from a tactical "
+    "squad-based game (Marines, snipers, combat barks). Match the tone — short "
+    "exclamations stay short, formal lines stay formal. Output only the English "
+    "translation, no commentary, no quotes."
 )
 
 
-ASR_MODEL_ID = "Qwen/Qwen3-ASR-1.7B"
-TRANSLATION_MODEL_ID = "Helsinki-NLP/opus-mt-ja-en"
-TARGET_SAMPLE_RATE = 16000
-
-
-def load_models(device: str):
-    print(f"loading ASR model {ASR_MODEL_ID} on {device}...", file=sys.stderr)
-    asr_processor = AutoProcessor.from_pretrained(ASR_MODEL_ID, trust_remote_code=True)
-    asr_model = AutoModelForSpeechSeq2Seq.from_pretrained(
-        ASR_MODEL_ID,
-        torch_dtype=torch.float16 if device != "cpu" else torch.float32,
-        low_cpu_mem_usage=True,
-        trust_remote_code=True,
-    ).to(device)
-    asr_model.eval()
-
-    print(f"loading translation model {TRANSLATION_MODEL_ID}...", file=sys.stderr)
-    tx_tokenizer = AutoTokenizer.from_pretrained(TRANSLATION_MODEL_ID)
-    tx_model = AutoModelForSeq2SeqLM.from_pretrained(
-        TRANSLATION_MODEL_ID,
-        torch_dtype=torch.float32,
-    ).to(device)
-    tx_model.eval()
-
-    return asr_processor, asr_model, tx_tokenizer, tx_model
-
-
-def transcribe_jp(audio_path: Path, processor, model, device: str) -> str:
-    audio, sr = sf.read(str(audio_path))
-    if audio.ndim > 1:
-        audio = audio.mean(axis=1)
-    if sr != TARGET_SAMPLE_RATE:
-        audio = librosa.resample(audio, orig_sr=sr, target_sr=TARGET_SAMPLE_RATE)
-    inputs = processor(
-        audio, sampling_rate=TARGET_SAMPLE_RATE, return_tensors="pt"
-    ).to(device)
-    with torch.inference_mode():
-        ids = model.generate(
-            **inputs,
+def transcribe_jp(client: openai.OpenAI, model: str, wav_path: Path) -> str:
+    with wav_path.open("rb") as f:
+        result = client.audio.transcriptions.create(
+            model=model,
+            file=f,
             language="ja",
-            task="transcribe",
-            max_new_tokens=256,
         )
-    text = processor.batch_decode(ids, skip_special_tokens=True)[0].strip()
-    return text
+    return (result.text or "").strip()
 
 
-def translate_jp_to_en(jp_text: str, tokenizer, model, device: str) -> str:
+def translate_en(client: openai.OpenAI, model: str, jp_text: str) -> str:
     if not jp_text:
         return ""
-    inputs = tokenizer(jp_text, return_tensors="pt", truncation=True).to(device)
-    with torch.inference_mode():
-        ids = model.generate(**inputs, max_new_tokens=256, num_beams=4)
-    return tokenizer.batch_decode(ids, skip_special_tokens=True)[0].strip()
+    resp = client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": TRANSLATE_SYSTEM},
+            {"role": "user", "content": jp_text},
+        ],
+    )
+    return (resp.choices[0].message.content or "").strip()
 
 
 def main() -> int:
@@ -113,47 +79,57 @@ def main() -> int:
         "-o",
         "--output",
         type=Path,
-        required=True,
-        help="output CSV path",
+        default=None,
+        help="output CSV path (default: <source>/.trans.csv)",
     )
     ap.add_argument(
-        "--device",
-        default=None,
-        help="torch device override (cuda, cpu); auto-detected by default",
+        "--asr-model",
+        default=DEFAULT_ASR_MODEL,
+        help=f"OpenAI ASR model (default: {DEFAULT_ASR_MODEL})",
+    )
+    ap.add_argument(
+        "--translate-model",
+        default=DEFAULT_TRANSLATE_MODEL,
+        help=f"OpenAI translation model (default: {DEFAULT_TRANSLATE_MODEL})",
     )
     args = ap.parse_args()
 
     if not args.source.is_dir():
         print(f"error: {args.source} is not a directory", file=sys.stderr)
         return 1
+    if not os.environ.get("OPENAI_API_KEY"):
+        print("error: OPENAI_API_KEY environment variable not set", file=sys.stderr)
+        return 1
 
-    device = args.device or ("cuda" if torch.cuda.is_available() else "cpu")
-    asr_processor, asr_model, tx_tokenizer, tx_model = load_models(device)
-
+    output_path = args.output if args.output is not None else args.source / DEFAULT_OUTPUT_NAME
     wavs = sorted(args.source.glob("*.wav"))
     if not wavs:
         print(f"no .wav files in {args.source}", file=sys.stderr)
         return 1
 
-    source_dir_name = args.source.name
-    args.output.parent.mkdir(parents=True, exist_ok=True)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    client = openai.OpenAI()
 
-    print(f"transcribing {len(wavs)} clips from {source_dir_name}...", file=sys.stderr)
-    with args.output.open("w", newline="", encoding="utf-8") as f:
+    print(
+        f"transcribing {len(wavs)} clip(s) from {args.source.name} "
+        f"(ASR: {args.asr_model}, MT: {args.translate_model})",
+        file=sys.stderr,
+    )
+    with output_path.open("w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
-        writer.writerow(["source_dir", "filename", "transcript", "english", "note"])
+        writer.writerow(["filename", "transcript", "english", "note"])
         for i, wav in enumerate(wavs, 1):
             try:
-                jp = transcribe_jp(wav, asr_processor, asr_model, device)
-                en = translate_jp_to_en(jp, tx_tokenizer, tx_model, device)
+                jp = transcribe_jp(client, args.asr_model, wav)
+                en = translate_en(client, args.translate_model, jp)
             except Exception as ex:
-                print(f"[{i}/{len(wavs)}] {wav.name}: ERROR {ex}", file=sys.stderr)
+                print(f"[{i}/{len(wavs)}] {wav.name}: ERROR {type(ex).__name__}: {ex}", file=sys.stderr)
                 jp, en = "", ""
-            writer.writerow([source_dir_name, wav.name, jp, en, ""])
+            writer.writerow([wav.name, jp, en, ""])
             f.flush()
-            print(f"[{i}/{len(wavs)}] {wav.name}: {jp[:60]}", file=sys.stderr)
+            print(f"[{i}/{len(wavs)}] {wav.name}: {jp[:60]} | {en[:60]}", file=sys.stderr)
 
-    print(f"wrote {args.output} ({len(wavs)} rows)", file=sys.stderr)
+    print(f"wrote {output_path} ({len(wavs)} rows)", file=sys.stderr)
     return 0
 
 

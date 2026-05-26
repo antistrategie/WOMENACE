@@ -66,6 +66,8 @@ class TransferConfig:
     target_height_metres: float | None
     lod_decimate_ratios: list[float]
     lod_mesh_basename: str
+    fist_pose: bool
+    keep_right_index_extended: bool
 
     @staticmethod
     def load(path: Path) -> "TransferConfig":
@@ -85,6 +87,8 @@ class TransferConfig:
                 float(r) for r in data.get("lod_decimate_ratios", [1.0, 0.5, 0.25, 0.1])
             ],
             lod_mesh_basename=str(data.get("lod_mesh_basename", "character")),
+            fist_pose=bool(data.get("fist_pose", True)),
+            keep_right_index_extended=bool(data.get("keep_right_index_extended", True)),
         )
 
 
@@ -936,6 +940,99 @@ def make_single_user(objects) -> None:
         print(f"[warn] make_single_user failed: {e}")
 
 
+def apply_fist_pose(
+    armature_obj: "bpy.types.Object",
+    mesh_objects: list["bpy.types.Object"],
+    *,
+    keep_right_index_extended: bool = True,
+) -> int:
+    """Curl PMX finger bones into a fist pose, bake the deformation, apply
+    the new rest. Returns the number of finger bones rotated.
+
+    Why this exists: vanilla MENACE soldier rigs have no finger bones — the
+    in-game hand pose is whatever the mesh was baked at. After
+    rename_pmx_bones_to_menace collapses PMX finger bones onto Hand_L /
+    Hand_R, finger geometry rides the hand rigidly. So the pose at THIS
+    stage is the pose that ships. We bake a fist now while individual
+    finger bones still exist.
+
+    Right index finger stays extended by default — soldiers with weapons
+    benefit from a trigger-finger pose. Override via
+    keep_right_index_extended=False for a full fist on both hands.
+
+    PMX/MMD finger bone names (post-mmd_tools rename) use the .L/.R suffix
+    and full-width numerals: 中指１.L, 親指０.R, etc. The thumb is numbered
+    0/1/2; the other four fingers are 1/2/3.
+
+    Curl angles per joint approximate a moderate closed fist. They rotate
+    around the bone-local X axis, which is the standard MMD finger-curl
+    axis. Sign is positive for both sides because mmd_tools imports finger
+    bones with consistent local-X orientation across left and right.
+    """
+    NON_THUMB_FINGERS = ["中指", "人指", "小指", "薬指"]
+
+    # Joint curl angles (degrees). Knuckle/PIP/DIP for non-thumb;
+    # CMC/MCP/IP for the thumb (gentler — a closed fist tucks the thumb
+    # over the fingers without fully curling it).
+    NON_THUMB_ANGLES = [55, 75, 30]
+    THUMB_ANGLES = [20, 30, 40]
+
+    rotations: list[tuple[str, float]] = []
+    for side in (".L", ".R"):
+        for finger in NON_THUMB_FINGERS:
+            if keep_right_index_extended and finger == "人指" and side == ".R":
+                continue
+            for joint, deg in zip("１２３", NON_THUMB_ANGLES):
+                rotations.append((f"{finger}{joint}{side}", math.radians(deg)))
+        for joint, deg in zip("０１２", THUMB_ANGLES):
+            rotations.append((f"親指{joint}{side}", math.radians(deg)))
+
+    clear_selection()
+    bpy.context.view_layer.objects.active = armature_obj
+    armature_obj.select_set(True)
+    bpy.ops.object.mode_set(mode="POSE")
+
+    rotated = 0
+    missing: list[str] = []
+    for bone_name, angle in rotations:
+        pb = armature_obj.pose.bones.get(bone_name)
+        if pb is None:
+            missing.append(bone_name)
+            continue
+        pb.rotation_mode = "XYZ"
+        pb.rotation_euler.x += angle
+        rotated += 1
+
+    bpy.context.view_layer.update()
+    bpy.ops.object.mode_set(mode="OBJECT")
+
+    if missing:
+        print(f"[info] fist-pose: {len(missing)} finger bone(s) absent in PMX (e.g. {missing[0]}). Skipped them.")
+
+    if rotated == 0:
+        print("[info] fist-pose: no finger bones found. Skipping bake.")
+        return 0
+
+    print(f"[info] fist-pose: rotated {rotated} finger bone(s). Baking mesh.")
+    for mesh in mesh_objects:
+        ensure_armature_modifier(mesh, armature_obj)
+        for mod in mesh.modifiers:
+            if mod.type == "ARMATURE":
+                mod.use_deform_preserve_volume = True
+        apply_armature_modifier(mesh)
+
+    clear_selection()
+    bpy.context.view_layer.objects.active = armature_obj
+    armature_obj.select_set(True)
+    bpy.ops.object.mode_set(mode="POSE")
+    bpy.ops.pose.armature_apply()
+    bpy.ops.object.mode_set(mode="OBJECT")
+
+    for mesh in mesh_objects:
+        ensure_armature_modifier(mesh, armature_obj)
+    return rotated
+
+
 def apply_uniform_scale(armature_obj: "bpy.types.Object", mesh_objects: list["bpy.types.Object"], factor: float) -> None:
     objects = [armature_obj] + list(mesh_objects)
 
@@ -1698,6 +1795,13 @@ def main() -> None:
     )
     print(f"[info] uniform pre-scale factor: {scale:.4f}")
     apply_uniform_scale(pmx_armature, pmx_meshes, scale)
+
+    if config.fist_pose:
+        print("[info] applying fist-pose to fingers (bakes pose into mesh before bone collapse)")
+        apply_fist_pose(
+            pmx_armature, pmx_meshes,
+            keep_right_index_extended=config.keep_right_index_extended,
+        )
 
     print("[info] renaming PMX bones to MENACE humanoid names")
     rename_pmx_bones_to_menace(pmx_armature, config.bone_map, config.ignore_bones)

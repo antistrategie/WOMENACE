@@ -1,7 +1,5 @@
 clone "TagTemplate" from="unique" id="voymastina"
 
-clone "TagTemplate" from="unique" id="armor_restricted"
-
 clone "SpeakerTemplate" from="sy" id="voymastina_speaker" {
     set "Tags" "voymastina pirate_sl female infantry waybacker"
     set "Nickname" {
@@ -41,11 +39,8 @@ clone "EntityTemplate" from="player_squad.sy" id="player_squad.voymastina" {
     }
     set "Description" {
         set "m_DefaultTranslation" """
-            Like AN-94/Alva, AK-15 changed her name because of the renewed scrutiny over Task Force DEFY by various interest groups after they became semi-independent from Statesec.
-
-            Her decision to stop acting as a mere emotionless “weapon” as she thought Shaw wanted, combined with her confusion over RPK-16's actions and AK-12's departure, has made her more emotional, with Alva instead becoming the more rational member of DEFY.
-
-            Her appreciation for strong drinks like pepper vodka remains unchanged. She thinks the only human left worthy of commanding DEFY is the Commander.
+            No matter how difficult her mission is, Voymastina will always come up with a way to complete it. In her team, she is the sharpest blade, the strongest shield, and the most reliable linchpin of any plan that involves her. At times, you will be grateful that she's not on the opposing side.
+            "Tactics, efficiency, experience... each of them is essential to being the strongest Doll of them all."
             """
     }
 
@@ -66,11 +61,8 @@ clone "UnitLeaderTemplate" from="squad_leader.sy" id="squad_leader.voymastina" {
     }
     set "UnitDescription" {
         set "m_DefaultTranslation" """
-            Like AN-94/Alva, AK-15 changed her name because of the renewed scrutiny over Task Force DEFY by various interest groups after they became semi-independent from Statesec.
-
-            Her decision to stop acting as a mere emotionless “weapon” as she thought Shaw wanted, combined with her confusion over RPK-16's actions and AK-12's departure, has made her more emotional, with Alva instead becoming the more rational member of DEFY.
-
-            Her appreciation for strong drinks like pepper vodka remains unchanged. She thinks the only human left worthy of commanding DEFY is the Commander.
+            No matter how difficult her mission is, Voymastina will always come up with a way to complete it. In her team, she is the sharpest blade, the strongest shield, and the most reliable linchpin of any plan that involves her. At times, you will be grateful that she's not on the opposing side.
+            "Tactics, efficiency, experience... each of them is essential to being the strongest Doll of them all."
             """
     }
 
@@ -97,38 +89,38 @@ clone "UnitLeaderTemplate" from="squad_leader.sy" id="squad_leader.voymastina" {
     set "BadgeMini" asset="voymastina/badge_mini"
     set "HiringSelectBarkSound" {
         set "bankId" "tactical_barks_voymastina_va"
-        set "itemId" "Chosen"
+        set "itemId" "Series_Chosen_Series_Tone_Positive_006"
     }
     set "HiredBarkSound" {
         set "bankId" "tactical_barks_voymastina_va"
-        set "itemId" "ChosenAuto"
+        set "itemId" "Series_Chosen_Auto_Series_Tone_Positive_007"
     }
     set "PromotionBarkSounds" index=0 {
         set "PerkTier" 1
         set "Sound" {
             set "bankId" "tactical_barks_voymastina_va"
-            set "itemId" "Up2"
+            set "itemId" "Series_Up_002"
         }
     }
     set "PromotionBarkSounds" index=1 {
         set "PerkTier" 2
         set "Sound" {
             set "bankId" "tactical_barks_voymastina_va"
-            set "itemId" "Up3"
+            set "itemId" "Series_Up_003"
         }
     }
     set "PromotionBarkSounds" index=2 {
         set "PerkTier" 3
         set "Sound" {
             set "bankId" "tactical_barks_voymastina_va"
-            set "itemId" "Up4"
+            set "itemId" "Series_Up_004"
         }
     }
     set "PromotionBarkSounds" index=3 {
         set "PerkTier" 4
         set "Sound" {
             set "bankId" "tactical_barks_voymastina_va"
-            set "itemId" "Up5"
+            set "itemId" "Series_Up_005"
         }
     }
 }
