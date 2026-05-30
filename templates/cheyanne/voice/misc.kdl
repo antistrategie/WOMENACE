@@ -1,14 +1,15 @@
 clone "ConversationTemplate" from="Carda_Early/ammo_depleted" id="Cheyanne/ammo_depleted" {
     set "Active" #true
     set "Roles" index=0 {
-        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
             set "Tags" "wmgfl_cheyanne"
         }
     }
     set "Nodes" {
-        append "m_SerializedNodes" composite="VARIATION" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
             append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
+                append "m_SerializedNodes" type="SAY" {
                     set "Sound" {
                         set "bankId" "wmgfl_tactical_barks_cheyanne_va"
                         set "itemId" "Series_Dying_Series_Tone_Negative_002"
@@ -18,21 +19,22 @@ clone "ConversationTemplate" from="Carda_Early/ammo_depleted" id="Cheyanne/ammo_
                 }
             }
         }
-        append "m_SerializedNodes" composite="EMPTY" {}
+        append "m_SerializedNodes" type="EMPTY" {}
     }
 }
 
 clone "ConversationTemplate" from="Carda_Early/morale_recovery" id="Cheyanne/morale_recovery" {
     set "Active" #true
     set "Roles" index=0 {
-        set "m_SerializedRequirements" index=1 composite="HasOneTag" {
+        set "m_SerializedRequirements" index=1 type="HasOneTag" {
             set "Tags" "wmgfl_cheyanne"
         }
     }
     set "Nodes" {
-        append "m_SerializedNodes" composite="VARIATION" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
             append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
+                append "m_SerializedNodes" type="SAY" {
                     set "Sound" {
                         set "bankId" "wmgfl_tactical_barks_cheyanne_va"
                         set "itemId" "Series_Up_004"
@@ -42,21 +44,22 @@ clone "ConversationTemplate" from="Carda_Early/morale_recovery" id="Cheyanne/mor
                 }
             }
         }
-        append "m_SerializedNodes" composite="EMPTY" {}
+        append "m_SerializedNodes" type="EMPTY" {}
     }
 }
 
 clone "ConversationTemplate" from="Carda_Early/morale_wavering" id="Cheyanne/morale_wavering" {
     set "Active" #true
     set "Roles" index=0 {
-        set "m_SerializedRequirements" index=1 composite="HasOneTag" {
+        set "m_SerializedRequirements" index=1 type="HasOneTag" {
             set "Tags" "wmgfl_cheyanne"
         }
     }
     set "Nodes" {
-        append "m_SerializedNodes" composite="VARIATION" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
             append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
+                append "m_SerializedNodes" type="SAY" {
                     set "Sound" {
                         set "bankId" "wmgfl_tactical_barks_cheyanne_va"
                         set "itemId" "Series_Lose_Single_Lose_001"
@@ -66,21 +69,22 @@ clone "ConversationTemplate" from="Carda_Early/morale_wavering" id="Cheyanne/mor
                 }
             }
         }
-        append "m_SerializedNodes" composite="EMPTY" {}
+        append "m_SerializedNodes" type="EMPTY" {}
     }
 }
 
 clone "ConversationTemplate" from="Carda_Early/squaddie_death_bleed" id="Cheyanne/squaddie_death_bleed" {
     set "Active" #true
     set "Roles" index=0 {
-        set "m_SerializedRequirements" index=1 composite="HasOneTag" {
+        set "m_SerializedRequirements" index=1 type="HasOneTag" {
             set "Tags" "wmgfl_cheyanne"
         }
     }
     set "Nodes" {
-        append "m_SerializedNodes" composite="VARIATION" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
             append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
+                append "m_SerializedNodes" type="SAY" {
                     set "Sound" {
                         set "bankId" "wmgfl_tactical_barks_cheyanne_va"
                         set "itemId" "Series_Dying_Series_Tone_Negative_002"
@@ -90,6 +94,6 @@ clone "ConversationTemplate" from="Carda_Early/squaddie_death_bleed" id="Cheyann
                 }
             }
         }
-        append "m_SerializedNodes" composite="EMPTY" {}
+        append "m_SerializedNodes" type="EMPTY" {}
     }
 }

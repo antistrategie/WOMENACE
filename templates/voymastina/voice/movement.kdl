@@ -1,14 +1,15 @@
 clone "ConversationTemplate" from="JeanSy/missed_cover" id="Voymastina/missed_cover" {
     set "Active" #true
     set "Roles" index=0 {
-        set "m_SerializedRequirements" index=1 composite="HasOneTag" {
+        set "m_SerializedRequirements" index=1 type="HasOneTag" {
             set "Tags" "wmgfl_voymastina"
         }
     }
     set "Nodes" {
-        append "m_SerializedNodes" composite="VARIATION" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
             append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
+                append "m_SerializedNodes" type="SAY" {
                     set "Sound" {
                         set "bankId" "wmgfl_tactical_barks_voymastina_va"
                         set "itemId" "Series_Attack_Series_Tone_Positive_003"
@@ -18,27 +19,28 @@ clone "ConversationTemplate" from="JeanSy/missed_cover" id="Voymastina/missed_co
                 }
             }
         }
-        append "m_SerializedNodes" composite="EMPTY" {}
+        append "m_SerializedNodes" type="EMPTY" {}
     }
 }
 
 clone "ConversationTemplate" from="JeanSy/missed_open" id="Voymastina/missed_open" {
     set "Active" #true
     set "Roles" index=0 {
-        set "m_SerializedRequirements" index=1 composite="HasOneTag" {
+        set "m_SerializedRequirements" index=1 type="HasOneTag" {
             set "Tags" "wmgfl_voymastina"
         }
     }
     set "Nodes" {
-        append "m_SerializedNodes" composite="ACTION" {
-            set "m_SerAction" composite="SetFlag" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="ACTION" {
+            set "m_SerAction" type="SetFlag" {
                 set "FlagName" "voymastina_missed_played"
                 set "FlagValue" #true
             }
         }
-        append "m_SerializedNodes" composite="VARIATION" {
+        append "m_SerializedNodes" type="VARIATION" {
             append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
+                append "m_SerializedNodes" type="SAY" {
                     set "Sound" {
                         set "bankId" "wmgfl_tactical_barks_voymastina_va"
                         set "itemId" "Series_Attack_Series_Tone_Positive_003"
@@ -48,21 +50,22 @@ clone "ConversationTemplate" from="JeanSy/missed_open" id="Voymastina/missed_ope
                 }
             }
         }
-        append "m_SerializedNodes" composite="EMPTY" {}
+        append "m_SerializedNodes" type="EMPTY" {}
     }
 }
 
 clone "ConversationTemplate" from="JeanSy/moving_finished" id="Voymastina/moving_finished" {
     set "Active" #true
     set "Roles" index=0 {
-        set "m_SerializedRequirements" index=1 composite="HasOneTag" {
+        set "m_SerializedRequirements" index=1 type="HasOneTag" {
             set "Tags" "wmgfl_voymastina"
         }
     }
     set "Nodes" {
-        append "m_SerializedNodes" composite="VARIATION" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
             append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
+                append "m_SerializedNodes" type="SAY" {
                     set "Sound" {
                         set "bankId" "wmgfl_tactical_barks_voymastina_va"
                         set "itemId" "Series_Tone_Positive_001"
@@ -72,21 +75,22 @@ clone "ConversationTemplate" from="JeanSy/moving_finished" id="Voymastina/moving
                 }
             }
         }
-        append "m_SerializedNodes" composite="EMPTY" {}
+        append "m_SerializedNodes" type="EMPTY" {}
     }
 }
 
 clone "ConversationTemplate" from="JeanSy/taking_fire" id="Voymastina/taking_fire" {
     set "Active" #true
     set "Roles" index=0 {
-        set "m_SerializedRequirements" index=1 composite="HasOneTag" {
+        set "m_SerializedRequirements" index=1 type="HasOneTag" {
             set "Tags" "wmgfl_voymastina"
         }
     }
     set "Nodes" {
-        append "m_SerializedNodes" composite="VARIATION" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
             append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
+                append "m_SerializedNodes" type="SAY" {
                     set "Sound" {
                         set "bankId" "wmgfl_tactical_barks_voymastina_va"
                         set "itemId" "Series_Shield_Broken_Series_Tone_Negative_003"
@@ -96,6 +100,6 @@ clone "ConversationTemplate" from="JeanSy/taking_fire" id="Voymastina/taking_fir
                 }
             }
         }
-        append "m_SerializedNodes" composite="EMPTY" {}
+        append "m_SerializedNodes" type="EMPTY" {}
     }
 }

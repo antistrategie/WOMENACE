@@ -1,21 +1,22 @@
 clone "ConversationTemplate" from="Carda_Early/click_bark" id="Cheyanne/click_bark" {
     set "Active" #true
     set "Roles" index=0 {
-        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
             set "Tags" "wmgfl_cheyanne"
         }
     }
     set "Priority" 100
     set "Nodes" {
-        append "m_SerializedNodes" composite="ACTION" {
-            set "m_SerAction" composite="SetFlag" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="ACTION" {
+            set "m_SerAction" type="SetFlag" {
                 set "FlagName" "click_bark_cheyanne"
                 set "FlagValue" #true
             }
         }
-        append "m_SerializedNodes" composite="VARIATION" {
+        append "m_SerializedNodes" type="VARIATION" {
             append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
+                append "m_SerializedNodes" type="SAY" {
                     set "Sound" {
                         set "bankId" "wmgfl_tactical_barks_cheyanne_va"
                         set "itemId" "Series_Set_Click_Series_Tone_Positive_004"
@@ -25,7 +26,7 @@ clone "ConversationTemplate" from="Carda_Early/click_bark" id="Cheyanne/click_ba
                 }
             }
             append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
+                append "m_SerializedNodes" type="SAY" {
                     set "Sound" {
                         set "bankId" "wmgfl_tactical_barks_cheyanne_va"
                         set "itemId" "Series_Set_Fall_Series_Tone_Positive_005"
@@ -35,7 +36,7 @@ clone "ConversationTemplate" from="Carda_Early/click_bark" id="Cheyanne/click_ba
                 }
             }
             append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
+                append "m_SerializedNodes" type="SAY" {
                     set "Sound" {
                         set "bankId" "wmgfl_tactical_barks_cheyanne_va"
                         set "itemId" "Series_Chosen_Auto_Series_Tone_Positive_007"
@@ -45,21 +46,22 @@ clone "ConversationTemplate" from="Carda_Early/click_bark" id="Cheyanne/click_ba
                 }
             }
         }
-        append "m_SerializedNodes" composite="EMPTY" {}
+        append "m_SerializedNodes" type="EMPTY" {}
     }
 }
 
 clone "ConversationTemplate" from="Carda_Early/click_hurt" id="Cheyanne/click_hurt" {
     set "Active" #true
     set "Roles" index=0 {
-        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
             set "Tags" "wmgfl_cheyanne"
         }
     }
     set "Nodes" {
-        append "m_SerializedNodes" composite="VARIATION" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
             append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
+                append "m_SerializedNodes" type="SAY" {
                     set "Sound" {
                         set "bankId" "wmgfl_tactical_barks_cheyanne_va"
                         set "itemId" "Series_Chosen_Series_Tone_Positive_006"
@@ -69,21 +71,22 @@ clone "ConversationTemplate" from="Carda_Early/click_hurt" id="Cheyanne/click_hu
                 }
             }
         }
-        append "m_SerializedNodes" composite="EMPTY" {}
+        append "m_SerializedNodes" type="EMPTY" {}
     }
 }
 
 clone "ConversationTemplate" from="Carda_Early/idle_bark_combat" id="Cheyanne/idle_bark_combat" {
     set "Active" #true
     set "Roles" index=0 {
-        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
             set "Tags" "wmgfl_cheyanne"
         }
     }
     set "Nodes" {
-        append "m_SerializedNodes" composite="VARIATION" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
             append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
+                append "m_SerializedNodes" type="SAY" {
                     set "Sound" {
                         set "bankId" "wmgfl_tactical_barks_cheyanne_va"
                         set "itemId" "Single_Passive_SSR_001"
@@ -93,6 +96,6 @@ clone "ConversationTemplate" from="Carda_Early/idle_bark_combat" id="Cheyanne/id
                 }
             }
         }
-        append "m_SerializedNodes" composite="EMPTY" {}
+        append "m_SerializedNodes" type="EMPTY" {}
     }
 }

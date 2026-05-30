@@ -1,14 +1,15 @@
 clone "ConversationTemplate" from="Carda_Early/response_taking_fire_anyone" id="Cheyanne/response_taking_fire_anyone" {
     set "Active" #true
     set "Roles" index=2 {
-        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
             set "Tags" "wmgfl_cheyanne"
         }
     }
     set "Nodes" {
-        append "m_SerializedNodes" composite="VARIATION" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
             append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
+                append "m_SerializedNodes" type="SAY" {
                     set "Sound" {
                         set "bankId" "wmgfl_tactical_barks_cheyanne_va"
                         set "itemId" "Series_Skill02_Single_Skill_002"
@@ -18,6 +19,6 @@ clone "ConversationTemplate" from="Carda_Early/response_taking_fire_anyone" id="
                 }
             }
         }
-        append "m_SerializedNodes" composite="EMPTY" {}
+        append "m_SerializedNodes" type="EMPTY" {}
     }
 }

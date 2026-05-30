@@ -1,14 +1,15 @@
 clone "ConversationTemplate" from="Carda_Early/arrival_carda" id="Cheyanne/arrival_cheyanne" {
     set "Active" #true
     set "Roles" index=0 {
-        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
             set "Tags" "wmgfl_cheyanne"
         }
     }
     set "Nodes" {
-        append "m_SerializedNodes" composite="VARIATION" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
             append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
+                append "m_SerializedNodes" type="SAY" {
                     set "Sound" {
                         set "bankId" "wmgfl_tactical_barks_cheyanne_va"
                         set "itemId" "Series_Battle_Start_Series_Tone_Positive_002"
@@ -18,7 +19,7 @@ clone "ConversationTemplate" from="Carda_Early/arrival_carda" id="Cheyanne/arriv
                 }
             }
             append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
+                append "m_SerializedNodes" type="SAY" {
                     set "Sound" {
                         set "bankId" "wmgfl_tactical_barks_cheyanne_va"
                         set "itemId" "Single_Login_001"
@@ -28,6 +29,6 @@ clone "ConversationTemplate" from="Carda_Early/arrival_carda" id="Cheyanne/arriv
                 }
             }
         }
-        append "m_SerializedNodes" composite="EMPTY" {}
+        append "m_SerializedNodes" type="EMPTY" {}
     }
 }

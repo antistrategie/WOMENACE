@@ -1,14 +1,15 @@
 clone "ConversationTemplate" from="Carda_Early/objective_first" id="Cheyanne/objective_first" {
     set "Active" #true
     set "Roles" index=0 {
-        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
             set "Tags" "wmgfl_cheyanne"
         }
     }
     set "Nodes" {
-        append "m_SerializedNodes" composite="VARIATION" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
             append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
+                append "m_SerializedNodes" type="SAY" {
                     set "Sound" {
                         set "bankId" "wmgfl_tactical_barks_cheyanne_va"
                         set "itemId" "Series_Win_Single_Win_001"
@@ -18,21 +19,22 @@ clone "ConversationTemplate" from="Carda_Early/objective_first" id="Cheyanne/obj
                 }
             }
         }
-        append "m_SerializedNodes" composite="EMPTY" {}
+        append "m_SerializedNodes" type="EMPTY" {}
     }
 }
 
 clone "ConversationTemplate" from="Carda_Early/objective_second" id="Cheyanne/objective_second" {
     set "Active" #true
     set "Roles" index=0 {
-        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
             set "Tags" "wmgfl_cheyanne"
         }
     }
     set "Nodes" {
-        append "m_SerializedNodes" composite="VARIATION" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
             append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
+                append "m_SerializedNodes" type="SAY" {
                     set "Sound" {
                         set "bankId" "wmgfl_tactical_barks_cheyanne_va"
                         set "itemId" "Series_Up_003"
@@ -42,21 +44,22 @@ clone "ConversationTemplate" from="Carda_Early/objective_second" id="Cheyanne/ob
                 }
             }
         }
-        append "m_SerializedNodes" composite="EMPTY" {}
+        append "m_SerializedNodes" type="EMPTY" {}
     }
 }
 
 clone "ConversationTemplate" from="Carda_Early/objective_third" id="Cheyanne/objective_third" {
     set "Active" #true
     set "Roles" index=0 {
-        set "m_SerializedRequirements" index=2 composite="HasOneTag" {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
             set "Tags" "wmgfl_cheyanne"
         }
     }
     set "Nodes" {
-        append "m_SerializedNodes" composite="VARIATION" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
             append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
+                append "m_SerializedNodes" type="SAY" {
                     set "Sound" {
                         set "bankId" "wmgfl_tactical_barks_cheyanne_va"
                         set "itemId" "Series_Up_002"
@@ -66,6 +69,6 @@ clone "ConversationTemplate" from="Carda_Early/objective_third" id="Cheyanne/obj
                 }
             }
         }
-        append "m_SerializedNodes" composite="EMPTY" {}
+        append "m_SerializedNodes" type="EMPTY" {}
     }
 }

@@ -1,14 +1,15 @@
 clone "ConversationTemplate" from="JeanSy/morale_recovery" id="Voymastina/morale_recovery" {
     set "Active" #true
     set "Roles" index=0 {
-        set "m_SerializedRequirements" index=1 composite="HasOneTag" {
+        set "m_SerializedRequirements" index=1 type="HasOneTag" {
             set "Tags" "wmgfl_voymastina"
         }
     }
     set "Nodes" {
-        append "m_SerializedNodes" composite="VARIATION" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
             append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
+                append "m_SerializedNodes" type="SAY" {
                     set "Sound" {
                         set "bankId" "wmgfl_tactical_barks_voymastina_va"
                         set "itemId" "Series_Up_002"
@@ -18,21 +19,22 @@ clone "ConversationTemplate" from="JeanSy/morale_recovery" id="Voymastina/morale
                 }
             }
         }
-        append "m_SerializedNodes" composite="EMPTY" {}
+        append "m_SerializedNodes" type="EMPTY" {}
     }
 }
 
 clone "ConversationTemplate" from="JeanSy/morale_wavering" id="Voymastina/morale_wavering" {
     set "Active" #true
     set "Roles" index=0 {
-        set "m_SerializedRequirements" index=1 composite="HasOneTag" {
+        set "m_SerializedRequirements" index=1 type="HasOneTag" {
             set "Tags" "wmgfl_voymastina"
         }
     }
     set "Nodes" {
-        append "m_SerializedNodes" composite="VARIATION" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
             append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
+                append "m_SerializedNodes" type="SAY" {
                     set "Sound" {
                         set "bankId" "wmgfl_tactical_barks_voymastina_va"
                         set "itemId" "Series_Lose_Single_Lose_001"
@@ -42,21 +44,22 @@ clone "ConversationTemplate" from="JeanSy/morale_wavering" id="Voymastina/morale
                 }
             }
         }
-        append "m_SerializedNodes" composite="EMPTY" {}
+        append "m_SerializedNodes" type="EMPTY" {}
     }
 }
 
 clone "ConversationTemplate" from="JeanSy/squaddie_death_bleed" id="Voymastina/squaddie_death_bleed" {
     set "Active" #true
     set "Roles" index=0 {
-        set "m_SerializedRequirements" index=1 composite="HasOneTag" {
+        set "m_SerializedRequirements" index=1 type="HasOneTag" {
             set "Tags" "wmgfl_voymastina"
         }
     }
     set "Nodes" {
-        append "m_SerializedNodes" composite="VARIATION" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
             append "Variations" {
-                append "m_SerializedNodes" composite="SAY" {
+                append "m_SerializedNodes" type="SAY" {
                     set "Sound" {
                         set "bankId" "wmgfl_tactical_barks_voymastina_va"
                         set "itemId" "Series_Lose_Single_Lose_001"
@@ -66,6 +69,6 @@ clone "ConversationTemplate" from="JeanSy/squaddie_death_bleed" id="Voymastina/s
                 }
             }
         }
-        append "m_SerializedNodes" composite="EMPTY" {}
+        append "m_SerializedNodes" type="EMPTY" {}
     }
 }

@@ -12,7 +12,7 @@
         set "m_DefaultTranslation" "-3 AP cost per tile of movement."
     }
     clear "EventHandlers"
-    append "EventHandlers" handler="ChangeMovementCost" {
+    append "EventHandlers" type="ChangeMovementCost" {
         set "CostPerTile" -3
     }
 }
