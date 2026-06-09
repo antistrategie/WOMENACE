@@ -1,0 +1,52 @@
+clone "SkillTemplate" from="effect.stunned" id="effect.voymastina_death_defying" {
+    clear "EventHandlers"
+    set "Title" {
+        set "m_CategoryName" ""
+        set "m_FieldName" ""
+        set "m_DefaultTranslation" "Death DEFYing"
+    }
+    set "ShortDescription" {
+        set "m_CategoryName" ""
+        set "m_FieldName" ""
+        set "m_DefaultTranslation" "Invulnerable and unsuppressable."
+    }
+    set "Description" {
+        set "m_CategoryName" ""
+        set "m_FieldName" ""
+        set "m_DefaultTranslation" "Clinging to life. Invulnerable and immune to suppression while active."
+    }
+    append "EventHandlers" type="WOMENACE:DeathDefyingStatus"
+}
+
+clone "PerkTemplate" from="perk.fury" id="perk.voymastina_death_defying" {
+    set "Title" {
+        set "m_CategoryName" ""
+        set "m_FieldName" ""
+        set "m_DefaultTranslation" "Death DEFYing"
+    }
+    set "ShortDescription" {
+        set "m_CategoryName" ""
+        set "m_FieldName" ""
+        set "m_DefaultTranslation" "The first lethal hit each mission is survived at 1 HP. Invulnerable and unsuppressable for 3 turns after."
+    }
+    set "Description" {
+        set "m_CategoryName" ""
+        set "m_FieldName" ""
+        set "m_DefaultTranslation" """
+            BREAKING NEWS: Local Doll too angry to die.
+
+            "I refuse."
+
+            – Voymastina, bleeding out
+            """
+    }
+    clear "EventHandlers"
+    append "EventHandlers" type="WOMENACE:DeathDefying" {
+        set "InvulnTurns" 3
+        set "StatusEffect" ref="SkillTemplate" "effect.voymastina_death_defying"
+    }
+    append "EventHandlers" type="ApplySkillToSelf" {
+        set "SkillToApply" ref="SkillTemplate" "effect.voymastina_death_defying"
+        set "ChanceToApply" 100
+    }
+}

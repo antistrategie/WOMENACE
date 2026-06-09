@@ -1,0 +1,28 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="../theme.uss" />
+    <Style src="affinity.uss" />
+    <ui:VisualElement name="gift-flyout" class="window wm-gift-flyout">
+        <ui:VisualElement class="unit-window-background" />
+        <ui:VisualElement class="unit-window-border" />
+        <ui:VisualElement class="wm-gift-titlerow">
+            <ui:Label text="GIVE GIFTS" class="wm-gift-title" />
+            <ui:Label name="level-current" text="01" class="wm-gift-level" />
+            <ui:VisualElement
+                name="preview-track"
+                class="wm-gift-preview-track"
+            >
+                <ui:VisualElement
+                    name="preview-temp"
+                    class="wm-gift-preview-temp"
+                />
+                <ui:VisualElement
+                    name="preview-fill"
+                    class="wm-gift-preview-fill"
+                />
+            </ui:VisualElement>
+            <ui:Label name="level-next" text="02" class="wm-gift-level" />
+        </ui:VisualElement>
+        <ui:VisualElement name="gift-grid" class="wm-gift-grid" />
+        <ui:VisualElement name="gift-actions" class="wm-gift-actions" />
+    </ui:VisualElement>
+</ui:UXML>

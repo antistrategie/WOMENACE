@@ -1,0 +1,9 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="../theme.uss" />
+    <Style src="affinity.uss" />
+    <ui:VisualElement name="affinity-badge" class="wm-affinity-badge">
+        <ui:VisualElement name="affinity-frame" class="wm-affinity-badge__frame" />
+        <ui:VisualElement name="affinity-star" class="wm-affinity-badge__star" />
+        <ui:Label name="affinity-level" text="01" class="wm-affinity-badge__level" />
+    </ui:VisualElement>
+</ui:UXML>
