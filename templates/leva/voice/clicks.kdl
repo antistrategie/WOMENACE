@@ -1,0 +1,116 @@
+clone "ConversationTemplate" from="JeanSy/click_bark" id="Leva/click_bark" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_leva"
+        }
+    }
+    set "Priority" 100
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="ACTION" {
+            set "m_SerAction" type="SetFlag" {
+                set "FlagName" "click_bark_leva"
+                set "FlagValue" #true
+            }
+        }
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_leva_va"
+                        set "itemId" "Series_Set_Click_Series_Tone_Positive_004"
+                    }
+                    set "RoleGuid" "Entity"
+                    set "Text" "Do you need me?"
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_leva_va"
+                        set "itemId" "Series_Chosen_Series_Tone_Positive_006"
+                    }
+                    set "RoleGuid" "Entity"
+                    set "Text" "I'm listening."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/click_bark_quiet1" id="Leva/click_bark_quiet1" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_leva"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_leva_va"
+                        set "itemId" "Series_Set_Fall_Series_Tone_Positive_005"
+                    }
+                    set "RoleGuid" "Entity"
+                    set "Text" "Got it—"
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/click_enemy_threatening_obj_zone" id="Leva/click_enemy_threatening_obj_zone" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_leva"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_leva_va"
+                        set "itemId" "Series_Up_005"
+                    }
+                    set "RoleGuid" "Entity"
+                    set "Text" "Feel free to lean on me."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/idle_bark_combat" id="Leva/idle_bark_combat" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_leva"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_leva_va"
+                        set "itemId" "Series_Set_Fall_Series_Tone_Positive_005"
+                    }
+                    set "RoleGuid" "JeanSy"
+                    set "Text" "Got it—"
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}

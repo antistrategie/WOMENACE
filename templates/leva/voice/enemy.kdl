@@ -1,0 +1,184 @@
+clone "ConversationTemplate" from="JeanSy/building_destroyed" id="Leva/building_destroyed" {
+    set "Active" #true
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_leva"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_leva_va"
+                        set "itemId" "Series_Ultimate_Single_Ultimate_SSR_001"
+                    }
+                    set "RoleGuid" "Killer"
+                    set "Text" "Feel free to scream if it hurts."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/building_destroyed_neighborhood" id="Leva/building_destroyed_neighborhood" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_leva"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_leva_va"
+                        set "itemId" "Series_Ultimate_Single_Ultimate_SSR_001"
+                    }
+                    set "RoleGuid" "Entity"
+                    set "Text" "Feel free to scream if it hurts."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/enemy_damage_blocked" id="Leva/enemy_damage_blocked" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=1 type="HasOneTag" {
+            set "Tags" "wmgfl_leva"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_leva_va"
+                        set "itemId" "Series_Shield_Broken_Series_Tone_Negative_003"
+                    }
+                    set "RoleGuid" "Attacker"
+                    set "Text" "This is kind of bad..."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/enemy_damaged" id="Leva/enemy_damaged" {
+    set "Active" #true
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_leva"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_leva_va"
+                        set "itemId" "Series_Skill01_Single_Skill_001"
+                    }
+                    set "RoleGuid" "Attacker"
+                    set "Text" "Cherish the rest of your life."
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_leva_va"
+                        set "itemId" "Series_Hit_Single_Hit_001"
+                    }
+                    set "RoleGuid" "Attacker"
+                    set "Text" "Want to test your luck?"
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/enemy_fleeing" id="Leva/enemy_fleeing" {
+    set "Active" #true
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_leva"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_leva_va"
+                        set "itemId" "Series_Skill02_Single_Skill_002"
+                    }
+                    set "RoleGuid" "JeanSy"
+                    set "Text" "Silence, please."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/enemy_killed" id="Leva/enemy_killed" {
+    set "Active" #true
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_leva"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_leva_va"
+                        set "itemId" "Series_Kill_Single_Kill_001"
+                    }
+                    set "RoleGuid" "Killer"
+                    set "Text" "See you never."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/enemy_suppressed" id="Leva/enemy_suppressed" {
+    set "Active" #true
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=3 type="HasOneTag" {
+            set "Tags" "wmgfl_leva"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_leva_va"
+                        set "itemId" "Series_Hit_Single_Hit_001"
+                    }
+                    set "RoleGuid" "JeanSy"
+                    set "Text" "Want to test your luck?"
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}

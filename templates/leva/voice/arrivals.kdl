@@ -1,0 +1,59 @@
+clone "ConversationTemplate" from="JeanSy/arrival_jeansy" id="Leva/arrival_leva" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_leva"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_leva_va"
+                        set "itemId" "Single_Obtain_SSR_001"
+                    }
+                    set "RoleGuid" "JeanSy"
+                    set "Text" "We'll soon be in a closer partnership than ever before~ Aren't you looking forward to it, Commander~?"
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_leva_va"
+                        set "itemId" "Single_Login_001"
+                    }
+                    set "RoleGuid" "JeanSy"
+                    set "Text" "Oh my, it's you, Commander~ What's this, were you thinking of me~?"
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/last_man_standing1" id="Leva/last_man_standing1" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_leva"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_leva_va"
+                        set "itemId" "Series_Lose_Single_Lose_001"
+                    }
+                    set "RoleGuid" "Entity"
+                    set "Text" "At the very least, we know what not to do next time, right?"
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}

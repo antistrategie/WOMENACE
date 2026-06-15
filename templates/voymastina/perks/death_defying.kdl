@@ -15,7 +15,7 @@ clone "SkillTemplate" from="effect.stunned" id="effect.voymastina_death_defying"
         set "m_FieldName" ""
         set "m_DefaultTranslation" "Clinging to life. Invulnerable and immune to suppression while active."
     }
-    append "EventHandlers" type="WOMENACE:DeathDefyingStatus"
+    append "EventHandlers" type="WOMENACE:DeathDefyingStatus" {}
 }
 
 clone "PerkTemplate" from="perk.fury" id="perk.voymastina_death_defying" {
@@ -40,13 +40,14 @@ clone "PerkTemplate" from="perk.fury" id="perk.voymastina_death_defying" {
             – Voymastina, bleeding out
             """
     }
+
     clear "EventHandlers"
     append "EventHandlers" type="WOMENACE:DeathDefying" {
         set "InvulnTurns" 3
         set "StatusEffect" ref="SkillTemplate" "effect.voymastina_death_defying"
     }
     append "EventHandlers" type="ApplySkillToSelf" {
-        set "SkillToApply" ref="SkillTemplate" "effect.voymastina_death_defying"
+        set "SkillToApply" "effect.voymastina_death_defying"
         set "ChanceToApply" 100
     }
 }

@@ -1,0 +1,61 @@
+clone "WeaponTemplate" from="weapon.generic_smg_tier1_ppp_sof" id="weapon.leva_ump45" {
+    set "Title" {
+        set "m_DefaultTranslation" "UMP45"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Submachine Gun"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "A firearm highly compatible with Leva. Modified based on her combat preferences, it features improved firepower and improves her survivability on the battlefield."
+    }
+    set "Model" asset="weapon/ump45/main"
+    set "SkillsGranted" index=0 "active.fire_leva_ump45"
+    set "SkillsGranted" index=1 "active.fire_leva_ump45_tap"
+    set "IconEquipment" asset="weapon/ump45/IconEquipment"
+    set "IconEquipmentDisabled" asset="weapon/ump45/IconEquipmentDisabled"
+    set "IconSkillBar" asset="weapon/ump45/IconSkillBar"
+    set "IconSkillBarDisabled" asset="weapon/ump45/IconSkillBarDisabled"
+    append "OnlyEquipableBy" "wmgfl_leva"
+}
+
+clone "SkillTemplate" from="active.fire_smg_tier_1_SOF_suppressed" id="active.fire_leva_ump45" {
+    clear "SoundsOnAttack"
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_smg_addition_bank"
+        set "itemId" "smg_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "weapons_soundbank"
+        set "itemId" "small_caliber_brass_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_smg_addition_bank"
+        set "itemId" "smg_burst_distant"
+    }
+    clear "SoundsOnAttackFar"
+    append "SoundsOnAttackFar" {
+        set "bankId" "wmgfl_weapons_smg_addition_bank"
+        set "itemId" "smg_burst_distant"
+    }
+}
+
+clone "SkillTemplate" from="active.fire_smg_tap_fire_suppressed" id="active.fire_leva_ump45_tap" {
+    clear "SoundsOnAttack"
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_smg_addition_bank"
+        set "itemId" "smg_single"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "weapons_soundbank"
+        set "itemId" "small_caliber_brass_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_smg_addition_bank"
+        set "itemId" "smg_single_distant"
+    }
+    clear "SoundsOnAttackFar"
+    append "SoundsOnAttackFar" {
+        set "bankId" "wmgfl_weapons_smg_addition_bank"
+        set "itemId" "smg_single_distant"
+    }
+}

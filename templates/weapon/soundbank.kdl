@@ -91,3 +91,80 @@ clone "SoundBank" from="weapons_soundbank" id="wmgfl_weapons_rf_addition_bank" {
     }
     append "busIndices" 0
 }
+
+clone "SoundBank" from="weapons_soundbank" id="wmgfl_weapons_smg_addition_bank" {
+    clear "sounds"
+    clear "busIndices"
+
+    append "sounds" {
+        set "name" "smg_burst"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="weapons/smg/smg_burst_01"
+        }
+        append "variations" {
+            set "clip" asset="weapons/smg/smg_burst_02"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "smg_burst_distant"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="weapons/smg/smg_burst_distant_01"
+        }
+        append "variations" {
+            set "clip" asset="weapons/smg/smg_burst_distant_02"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "smg_single"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="weapons/smg/smg_single_01"
+        }
+        append "variations" {
+            set "clip" asset="weapons/smg/smg_single_02"
+        }
+        append "variations" {
+            set "clip" asset="weapons/smg/smg_single_03"
+        }
+        append "variations" {
+            set "clip" asset="weapons/smg/smg_single_04"
+        }
+        append "variations" {
+            set "clip" asset="weapons/smg/smg_single_05"
+        }
+        append "variations" {
+            set "clip" asset="weapons/smg/smg_single_06"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "smg_single_distant"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="weapons/smg/smg_single_distant_01"
+        }
+        append "variations" {
+            set "clip" asset="weapons/smg/smg_single_distant_02"
+        }
+        append "variations" {
+            set "clip" asset="weapons/smg/smg_single_distant_03"
+        }
+        append "variations" {
+            set "clip" asset="weapons/smg/smg_single_distant_04"
+        }
+        append "variations" {
+            set "clip" asset="weapons/smg/smg_single_distant_05"
+        }
+        append "variations" {
+            set "clip" asset="weapons/smg/smg_single_distant_06"
+        }
+    }
+    append "busIndices" 0
+}

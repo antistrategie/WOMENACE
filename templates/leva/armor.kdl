@@ -1,0 +1,44 @@
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.leva_default" {
+    set "Title" {
+        set "m_DefaultTranslation" "Reasoned Gaze"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Field Outfit"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Leva's typical outfit. Infusing her unique personaility into this outfit design which symbolizes rationality reflects how she walks a lonley path but never compromises her principles. This unique contradiction is where Leva's charm lies."
+    }
+    set "Icon" asset="leva/armor/default/Icon"
+    set "IconEquipment" asset="leva/armor/default/IconEquipment"
+    set "IconSkillBar" asset="leva/armor/default/IconSkillBar"
+    clear "MaleModels"
+    append "MaleModels" asset="leva/default/main"
+    clear "FemaleModels"
+    append "FemaleModels" asset="leva/default/main"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_leva"
+}
+
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.leva_diamond_flower" {
+    set "Title" {
+        set "m_DefaultTranslation" "Diamond Flower"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Formal Wear"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            "I've taken part in many more parties than in the past. However, there's one that I've been looking forward to; I've never gotten an invite for it... So what are you waiting for, Commander~?"
+            She fixes you with her mirthful eyes, waiting for your answer.
+            """
+    }
+    set "Icon" asset="leva/armor/diamond/Icon"
+    set "IconEquipment" asset="leva/armor/diamond/IconEquipment"
+    set "IconSkillBar" asset="leva/armor/diamond/IconSkillBar"
+    clear "MaleModels"
+    append "MaleModels" asset="leva/diamond_flower/main"
+    clear "FemaleModels"
+    append "FemaleModels" asset="leva/diamond_flower/main"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_leva"
+}

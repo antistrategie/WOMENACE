@@ -13,6 +13,7 @@ Discovers any directory under assets/additions/audio/<char>/ that has a
 import csv
 import http.server
 import json
+import re
 import socketserver
 import sys
 import webbrowser
@@ -21,7 +22,32 @@ from urllib.parse import unquote
 
 REPO = Path(__file__).resolve().parents[2]
 AUDIO_ROOT = REPO / 'assets/additions/audio'
+TEMPLATES_ROOT = REPO / 'templates'
 PORT = 8765
+
+
+def load_bank(char):
+    """Map each clip to its SoundBank entry from templates/<char>/voice/soundbank.kdl.
+
+    Returns (bank_id, {clip_stem: sound_name}). The sound_name is the itemId a
+    conversation / squad-leader template references. Empty if the char has no bank.
+    """
+    kdl = TEMPLATES_ROOT / char / 'voice' / 'soundbank.kdl'
+    if not kdl.exists():
+        return None, {}
+    text = kdl.read_text(encoding='utf-8')
+    m = re.search(r'clone\s+"SoundBank".*?id="([^"]+)"', text)
+    bank_id = m.group(1) if m else None
+    names, cur = {}, None
+    for line in text.splitlines():
+        nm = re.search(r'set\s+"name"\s+"([^"]+)"', line)
+        if nm:
+            cur = nm.group(1)
+            continue
+        cl = re.search(r'set\s+"clip"\s+asset="([^"]+)"', line)
+        if cl and cur is not None:
+            names.setdefault(cl.group(1).split('/')[-1], cur)
+    return bank_id, names
 
 INDEX_HTML = r"""<!DOCTYPE html>
 <html lang="en">
@@ -78,10 +104,16 @@ th {
     background: #1a1a1a;
 }
 .col-play  { width: 60px; }
-.col-name  { width: 280px; font-family: ui-monospace, monospace; font-size: 12px; color: #ccc; }
-.col-jp    { width: 30%; }
-.col-en    { width: 30%; }
+.col-name  { width: 230px; font-family: ui-monospace, monospace; font-size: 12px; color: #ccc; }
+.col-item  { width: 230px; font-family: ui-monospace, monospace; font-size: 12px; }
+.col-jp    { width: 24%; }
+.col-en    { width: 24%; }
 .col-note  { color: #888; font-style: italic; }
+.itemid { color: #6db3f2; cursor: pointer; border-bottom: 1px dotted #456; }
+.itemid:hover { color: #9cd; }
+.itemid.copied { color: #6f6; border-bottom-color: #6f6; }
+.itemid.orphan { color: #d66; border-bottom: none; cursor: default; }
+.bank-id { color: #888; font-size: 13px; font-family: ui-monospace, monospace; }
 button.play {
     background: #2a2a2a;
     border: 1px solid #444;
@@ -103,6 +135,7 @@ tr:hover { background: #222; }
     <h1>voice lines</h1>
     <select id="char-select"></select>
     <input type="text" id="filter" placeholder="filter by text..." autocomplete="off">
+    <span class="bank-id" id="bank-id"></span>
     <span class="spacer"></span>
     <span class="row-count" id="row-count"></span>
 </header>
@@ -112,6 +145,7 @@ tr:hover { background: #222; }
             <tr>
                 <th class="col-play"></th>
                 <th class="col-name">file</th>
+                <th class="col-item">bank itemId</th>
                 <th class="col-jp">transcript (JP)</th>
                 <th class="col-en">english</th>
                 <th class="col-note">note</th>
@@ -143,7 +177,9 @@ async function loadChars() {
 
 async function loadTrans() {
     const res = await fetch(`/api/trans/${currentChar}`);
-    rows = await res.json();
+    const data = await res.json();
+    rows = data.rows || [];
+    document.getElementById('bank-id').textContent = data.bank_id ? `bank: ${data.bank_id}` : '(no soundbank.kdl)';
     render();
 }
 
@@ -152,6 +188,7 @@ function render() {
     const filtered = q
         ? rows.filter(r =>
             r.filename.toLowerCase().includes(q) ||
+            (r.item_id || '').toLowerCase().includes(q) ||
             (r.transcript || '').toLowerCase().includes(q) ||
             (r.english || '').toLowerCase().includes(q))
         : rows;
@@ -160,6 +197,9 @@ function render() {
         <tr>
             <td class="col-play"><button class="play" data-file="${escapeAttr(r.filename)}">▶</button></td>
             <td class="col-name">${escapeHtml(r.filename)}</td>
+            <td class="col-item">${r.in_bank
+                ? `<span class="itemid" data-id="${escapeAttr(r.item_id)}" title="click to copy">${escapeHtml(r.item_id)}</span>`
+                : `<span class="itemid orphan" title="not registered in soundbank.kdl">${escapeHtml(r.item_id)} ⚠</span>`}</td>
             <td class="col-jp jp">${escapeHtml(r.transcript || '')}</td>
             <td class="col-en">${escapeHtml(r.english || '')}</td>
             <td class="col-note">${escapeHtml(r.note || '')}</td>
@@ -167,6 +207,14 @@ function render() {
     `).join('');
     tbody.querySelectorAll('button.play').forEach(btn => {
         btn.addEventListener('click', () => play(btn, btn.dataset.file));
+    });
+    tbody.querySelectorAll('span.itemid[data-id]').forEach(el => {
+        el.addEventListener('click', () => {
+            navigator.clipboard.writeText(el.dataset.id).then(() => {
+                el.classList.add('copied');
+                setTimeout(() => el.classList.remove('copied'), 800);
+            });
+        });
     });
 }
 
@@ -224,7 +272,14 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     return self._send(404, 'text/plain', b'not found')
                 with csv_path.open(newline='', encoding='utf-8') as f:
                     rows = list(csv.DictReader(f))
-                return self._send(200, 'application/json', json.dumps(rows).encode())
+                bank_id, names = load_bank(char)
+                for r in rows:
+                    fn = r.get('filename', '')
+                    stem = fn[:-4] if fn.endswith('.wav') else fn
+                    r['item_id'] = names.get(stem, stem)
+                    r['in_bank'] = stem in names
+                payload = {'bank_id': bank_id, 'rows': rows}
+                return self._send(200, 'application/json', json.dumps(payload).encode())
             if self.path.startswith('/audio/'):
                 rest = unquote(self.path[len('/audio/'):])
                 # Resolve under AUDIO_ROOT; reject path traversal.
