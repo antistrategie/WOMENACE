@@ -73,20 +73,25 @@ clone "UnitLeaderTemplate" from="squad_leader.sy" id="squad_leader.leva" {
     set "InitialAttributes" index=4 100
     set "InitialAttributes" index=5 20
     set "InitialAttributes" index=6 100
+
     set "QualityLevel" 3
     set "GrowthPotential" 5
     set "FixedSupplyCost" 60
     set "SquaddieTax" 60
     set "Rarity" 5
+
     set "InitialPerk" "perk.covert_ops"
     set "PerkTrees" index=0 "perk_tree.leva"
+
     set "Slot" asset="leva/slot"
     set "SlotInactive" asset="leva/slot_inactive"
     set "SlotBadge" asset="leva/slot_badge"
+
     set "BadgeDragged" asset="leva/badge_dragged"
     set "BigBadge" asset="leva/big_badge"
     set "BadgeUnitWindow" asset="leva/badge_unit_window"
     set "BadgeMini" asset="leva/badge_mini"
+
     set "HiringSelectBarkSound" {
         set "bankId" "wmgfl_tactical_barks_leva_va"
         set "itemId" "Series_Chosen_Series_Tone_Positive_006"
@@ -95,6 +100,7 @@ clone "UnitLeaderTemplate" from="squad_leader.sy" id="squad_leader.leva" {
         set "bankId" "wmgfl_tactical_barks_leva_va"
         set "itemId" "Series_Chosen_Auto_Series_Tone_Positive_007"
     }
+
     set "PromotionBarkSounds" index=0 {
         set "PerkTier" 1
         set "Sound" {
@@ -121,6 +127,100 @@ clone "UnitLeaderTemplate" from="squad_leader.sy" id="squad_leader.leva" {
         set "Sound" {
             set "bankId" "wmgfl_tactical_barks_leva_va"
             set "itemId" "Series_Up_005"
+        }
+    }
+
+    clear "EmotionalStateResponses"
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Eager"
+        set "Text" {
+            set "m_DefaultTranslation" "Come closer, Commander. What's this? Worried about your nose?"
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_leva_va"
+            set "itemId" "Series_Daily_002"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Determined"
+        set "Text" {
+            set "m_DefaultTranslation" "We'll soon be in a closer partnership than ever before~ Aren't you looking forward to it, Commander~?"
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_leva_va"
+            set "itemId" "Single_Obtain_SSR_001"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Overconfident"
+        set "Text" {
+            set "m_DefaultTranslation" "Every time I see Klukai working hard, I can't help but want to bully her a little... Ah, you don't have to keep that a secret, Commander."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_leva_va"
+            set "itemId" "Series_Daily_003"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Euphoric"
+        set "Text" {
+            set "m_DefaultTranslation" "Oh my, it's you, Commander~ What's this, were you thinking of me~?"
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_leva_va"
+            set "itemId" "Single_Login_001"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Hesitant"
+        set "Text" {
+            set "m_DefaultTranslation" "Hm"
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_leva_va"
+            set "itemId" "End"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Frustrated"
+        set "Text" {
+            set "m_DefaultTranslation" "Patience, patience~"
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_leva_va"
+            set "itemId" "Series_Attack_Series_Tone_Positive_003"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Disheartened"
+        set "Text" {
+            set "m_DefaultTranslation" "At the very least, we know what not to do next time, right?"
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_leva_va"
+            set "itemId" "Series_Lose_Single_Lose_001"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Miserable"
+        set "Text" {
+            set "m_DefaultTranslation" "Sigh..."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_leva_va"
+            set "itemId" "Touch_Head"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "GoodwillTowards"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "AnimosityTowards"
+        set "Text" {
+            set "m_DefaultTranslation" ""
         }
     }
 }

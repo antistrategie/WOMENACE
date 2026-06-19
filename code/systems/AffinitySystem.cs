@@ -1,4 +1,3 @@
-using Il2CppInterop.Runtime;
 using Il2CppMenace.Items;
 using Il2CppMenace.States;
 using Il2CppMenace.Strategy;
@@ -49,42 +48,45 @@ public sealed class AffinitySystem : JiangyuSystem
     private VisualElement _activeWindow;
     private int _activeLeaderKey;
     private int _baseAffinity;
-    private bool _dismissHooked;
+    private bool _modalOpen;
 
     public override void OnInit()
     {
-        // The affinity badge, pinned to the top-left of the leader portrait. It is
-        // appended to LeaderMask, the box that holds the portrait render, so its
-        // coordinate space is the portrait itself; only the leader detail window has
-        // that box, so squaddie cards get nothing.
+        // The Armory and mission-prep screens both host the same UnitWindow leader section, so each gets
+        // the same affinity injections (badge, gift button, gift flyout).
+        RegisterScreen<ArmoryUIScreen>();
+        RegisterScreen<MissionPrepUIScreen>();
+
+        Context.Patches.Postfix("Il2CppMenace.UI.Strategy.UnitWindow", "SetLeader", OnWindowChanged);
+        Context.Patches.Postfix("Il2CppMenace.UI.Strategy.UnitWindow", "Refresh", OnWindowChanged);
+    }
+
+    // Inject the affinity badge, gift button, and gift flyout onto every UnitWindow of the given screen.
+    private void RegisterScreen<TScreen>() where TScreen : Il2CppMenace.UI.UIScreen
+    {
+        // The affinity badge, pinned to the top-left of the leader portrait (LeaderMask holds the render).
         UI.InjectEach(
-            UiTarget.Screen<ArmoryUIScreen>()
+            UiTarget.Screen<TScreen>()
                 .Each(UiSelector.TypeName("UnitWindow"))
                 .AppendTo(UiSelector.Name("LeaderMask")),
             "affinity/affinity-badge",
             BindBadge);
 
-        // The gift button, sitting right after the native "Remove from mission" button in
-        // the unit window header. A TextButton, so it wears the game's hover glow and
-        // click sound with no wiring of its own.
+        // The gift button (a native-style IconButton). OpenModal resolves the flyout from the clicked window.
         UI.InjectEach(
-            UiTarget.Screen<ArmoryUIScreen>()
+            UiTarget.Screen<TScreen>()
                 .Each(UiSelector.TypeName("UnitWindow"))
                 .After(UiSelector.Name("UnitWindowButton")),
             BuildGiftButton,
             (_, window) => UpdateGiftButton(window));
 
-        // The gift flyout, anchored in the unit window's right-aligned area, the same
-        // place the native Select Weapon panel appears.
+        // The gift flyout, one per window.
         UI.InjectEach(
-            UiTarget.Screen<ArmoryUIScreen>()
+            UiTarget.Screen<TScreen>()
                 .Each(UiSelector.TypeName("UnitWindow"))
                 .Before(UiSelector.Name("EquipmentAlternatives")),
             "affinity/gift-modal",
             WireModal);
-
-        Context.Patches.Postfix("Il2CppMenace.UI.Strategy.UnitWindow", "SetLeader", OnWindowChanged);
-        Context.Patches.Postfix("Il2CppMenace.UI.Strategy.UnitWindow", "Refresh", OnWindowChanged);
     }
 
     private void OnWindowChanged(PatchInfo info)
@@ -113,15 +115,17 @@ public sealed class AffinitySystem : JiangyuSystem
         var badge = UI.Find(window, UiSelector.Name("affinity-badge"));
         if (badge == null)
             return;
+
         var key = OurLeaderKey(window);
         SetVisible(badge, key != 0);
+
         if (key == 0)
             return;
+
         var level = LevelForPoints(Context.State.Get<AffinityState>().ForLeader(key).Affinity);
         var label = UI.Find(badge, UiSelector.Name("affinity-level"))?.TryCast<Label>();
-        if (label != null)
-            label.text = level.ToString("00");
-        // The knot frame is a top-level flourish: show it behind the star only at the cap.
+        label?.text = level.ToString("00");
+
         var frame = UI.Find(badge, UiSelector.Name("affinity-frame"));
         if (frame != null)
             SetVisible(frame, level >= MaxLevel);
@@ -129,17 +133,35 @@ public sealed class AffinitySystem : JiangyuSystem
 
     private VisualElement BuildGiftButton(VisualElement window)
     {
-        var button = new TextButton("GIFT");
+        var button = new IconButton();
         button.Root.name = "gift-open";
+        button.SetSize(22f, 22f);
+
+        var icon = Context.Assets.Load<UnityEngine.Texture2D>("gift_icon");
+        if (icon != null)
+            button.SetIcon(icon);
+        else
+            Context.Log.Warn("gift button: 'gift_icon' texture not found in mod bundles");
+
         button.OnClick(() =>
         {
-            if (_modalRoot != null && IsVisible(_modalRoot))
+            try
             {
+                // Toggle this window's flyout. Close whatever is open first, then open this one unless
+                // it was already the open flyout, so clicking a second window's button switches to it
+                // rather than only dismissing the first.
+                bool reopenSameWindow = _modalOpen && ReferenceEquals(_activeWindow, window);
                 CloseModal();
-                return;
+                if (!reopenSameWindow)
+                {
+                    SeedGifts();
+                    OpenModal(window);
+                }
             }
-            SeedGifts();
-            OpenModal(window);
+            catch (Exception ex)
+            {
+                Context.Log.Warn($"[gift] click failed: {ex.GetType().Name}: {ex.Message}");
+            }
         });
         return button.Root;
     }
@@ -151,8 +173,19 @@ public sealed class AffinitySystem : JiangyuSystem
             SetVisible(button, OurLeaderKey(window) != 0);
     }
 
-    // The level for a points total: everyone starts at level 1, and each threshold the
-    // points pass adds a level, capped at MaxLevel.
+    // Deterministic FNV-1a hash so the affinity key is stable across runs (string.GetHashCode is
+    // randomised per process and would break save persistence).
+    private static int StableHash(string s)
+    {
+        unchecked
+        {
+            var h = (int)2166136261;
+            foreach (var c in s)
+                h = (h ^ c) * 16777619;
+            return h;
+        }
+    }
+
     private static int LevelForPoints(int points)
     {
         var level = 1;
@@ -166,7 +199,6 @@ public sealed class AffinitySystem : JiangyuSystem
         return level > MaxLevel ? MaxLevel : level;
     }
 
-    // The percentage of value's position between floor and ceiling, clamped to 0-100.
     private static int PercentBetween(int value, int floor, int ceiling)
     {
         if (ceiling <= floor)
@@ -175,15 +207,21 @@ public sealed class AffinitySystem : JiangyuSystem
         return pct < 0 ? 0 : pct > 100 ? 100 : pct;
     }
 
-    // Cache the modal's parts and wire its buttons. Re-runs if the screen rebuilds.
+    // Point the modal-state fields at a specific flyout. The gift button exists on more than one
+    // screen, each with its own flyout instance, so this rebinds to the clicked window's flyout.
+    private void BindModalFields(VisualElement flyout)
+    {
+        _modalRoot = flyout;
+        _grid = UI.Find(flyout, UiSelector.Name("gift-grid"));
+        _previewFill = UI.Find(flyout, UiSelector.Name("preview-fill"));
+        _previewTemp = UI.Find(flyout, UiSelector.Name("preview-temp"));
+        _levelCurrent = UI.Find(flyout, UiSelector.Name("level-current"))?.TryCast<Label>();
+        _levelNext = UI.Find(flyout, UiSelector.Name("level-next"))?.TryCast<Label>();
+    }
+
     private void WireModal(VisualElement root, VisualElement window)
     {
-        _modalRoot = root;
-        _grid = UI.Find(root, UiSelector.Name("gift-grid"));
-        _previewFill = UI.Find(root, UiSelector.Name("preview-fill"));
-        _previewTemp = UI.Find(root, UiSelector.Name("preview-temp"));
-        _levelCurrent = UI.Find(root, UiSelector.Name("level-current"))?.TryCast<Label>();
-        _levelNext = UI.Find(root, UiSelector.Name("level-next"))?.TryCast<Label>();
+        BindModalFields(root);
 
         // The confirm button is a TextButton built into the actions row, so it carries
         // the game's hover glow and click sound. Guarded so a re-injected modal adds it
@@ -198,18 +236,26 @@ public sealed class AffinitySystem : JiangyuSystem
             actions.Add(confirm.Root);
         }
 
-        // Dismiss on any outside click, the gift button aside (it toggles the flyout). The
-        // handler lands on the persistent panel root, so hook it once.
-        if (!_dismissHooked && root?.panel != null)
+        // Dismiss on any outside click (the gift button aside, since it toggles the flyout). Hooked
+        // per flyout so both the Armory and prep flyouts dismiss. Guarded against a re-injected flyout.
+        if (root != null && root.panel != null && !root.ClassListContains("wm-dismiss-hooked"))
         {
+            root.AddToClassList("wm-dismiss-hooked");
             UI.CloseOnOutsideClick(root, CloseModal, "gift-open");
-            _dismissHooked = true;
         }
         SetVisible(root, false);
     }
 
     private void OpenModal(VisualElement window)
     {
+        // Rebind to this window's own flyout (the gift button lives on multiple screens). WireModal
+        // toggles the injection's TemplateContainer wrapper, so bind to the flyout's parent. Showing
+        // the inner flyout alone leaves the wrapper hidden and nothing renders.
+        var flyout = UI.Find(window, UiSelector.Name("gift-flyout"));
+        var modal = flyout?.parent ?? flyout;
+        if (modal != null)
+            BindModalFields(modal);
+
         var key = OurLeaderKey(window);
         if (key == 0 || _modalRoot == null || _grid == null)
             return;
@@ -220,10 +266,11 @@ public sealed class AffinitySystem : JiangyuSystem
         BuildBoxes();
         UpdatePreview();
         SetVisible(_modalRoot, true);
+        _modalOpen = true;
     }
 
     // Temporary test scaffolding: top the player's inventory up to a few of each gift
-    // commodity when the bar button is pressed, so the picker always has stock to try.
+    // commodity when the picker is opened, so it always has stock to try.
     private void SeedGifts()
     {
         var owned = Owned();
@@ -243,7 +290,7 @@ public sealed class AffinitySystem : JiangyuSystem
     }
 
     // Fill the grid with one ItemTile per owned gift type. The component renders the native
-    // loot slot, the game's hover glow, the selected border and the chosen-count badge; the
+    // loot slot, the game's hover glow, the selected border and the chosen-count badge. The
     // WOMENACE classes restyle its tile and badge.
     private void BuildBoxes()
     {
@@ -284,7 +331,7 @@ public sealed class AffinitySystem : JiangyuSystem
     }
 
     // Adjust a box's chosen count, clamped to [0, owned]. Left-click adds one (stopping
-    // at the owned max, so clicking a maxed stack no longer unselects it); right-click
+    // at the owned max, so clicking a maxed stack no longer unselects it). Right-click
     // removes one (stopping at none).
     private void AdjustBox(Box box, int delta)
     {
@@ -310,7 +357,7 @@ public sealed class AffinitySystem : JiangyuSystem
 
     // Frame the bar on the level the selected gifts would land the leader in, so the
     // preview shows how far into that level the points reach. The darker temp fill is the
-    // projected total; the bright fill is where they sit now (it reads empty once the
+    // projected total. The bright fill is where they sit now (it reads empty once the
     // gifts carry them past the current level into a higher one).
     private void UpdatePreview()
     {
@@ -322,14 +369,12 @@ public sealed class AffinitySystem : JiangyuSystem
         var level = LevelForPoints(projected);
 
         // Numbers flanking the bar: the level now, and the level the gifts would reach.
-        if (_levelCurrent != null)
-            _levelCurrent.text = LevelForPoints(_baseAffinity).ToString("00");
-        if (_levelNext != null)
-            _levelNext.text = level.ToString("00");
+        _levelCurrent?.text = LevelForPoints(_baseAffinity).ToString("00");
+        _levelNext?.text = level.ToString("00");
 
         // Frame the bar on the projected level so the fill reads as how far into that
         // level the points land. The bright fill is where they are now (empty once the
-        // gifts carry them up into this higher level); the temp fill is the projection.
+        // gifts carry them up into this higher level). The temp fill is the projection.
         if (level >= MaxLevel)
         {
             SetWidth(_previewFill, 100);
@@ -367,10 +412,11 @@ public sealed class AffinitySystem : JiangyuSystem
 
     private void CloseModal()
     {
+        _modalOpen = false;
         _chosen.Clear();
-        if (_grid != null)
-            _grid.Clear();
+        _grid?.Clear();
         _boxes.Clear();
+
         if (_modalRoot != null)
             SetVisible(_modalRoot, false);
     }
@@ -452,7 +498,6 @@ public sealed class AffinitySystem : JiangyuSystem
         catch { return null; }
     }
 
-    // The displayed leader's template guid when it is a WOMENACE squad leader, else 0.
     private int OurLeaderKey(VisualElement window)
     {
         try
@@ -466,8 +511,12 @@ public sealed class AffinitySystem : JiangyuSystem
             if (string.IsNullOrEmpty(tags) || !tags.Contains(OurTag))
                 return 0;
 
-            var template = leader.LeaderTemplate;
-            return template.IsAlive() ? template.GetGuid() : 0;
+            // Key by the speaker's tags (the character), not the leader template, so affinity is
+            // shared across a character's forms (Voymastina's squad-leader and pilot share one
+            // speaker, so identical tags) and stable across saves. 0 is reserved for "not ours", so a
+            // tags string that happens to hash to 0 is nudged to a non-zero key.
+            var key = StableHash(tags);
+            return key == 0 ? 1 : key;
         }
         catch (Exception ex)
         {
@@ -482,12 +531,6 @@ public sealed class AffinitySystem : JiangyuSystem
         catch { }
     }
 
-    private static bool IsVisible(VisualElement element)
-    {
-        try { return element.resolvedStyle.display == DisplayStyle.Flex; }
-        catch { return false; }
-    }
-
     private static void SetWidth(VisualElement element, int percent)
     {
         if (element == null)
@@ -496,10 +539,6 @@ public sealed class AffinitySystem : JiangyuSystem
         catch { }
     }
 
-    // The mod's persisted state: per-leader affinity keyed by the leader's template
-    // guid, a record per leader rather than a bare value so the feature can carry more
-    // than affinity later without reshaping the save. Survives a strategy save and
-    // reload through Context.State.
     public sealed class AffinityState
     {
         public Dictionary<int, LeaderState> Leaders { get; set; } = [];
@@ -514,8 +553,6 @@ public sealed class AffinitySystem : JiangyuSystem
 
     public sealed class LeaderState
     {
-        // Accumulated affinity points. The displayed level is derived from this through
-        // the level curve, never stored, so the curve can be retuned freely.
         public int Affinity { get; set; }
     }
 }

@@ -16,6 +16,7 @@ clone "WeaponTemplate" from="weapon.generic_smg_tier1_ppp_sof" id="weapon.leva_u
     set "IconSkillBar" asset="weapon/ump45/IconSkillBar"
     set "IconSkillBarDisabled" asset="weapon/ump45/IconSkillBarDisabled"
     append "OnlyEquipableBy" "wmgfl_leva"
+    set "BlackMarketMaxQuantity" 0
 }
 
 clone "SkillTemplate" from="active.fire_smg_tier_1_SOF_suppressed" id="active.fire_leva_ump45" {

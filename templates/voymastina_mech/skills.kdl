@@ -1,0 +1,90 @@
+clone "SkillTemplate" from="active.fire_assault_rifle_tier1_762" id="active.voymastina_mech_gun" {
+    set "Title" {
+        set "m_DefaultTranslation" "Dread Ultimatum"
+    }
+
+    set "ActionPointCost" 5
+
+    set "MuzzleType" enum="MuzzleType" "Muzzle"
+    set "IsWeaponSetupRequired" #false
+    set "AnimationType" enum="AnimationType" "ShootSingle"
+    set "KeyBind" enum="KeyBindPlayerSetting" "SelectItemSkill1"
+    set "Order" enum="SkillOrder" "OffensiveTargeted"
+
+    set "Repetitions" 3
+    set "RepetitionDelay" 0.1
+    set "DelayAfterAnimationTrigger" 1.35
+
+    set "IsSoundOnAttackPerElementPlayingAfterAnimationDelay" #true
+    set "IsSoundOnAttackPerElementFarPlayingAfterAnimationDelay" #true
+
+    clear "SoundsOnAttack"
+    clear "SoundsOnAttackFar"
+    clear "SoundsOnAttackPerElement"
+
+    append "SoundsOnAttackPerElement" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_burst"
+    }
+    append "SoundsOnAttackPerElement" {
+        set "bankId" "weapons_soundbank"
+        set "itemId" "small_caliber_brass_burst"
+    }
+    clear "SoundsOnAttackPerElementFar"
+    append "SoundsOnAttackPerElementFar" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_burst_distant"
+    }
+}
+
+clone "SkillTemplate" from="active.launch_construct_rocket" id="active.voymastina_mech_rocket" {
+    set "Title" {
+        set "m_DefaultTranslation" "Sirius Fall"
+    }
+
+    set "ActionPointCost" 20
+
+    set "MuzzleType" enum="MuzzleType" "Muzzle2"
+    set "AnimationType" enum="AnimationType" "SpecialAttack1"
+    set "KeyBind" enum="KeyBindPlayerSetting" "SelectItemSkill2"
+    set "Order" enum="SkillOrder" "OffensiveSpecial"
+
+    set "DelayAfterAnimationTrigger" 1.333
+}
+
+clone "SkillTemplate" from="active.wetteroth_thats_a_knife" id="active.voymastina_mech_drill" {
+    set "Title" {
+        set "m_DefaultTranslation" "Pile Bunker"
+    }
+
+    set "ActionPointCost" 20
+
+    set "MuzzleType" enum="MuzzleType" "Muzzle3"
+    set "AnimationType" enum="AnimationType" "SpecialAttack2"
+    set "KeyBind" enum="KeyBindPlayerSetting" "SelectItemSkill3"
+    set "Order" enum="SkillOrder" "OffensiveSpecial2"
+
+    set "DelayAfterAnimationTrigger" 4.2
+
+    set "IsOverridingRanges" #true
+    set "MinRange" 1
+    set "IdealRange" 1
+    set "MaxRange" 6
+
+    set "EventHandlers" index=0 {
+        set "Damage" 80.0
+        set "ArmorPenetration" 60.0
+    }
+
+    clear "SoundsOnUse"
+    clear "SoundsOnHit"
+
+    append "SoundsOnUse" {
+        set "bankId" "wmgfl_voymastina_mech_sfx"
+        set "itemId" "UltraSkill_Satk"
+    }
+    append "SoundsOnHit" {
+        set "bankId" "wmgfl_voymastina_mech_sfx"
+        set "itemId" "UltraSkill_Cast"
+    }
+}

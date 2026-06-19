@@ -1,0 +1,17 @@
+clone "ElementAnimatorTemplate" from="animator.construct_soldier" id="animator.voymastina_mech" {
+    set "DeathBehaviour" enum="AnimatorDeathBehaviour" "DeathAnimations"
+}
+
+clone "EntityTemplate" from="enemy.construct_soldier_tier1" id="construct.voymastina_mech" {
+    set "ElementsMin" 1
+    set "ElementsMax" 1
+    set "Prefabs" index=0 asset="voymastina_mech/default/main"
+    set "AnimatorTemplate" "animator.voymastina_mech"
+}
+
+clone "EntityTemplate" from="enemy.construct_soldier_tier1" id="construct.voymastina_mech_erwin" {
+    set "ElementsMin" 1
+    set "ElementsMax" 1
+    set "Prefabs" index=0 asset="voymastina_mech/erwin/main"
+    set "AnimatorTemplate" "animator.voymastina_mech"
+}

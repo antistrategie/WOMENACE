@@ -66,20 +66,25 @@ clone "UnitLeaderTemplate" from="squad_leader.carda" id="squad_leader.cheyanne" 
     set "InitialAttributes" index=4 100
     set "InitialAttributes" index=5 10
     set "InitialAttributes" index=6 50
+
     set "QualityLevel" 5
     set "GrowthPotential" 5
     set "FixedSupplyCost" 60
     set "SquaddieTax" 60
     set "Rarity" 5
+
     set "InitialPerk" "perk.lucky_shot"
     set "PerkTrees" index=0 "perk_tree.cheyanne"
+
     set "Slot" asset="cheyanne/slot"
     set "SlotInactive" asset="cheyanne/slot_inactive"
     set "SlotBadge" asset="cheyanne/slot_badge"
+
     set "BadgeDragged" asset="cheyanne/badge_dragged"
     set "BigBadge" asset="cheyanne/big_badge"
     set "BadgeUnitWindow" asset="cheyanne/badge_unit_window"
     set "BadgeMini" asset="cheyanne/badge_mini"
+
     set "HiringSelectBarkSound" {
         set "bankId" "wmgfl_tactical_barks_cheyanne_va"
         set "itemId" "Series_Chosen_Series_Tone_Positive_006"
@@ -88,6 +93,7 @@ clone "UnitLeaderTemplate" from="squad_leader.carda" id="squad_leader.cheyanne" 
         set "bankId" "wmgfl_tactical_barks_cheyanne_va"
         set "itemId" "Series_Chosen_Auto_Series_Tone_Positive_007"
     }
+
     set "PromotionBarkSounds" index=0 {
         set "PerkTier" 1
         set "Sound" {
@@ -114,6 +120,100 @@ clone "UnitLeaderTemplate" from="squad_leader.carda" id="squad_leader.cheyanne" 
         set "Sound" {
             set "bankId" "wmgfl_tactical_barks_cheyanne_va"
             set "itemId" "Series_Up_005"
+        }
+    }
+
+    clear "EmotionalStateResponses"
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Eager"
+        set "Text" {
+            set "m_DefaultTranslation" "I have one request. If possible, please don't be so quick to praise me. My chassis will overheat."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_cheyanne_va"
+            set "itemId" "Single_Friendliness_004"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Determined"
+        set "Text" {
+            set "m_DefaultTranslation" "Leave weapons maintenance to me."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_cheyanne_va"
+            set "itemId" "Single_Friendliness_001"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Overconfident"
+        set "Text" {
+            set "m_DefaultTranslation" "Commander, did you notice? I tended the Elmo's plants. I've been getting into gardening lately, it's surprisingly fun."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_cheyanne_va"
+            set "itemId" "Series_Daily_004"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Euphoric"
+        set "Text" {
+            set "m_DefaultTranslation" "Lately I've been a little weird. When you praise me, my frame overheats, and yet I still want more praise. That's strange, isn't it?"
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_cheyanne_va"
+            set "itemId" "Single_Friendliness_008"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Hesitant"
+        set "Text" {
+            set "m_DefaultTranslation" "My marksmanship isn't getting better or worse... Maybe I should step up my training if I'm going to catch up to the Commander."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_cheyanne_va"
+            set "itemId" "Series_Daily_002"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Frustrated"
+        set "Text" {
+            set "m_DefaultTranslation" "I let my guard down."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_cheyanne_va"
+            set "itemId" "Series_Shield_Broken_Series_Tone_Negative_003"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Disheartened"
+        set "Text" {
+            set "m_DefaultTranslation" "Please give me another chance."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_cheyanne_va"
+            set "itemId" "Series_Lose_Single_Lose_001"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Miserable"
+        set "Text" {
+            set "m_DefaultTranslation" "Sorry."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_cheyanne_va"
+            set "itemId" "Series_Die_Series_Tone_Negative_001"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "GoodwillTowards"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "AnimosityTowards"
+        set "Text" {
+            set "m_DefaultTranslation" ""
         }
     }
 }

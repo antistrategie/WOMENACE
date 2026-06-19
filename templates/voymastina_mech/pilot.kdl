@@ -1,0 +1,153 @@
+clone "UnitLeaderTemplate" from="pilot.rewa" id="pilot.voymastina_mech" {
+    set "InitialVehicleItem" "vehicle.voymastina_mech"
+    set "SpeakerTemplate" "wmgfl_voymastina_speaker"
+    set "CustomHead" #null
+    set "UnitTitle" {
+        set "m_DefaultTranslation" "Task Force DEFY"
+    }
+    set "UnitDescription" {
+        set "m_DefaultTranslation" """
+            No matter how difficult her mission is, Voymastina will always come up with a way to complete it. In her team, she is the sharpest blade, the strongest shield, and the most reliable linchpin of any plan that involves her. At times, you will be grateful that she's not on the opposing side.
+            "Tactics, efficiency, experience... each of them is essential to being the strongest Doll of them all."
+            """
+    }
+
+    set "Slot" asset="voymastina/slot"
+    set "SlotInactive" asset="voymastina/slot_inactive"
+    set "SlotBadge" asset="voymastina/slot_badge"
+
+    set "BadgeDragged" asset="voymastina/badge_dragged"
+    set "BigBadge" asset="voymastina/big_badge"
+    set "BadgeUnitWindow" asset="voymastina/badge_unit_window"
+    set "BadgeMini" asset="voymastina/badge_mini"
+    set "Badge" asset="voymastina/badge_mini"
+    set "BadgeWhite" asset="voymastina/badge_mini"
+
+    set "HiringSelectBarkSound" {
+        set "bankId" "wmgfl_tactical_barks_voymastina_va"
+        set "itemId" "Series_Chosen_Series_Tone_Positive_006"
+    }
+    set "HiredBarkSound" {
+        set "bankId" "wmgfl_tactical_barks_voymastina_va"
+        set "itemId" "Series_Chosen_Auto_Series_Tone_Positive_007"
+    }
+
+    set "PromotionBarkSounds" index=0 {
+        set "PerkTier" 1
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_voymastina_va"
+            set "itemId" "Series_Up_002"
+        }
+    }
+    set "PromotionBarkSounds" index=1 {
+        set "PerkTier" 2
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_voymastina_va"
+            set "itemId" "Series_Up_003"
+        }
+    }
+    set "PromotionBarkSounds" index=2 {
+        set "PerkTier" 3
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_voymastina_va"
+            set "itemId" "Series_Up_004"
+        }
+    }
+    set "PromotionBarkSounds" index=3 {
+        set "PerkTier" 4
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_voymastina_va"
+            set "itemId" "Series_Up_005"
+        }
+    }
+
+    clear "EmotionalStateResponses"
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Eager"
+        set "Text" {
+            set "m_DefaultTranslation" "I would never question your decisions. But when it comes to execution, let me handle the plan's details."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_voymastina_va"
+            set "itemId" "Single_Friendliness_002"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Determined"
+        set "Text" {
+            set "m_DefaultTranslation" "I've analysed the test data from the last few runs. Please review it when you have a moment."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_voymastina_va"
+            set "itemId" "Single_Friendliness_001"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Overconfident"
+        set "Text" {
+            set "m_DefaultTranslation" "Let's clear every obstacle in our way."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_voymastina_va"
+            set "itemId" "Series_Up_005"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Euphoric"
+        set "Text" {
+            set "m_DefaultTranslation" "Today's a special day. Any requests? Even if you wanted to sabotage training, I'll look the other way, just for today."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_voymastina_va"
+            set "itemId" "Single_Birthday_SSR_001"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Hesitant"
+        set "Text" {
+            set "m_DefaultTranslation" "Performance alone isn't nearly enough."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_voymastina_va"
+            set "itemId" "Series_Up_003"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Frustrated"
+        set "Text" {
+            set "m_DefaultTranslation" "Tch."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_voymastina_va"
+            set "itemId" "Series_Attack_Series_Tone_Positive_003"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Disheartened"
+        set "Text" {
+            set "m_DefaultTranslation" "I take full responsibility."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_voymastina_va"
+            set "itemId" "Series_Lose_Single_Lose_001"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Miserable"
+        set "Text" {
+            set "m_DefaultTranslation" "..."
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "GoodwillTowards"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "AnimosityTowards"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+}

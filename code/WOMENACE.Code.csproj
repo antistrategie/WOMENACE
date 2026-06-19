@@ -4,4 +4,11 @@
     <AssemblyName>WOMENACE.Code</AssemblyName>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Reference Include="UnityEngine.AnimationModule">
+      <HintPath>$(GameAssembliesDir)/UnityEngine.AnimationModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
 </Project>

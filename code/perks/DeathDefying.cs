@@ -1,4 +1,3 @@
-using System;
 using Il2CppMenace.Tactical;
 using Il2CppMenace.Tactical.Skills;
 using Il2CppMenace.Tactical.Skills.Effects;
@@ -169,7 +168,6 @@ public sealed partial class DeathDefyingHandler : SkillEventHandler
     // Drive the status icon's number badge with the turns left.
     private void SetStackCount(int n)
     {
-        if (_statusSkill != null)
-            _statusSkill.StackCount = n;
+        _statusSkill?.StackCount = n;
     }
 }

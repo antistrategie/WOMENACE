@@ -53,7 +53,11 @@ namespace Jiangyu.Mod
 
             var assigned =
                 AssignBundleNames("t:Prefab", "Assets/Prefabs", ".prefab") +
-                AssignBundleNames("t:VisualTreeAsset", "Assets/UI", ".uxml");
+                AssignBundleNames("t:VisualTreeAsset", "Assets/UI", ".uxml") +
+                // Textures under Assets/UI/Icons get their own bundle, loadable by name via
+                // Context.Assets.Load. Textures elsewhere under Assets/UI stay as UXML/USS
+                // dependencies of their owning UXML.
+                AssignBundleNames("t:Texture2D", "Assets/UI/Icons", ".png");
             if (assigned == 0)
             {
                 Debug.LogWarning("Jiangyu BuildBundles: no prefabs under Assets/Prefabs/ or UXML under Assets/UI/. Nothing to build.");
