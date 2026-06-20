@@ -82,7 +82,7 @@ public sealed class VoymastinaFormSwapSystem : JiangyuSystem
 
     private VisualElement BuildSwapButton(VisualElement window)
     {
-        var button = new TextButton("SWAP FORM");
+        var button = new TextButton(Locale.Text("WOMENACE::ui/swap_form", "SWAP FORM"));
         button.Root.name = "voymastina-formswap";
         button.Root.style.marginRight = new StyleLength(8f);
         button.OnClick(() => DoSwap(window));
@@ -103,7 +103,9 @@ public sealed class VoymastinaFormSwapSystem : JiangyuSystem
             return;
 
         var label = UI.Find(button, UiSelector.TypeName("Label"))?.TryCast<Label>();
-        label?.text = id == MechTemplateId ? "DEPLOY ON FOOT" : "DEPLOY SINBREAKER";
+        label?.text = id == MechTemplateId
+            ? Locale.Text("WOMENACE::ui/deploy_on_foot", "DEPLOY ON FOOT")
+            : Locale.Text("WOMENACE::ui/deploy_sinbreaker", "DEPLOY SINBREAKER");
     }
 
     private void DoSwap(VisualElement window)

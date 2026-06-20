@@ -229,7 +229,7 @@ public sealed class AffinitySystem : JiangyuSystem
         var actions = UI.Find(root, UiSelector.Name("gift-actions"));
         if (actions != null && UI.Find(actions, UiSelector.Name("gift-confirm")) == null)
         {
-            var confirm = new TextButton("Give");
+            var confirm = new TextButton(Locale.Text("WOMENACE::ui/give", "Give"));
             confirm.Root.name = "gift-confirm";
             confirm.Root.AddToClassList("wm-gift-btn");
             confirm.OnClick(ConfirmGifts);
