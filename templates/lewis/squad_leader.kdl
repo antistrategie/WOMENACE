@@ -1,0 +1,213 @@
+clone "TagTemplate" from="unique" id="wmgfl_lewis"
+
+clone "SpeakerTemplate" from="carda" id="wmgfl_lewis_speaker" {
+    set "Tags" "wmgfl_lewis female infantry waybacker"
+    set "Nickname" {
+        set "m_DefaultTranslation" "Lewis"
+    }
+    set "Forename" {
+        set "m_DefaultTranslation" "Lewis"
+    }
+    set "Surname" {
+        set "m_DefaultTranslation" ""
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            Name: Lewis (Lewis Gun)
+
+            Proficiency: Suppression & Area Denial
+
+            Birth: Unknown
+
+            Age: Classified
+
+            Affiliation(s): 42LAB
+            """
+    }
+
+    set "BarkImage" asset="lewis/bark"
+    set "StandLookLeftImage" asset="lewis/stand_look_left"
+    set "StandLookRightImage" asset="lewis/stand_look_right"
+    set "StandLookRightInactiveImage" asset="lewis/stand_look_right_inactive"
+}
+
+clone "EntityTemplate" from="player_squad.carda" id="player_squad.lewis" {
+    append "Tags" "wmgfl_lewis"
+    append "Tags" "armor_restricted"
+    set "Title" {
+        set "m_DefaultTranslation" "42LAB"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "An innocent and pure-hearted Tactical Doll who also works as a toy designer. Possessing great strength, she has an endless love for all things cute. Famous in the toy collecting world, Lewis doesn’t care for reputation or rewards—only for bringing joy to others and protecting the smiles of children when they hold toys. As a toy designer, she continues to design toys to pass on happiness into the future, and as a Tactical Doll, she wields her weapon to ensure that future arrives."
+    }
+
+    set "Badge" asset="lewis/badge_mini"
+    set "BadgeWhite" asset="lewis/badge_mini"
+    clear "Items"
+    append "Items" "armor.lewis_default"
+    append "Items" "weapon.lewis"
+}
+
+clone "UnitLeaderTemplate" from="squad_leader.carda" id="squad_leader.lewis" {
+    set "InfantryUnitTemplate" "player_squad.lewis"
+    set "SpeakerTemplate" "wmgfl_lewis_speaker"
+    set "CustomHead" #null
+    set "UnitTitle" {
+        set "m_DefaultTranslation" "Tactical Doll"
+    }
+    set "UnitDescription" {
+        set "m_DefaultTranslation" "An innocent and pure-hearted Tactical Doll who also works as a toy designer. Possessing great strength, she has an endless love for all things cute. Famous in the toy collecting world, Lewis doesn’t care for reputation or rewards—only for bringing joy to others and protecting the smiles of children when they hold toys. As a toy designer, she continues to design toys to pass on happiness into the future, and as a Tactical Doll, she wields her weapon to ensure that future arrives."
+    }
+
+    set "InitialAttributes" index=0 75
+    set "InitialAttributes" index=1 80
+    set "InitialAttributes" index=2 80
+    set "InitialAttributes" index=3 100
+    set "InitialAttributes" index=4 100
+    set "InitialAttributes" index=5 35
+    set "InitialAttributes" index=6 70
+
+    set "QualityLevel" 3
+    set "GrowthPotential" 5
+    set "FixedSupplyCost" 60
+    set "SquaddieTax" 60
+    set "Rarity" 5
+
+    set "InitialPerk" "perk.full_send"
+    set "PerkTrees" index=0 "perk_tree.lewis"
+
+    set "Slot" asset="lewis/slot"
+    set "SlotInactive" asset="lewis/slot_inactive"
+    set "SlotBadge" asset="lewis/slot_badge"
+
+    set "BadgeDragged" asset="lewis/badge_dragged"
+    set "BigBadge" asset="lewis/big_badge"
+    set "BadgeUnitWindow" asset="lewis/badge_unit_window"
+    set "BadgeMini" asset="lewis/badge_mini"
+
+    set "HiringSelectBarkSound" {
+        set "bankId" "wmgfl_tactical_barks_lewis_va"
+        set "itemId" "Series_Chosen_Series_Tone_Positive_006"
+    }
+    set "HiredBarkSound" {
+        set "bankId" "wmgfl_tactical_barks_lewis_va"
+        set "itemId" "Series_Chosen_Auto_Series_Tone_Positive_007"
+    }
+    set "PromotionBarkSounds" index=0 {
+        set "PerkTier" 1
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_lewis_va"
+            set "itemId" "Series_Up_002"
+        }
+    }
+    set "PromotionBarkSounds" index=1 {
+        set "PerkTier" 2
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_lewis_va"
+            set "itemId" "Series_Up_003"
+        }
+    }
+    set "PromotionBarkSounds" index=2 {
+        set "PerkTier" 3
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_lewis_va"
+            set "itemId" "Series_Up_004"
+        }
+    }
+    set "PromotionBarkSounds" index=3 {
+        set "PerkTier" 4
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_lewis_va"
+            set "itemId" "Series_Up_005"
+        }
+    }
+    clear "EmotionalStateResponses"
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Eager"
+        set "Text" {
+            set "m_DefaultTranslation" "Hehe, isn’t my latest creation cute? Since we’re at it, wanna play house with me?"
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_lewis_va"
+            set "itemId" "Single_Friendliness_004"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Determined"
+        set "Text" {
+            set "m_DefaultTranslation" "I made plushies for everyone. Cute, right? I even put a Dinergate on Robella’s, but she didn’t seem to like it."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_lewis_va"
+            set "itemId" "Single_Friendliness_001"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Overconfident"
+        set "Text" {
+            set "m_DefaultTranslation" "I won’t lose a contest of strength. Wanna arm-wrestle me?"
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_lewis_va"
+            set "itemId" "Series_Daily_002"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Euphoric"
+        set "Text" {
+            set "m_DefaultTranslation" "Commander, I brought back a bunch of coffee mooncakes. They’re all colorful and cute, right?"
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_lewis_va"
+            set "itemId" "Single_MidAutumn_001"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Hesitant"
+        set "Text" {
+            set "m_DefaultTranslation" "Leave the paperwork to me. Wait, the file I organized yesterday is gone."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_lewis_va"
+            set "itemId" "Series_Daily_001"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Frustrated"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Disheartened"
+        set "Text" {
+            set "m_DefaultTranslation" "Nothing but nasty enemies."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_lewis_va"
+            set "itemId" "Series_Lose_Single_Lose_001"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Miserable"
+        set "Text" {
+            set "m_DefaultTranslation" "The toy’s busted."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_lewis_va"
+            set "itemId" "Series_Die_Series_Tone_Negative_001"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "GoodwillTowards"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "AnimosityTowards"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+}

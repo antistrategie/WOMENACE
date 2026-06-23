@@ -6,6 +6,7 @@ patch "StrategyConfig" "strategy_config" {
     append "InitialPickableUnitLeaders" "squad_leader.voymastina"
     append "InitialPickableUnitLeaders" "squad_leader.cheyanne"
     append "InitialPickableUnitLeaders" "squad_leader.leva"
+    append "InitialPickableUnitLeaders" "squad_leader.lewis"
 
     append "InitialAdditionalUnlockedItems" "vehicle.voymastina_mech_erwin"
 }
@@ -14,6 +15,7 @@ patch "DossierItemTemplate" "dossier.squad_leader" {
     append "m_UnlockedLeaders" "squad_leader.voymastina"
     append "m_UnlockedLeaders" "squad_leader.cheyanne"
     append "m_UnlockedLeaders" "squad_leader.leva"
+    append "m_UnlockedLeaders" "squad_leader.lewis"
 }
 
 //   patch "DossierItemTemplate" "dossier.pilot" {

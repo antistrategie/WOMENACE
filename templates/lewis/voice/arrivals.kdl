@@ -1,0 +1,34 @@
+clone "ConversationTemplate" from="Carda_Early/arrival_carda" id="Lewis/arrival_lewis" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_lewis"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_lewis_va"
+                        set "itemId" "Series_Battle_Start_Series_Tone_Positive_002"
+                    }
+                    set "RoleGuid" "Carda"
+                    set "Text" "I’ll take out the bad guys."
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_lewis_va"
+                        set "itemId" "Lobby_Welcome_Single_Login_001"
+                    }
+                    set "RoleGuid" "Carda"
+                    set "Text" "Let's try out our new toy today."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}

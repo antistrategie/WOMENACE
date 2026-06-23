@@ -1,0 +1,24 @@
+clone "ConversationTemplate" from="Carda_Early/response_taking_fire_anyone" id="Lewis/response_taking_fire_anyone" {
+    set "Active" #true
+    set "Roles" index=2 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_lewis"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_lewis_va"
+                        set "itemId" "Series_Shield_Broken_Series_Tone_Negative_003"
+                    }
+                    set "RoleGuid" "SL"
+                    set "Text" "Ah!"
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}

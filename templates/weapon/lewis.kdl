@@ -1,0 +1,63 @@
+clone "WeaponTemplate" from="specialweapon.light_machinegun_tier1_m10E" id="weapon.lewis" {
+    set "Title" {
+        set "m_DefaultTranslation" "Lewis Machine Gun"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Light Machine Gun"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "A firearm highly compatible with Lewis. Modified based on her combat preferences. Its brand new cooling system has solved the problem of overheating during extended periods of firing."
+    }
+
+    set "Model" asset="weapon/lewis/main"
+    set "VisualAlterationSlot" enum="VisualAlterationSlot" "Hand_R"
+    set "ModelSecondary" #null
+    set "VisualAlterationSlotSecondary" enum="VisualAlterationSlot" "EntireModel"
+
+    set "SlotType" enum="ItemSlot" "InfantryWeapon"
+
+    set "SkillsGranted" index=0 "active.fire_lewis_direct"
+    append "SkillsGranted" "active.fire_lewis"
+
+    set "IconEquipment" asset="weapon/lewis/IconEquipment"
+    set "IconEquipmentDisabled" asset="weapon/lewis/IconEquipmentDisabled"
+    set "IconSkillBar" asset="weapon/lewis/IconSkillBar"
+    set "IconSkillBarDisabled" asset="weapon/lewis/IconSkillBarDisabled"
+
+    append "OnlyEquipableBy" "wmgfl_lewis"
+    set "BlackMarketMaxQuantity" 0
+}
+
+clone "SkillTemplate" from="active.light_mg_suppressive_fire" id="active.fire_lewis" {
+    clear "SoundsOnAttackPerElement"
+    append "SoundsOnAttackPerElement" {
+        set "bankId" "wmgfl_weapons_mg_addition_bank"
+        set "itemId" "mg_burst"
+    }
+    append "SoundsOnAttackPerElement" {
+        set "bankId" "wmgfl_weapons_mg_addition_bank"
+        set "itemId" "mg_burst_distant"
+    }
+    clear "SoundsOnAttackPerElementFar"
+    append "SoundsOnAttackPerElementFar" {
+        set "bankId" "wmgfl_weapons_mg_addition_bank"
+        set "itemId" "mg_burst_distant"
+    }
+}
+
+clone "SkillTemplate" from="active.fire_assault_rifle_sustained_fire_tier1_762" id="active.fire_lewis_direct" {
+    clear "SoundsOnAttack"
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_mg_addition_bank"
+        set "itemId" "mg_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_mg_addition_bank"
+        set "itemId" "mg_burst_distant"
+    }
+    clear "SoundsOnAttackFar"
+    append "SoundsOnAttackFar" {
+        set "bankId" "wmgfl_weapons_mg_addition_bank"
+        set "itemId" "mg_burst_distant"
+    }
+}

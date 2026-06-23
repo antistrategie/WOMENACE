@@ -1,0 +1,20 @@
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.lewis_default" {
+    set "Title" {
+        set "m_DefaultTranslation" "Ruby Protector"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Field Outfit"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Lewis's usual outfit. Modelled after her neural projection on Magrasea, it combines comfort and familiarity while also inheriting her dreams and beliefs."
+    }
+    set "Icon" asset="lewis/armor/default/Icon"
+    set "IconEquipment" asset="lewis/armor/default/IconEquipment"
+    set "IconSkillBar" asset="lewis/armor/default/IconSkillBar"
+    clear "MaleModels"
+    append "MaleModels" asset="lewis/default/main"
+    clear "FemaleModels"
+    append "FemaleModels" asset="lewis/default/main"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_lewis"
+}

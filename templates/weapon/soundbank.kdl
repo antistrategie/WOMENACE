@@ -168,3 +168,104 @@ clone "SoundBank" from="weapons_soundbank" id="wmgfl_weapons_smg_addition_bank" 
     }
     append "busIndices" 0
 }
+
+clone "SoundBank" from="weapons_soundbank" id="wmgfl_weapons_mg_addition_bank" {
+    clear "sounds"
+    clear "busIndices"
+
+    append "sounds" {
+        set "name" "mg_burst"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="weapons/mg/mg_burst_01"
+        }
+        append "variations" {
+            set "clip" asset="weapons/mg/mg_burst_02"
+        }
+        append "variations" {
+            set "clip" asset="weapons/mg/mg_burst_03"
+        }
+        append "variations" {
+            set "clip" asset="weapons/mg/mg_burst_04"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "mg_burst_distant"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="weapons/mg/mg_burst_distant_01"
+        }
+        append "variations" {
+            set "clip" asset="weapons/mg/mg_burst_distant_02"
+        }
+        append "variations" {
+            set "clip" asset="weapons/mg/mg_burst_distant_03"
+        }
+        append "variations" {
+            set "clip" asset="weapons/mg/mg_burst_distant_04"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "mg_shot"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="weapons/mg/mg_shot_01"
+        }
+        append "variations" {
+            set "clip" asset="weapons/mg/mg_shot_02"
+        }
+        append "variations" {
+            set "clip" asset="weapons/mg/mg_shot_03"
+        }
+        append "variations" {
+            set "clip" asset="weapons/mg/mg_shot_04"
+        }
+        append "variations" {
+            set "clip" asset="weapons/mg/mg_shot_05"
+        }
+        append "variations" {
+            set "clip" asset="weapons/mg/mg_shot_06"
+        }
+        append "variations" {
+            set "clip" asset="weapons/mg/mg_shot_07"
+        }
+        append "variations" {
+            set "clip" asset="weapons/mg/mg_shot_08"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "mg_shot_distant"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="weapons/mg/mg_shot_distant_01"
+        }
+        append "variations" {
+            set "clip" asset="weapons/mg/mg_shot_distant_02"
+        }
+        append "variations" {
+            set "clip" asset="weapons/mg/mg_shot_distant_03"
+        }
+        append "variations" {
+            set "clip" asset="weapons/mg/mg_shot_distant_04"
+        }
+        append "variations" {
+            set "clip" asset="weapons/mg/mg_shot_distant_05"
+        }
+        append "variations" {
+            set "clip" asset="weapons/mg/mg_shot_distant_06"
+        }
+        append "variations" {
+            set "clip" asset="weapons/mg/mg_shot_distant_07"
+        }
+        append "variations" {
+            set "clip" asset="weapons/mg/mg_shot_distant_08"
+        }
+    }
+    append "busIndices" 0
+}

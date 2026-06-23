@@ -99,12 +99,31 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--config", required=True, help="Path to the transfer configuration JSON file."
     )
+    parser.add_argument(
+        "--stage",
+        choices=["full", "prep", "finish"],
+        default="full",
+        help=(
+            "full (default): run the whole pipeline in one process. "
+            "prep: run rig rename + T-pose + attachment grafting, then save a single "
+            "full-res LOD0 .blend (--blend) for manual weight painting. "
+            "finish: re-open the hand-edited --blend, decimate LOD1-N from the "
+            "corrected LOD0, and export the glTF."
+        ),
+    )
+    parser.add_argument(
+        "--blend",
+        help="Path to the handoff .blend file. Written by --stage prep, read by --stage finish.",
+    )
     argv = sys.argv
     if "--" in argv:
         argv = argv[argv.index("--") + 1 :]
     else:
         argv = []
-    return parser.parse_args(argv)
+    args = parser.parse_args(argv)
+    if args.stage in ("prep", "finish") and not args.blend:
+        parser.error(f"--stage {args.stage} requires --blend <path>")
+    return args
 
 
 # -----------------------------------------------------------------------------
@@ -1759,10 +1778,11 @@ def _compute_height_scale_against_reference(
     return reference.yspan_metres / pmx_body_height
 
 
-def main() -> None:
-    args = parse_args()
-    config = TransferConfig.load(Path(args.config).resolve())
-
+def prep_pmx(config: "TransferConfig") -> tuple:
+    """Stages 1-8: import, scale, rig rename, T-pose calibration, attachment
+    grafting and the optional hip-leg weight blend. Returns (armature, meshes)
+    with the source mesh(es) still un-conformed and un-decimated, ready either
+    for LOD generation (full) or for a manual weight-painting handoff (prep)."""
     print(f"[info] loading reference armature: {config.reference_prefab_path}")
     reference = parse_reference_armature(config.reference_prefab_path)
     print(
@@ -1843,6 +1863,13 @@ def main() -> None:
             )
         print(f"[info] blended {total_blended} vert(s)")
 
+    return pmx_armature, pmx_meshes
+
+
+def finish_pmx(config: "TransferConfig", pmx_armature, pmx_meshes) -> None:
+    """Stages 9-11: conform LOD names, decimate LOD1-N, purge, export glTF.
+    Decimation runs on copies of LOD0, so any hand-painted weights on LOD0
+    (the full-res mesh) propagate down to the lower LODs automatically."""
     print("[info] conforming mesh names to LOD naming convention")
     lod_names = [
         f"{config.lod_mesh_basename}_LOD{i}"
@@ -1863,6 +1890,74 @@ def main() -> None:
 
     print("[done] addition prefab source written to:", config.output_path)
 
+
+def recover_handoff_scene(config: "TransferConfig", blend_path: Path) -> tuple:
+    """Re-open a --stage prep .blend and recover (armature, [LOD0 mesh]) for the
+    finish stage. Prefers the mesh named '<basename>_LOD0'; falls back to the
+    deform mesh bound to the armature with the most vertices."""
+    if not blend_path.exists():
+        raise FileNotFoundError(f"handoff .blend not found: {blend_path}")
+    bpy.ops.wm.open_mainfile(filepath=str(blend_path))
+    armatures = [o for o in bpy.data.objects if o.type == "ARMATURE"]
+    if not armatures:
+        raise RuntimeError(f"{blend_path} contains no armature.")
+    armature = armatures[0]
+    lod0_name = f"{config.lod_mesh_basename}_LOD0"
+    meshes = [o for o in bpy.data.objects if o.type == "MESH"]
+    chosen = [o for o in meshes if o.name == lod0_name]
+    if not chosen:
+        bound = [
+            o for o in meshes
+            if any(m.type == "ARMATURE" and m.object == armature for m in o.modifiers)
+        ] or meshes
+        bound.sort(key=lambda o: len(o.data.vertices), reverse=True)
+        chosen = bound[:1]
+        if chosen:
+            print(f"[warn] no mesh named '{lod0_name}', using '{chosen[0].name}'")
+    if not chosen:
+        raise RuntimeError(f"{blend_path} contains no usable mesh.")
+    return armature, chosen
+
+
+def main() -> None:
+    args = parse_args()
+    config = TransferConfig.load(Path(args.config).resolve())
+
+    if args.stage == "finish":
+        armature, meshes = recover_handoff_scene(config, Path(args.blend).resolve())
+        finish_pmx(config, armature, meshes)
+        return
+
+    armature, meshes = prep_pmx(config)
+
+    if args.stage == "prep":
+        # Drop mmd_tools' rigid-body / joint helper objects so the handoff
+        # scene is just the armature + the character mesh, clean to paint.
+        # The data API removes regardless of selectability — mmd_tools parks
+        # its rigid bodies in a hidden collection that bpy.ops.object.delete
+        # (used by purge_non_authored_scene) silently skips.
+        keep = {armature.name, *(m.name for m in meshes)}
+        for obj in [o for o in bpy.data.objects if o.name not in keep]:
+            bpy.data.objects.remove(obj, do_unlink=True)
+        for block in (bpy.data.meshes, bpy.data.materials, bpy.data.images, bpy.data.armatures):
+            for datum in list(block):
+                if datum.users == 0:
+                    block.remove(datum)
+        print(f"[info] handoff scene reduced to {len(bpy.data.objects)} object(s)")
+        # Name the single full-res mesh LOD0 so the finish stage can find it,
+        # then hand the bound, T-posed scene off for manual weight painting.
+        if len(meshes) == 1:
+            lod0_name = f"{config.lod_mesh_basename}_LOD0"
+            meshes[0].name = lod0_name
+            meshes[0].data.name = lod0_name
+        blend_path = Path(args.blend).resolve()
+        blend_path.parent.mkdir(parents=True, exist_ok=True)
+        bpy.ops.wm.save_as_mainfile(filepath=str(blend_path))
+        print(f"[done] handoff scene written to: {blend_path}")
+        print("[next] weight-paint LOD0, save, then re-run with --stage finish")
+        return
+
+    finish_pmx(config, armature, meshes)
 
 
 if __name__ == "__main__":
