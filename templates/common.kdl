@@ -11,7 +11,19 @@ patch "StrategyConfig" "strategy_config" {
     append "InitialPickableUnitLeaders" "squad_leader.cheyanne"
     append "InitialPickableUnitLeaders" "squad_leader.leva"
     append "InitialPickableUnitLeaders" "squad_leader.lewis"
+}
 
+patch "GlobalDifficultyTemplate" "global_difficulty.normal" {
+    append "InitialAdditionalUnlockedItems" "vehicle.voymastina_mech"
+    append "InitialAdditionalUnlockedItems" "vehicle.voymastina_mech_erwin"
+}
+
+patch "GlobalDifficultyTemplate" "global_difficulty.challenging" {
+    append "InitialAdditionalUnlockedItems" "vehicle.voymastina_mech"
+    append "InitialAdditionalUnlockedItems" "vehicle.voymastina_mech_erwin"
+}
+
+patch "GlobalDifficultyTemplate" "global_difficulty.expert" {
     append "InitialAdditionalUnlockedItems" "vehicle.voymastina_mech"
     append "InitialAdditionalUnlockedItems" "vehicle.voymastina_mech_erwin"
 }

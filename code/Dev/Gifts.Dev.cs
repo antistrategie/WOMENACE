@@ -25,7 +25,7 @@ public static class Gifts
             kinds++;
             for (var k = 0; k < count; k++)
             {
-                owned.AddItem(gift, false);
+                owned.AddItem(gift, false, false);
                 granted++;
             }
         }

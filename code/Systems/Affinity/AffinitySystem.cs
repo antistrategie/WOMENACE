@@ -207,7 +207,7 @@ public sealed class AffinitySystem : JiangyuSystem
                 var template = ResolveArmor(id);
                 if (template == null || owned.GetInstanceCount(template) > 0)
                     continue;
-                owned.AddItem(template, false);
+                owned.AddItem(template, false, false);
                 Context.Log.Info($"affinity: unlocked skin '{id}' (level {level})");
             }
         }

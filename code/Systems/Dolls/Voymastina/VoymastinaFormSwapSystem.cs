@@ -677,7 +677,7 @@ public sealed class VoymastinaFormSwapSystem : JiangyuSystem
                 var template = ResolveTemplate<VehicleItemTemplate>(wantedId);
                 if (template != null)
                 {
-                    existing = owned.AddItem(template, false)?.TryCast<Vehicle>();
+                    existing = owned.AddItem(template, false, false)?.TryCast<Vehicle>();
                     Context.Log.Info($"form swap: granted chassis '{wantedId}' (none owned)");
                 }
             }
