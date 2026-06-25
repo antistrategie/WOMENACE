@@ -45,8 +45,8 @@ public sealed class VoymastinaFormSwapSystem : JiangyuSystem
     private const string HumanTemplateId = "squad_leader.voymastina";
     private const string MechTemplateId = "pilot.voymastina_mech";
 
-    // The mech's two switchable chassis (default + erwin skin). Each is a separately-owned vehicle item;
-    // exactly one of each should exist in the shared inventory.
+    // The mech's two switchable chassis (default + erwin skin). Each is a separately-owned vehicle item.
+    // Exactly one of each should exist in the shared inventory.
     private const string MechDefaultVehicleId = "vehicle.voymastina_mech";
     private const string MechErwinVehicleId = "vehicle.voymastina_mech_erwin";
 
@@ -72,7 +72,18 @@ public sealed class VoymastinaFormSwapSystem : JiangyuSystem
 
         Context.Patches.Postfix("Il2CppMenace.UI.Strategy.UnitWindow", "SetLeader", OnWindowChanged);
         Context.Patches.Postfix("Il2CppMenace.UI.Strategy.UnitWindow", "Refresh", OnWindowChanged);
+
+        // Re-evaluate the button when affinity changes (a gift), so reaching the mech level ungreys
+        // it without leaving and re-entering the screen.
+        Affinity.Changed += OnAffinityChanged;
     }
+
+    public override void OnUnload()
+    {
+        Affinity.Changed -= OnAffinityChanged;
+    }
+
+    private void OnAffinityChanged(VisualElement window) => UpdateSwapButton(window);
 
     private void OnWindowChanged(PatchInfo info)
     {
@@ -84,7 +95,7 @@ public sealed class VoymastinaFormSwapSystem : JiangyuSystem
     {
         var button = new TextButton(Locale.Text("WOMENACE::ui/swap_form", "SWAP FORM"));
         button.Root.name = "voymastina-formswap";
-        button.Root.style.marginRight = new StyleLength(8f);
+        button.Root.style.marginRight = new StyleLength(4f);
         button.OnClick(() => DoSwap(window));
         return button.Root;
     }
@@ -103,9 +114,48 @@ public sealed class VoymastinaFormSwapSystem : JiangyuSystem
             return;
 
         var label = UI.Find(button, UiSelector.TypeName("Label"))?.TryCast<Label>();
-        label?.text = id == MechTemplateId
-            ? Locale.Text("WOMENACE::ui/deploy_on_foot", "DEPLOY ON FOOT")
-            : Locale.Text("WOMENACE::ui/deploy_sinbreaker", "DEPLOY SINBREAKER");
+
+        // Returning to the infantry form is always allowed once she is the mech.
+        if (id == MechTemplateId)
+        {
+            SetLocked(button, false);
+            label?.text = Locale.Text("WOMENACE::ui/deploy_on_foot", "DEPLOY ON FOOT");
+            return;
+        }
+
+        // Infantry form: deploying the Sinbreaker is gated behind the affinity mech-unlock level.
+        // Below it the button is locked (greyed and non-clickable) and labelled with the level it
+        // needs, so the unlock advertises itself.
+        var leader = window.TryCast<UnitWindow>()?.m_CurrentLeader;
+        var characterTag = Affinity.CharacterTag(leader);
+        if (Unlocks.MechUnlocked(characterTag, Affinity.LevelFor(Context, leader)))
+        {
+            SetLocked(button, false);
+            label?.text = Locale.Text("WOMENACE::ui/deploy_sinbreaker", "DEPLOY SINBREAKER");
+        }
+        else
+        {
+            SetLocked(button, true);
+            label?.text = string.Format(
+                Locale.Text("WOMENACE::ui/deploy_sinbreaker_locked", "SINBREAKER (LV.{0})"),
+                Unlocks.MechLevel(characterTag));
+        }
+    }
+
+    // Toggle the button's locked look: SetEnabled(false) genuinely blocks the click and tags it
+    // :disabled, and the wm-locked class our affinity.uss greys gives the appearance deterministically
+    // (the game's theme is not relied on to style :disabled for .text-button).
+    private static void SetLocked(VisualElement button, bool locked)
+    {
+        try
+        {
+            button.SetEnabled(!locked);
+            if (locked)
+                button.AddToClassList("wm-locked");
+            else
+                button.RemoveFromClassList("wm-locked");
+        }
+        catch { }
     }
 
     private void DoSwap(VisualElement window)
@@ -124,6 +174,18 @@ public sealed class VoymastinaFormSwapSystem : JiangyuSystem
             if (curId != HumanTemplateId && curId != MechTemplateId)
                 return;
             string targetId = curId == MechTemplateId ? HumanTemplateId : MechTemplateId;
+
+            // Gate the infantry -> mech direction by affinity. The button is disabled while locked, so
+            // this only matters if the swap is reached another way. Returning to infantry is free.
+            if (targetId == MechTemplateId)
+            {
+                var characterTag = Affinity.CharacterTag(leader);
+                if (!Unlocks.MechUnlocked(characterTag, Affinity.LevelFor(Context, leader)))
+                {
+                    Context.Log.Info($"form swap: Sinbreaker locked (needs affinity level {Unlocks.MechLevel(characterTag)})");
+                    return;
+                }
+            }
 
             var hired = StrategyState.Get()?.Roster?.m_HiredLeaders;
             if (hired == null)
@@ -220,7 +282,7 @@ public sealed class VoymastinaFormSwapSystem : JiangyuSystem
                 ReconcileMintedItems(ownedBefore);
             }
 
-            Context.Log.Info($"[formswap] {curId} -> {targetId}; idx={idx} hiredCount={hired.Count}");
+            Context.Log.Info($"form swap: {curId} -> {targetId}");
 
             // Refresh the UI. Each step is independent: a failure in one must not strand the others.
             TryUi(() => unitWindow.SetLeader(target), "set leader");
@@ -450,13 +512,13 @@ public sealed class VoymastinaFormSwapSystem : JiangyuSystem
         {
             Context.State.Get<FormSwapState>().Forms.TryGetValue(templateId, out var snap);
 
-            // The mech's loadout is its chassis. With a snapshot, RestoreVehicle rebinds the saved
-            // choice. With none (first-ever swap), the minted default chassis already registers via
-            // CreateUnitLeader, so leave it. Either way the mech has no item slots to restore.
+            // The mech's loadout is its chassis. Bind an owned chassis (the saved choice, or the
+            // default on the first-ever swap) so the pilot rides a registered instance that shows as
+            // selected, rather than the unregistered ghost CreateUnitLeader mints. The mech has no
+            // item slots beyond that.
             if (leader.IsVehicle())
             {
-                if (snap != null)
-                    RestoreVehicle(leader, snap);
+                RestoreVehicle(leader, snap);
                 return;
             }
 
@@ -467,7 +529,7 @@ public sealed class VoymastinaFormSwapSystem : JiangyuSystem
 
             // The loadout to equip: the saved snapshot, or (on the first-ever swap to this form, with no
             // snapshot yet) the form's freshly-built default items (captured before RemoveAll). Both
-            // are re-equipped from OWNED instances AFTER the roster commit so they register as equipped;
+            // are re-equipped from OWNED instances AFTER the roster commit so they register as equipped.
             // CreateUnitLeader equips defaults pre-roster, where they read as 0/1 ghosts.
             var itemIds = snap != null && snap.EquippedItemTemplateIds != null && snap.EquippedItemTemplateIds.Count > 0
                 ? snap.EquippedItemTemplateIds
@@ -562,7 +624,7 @@ public sealed class VoymastinaFormSwapSystem : JiangyuSystem
                 {
                     var unused = owned.GetUnusedInstance(tmpl, false);
                     if (unused == null)
-                        break;   // only equipped copies remain; nothing more to drop
+                        break;   // only equipped copies remain, nothing more to drop
                     owned.RemoveItem(unused);
                 }
             }
@@ -585,19 +647,65 @@ public sealed class VoymastinaFormSwapSystem : JiangyuSystem
 
             var minted = pilot.GetVehicle();
             string mintedGuid = minted != null && minted.IsAlive() ? minted.GetItemGuid() : null;
+            string mintedId = minted != null && minted.IsAlive() ? VehicleTemplateId(owned, minted) : null;
 
-            // Find an existing owned chassis of the saved choice (else any other owned mech chassis),
-            // excluding the freshly-minted one we are about to discard.
-            var existing = FindOwnedVehicle(owned, snap.VehicleTemplateId, mintedGuid);
+            // The chassis to ride: the saved choice, or the default chassis on the first-ever swap
+            // (no snapshot yet).
+            var wantedId = snap != null && !string.IsNullOrEmpty(snap.VehicleTemplateId)
+                ? snap.VehicleTemplateId
+                : MechDefaultVehicleId;
+
+            // CreateUnitLeader already minted the chassis named by the pilot template's InitialVehicleItem,
+            // and the game set it up in full (modular slots + visual). When that IS the chassis we want
+            // (the default on a fresh swap), keep it. Destroying it to rebind a separate owned instance
+            // that was only UNLOCKED (never initialised as a modular vehicle) leaves the mech with no
+            // chassis to display.
+            if (mintedId != null && mintedId == wantedId)
+            {
+                DedupeMechVehicles(owned, pilot);   // collapse the spare owned copy (e.g. from InitialAdditionalUnlockedItems)
+                return;
+            }
+
+            // The wanted chassis differs from the minted one (e.g. the erwin skin). Bind an owned
+            // instance of the wanted choice (else any owned mech chassis), excluding the minted one.
+            var existing = FindOwnedVehicle(owned, wantedId, mintedGuid);
+
+            // No owned instance of the wanted chassis: grant one the same way skins are granted
+            // (OwnedItems.AddItem returns the new owned instance).
+            if (existing == null)
+            {
+                var template = ResolveTemplate<VehicleItemTemplate>(wantedId);
+                if (template != null)
+                {
+                    existing = owned.AddItem(template, false)?.TryCast<Vehicle>();
+                    Context.Log.Info($"form swap: granted chassis '{wantedId}' (none owned)");
+                }
+            }
+
             if (existing != null)
             {
-                // FindOwnedVehicle falls back to any owned mech chassis when the saved choice is not
+                // FindOwnedVehicle falls back to any owned mech chassis when the wanted one is not
                 // found. Surface that divergence rather than silently binding the wrong skin/stats.
                 var boundId = VehicleTemplateId(owned, existing);
-                if (!string.IsNullOrEmpty(snap.VehicleTemplateId) && boundId != snap.VehicleTemplateId)
-                    Context.Log.Warn($"form swap: saved chassis '{snap.VehicleTemplateId}' not owned; binding '{boundId}' instead");
-                pilot.DestroyVehicleItem();   // remove the minted ghost chassis from owned items
-                pilot.SetVehicle(existing);   // ride the owned chassis so it shows equipped in the list
+                if (boundId != wantedId)
+                    Context.Log.Warn($"form swap: chassis '{wantedId}' not owned, binding '{boundId}' instead");
+
+                // Bind the owned chassis WITHOUT first destroying the engine-minted default, so the
+                // default survives as a fallback (DedupeMechVehicles collapses the surplus after).
+                // The minted default is the only chassis the game fully sets up (modular slots +
+                // visual). A non-default chassis selected this way may not display until a chassis
+                // picker that initialises it properly exists, so never leave the mech chassis-less.
+                pilot.SetVehicle(existing);
+                var riding = pilot.GetVehicle();
+                if ((riding == null || !riding.IsAlive()) && minted != null && minted.IsAlive())
+                {
+                    Context.Log.Warn($"form swap: chassis '{wantedId}' did not bind, keeping the default chassis");
+                    pilot.SetVehicle(minted);
+                }
+            }
+            else
+            {
+                Context.Log.Warn($"form swap: no chassis to bind for '{wantedId}' (minted present: {mintedGuid != null})");
             }
 
             DedupeMechVehicles(owned, pilot);
@@ -697,25 +805,9 @@ public sealed class VoymastinaFormSwapSystem : JiangyuSystem
         catch { return null; }
     }
 
-    // Resolve a DataTemplate by id: a linear scan of DataTemplateLoader.GetAll<T>() matching GetID().
+    // Resolve a DataTemplate by id via the shared resolver (see Templates).
     private T ResolveTemplate<T>(string id) where T : DataTemplate
-    {
-        try
-        {
-            var all = DataTemplateLoader.GetAll<T>();
-            var list = all?.TryCast<Il2CppSystem.Collections.Generic.IReadOnlyList<T>>();
-            if (list == null)
-                return null;
-            for (int i = 0; i < all.Count; i++)
-            {
-                var t = list[i];
-                if (t.IsAlive() && t.GetID() == id)
-                    return t;
-            }
-        }
-        catch (Exception ex) { Context.Log.Warn($"form swap: {typeof(T).Name} resolve failed: {ex.Message}"); }
-        return null;
-    }
+        => Templates.ById<T>(id, msg => Context.Log.Warn($"form swap: {msg}"));
 
     private string CurrentTemplateId(VisualElement window)
     {

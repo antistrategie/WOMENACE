@@ -1,0 +1,95 @@
+clone "CommodityTemplate" from="commodity.core_world_memorabillia" id="commodity.wmgfl_gift_classical_record" {
+    set "Title" {
+        set "m_DefaultTranslation" "Classical Record"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "This is probably Mozart or some shit. I wouldn't know, I only listen to video game music."
+    }
+    set "Icon" asset="gifts/Item_Icon_love_gift_pendant_3"
+    append "Tags" "wmgfl_gift"
+    append "Tags" "jy_no_sell"
+    set "Rarity" 40
+    set "TradeValue" 20
+    set "BlackMarketMaxQuantity" 0
+    set "MinCampaignProgress" 0
+}
+
+clone "CommodityTemplate" from="commodity.core_world_memorabillia" id="commodity.wmgfl_gift_camera" {
+    set "Title" {
+        set "m_DefaultTranslation" "Camera"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Yep... that's a camera... Sorry I don't know anything about cameras so I can't think of a joke."
+    }
+    set "Icon" asset="gifts/Item_Icon_love_gift_electrical_4"
+    append "Tags" "wmgfl_gift"
+    append "Tags" "jy_no_sell"
+    set "Rarity" 40
+    set "TradeValue" 20
+    set "BlackMarketMaxQuantity" 0
+    set "MinCampaignProgress" 0
+}
+
+clone "CommodityTemplate" from="commodity.core_world_memorabillia" id="commodity.wmgfl_gift_vr_glasses" {
+    set "Title" {
+        set "m_DefaultTranslation" "VR Glasses"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Why do these things still have controllers? You'd think by now we'd have progressed VR technology so far that we're able to use hand tracking for everything as a bare minimum, and that's with me ignoring how bulky the actual headset is."
+    }
+    set "Icon" asset="gifts/Item_Icon_love_gift_electrical_5"
+    append "Tags" "wmgfl_gift"
+    append "Tags" "jy_no_sell"
+    set "Rarity" 40
+    set "TradeValue" 20
+    set "BlackMarketMaxQuantity" 0
+    set "MinCampaignProgress" 0
+}
+
+clone "CommodityTemplate" from="commodity.core_world_memorabillia" id="commodity.wmgfl_gift_heavy_metal_necklace" {
+    set "Title" {
+        set "m_DefaultTranslation" "Heavy Metal Necklace"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            Pretty sure this is actually a dog collar. It gives dog collar vibes.
+
+            Wait... ohhhh... I see how it is. That is quite delightful.
+            """
+    }
+
+    set "Icon" asset="gifts/Item_Icon_love_gift_jewelry_5"
+    append "Tags" "wmgfl_gift"
+    append "Tags" "jy_no_sell"
+    set "Rarity" 40
+    set "TradeValue" 20
+    set "BlackMarketMaxQuantity" 0
+    set "MinCampaignProgress" 0
+}
+
+clone "CommodityTemplate" from="commodity.core_world_memorabillia" id="commodity.wmgfl_gift_battery" {
+    set "Title" {
+        set "m_DefaultTranslation" "Ultra-Long Life Battery"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            Can we talk about solid state batteries? Please let me talk about solid state batteries, none of my friends want to hear what I have to say about solid state batteries.
+
+            Like there's technology we're all waiting for, right? We all want fusion. We all want quantum computers. We all want a room temperature superconductor. So why, WHY does nobody ever talk about SOLID STATE BATTERIES?
+
+            And the thing is, the whole reason they matter is honestly kind of beautiful once you actually sit with it for a second, because what you're really doing is taking all that flammable liquid sludge sloshing around inside a normal battery and replacing it with a solid, which sounds unbelievably boring right up until you realise that it lets you run a pure lithium-metal anode, and that means you can fit something like twice the energy into the exact same amount of space, and the whole thing more or less stops wanting to burst into flames the moment you look at it wrong, and then on top of all of that it'll happily sit through something like ten thousand charge cycles, which is really just a very polite way of saying that you could plug it in every single day for the better part of thirty years and it would barely even notice you were doing it.
+
+            I think I've been pretty paitent waiting for all this. Like okay -- nuclear fusion, quantum computers, and room temperature superconductors? Yeah those seem HARD. I get why they don't really exist yet. But this is just a fucking battery, what's the goddamn holdup? I'm just... tired of waiting and going through constant cycles seeing everything I own die and become landfill, just to be replaced by something that dies just as quickly because of Captitalism or something.
+
+            So, anyway. I suppose you should go ahead and give it to one of the Dolls, and oh, hang on, it has only just this second occurred to me that she isn't exactly going to be using this to charge a phone, is she, what with the whole running-on-a-battery thing she has going on, which I suppose makes it less of a gadget and more of a, you know, a couple of extra decades of her not quietly winding down on us, and the genuinely stupid part is that I spent this entire rant being bitter about never getting to live in the future I was promised when the obvious answer was sitting right there the whole time, which is that the future was always going to be hers and not mine, so yeah, give it to her, she should have it.
+            """
+    }
+
+    set "Icon" asset="gifts/Item_Icon_love_gift_necessity_5"
+    append "Tags" "wmgfl_gift"
+    append "Tags" "jy_no_sell"
+    set "Rarity" 40
+    set "TradeValue" 20
+    set "BlackMarketMaxQuantity" 0
+    set "MinCampaignProgress" 0
+}

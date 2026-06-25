@@ -1,7 +1,7 @@
 clone "TagTemplate" from="unique" id="wmgfl_voymastina"
 
 clone "SpeakerTemplate" from="sy" id="wmgfl_voymastina_speaker" {
-    set "Tags" "wmgfl_voymastina pirate_sl female infantry waybacker vehicle_restricted"
+    set "Tags" "wmgfl_voymastina pirate_sl female infantry waybacker jy_vehicle_restricted"
     set "Nickname" {
         set "m_DefaultTranslation" "Voymastina"
     }
@@ -33,7 +33,7 @@ clone "SpeakerTemplate" from="sy" id="wmgfl_voymastina_speaker" {
 
 clone "EntityTemplate" from="player_squad.sy" id="player_squad.voymastina" {
     append "Tags" "wmgfl_voymastina"
-    append "Tags" "armor_restricted"
+    append "Tags" "jy_armor_restricted"
     set "Title" {
         set "m_DefaultTranslation" "Task Force DEFY"
     }
@@ -48,7 +48,6 @@ clone "EntityTemplate" from="player_squad.sy" id="player_squad.voymastina" {
     set "BadgeWhite" asset="voymastina/badge_mini"
     clear "Items"
     append "Items" "armor.voymastina_default"
-    append "Items" "armor.voymastina_erwin"
     append "Items" "weapon.voymastina_ak15"
 }
 

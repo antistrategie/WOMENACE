@@ -14,12 +14,6 @@ namespace WOMENACE.Code;
 
 public sealed class AffinitySystem : JiangyuSystem
 {
-    private const string OurTag = "wmgfl";
-    private const string GiftTag = "wmgfl_gift";
-    private const int MaxLevel = 9;
-
-    private static readonly int[] LevelStepThresholds =
-        { 100, 200, 300, 500, 800, 1300, 2100, 3400, 5500 };
 
     private sealed class Gift
     {
@@ -38,6 +32,19 @@ public sealed class AffinitySystem : JiangyuSystem
     private readonly List<Box> _boxes = [];
     private readonly Dictionary<Gift, int> _chosen = [];
 
+    // Resolved gated-skin armour templates, cached so the unlock pass does not rescan the template
+    // loader on every window refresh.
+    private readonly Dictionary<string, BaseItemTemplate> _armorCache = new(StringComparer.Ordinal);
+
+    // The game's rarity palette, read once from UIConfig (with the shipped values as a fallback) so
+    // gift tiles in the picker show the same common/uncommon/rare colours the game uses elsewhere.
+    private bool _rarityLoaded;
+    private int _uncommonMinRarity = 33;
+    private int _rareMinRarity = 66;
+    private UnityEngine.Color _commonRarity = new(0.455f, 0.424f, 0.294f, 1f);
+    private UnityEngine.Color _uncommonRarity = new(0.239f, 0.459f, 0.533f, 1f);
+    private UnityEngine.Color _rareRarity = new(0.741f, 0.192f, 0.192f, 1f);
+
     // Modal state, captured when it is injected / opened.
     private VisualElement _modalRoot;
     private VisualElement _grid;
@@ -52,6 +59,10 @@ public sealed class AffinitySystem : JiangyuSystem
 
     public override void OnInit()
     {
+        // Give the shared model a warn sink so its otherwise-silent leader-resolution catches are
+        // diagnosable in the player log.
+        Affinity.Warn = msg => Context.Log.Warn(msg);
+
         // The Armory and mission-prep screens both host the same UnitWindow leader section, so each gets
         // the same affinity injections (badge, gift button, gift flyout).
         RegisterScreen<ArmoryUIScreen>();
@@ -59,6 +70,13 @@ public sealed class AffinitySystem : JiangyuSystem
 
         Context.Patches.Postfix("Il2CppMenace.UI.Strategy.UnitWindow", "SetLeader", OnWindowChanged);
         Context.Patches.Postfix("Il2CppMenace.UI.Strategy.UnitWindow", "Refresh", OnWindowChanged);
+    }
+
+    public override void OnUnload()
+    {
+        // Drop the warn sink so the shared static does not keep this (torn-down) system's Context
+        // alive, mirroring how VoymastinaFormSwapSystem unsubscribes Affinity.Changed.
+        Affinity.Warn = null;
     }
 
     // Inject the affinity badge, gift button, and gift flyout onto every UnitWindow of the given screen.
@@ -107,7 +125,40 @@ public sealed class AffinitySystem : JiangyuSystem
             badge.style.top = new StyleLength(72f);
         }
         catch { }
+
+        // The unlock list rides the game's native tooltip via the SDK Tooltip component, which sticks
+        // to the mouse and matches the game's look. Rebuilt on each hover so it reflects the level.
+        Tooltip.OnHover(badge, () => BuildAffinityTooltip(window));
+
         UpdateBadge(window);
+    }
+
+    // Build the affinity tooltip for the leader on a window: a heading then one row per level, the
+    // milestone levels labelled with what they unlock (from the Unlocks registry) and the rest left
+    // as a dim placeholder. The leader's current level is highlighted, rows above it read as locked.
+    // Returns null when the window is not one of ours (no tooltip shown).
+    private Tooltip BuildAffinityTooltip(VisualElement window)
+    {
+        var key = Affinity.KeyFor(window);
+        if (key == 0)
+            return null;
+
+        var current = Affinity.LevelFor(Context, key);
+        var characterTag = Affinity.CharacterTag(Affinity.LeaderOf(window));
+
+        var tooltip = new Tooltip("wm-affinity", 230)
+            .Subheading(Locale.Text("WOMENACE::ui/affinity_unlocks", "AFFINITY UNLOCKS"))
+            .Line();
+
+        foreach (var row in Unlocks.RowsFor(characterTag))
+        {
+            var text = $"{row.Level:00}    {(string.IsNullOrEmpty(row.Text) ? "·" : row.Text)}";
+            // Every reached level (current and below) is highlighted, including ones that grant
+            // nothing. Levels still to come read as locked.
+            var style = row.Level <= current ? Tooltip.Style.Positive : Tooltip.Style.Disabled;
+            tooltip.Paragraph(text, style);
+        }
+        return tooltip;
     }
 
     private void UpdateBadge(VisualElement window)
@@ -116,19 +167,118 @@ public sealed class AffinitySystem : JiangyuSystem
         if (badge == null)
             return;
 
-        var key = OurLeaderKey(window);
-        SetVisible(badge, key != 0);
+        var key = Affinity.KeyFor(window);
+        badge.SetVisible(key != 0);
 
         if (key == 0)
             return;
 
-        var level = LevelForPoints(Context.State.Get<AffinityState>().ForLeader(key).Affinity);
+        var level = Affinity.LevelFor(Context, key);
         var label = UI.Find(badge, UiSelector.Name("affinity-level"))?.TryCast<Label>();
         label?.text = level.ToString("00");
 
         var frame = UI.Find(badge, UiSelector.Name("affinity-frame"));
         if (frame != null)
-            SetVisible(frame, level >= MaxLevel);
+            frame.SetVisible(level >= Affinity.MaxLevel);
+
+        // Apply any level-gated unlocks the leader now qualifies for. Showing the window is the
+        // moment to reconcile a save that is already past a threshold (e.g. loaded at level 2+), and
+        // the grant is idempotent, so re-running it on every refresh is harmless.
+        ApplyUnlocks(key, Affinity.LeaderOf(window));
+    }
+
+    // Grant the character's level-gated skins into the shared inventory once they are unlocked, so
+    // they appear in the armour picker (its alternatives list is driven by owned instances). Keyed
+    // off the Unlocks registry and idempotent: a skin already owned is skipped.
+    private void ApplyUnlocks(int key, BaseUnitLeader leader)
+    {
+        try
+        {
+            if (key == 0 || leader == null || !leader.IsAlive())
+                return;
+
+            var level = Affinity.LevelFor(Context, key);
+            var owned = Owned();
+            if (owned == null)
+                return;
+
+            foreach (var id in Unlocks.UnlockedSkinArmors(Affinity.CharacterTag(leader), level))
+            {
+                var template = ResolveArmor(id);
+                if (template == null || owned.GetInstanceCount(template) > 0)
+                    continue;
+                owned.AddItem(template, false);
+                Context.Log.Info($"affinity: unlocked skin '{id}' (level {level})");
+            }
+        }
+        catch (Exception ex) { Context.Log.Warn($"affinity: skin unlock failed: {ex.Message}"); }
+    }
+
+    // An armour template by id, cached after the first resolve.
+    private BaseItemTemplate ResolveArmor(string id)
+    {
+        if (_armorCache.TryGetValue(id, out var cached))
+            return cached;
+        var found = Templates.ById<ArmorTemplate>(id, msg => Context.Log.Warn($"affinity: {msg}"));
+        // Cache only a hit. Caching a miss would pin the skin as unresolvable for the session if the
+        // lookup happened before the armour template was registered, so the unlock would never land.
+        if (found != null)
+            _armorCache[id] = found;
+        return found;
+    }
+
+    // Read the rarity brackets and colours from the game's UIConfig once. Falls back to the shipped
+    // values if the config is unavailable, so the borders always render.
+    private void EnsureRarityPalette()
+    {
+        if (_rarityLoaded)
+            return;
+        _rarityLoaded = true;
+        try
+        {
+            var all = DataTemplateLoader.GetAll<Il2CppMenace.UI.UIConfig>();
+            var list = all?.TryCast<Il2CppSystem.Collections.Generic.IReadOnlyList<Il2CppMenace.UI.UIConfig>>();
+            var config = list != null && all.Count > 0 ? list[0] : null;
+            if (config == null || !config.IsAlive())
+                return;
+            _uncommonMinRarity = config.UncommonMinRarity;
+            _rareMinRarity = config.RareMinRarity;
+            _commonRarity = config.ColorCommonRarity;
+            _uncommonRarity = config.ColorUncommonRarity;
+            _rareRarity = config.ColorRareRarity;
+        }
+        catch (Exception ex) { Context.Log.Warn($"affinity: rarity palette read failed: {ex.Message}"); }
+    }
+
+    private UnityEngine.Color RarityColor(int rarity)
+    {
+        EnsureRarityPalette();
+        if (rarity >= _rareMinRarity)
+            return _rareRarity;
+        if (rarity >= _uncommonMinRarity)
+            return _uncommonRarity;
+        return _commonRarity;
+    }
+
+    // Frame a gift tile in its rarity colour, matching the game's common/uncommon/rare palette.
+    private void ApplyRarityBorder(VisualElement element, int rarity)
+    {
+        if (element == null)
+            return;
+        try
+        {
+            var colour = new StyleColor(RarityColor(rarity));
+            element.style.borderTopColor = colour;
+            element.style.borderBottomColor = colour;
+            element.style.borderLeftColor = colour;
+            element.style.borderRightColor = colour;
+            var width = new StyleFloat(2f);
+            element.style.borderTopWidth = width;
+            element.style.borderBottomWidth = width;
+            element.style.borderLeftWidth = width;
+            element.style.borderRightWidth = width;
+        }
+        catch { }
     }
 
     private VisualElement BuildGiftButton(VisualElement window)
@@ -153,10 +303,7 @@ public sealed class AffinitySystem : JiangyuSystem
                 bool reopenSameWindow = _modalOpen && ReferenceEquals(_activeWindow, window);
                 CloseModal();
                 if (!reopenSameWindow)
-                {
-                    SeedGifts();
                     OpenModal(window);
-                }
             }
             catch (Exception ex)
             {
@@ -170,33 +317,7 @@ public sealed class AffinitySystem : JiangyuSystem
     {
         var button = UI.Find(window, UiSelector.Name("gift-open"));
         if (button != null)
-            SetVisible(button, OurLeaderKey(window) != 0);
-    }
-
-    // Deterministic FNV-1a hash so the affinity key is stable across runs (string.GetHashCode is
-    // randomised per process and would break save persistence).
-    private static int StableHash(string s)
-    {
-        unchecked
-        {
-            var h = (int)2166136261;
-            foreach (var c in s)
-                h = (h ^ c) * 16777619;
-            return h;
-        }
-    }
-
-    private static int LevelForPoints(int points)
-    {
-        var level = 1;
-        foreach (var threshold in LevelStepThresholds)
-        {
-            if (points >= threshold)
-                level++;
-            else
-                break;
-        }
-        return level > MaxLevel ? MaxLevel : level;
+            button.SetVisible(Affinity.KeyFor(window) != 0);
     }
 
     private static int PercentBetween(int value, int floor, int ceiling)
@@ -243,7 +364,7 @@ public sealed class AffinitySystem : JiangyuSystem
             root.AddToClassList("wm-dismiss-hooked");
             UI.CloseOnOutsideClick(root, CloseModal, "gift-open");
         }
-        SetVisible(root, false);
+        root.SetVisible(false);
     }
 
     private void OpenModal(VisualElement window)
@@ -256,7 +377,7 @@ public sealed class AffinitySystem : JiangyuSystem
         if (modal != null)
             BindModalFields(modal);
 
-        var key = OurLeaderKey(window);
+        var key = Affinity.KeyFor(window);
         if (key == 0 || _modalRoot == null || _grid == null)
             return;
 
@@ -265,28 +386,8 @@ public sealed class AffinitySystem : JiangyuSystem
         _baseAffinity = Context.State.Get<AffinityState>().ForLeader(key).Affinity;
         BuildBoxes();
         UpdatePreview();
-        SetVisible(_modalRoot, true);
+        _modalRoot.SetVisible(true);
         _modalOpen = true;
-    }
-
-    // Temporary test scaffolding: top the player's inventory up to a few of each gift
-    // commodity when the picker is opened, so it always has stock to try.
-    private void SeedGifts()
-    {
-        var owned = Owned();
-        if (owned == null)
-            return;
-        ResolveGifts();
-        foreach (var gift in _gifts)
-        {
-            try
-            {
-                for (var have = owned.GetInstanceCount(gift.Template); have < 5; have++)
-                    owned.AddItem(gift.Template, false);
-            }
-            catch (Exception ex) { Context.Log.Warn($"seed gift '{gift.Name}' failed: {ex.Message}"); }
-        }
-        Context.Log.Info("seeded gift commodities for testing");
     }
 
     // Fill the grid with one ItemTile per owned gift type. The component renders the native
@@ -312,6 +413,7 @@ public sealed class AffinitySystem : JiangyuSystem
             var slot = new ItemTile(gift.Template, count);
             slot.Root.AddToClassList("wm-gift-box");
             slot.Badge.AddToClassList("wm-gift-box__badge");
+            ApplyRarityBorder(slot.Root, gift.Template.Rarity);
 
             var box = new Box { Gift = gift, Slot = slot };
             _boxes.Add(box);
@@ -366,25 +468,25 @@ public sealed class AffinitySystem : JiangyuSystem
             gain += kv.Key.Affinity * kv.Value;
 
         var projected = _baseAffinity + gain;
-        var level = LevelForPoints(projected);
+        var level = Affinity.LevelForPoints(projected);
 
         // Numbers flanking the bar: the level now, and the level the gifts would reach.
-        _levelCurrent?.text = LevelForPoints(_baseAffinity).ToString("00");
+        _levelCurrent?.text = Affinity.LevelForPoints(_baseAffinity).ToString("00");
         _levelNext?.text = level.ToString("00");
 
         // Frame the bar on the projected level so the fill reads as how far into that
         // level the points land. The bright fill is where they are now (empty once the
         // gifts carry them up into this higher level). The temp fill is the projection.
-        if (level >= MaxLevel)
+        if (level >= Affinity.MaxLevel)
         {
-            SetWidth(_previewFill, 100);
-            SetWidth(_previewTemp, 100);
+            _previewFill.SetWidthPercent(100);
+            _previewTemp.SetWidthPercent(100);
             return;
         }
-        var floor = level >= 2 ? LevelStepThresholds[level - 2] : 0;
-        var next = LevelStepThresholds[level - 1];
-        SetWidth(_previewFill, PercentBetween(_baseAffinity, floor, next));
-        SetWidth(_previewTemp, PercentBetween(projected, floor, next));
+        var floor = level >= 2 ? Affinity.StepThresholds[level - 2] : 0;
+        var next = Affinity.StepThresholds[level - 1];
+        _previewFill.SetWidthPercent(PercentBetween(_baseAffinity, floor, next));
+        _previewTemp.SetWidthPercent(PercentBetween(projected, floor, next));
     }
 
     private void ConfirmGifts()
@@ -394,17 +496,29 @@ public sealed class AffinitySystem : JiangyuSystem
         {
             var gained = 0;
             foreach (var kv in _chosen)
+            {
+                // Never consume a gift that grants nothing: removing it would destroy the item for
+                // zero affinity. (No gift ships with Affinity 0 today, so this is a guard.)
+                if (kv.Key.Affinity <= 0)
+                    continue;
                 for (var i = 0; i < kv.Value; i++)
                     if (owned.RemoveItem(kv.Key.Template))
                         gained += kv.Key.Affinity;
+            }
 
             if (gained > 0)
             {
                 var state = Context.State.Get<AffinityState>().ForLeader(_activeLeaderKey);
                 state.Affinity += gained;
+                // Crossing a threshold here unlocks content (e.g. skins at level 2). UpdateBadge runs
+                // the unlock pass, so do it before logging the new level. Raising Changed lets the
+                // form-swap button ungrey on the spot if this gift reached the mech level.
                 if (_activeWindow != null)
+                {
                     UpdateBadge(_activeWindow);
-                Context.Log.Info($"gift: gave to leader {_activeLeaderKey}, points -> {state.Affinity} (level {LevelForPoints(state.Affinity)})");
+                    Affinity.RaiseChanged(_activeWindow);
+                }
+                Context.Log.Info($"gift: gave to leader {_activeLeaderKey}, points -> {state.Affinity} (level {Affinity.LevelForPoints(state.Affinity)})");
             }
         }
         CloseModal();
@@ -418,61 +532,24 @@ public sealed class AffinitySystem : JiangyuSystem
         _boxes.Clear();
 
         if (_modalRoot != null)
-            SetVisible(_modalRoot, false);
+            _modalRoot.SetVisible(false);
     }
 
-    // Discover every gift commodity once, by the GiftTag tag. Name comes from the
-    // template's Title and the affinity points from its TradeValue, so the whole gift
-    // roster lives in KDL.
+    // Project the shared gift catalogue into the modal's gift rows. Name comes from the template's
+    // Title and the affinity points from its TradeValue, so the whole gift roster lives in KDL.
+    // Re-runs while empty (GiftCatalog does not cache an empty scan), so a modal opened before the
+    // commodity templates are registered fills in once they are.
     private void ResolveGifts()
     {
         if (_gifts.Count > 0)
             return;
-        try
-        {
-            var all = DataTemplateLoader.GetAll<CommodityTemplate>();
-            // GetAll is array-backed, so it is an IReadOnlyList: index it. The Il2Cpp
-            // enumerator path does not advance (its boxed struct enumerator stays put).
-            var list = all?.TryCast<Il2CppSystem.Collections.Generic.IReadOnlyList<CommodityTemplate>>();
-            if (list == null)
+        foreach (var template in GiftCatalog.All())
+            _gifts.Add(new Gift
             {
-                Context.Log.Warn($"gift discovery: not index-able ({(all == null ? "null" : all.GetType().FullName)})");
-                return;
-            }
-            var count = all.Count;
-            for (var i = 0; i < count; i++)
-            {
-                var template = list[i];
-                if (template == null || !template.IsAlive() || !HasGiftTag(template))
-                    continue;
-                _gifts.Add(new Gift
-                {
-                    Template = template,
-                    Name = GiftName(template),
-                    Affinity = template.TradeValue,
-                });
-            }
-            Context.Log.Info($"gift discovery: scanned {count} commodity template(s), matched {_gifts.Count} gift(s)");
-        }
-        catch (Exception ex) { Context.Log.Warn($"gift discovery failed: {ex}"); }
-    }
-
-    private static bool HasGiftTag(CommodityTemplate template)
-    {
-        try
-        {
-            var tags = template.Tags;
-            if (tags == null)
-                return false;
-            for (var i = 0; i < tags.Count; i++)
-            {
-                var name = tags[i]?.name;
-                if (!string.IsNullOrEmpty(name) && name.Contains(GiftTag))
-                    return true;
-            }
-        }
-        catch { }
-        return false;
+                Template = template,
+                Name = GiftName(template),
+                Affinity = template.TradeValue,
+            });
     }
 
     private static string GiftName(CommodityTemplate template)
@@ -498,61 +575,4 @@ public sealed class AffinitySystem : JiangyuSystem
         catch { return null; }
     }
 
-    private int OurLeaderKey(VisualElement window)
-    {
-        try
-        {
-            var leader = window.TryCast<UnitWindow>()?.m_CurrentLeader;
-            if (!leader.IsAlive())
-                return 0;
-
-            var speaker = leader.GetSpeakerTemplate();
-            var tags = speaker.IsAlive() ? speaker.Tags : null;
-            if (string.IsNullOrEmpty(tags) || !tags.Contains(OurTag))
-                return 0;
-
-            // Key by the speaker's tags (the character), not the leader template, so affinity is
-            // shared across a character's forms (Voymastina's squad-leader and pilot share one
-            // speaker, so identical tags) and stable across saves. 0 is reserved for "not ours", so a
-            // tags string that happens to hash to 0 is nudged to a non-zero key.
-            var key = StableHash(tags);
-            return key == 0 ? 1 : key;
-        }
-        catch (Exception ex)
-        {
-            Context.Log.Warn($"relationship: leader key failed: {ex.Message}");
-            return 0;
-        }
-    }
-
-    private static void SetVisible(VisualElement element, bool visible)
-    {
-        try { element.style.display = new StyleEnum<DisplayStyle>(visible ? DisplayStyle.Flex : DisplayStyle.None); }
-        catch { }
-    }
-
-    private static void SetWidth(VisualElement element, int percent)
-    {
-        if (element == null)
-            return;
-        try { element.style.width = new StyleLength(Length.Percent(percent)); }
-        catch { }
-    }
-
-    public sealed class AffinityState
-    {
-        public Dictionary<int, LeaderState> Leaders { get; set; } = [];
-
-        public LeaderState ForLeader(int templateGuid)
-        {
-            if (!Leaders.TryGetValue(templateGuid, out var state))
-                Leaders[templateGuid] = state = new LeaderState();
-            return state;
-        }
-    }
-
-    public sealed class LeaderState
-    {
-        public int Affinity { get; set; }
-    }
 }

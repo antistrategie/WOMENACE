@@ -92,6 +92,21 @@ Several badge/portrait fields exist on both `UnitLeaderTemplate` and `EntityTemp
 - `UnitLeaderTemplate.BigBadge` drives the hiring info panel banner.
 - `UnitLeaderTemplate.SlotBadge` / `BadgeDragged` drive the hire-slot and drag visuals (BadgeDragged also serves as the mission-prep drag preview).
 
+## Affinity and unlocks
+
+The affinity feature is three `JiangyuSystem`s that coordinate through one shared `Context.State` plus a declarative rules table, never by calling each other (the SDK's only cross-system channel: `Context.State.Get<T>()` returns the same live instance to every system of the mod).
+
+- `AffinityState` (in `code/Systems/Affinity/Affinity.cs`) is the only persisted store of points, keyed by a stable FNV-1a hash of the character's own tag (`wmgfl_<name>`, parsed out of the speaker `Tags`) so a character's forms share one total (Voymastina's squad-leader and pilot share a speaker) and the key does not move when unrelated speaker tags change. `AffinitySystem` is its only writer.
+- `Affinity` (static) is the shared read API: level maths (`StepThresholds`, `LevelForPoints`), the leader key (`KeyFor`), and the character tag (`CharacterTag`, e.g. `wmgfl_voymastina`). Any system gates on affinity through this.
+- `Unlocks` (`code/Systems/Affinity/Unlocks.cs`) is the per-character map of `level -> Feature`. Both the gameplay gates and the badge popover read it, so the level a feature unlocks at and the level the popover advertises cannot drift. A character absent from the map has no unlocks. Add unlocks here and every consumer follows.
+
+Two gate mechanisms, chosen to fit how MENACE surfaces each:
+
+- **Skins are gated in the picker UI** (`SkinGateSystem`). The alternate-outfit picker is a CATALOGUE, not an owned-items list: `UnitWindowEquipment.UpdateEquipmentAlternatives` lists every equippable armour with an owned-count and can show ones the player does not own, so withholding ownership does not hide a skin. A Harmony postfix on that method reads the window's `m_Leader`, finds the `EquipmentAlternatives` element in the active screen, and sets `display:none` on each `EquipmentSlot` whose `m_Item` is a skin the leader has not unlocked (`Unlocks.LockedSkinArmors`). The slot reappears the instant the level is reached. Separately, `AffinitySystem.ApplyUnlocks` grants the owned instance (`OwnedItems.AddItem`, idempotent on `GetInstanceCount`) at the unlock level so the now-visible skin is equippable, and the skins are kept out of the squad template's starting `Items` so a fresh save does not own them early.
+- **The mech form is gated at the swap button.** The Pilot form is reachable only through `VoymastinaFormSwapSystem`'s swap (the pilot template is not pickable or dossier-unlocked), so locking that one affordance fully locks the form. Below the unlock level the button is greyed and non-clickable (`SetEnabled(false)` blocks the click, the `.wm-locked` USS class supplies the look since the game theme is not relied on to style `:disabled` for `.text-button`) and `DoSwap` re-checks defensively.
+
+The badge hover popover is the game's **native tooltip**, via the SDK `Jiangyu.Game.Ui.Components.Tooltip` wrapper (`UIManager.ShowTooltip`, sticks to the mouse). `AffinitySystem` builds it from `Unlocks.RowsFor` on each hover (`Tooltip.OnHover`): a subheading then one row per level, every reached level (current and below) in `Positive` and every level not yet reached in `Disabled`. Each label is the zero-padded level (`01`, `02`, ...) followed by that level's reward text, or a `·` for a level that grants nothing.
+
 ## Loader + CLI version coupling
 
 The deployed `Jiangyu.Loader.dll` (under `~/.steam/.../Menace/Mods/`) and the Jiangyu CLI used by `mise compile` must come from the same Jiangyu commit. A stale loader silently misses pipeline changes — e.g. the addition-prefab build was folded into the mesh-replacement Unity batchmode pass at commit `bfd02ee`, so a pre-`bfd02ee` loader fails to load addition prefabs from the new combined bundle and the in-game models render as fallback.
@@ -114,7 +129,7 @@ Run `jiangyu unity sync` from the repo root to refresh the managed scripts. The 
 
 ## Conventions
 
-- **Mod ID prefix `wmgfl_`** on collision-prone clone IDs: SoundBank names (`wmgfl_tactical_barks_<char>_va`, `wmgfl_weapons_ar_addition_bank`, `wmgfl_weapons_rf_addition_bank`), character TagTemplate IDs (`wmgfl_cheyanne`, `wmgfl_voymastina`), SpeakerTemplate IDs (`wmgfl_cheyanne_speaker`). Already-namespaced IDs (`armor.cheyanne_default`, `weapon.voymastina_ak15`, `Cheyanne/arrival_cheyanne` etc.) skip the prefix because the character segment carries equivalent namespacing. Jiangyu-contract tags (`armor_restricted`, `weapon_restricted`) skip it because they're a cross-mod protocol.
+- **Mod ID prefix `wmgfl_`** on collision-prone clone IDs: SoundBank names (`wmgfl_tactical_barks_<char>_va`, `wmgfl_weapons_ar_addition_bank`, `wmgfl_weapons_rf_addition_bank`), character TagTemplate IDs (`wmgfl_cheyanne`, `wmgfl_voymastina`), SpeakerTemplate IDs (`wmgfl_cheyanne_speaker`). Already-namespaced IDs (`armor.cheyanne_default`, `weapon.voymastina_ak15`, `Cheyanne/arrival_cheyanne` etc.) skip the prefix because the character segment carries equivalent namespacing. Jiangyu-contract tags (`jy_armor_restricted`, `jy_weapon_restricted`) skip it because they're a cross-mod protocol.
 - British English in code, comments, docs (analyse, colour, organisation).
 - No em dashes. No semicolons in prose, comments, or string literals. Use periods, commas, colons.
 - Docs describe the current working state only. No past-tense framing ("used to", "previously", "earlier attempts"). No future-tense framing ("not yet", "TODO", "in progress"). If something doesn't work, fix it or leave it out.

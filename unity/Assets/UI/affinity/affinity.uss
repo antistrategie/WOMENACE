@@ -134,3 +134,13 @@
     padding-left: 2px;
     padding-right: 2px;
 }
+
+/* A feature locked behind affinity: greyed and muted. Paired with SetEnabled(false) in code, which
+   blocks the click and adds :disabled. */
+.wm-locked {
+    opacity: 0.45;
+}
+
+.wm-locked .text-button-label {
+    color: rgb(150, 140, 120);
+}

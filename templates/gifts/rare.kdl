@@ -1,0 +1,84 @@
+clone "CommodityTemplate" from="commodity.core_world_memorabillia" id="commodity.wmgfl_gift_devotion_ring" {
+    set "Title" {
+        set "m_DefaultTranslation" "Devotion Ring"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "I wanted to only let you give this to Wawa, the one true wife. But I thought better of it and am willing to let you FREAKS who like other Dolls have it your way."
+    }
+    set "Icon" asset="gifts/Item_Icon_love_gift_jewelry_1"
+    append "Tags" "wmgfl_gift"
+    append "Tags" "jy_no_sell"
+    set "Rarity" 75
+    set "TradeValue" 50
+    set "BlackMarketMaxQuantity" 0
+    set "MinCampaignProgress" 0
+}
+
+clone "CommodityTemplate" from="commodity.core_world_memorabillia" id="commodity.wmgfl_gift_organic_cat_food" {
+    set "Title" {
+        set "m_DefaultTranslation" "Organic Cat Food"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            Yeah, you're gonna wanna eat that, then huff some glue and chug some beer.
+
+            Look, I can't explain it, alright? There's some sort of weird chemical reaction that happens when you combine cat food, beer, and glue. It makes you feel extremely sick and tired, and you're able to fall asleep.
+            """
+    }
+
+    set "Icon" asset="gifts/Item_Icon_love_gift_necessity_1"
+    append "Tags" "wmgfl_gift"
+    append "Tags" "jy_no_sell"
+    set "Rarity" 75
+    set "TradeValue" 50
+    set "BlackMarketMaxQuantity" 0
+    set "MinCampaignProgress" 0
+}
+
+clone "CommodityTemplate" from="commodity.core_world_memorabillia" id="commodity.wmgfl_gift_succlent_plant_pot" {
+    set "Title" {
+        set "m_DefaultTranslation" "Succulent Plant Pot"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Gentlemen, this is democracy manifest! What is the charge? Eating a meal? A succulent Chinese plant pot meal?"
+    }
+    set "Icon" asset="gifts/Item_Icon_love_gift_necessity_1"
+    append "Tags" "wmgfl_gift"
+    append "Tags" "jy_no_sell"
+    set "Rarity" 75
+    set "TradeValue" 50
+    set "BlackMarketMaxQuantity" 0
+    set "MinCampaignProgress" 0
+}
+
+clone "CommodityTemplate" from="commodity.core_world_memorabillia" id="commodity.wmgfl_gift_gaming_console" {
+    set "Title" {
+        set "m_DefaultTranslation" "Gaming Console"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "I bet this thing wouldn't even be able to run Star Citizen, which I'm sure must have been released by now... right? RIGHT???"
+    }
+    set "Icon" asset="gifts/Item_Icon_love_gift_electrical_2"
+    append "Tags" "wmgfl_gift"
+    append "Tags" "jy_no_sell"
+    set "Rarity" 75
+    set "TradeValue" 50
+    set "BlackMarketMaxQuantity" 0
+    set "MinCampaignProgress" 0
+}
+
+clone "CommodityTemplate" from="commodity.core_world_memorabillia" id="commodity.wmgfl_gift_precious_book" {
+    set "Title" {
+        set "m_DefaultTranslation" "Precious Book"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "If you think I'm going to make a joke about reading then you're mistaken. Anti-intellectualism is a cancer on humanity and you should be ashamed to not be reguarly reading."
+    }
+    set "Icon" asset="gifts/Item_Icon_love_gift_pendant_2"
+    append "Tags" "wmgfl_gift"
+    append "Tags" "jy_no_sell"
+    set "Rarity" 75
+    set "TradeValue" 50
+    set "BlackMarketMaxQuantity" 0
+    set "MinCampaignProgress" 0
+}

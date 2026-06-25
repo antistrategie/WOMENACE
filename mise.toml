@@ -2,9 +2,23 @@
 description = "Compile the mod with Jiangyu (override JIANGYU_DIR or JIANGYU_BUILD to point at a different local build)"
 run = "dotnet ${JIANGYU_DIR:-../jiangyu}/src/Jiangyu.Cli/bin/${JIANGYU_BUILD:-Debug}/net10.0/jiangyu.dll compile"
 
-[tasks.format]
+[tasks."format:kdl"]
 description = "Canonicalise every templates/*.kdl through Jiangyu's editor pipeline."
 run = "dotnet ${JIANGYU_DIR:-../jiangyu}/src/Jiangyu.Cli/bin/${JIANGYU_BUILD:-Debug}/net10.0/jiangyu.dll templates format"
+
+# JiangyuDev=true keeps the *.Dev.cs sources (dev verbs) in scope, so they are formatted/linted too.
+# dotnet format takes the property from the environment, not -p:, so it is set inline here.
+[tasks."format:roslyn"]
+description = "Apply Roslyn whitespace, style, and analyzer fixes to code/."
+run = "JiangyuDev=true dotnet format code/WOMENACE.Code.csproj"
+
+[tasks.format]
+description = "Run formatting (KDL templates + Roslyn code)."
+depends = ["format:kdl", "format:roslyn"]
+
+[tasks.lint]
+description = "Verify code/ is Roslyn-clean without modifying it (fails on any drift)."
+run = "JiangyuDev=true dotnet format code/WOMENACE.Code.csproj --verify-no-changes"
 
 [tasks.deploy]
 description = "Deploy the compiled mod into the MENACE Mods directory (clean: removes the existing deployed folder first)"

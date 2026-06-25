@@ -126,7 +126,7 @@ public sealed class VoymastinaMechSystem : JiangyuSystem
         Tile landing = PickLandingTile(mech, mechTile, targetTile);
         if (landing == null)
         {
-            Context.Log.Debug("drill dash: no free tile adjacent to target; drilling in place");
+            Context.Log.Debug("drill dash: no free tile adjacent to target, drilling in place");
             yield break;
         }
         if (landing.GetX() == mechTile.GetX() && landing.GetZ() == mechTile.GetZ())
@@ -154,7 +154,7 @@ public sealed class VoymastinaMechSystem : JiangyuSystem
             var repick = PickLandingTile(mech, mechTile, targetTile);
             if (repick == null || (repick.GetX() == mechTile.GetX() && repick.GetZ() == mechTile.GetZ()))
             {
-                Context.Log.Debug("drill dash: landing tile taken during windup; drilling in place");
+                Context.Log.Debug("drill dash: landing tile taken during windup, drilling in place");
                 yield break;
             }
             landing = repick;

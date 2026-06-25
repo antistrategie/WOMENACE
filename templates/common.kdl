@@ -1,6 +1,10 @@
-clone "TagTemplate" from="unique" id="armor_restricted"
+clone "TagTemplate" from="unique" id="jy_armor_restricted"
 
-clone "TagTemplate" from="unique" id="vehicle_restricted"
+clone "TagTemplate" from="unique" id="jy_vehicle_restricted"
+
+clone "TagTemplate" from="unique" id="jy_no_sell"
+
+clone "TagTemplate" from="unique" id="wmgfl_gift"
 
 patch "StrategyConfig" "strategy_config" {
     append "InitialPickableUnitLeaders" "squad_leader.voymastina"
@@ -8,6 +12,7 @@ patch "StrategyConfig" "strategy_config" {
     append "InitialPickableUnitLeaders" "squad_leader.leva"
     append "InitialPickableUnitLeaders" "squad_leader.lewis"
 
+    append "InitialAdditionalUnlockedItems" "vehicle.voymastina_mech"
     append "InitialAdditionalUnlockedItems" "vehicle.voymastina_mech_erwin"
 }
 

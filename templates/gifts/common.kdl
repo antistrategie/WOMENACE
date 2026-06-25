@@ -1,0 +1,95 @@
+clone "CommodityTemplate" from="commodity.core_world_memorabillia" id="commodity.wmgfl_gift_dinergate_model" {
+    set "Title" {
+        set "m_DefaultTranslation" "Dinergate Model"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "What a cutie! This is a perfect gift for Robella, PLEASE give it to her, it WILL make her happy."
+    }
+    set "Icon" asset="gifts/Item_Icon_love_gift_pendant_8"
+    append "Tags" "wmgfl_gift"
+    append "Tags" "jy_no_sell"
+    set "Rarity" 10
+    set "TradeValue" 10
+    set "BlackMarketMaxQuantity" 0
+    set "MinCampaignProgress" 0
+}
+
+clone "CommodityTemplate" from="commodity.core_world_memorabillia" id="commodity.wmgfl_gift_exquisite_pen" {
+    set "Title" {
+        set "m_DefaultTranslation" "Exquisite Pen"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Wow a pen. What a great gift, did your mum pick it out for you?"
+    }
+    set "Icon" asset="gifts/Item_Icon_love_gift_necessity_6"
+    append "Tags" "wmgfl_gift"
+    append "Tags" "jy_no_sell"
+    set "Rarity" 10
+    set "TradeValue" 10
+    set "BlackMarketMaxQuantity" 0
+    set "MinCampaignProgress" 0
+}
+
+clone "CommodityTemplate" from="commodity.core_world_memorabillia" id="commodity.wmgfl_gift_body_liquid" {
+    set "Title" {
+        set "m_DefaultTranslation" "Body Maintenance Liquid"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            (Don't make a lubrication joke. Don't make a lubrication joke. Don't make a lubrication joke. C'mon dude, you're BETTER than this.)
+
+            So uhhh... what's the DEAL with airplane food?
+            """
+    }
+
+    set "Icon" asset="gifts/Item_Icon_love_gift_necessity_8"
+    append "Tags" "wmgfl_gift"
+    append "Tags" "jy_no_sell"
+    set "Rarity" 10
+    set "TradeValue" 10
+    set "BlackMarketMaxQuantity" 0
+    set "MinCampaignProgress" 0
+}
+
+clone "CommodityTemplate" from="commodity.core_world_memorabillia" id="commodity.wmgfl_gift_art_posters" {
+    set "Title" {
+        set "m_DefaultTranslation" "Art Posters"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "If a Doll made it does it count as AI art?"
+    }
+    set "Icon" asset="gifts/Item_Icon_love_gift_pendant_7"
+    append "Tags" "wmgfl_gift"
+    append "Tags" "jy_no_sell"
+    set "Rarity" 10
+    set "TradeValue" 10
+    set "BlackMarketMaxQuantity" 0
+    set "MinCampaignProgress" 0
+}
+
+clone "CommodityTemplate" from="commodity.core_world_memorabillia" id="commodity.wmgfl_gift_camping_gear" {
+    set "Title" {
+        set "m_DefaultTranslation" "Camping Gear"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            I quit my job to go camping full-time. It was an in-"tents" decision.
+
+            Why don't you ever see a campfire on its phone? Terrible reception, and it's always getting roasted.
+
+            I tried to start a fire with two sticks last night. Turns out one of them was a match -- should've read the fine print.
+
+            Why are tents so confident? They're always pitched at the right level.
+
+            ...WAIT COME BACK I HAVE MORE!
+            """
+    }
+
+    set "Icon" asset="gifts/Item_Icon_love_gift_experience_6"
+    append "Tags" "wmgfl_gift"
+    append "Tags" "jy_no_sell"
+    set "Rarity" 10
+    set "TradeValue" 10
+    set "BlackMarketMaxQuantity" 0
+    set "MinCampaignProgress" 0
+}
