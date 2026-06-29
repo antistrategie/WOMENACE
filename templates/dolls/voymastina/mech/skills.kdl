@@ -3,7 +3,8 @@ clone "SkillTemplate" from="active.fire_assault_rifle_tier1_762" id="active.voym
         set "m_DefaultTranslation" "Dread Ultimatum"
     }
 
-    set "ActionPointCost" 5
+    set "ActionPointCost" 10
+    set "Uses" 16
 
     set "MuzzleType" enum="MuzzleType" "Muzzle"
     set "IsWeaponSetupRequired" #false
@@ -14,6 +15,12 @@ clone "SkillTemplate" from="active.fire_assault_rifle_tier1_762" id="active.voym
     set "Repetitions" 3
     set "RepetitionDelay" 0.1
     set "DelayAfterAnimationTrigger" 1.35
+
+    set "EventHandlers" index=0 {
+        set "Damage" 12.0
+        set "ArmorPenetration" 20.0
+        set "Suppression" 3.0
+    }
 
     set "IsSoundOnAttackPerElementPlayingAfterAnimationDelay" #true
     set "IsSoundOnAttackPerElementFarPlayingAfterAnimationDelay" #true
@@ -43,6 +50,7 @@ clone "SkillTemplate" from="active.launch_construct_rocket" id="active.voymastin
     }
 
     set "ActionPointCost" 20
+    set "Uses" 5
 
     set "MuzzleType" enum="MuzzleType" "Muzzle2"
     set "AnimationType" enum="AnimationType" "SpecialAttack1"
@@ -50,6 +58,12 @@ clone "SkillTemplate" from="active.launch_construct_rocket" id="active.voymastin
     set "Order" enum="SkillOrder" "OffensiveSpecial"
 
     set "DelayAfterAnimationTrigger" 1.333
+
+    set "EventHandlers" index=0 {
+        set "Damage" 120.0
+        set "ArmorPenetration" 80.0
+        set "Suppression" 50.0
+    }
 }
 
 clone "SkillTemplate" from="active.wetteroth_thats_a_knife" id="active.voymastina_mech_drill" {
@@ -72,8 +86,9 @@ clone "SkillTemplate" from="active.wetteroth_thats_a_knife" id="active.voymastin
     set "MaxRange" 6
 
     set "EventHandlers" index=0 {
-        set "Damage" 80.0
-        set "ArmorPenetration" 60.0
+        set "Damage" 70.0
+        set "ArmorPenetration" 120.0
+        set "Suppression" 80.0
     }
 
     clear "SoundsOnUse"

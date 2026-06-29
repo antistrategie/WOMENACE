@@ -12,6 +12,19 @@ clone "UnitLeaderTemplate" from="pilot.rewa" id="pilot.voymastina_mech" {
             """
     }
 
+    set "InitialAttributes" index=0 100
+    set "InitialAttributes" index=1 85
+    set "InitialAttributes" index=2 85
+    set "InitialAttributes" index=3 50
+    set "InitialAttributes" index=4 50
+    set "InitialAttributes" index=5 20
+    set "InitialAttributes" index=6 50
+
+    set "InitialPerk" "perk.unique_rewa_revel_in_slaughter"
+    set "PerkTrees" index=0 "perk_tree.voymastina_mech"
+
+    set "FixedSupplyCost" 80
+
     set "Slot" asset="voymastina/slot"
     set "SlotInactive" asset="voymastina/slot_inactive"
     set "SlotBadge" asset="voymastina/slot_badge"
