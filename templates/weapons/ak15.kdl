@@ -19,8 +19,10 @@ clone "WeaponTemplate" from="weapon.generic_assault_rifle_tier1_ARC_762" id="wea
 
     set "Damage" 12.0
     set "ArmorPenetration" 20.0
-    set "Suppression" 3.0
-    set "TradeValue" 15
+    set "Suppression" 3.5
+    set "DeployCosts" {
+        set "m_Supplies" 13
+    }
 
     append "OnlyEquipableBy" "wmgfl_voymastina"
     set "BlackMarketMaxQuantity" 0

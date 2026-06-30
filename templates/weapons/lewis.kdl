@@ -26,8 +26,10 @@ clone "WeaponTemplate" from="specialweapon.light_machinegun_tier1_m10E" id="weap
 
     set "Damage" 12.0
     set "ArmorPenetration" 28.0
-    set "Suppression" 10.0
-    set "TradeValue" 30
+    set "Suppression" 9.0
+    set "DeployCosts" {
+        set "m_Supplies" 13
+    }
 
     append "OnlyEquipableBy" "wmgfl_lewis"
     set "BlackMarketMaxQuantity" 0

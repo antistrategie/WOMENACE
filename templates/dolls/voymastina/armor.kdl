@@ -1,4 +1,7 @@
 clone "ArmorTemplate" from="armor.player_fatigues" id="armor.voymastina_default" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
     set "Title" {
         set "m_DefaultTranslation" "White Mastiff's Fang"
     }
@@ -21,6 +24,9 @@ clone "ArmorTemplate" from="armor.player_fatigues" id="armor.voymastina_default"
 }
 
 clone "ArmorTemplate" from="armor.player_fatigues" id="armor.voymastina_erwin" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
     set "Title" {
         set "m_DefaultTranslation" "Erwin"
     }

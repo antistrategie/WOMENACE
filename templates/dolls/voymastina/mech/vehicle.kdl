@@ -112,6 +112,10 @@ clone "EntityTemplate" from="player_vehicle.generic_heavy_attack_walker" id="pla
 clone "VehicleItemTemplate" from="vehicle.chassis_walker_medium" id="vehicle.voymastina_mech" {
     set "EntityTemplate" "player_vehicle.voymastina_mech"
 
+    set "DeployCosts" {
+        set "m_Supplies" 400
+    }
+
     set "Icon" asset="voymastina/armor/default/Icon"
     set "IconEquipment" asset="voymastina/armor/default/IconEquipment"
     set "IconSkillBar" asset="voymastina/armor/default/IconSkillBar"
@@ -124,6 +128,10 @@ clone "VehicleItemTemplate" from="vehicle.chassis_walker_medium" id="vehicle.voy
 
 clone "VehicleItemTemplate" from="vehicle.chassis_walker_medium" id="vehicle.voymastina_mech_erwin" {
     set "EntityTemplate" "player_vehicle.voymastina_mech_erwin"
+
+    set "DeployCosts" {
+        set "m_Supplies" 400
+    }
 
     set "Icon" asset="voymastina/armor/erwin/Icon"
     set "IconEquipment" asset="voymastina/armor/erwin/IconEquipment"
