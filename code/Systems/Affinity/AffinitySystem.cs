@@ -50,6 +50,7 @@ public sealed class AffinitySystem : JiangyuSystem
     private VisualElement _grid;
     private VisualElement _previewFill;
     private VisualElement _previewTemp;
+    private Label _previewCount;
     private Label _levelCurrent;
     private Label _levelNext;
     private VisualElement _activeWindow;
@@ -336,6 +337,7 @@ public sealed class AffinitySystem : JiangyuSystem
         _grid = UI.Find(flyout, UiSelector.Name("gift-grid"));
         _previewFill = UI.Find(flyout, UiSelector.Name("preview-fill"));
         _previewTemp = UI.Find(flyout, UiSelector.Name("preview-temp"));
+        _previewCount = UI.Find(flyout, UiSelector.Name("preview-count"))?.TryCast<Label>();
         _levelCurrent = UI.Find(flyout, UiSelector.Name("level-current"))?.TryCast<Label>();
         _levelNext = UI.Find(flyout, UiSelector.Name("level-next"))?.TryCast<Label>();
     }
@@ -481,12 +483,23 @@ public sealed class AffinitySystem : JiangyuSystem
         {
             _previewFill.SetWidthPercent(100);
             _previewTemp.SetWidthPercent(100);
+            _previewCount?.text = Locale.Text("WOMENACE::ui/gift_level_max", "MAX");
             return;
         }
         var floor = level >= 2 ? Affinity.StepThresholds[level - 2] : 0;
         var next = Affinity.StepThresholds[level - 1];
         _previewFill.SetWidthPercent(PercentBetween(_baseAffinity, floor, next));
         _previewTemp.SetWidthPercent(PercentBetween(projected, floor, next));
+
+        // Centred count: points into this level over the level's span, tracking the projected
+        // (post-gift) total so it climbs live as gifts are selected. e.g. 5/100.
+        var span = next - floor;
+        var into = projected - floor;
+        if (into < 0)
+            into = 0;
+        else if (into > span)
+            into = span;
+        _previewCount?.text = $"{into}/{span}";
     }
 
     private void ConfirmGifts()
