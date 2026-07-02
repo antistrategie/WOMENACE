@@ -58,6 +58,10 @@ public sealed class VoymastinaFormSwapSystem : JiangyuSystem
     private BaseUnitLeader _stashedMech;
     private BaseUnitLeader _stashedHuman;
 
+    // Set while a dossier redeem is masking Voymastina's stashed squad-leader form as already-hirable
+    // (see OnDossierRedeemPre), so the postfix knows to unmask it.
+    private bool _maskedHumanInHirable;
+
     public override void OnInit()
     {
         // The swap button sits after the native unit-window button on the Armory (squad-menu) screen
@@ -72,6 +76,12 @@ public sealed class VoymastinaFormSwapSystem : JiangyuSystem
 
         Context.Patches.Postfix("Il2CppMenace.UI.Strategy.UnitWindow", "SetLeader", OnWindowChanged);
         Context.Patches.Postfix("Il2CppMenace.UI.Strategy.UnitWindow", "Refresh", OnWindowChanged);
+
+        // Stop a squad-leader dossier from rolling a duplicate Voymastina while she is in her mech
+        // form (her squad-leader form is stashed out of the roster then, so it reads as unacquired).
+        // See OnDossierRedeemPre.
+        Context.Patches.Prefix("Il2CppMenace.Items.DossierItemTemplate", "Redeem", OnDossierRedeemPre);
+        Context.Patches.Postfix("Il2CppMenace.Items.DossierItemTemplate", "Redeem", OnDossierRedeemPost);
 
         // Re-evaluate the button when affinity changes (a gift), so reaching the mech level ungreys
         // it without leaving and re-entering the screen.
@@ -89,6 +99,88 @@ public sealed class VoymastinaFormSwapSystem : JiangyuSystem
     {
         if (info.Instance is VisualElement window)
             UpdateSwapButton(window);
+    }
+
+    // A squad-leader dossier redeems a random not-yet-acquired squad leader. While Voymastina is in
+    // her mech form, her squad-leader form (squad_leader.voymastina) is stashed OUT of the roster
+    // (DoSwap replaces her roster slot with the pilot), so the game reads it as never-acquired and the
+    // dossier could roll it, handing out a SECOND Voymastina squad leader alongside the mech.
+    //
+    // To exclude her from the roll WITHOUT wasting the dossier, mask her form as already-hirable for
+    // the duration of the redeem: add her template to the roster's hirable list so the pick treats her
+    // as already available and skips her, then remove it again in the postfix. The add + remove are
+    // fully contained in the synchronous redeem, so she never actually surfaces in the recruit pool.
+    private void OnDossierRedeemPre(PatchInfo info)
+    {
+        try
+        {
+            _maskedHumanInHirable = false;
+            if (!MechFormActive())
+                return;
+
+            var hirable = StrategyState.Get()?.Roster?.m_HirableLeaders;
+            var human = ResolveTemplate<UnitLeaderTemplate>(HumanTemplateId);
+            if (hirable == null || human == null || hirable.Contains(human))
+                return;
+
+            hirable.Add(human);
+            _maskedHumanInHirable = true;
+        }
+        catch (Exception ex)
+        {
+            Context.Log.Warn($"dossier guard (pre) failed: {ex.GetType().Name}: {ex.Message}");
+        }
+    }
+
+    private void OnDossierRedeemPost(PatchInfo info)
+    {
+        try
+        {
+            if (!_maskedHumanInHirable)
+                return;
+            _maskedHumanInHirable = false;
+
+            var hirable = StrategyState.Get()?.Roster?.m_HirableLeaders;
+            var human = ResolveTemplate<UnitLeaderTemplate>(HumanTemplateId);
+            if (hirable == null || human == null)
+                return;
+
+            hirable.Remove(human);
+
+            // Tripwire: after removing our mask she should be gone. If she is still hirable, the
+            // redeem granted her despite the mask, i.e. the game no longer skips already-hirable
+            // leaders when it rolls (a behavioural change from a game update). Warn loudly so it
+            // surfaces in the log rather than as a silent duplicate, and scrub the extra so the
+            // failure degrades to a wasted roll, never a duplicate Voymastina.
+            if (hirable.Contains(human))
+            {
+                Context.Log.Warn("dossier guard: squad_leader.voymastina still hirable after unmask - "
+                    + "the redeem picked her despite the mask. The 'skip already-hirable' assumption has "
+                    + "broken (game update?). Scrubbing the duplicate; the guard needs revisiting.");
+                while (hirable.Contains(human))
+                    hirable.Remove(human);
+            }
+        }
+        catch (Exception ex)
+        {
+            Context.Log.Warn($"dossier guard (post) failed: {ex.GetType().Name}: {ex.Message}");
+        }
+    }
+
+    // True when Voymastina is currently in her mech form: the pilot occupies her roster slot, so her
+    // squad-leader form is stashed out of the roster and would otherwise read as unacquired.
+    private bool MechFormActive()
+    {
+        var hired = StrategyState.Get()?.Roster?.m_HiredLeaders;
+        if (hired == null)
+            return false;
+        for (int i = 0; i < hired.Count; i++)
+        {
+            var t = hired[i]?.LeaderTemplate;
+            if (t.IsAlive() && t.GetID() == MechTemplateId)
+                return true;
+        }
+        return false;
     }
 
     private VisualElement BuildSwapButton(VisualElement window)
