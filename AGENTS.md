@@ -1,6 +1,6 @@
 # WOMENACE
 
-A Girls' Frontline mod for MENACE, built with [Jiangyu](https://github.com/antistrategie/jiangyu). Characters are authored from PMX (MMD) sources, converted to Unity-native prefabs via a Blender + Unity pipeline, and shipped to MENACE through Jiangyu's KDL template system as squad-leader clones, armor clones, entity clones, and perk trees.
+A Girls' Frontline mod for MENACE, built with [Jiangyu](https://github.com/antistrategie/jiangyu). Characters are authored from PMX (MMD) sources, converted to Unity-native prefabs via a Blender + Unity pipeline, and shipped to MENACE through Jiangyu's KDL template system as squad-leader clones, armor clones, entity clones, and perk trees. Runtime behaviour the templates cannot express (affinity progression, gift drops, SSR-weapon imprint bonuses, the mech form swap) lives in a C# code mod under `code/`.
 
 This file is the agent-onboarding briefing. For SDK-level concepts (KDL templates, clone/patch grammar, addition vs replacement, asset bundle pipeline, loader hooks), read Jiangyu's own [AGENTS.md](https://github.com/antistrategie/jiangyu/blob/main/AGENTS.md) first. For per-pipeline detail:
 
@@ -19,11 +19,24 @@ Things an agent can't easily find by reading the code. If the answer lives in `t
 WOMENACE/
 ├── jiangyu.json            mod manifest (name + Jiangyu version pin)
 ├── mise.toml               task runner: compile, deploy, unity-init, unity-open
-├── templates/              KDL template patches and clones, one file per character
+├── templates/              KDL template patches and clones
+│   ├── common.kdl          shared registrations (pickable leaders, dossier roster)
+│   ├── dolls/<character>/  per-character spine (tag, speaker, entity, leader, perks, armor) + voice/
+│   ├── weapons/            weapon + fire-skill clones, one file per weapon (+ shared soundbank.kdl)
+│   └── gifts/              affinity-gift item clones, one file per rarity
+├── code/                   C# code mod: JiangyuSystem subclasses (auto-discovered) + Harmony patches
+│   ├── Templates.cs        shared id→template lookup + caching resolve
+│   ├── Systems/Affinity/   affinity model + skin gate + unlock grants + badge popover
+│   ├── Systems/Ssr/        SSR "Imprint Boost" weapons (owner-only combat bonuses + tooltip section)
+│   ├── Systems/Dolls/      per-doll systems (e.g. Voymastina mech form swap)
+│   ├── Systems/Gifts/      affinity-gift drops + catalogue
+│   ├── Perks/              custom perk behaviours
+│   └── Dev/                dev-only verbs (*.Dev.cs, excluded from release builds)
 ├── scripts/                Authoring + asset pipelines (Python)
 │   ├── pmx_to_menace.py    PMX → glTF (humanoid characters)
-│   ├── bake_weapon.py      OBJ → glTF (weapons + attach-point empties)
-│   ├── render_weapon.py    glTF → transparent PNG (icon prep)
+│   ├── weapon/
+│   │   ├── bake_weapon.py    OBJ → glTF (weapons + attach-point empties)
+│   │   └── render_weapon.py  glTF → transparent PNG (icon prep)
 │   ├── voice/
 │   │   ├── transcribe.py   OpenAI ASR + MT → per-character .trans.csv
 │   │   ├── serve.py        Local web utility: browse + play character voice lines
@@ -50,7 +63,7 @@ WOMENACE/
 
 A full character ships four kinds of content end-to-end via `mise compile && mise deploy`:
 
-1. **KDL spine** — TagTemplate, SpeakerTemplate, EntityTemplate, UnitLeaderTemplate, PerkTreeTemplate, ArmorTemplate clones at `templates/<character>/`. See [`skills/character-authoring/SKILL.md`](skills/character-authoring/SKILL.md).
+1. **KDL spine** — TagTemplate, SpeakerTemplate, EntityTemplate, UnitLeaderTemplate, PerkTreeTemplate, ArmorTemplate clones at `templates/dolls/<character>/`. See [`skills/character-authoring/SKILL.md`](skills/character-authoring/SKILL.md).
 2. **3D model** — PMX source → glTF (Blender) → addition prefab (Unity). See [`skills/pmx-to-menace/SKILL.md`](skills/pmx-to-menace/SKILL.md).
 3. **Voice** — rip dir → normalised + transcribed WAVs at `assets/additions/audio/<character>/` → SoundBank + ConversationTemplate clones. See [`skills/voice-pipeline/SKILL.md`](skills/voice-pipeline/SKILL.md).
 4. **Weapon (optional)** — OBJ source → glTF (Blender) → addition prefab (Unity) + WeaponTemplate clone + custom gunshot SoundBank + Skill clones. See [`skills/weapon-pipeline/SKILL.md`](skills/weapon-pipeline/SKILL.md).
@@ -94,16 +107,22 @@ Several badge/portrait fields exist on both `UnitLeaderTemplate` and `EntityTemp
 
 ## Affinity and unlocks
 
-The affinity feature is three `JiangyuSystem`s that coordinate through one shared `Context.State` plus a declarative rules table, never by calling each other (the SDK's only cross-system channel: `Context.State.Get<T>()` returns the same live instance to every system of the mod).
+The affinity feature is a shared model (persisted state + a static read API + a declarative rules table) that its `JiangyuSystem`s coordinate through, never by calling each other (the SDK's only cross-system channel: `Context.State.Get<T>()` returns the same live instance to every system of the mod).
 
 - `AffinityState` (in `code/Systems/Affinity/Affinity.cs`) is the only persisted store of points, keyed by a stable FNV-1a hash of the character's own tag (`wmgfl_<name>`, parsed out of the speaker `Tags`) so a character's forms share one total (Voymastina's squad-leader and pilot share a speaker) and the key does not move when unrelated speaker tags change. `AffinitySystem` is its only writer.
 - `Affinity` (static) is the shared read API: level maths (`StepThresholds`, `LevelForPoints`), the leader key (`KeyFor`), and the character tag (`CharacterTag`, e.g. `wmgfl_voymastina`). Any system gates on affinity through this.
 - `Unlocks` (`code/Systems/Affinity/Unlocks.cs`) is the per-character map of `level -> Feature`. Both the gameplay gates and the badge popover read it, so the level a feature unlocks at and the level the popover advertises cannot drift. A character absent from the map has no unlocks. Add unlocks here and every consumer follows.
 
-Two gate mechanisms, chosen to fit how MENACE surfaces each:
+Three gate mechanisms, chosen to fit how MENACE surfaces each:
 
 - **Skins are gated in the picker UI** (`SkinGateSystem`). The alternate-outfit picker is a CATALOGUE, not an owned-items list: `UnitWindowEquipment.UpdateEquipmentAlternatives` lists every equippable armour with an owned-count and can show ones the player does not own, so withholding ownership does not hide a skin. A Harmony postfix on that method reads the window's `m_Leader`, finds the `EquipmentAlternatives` element in the active screen, and sets `display:none` on each `EquipmentSlot` whose `m_Item` is a skin the leader has not unlocked (`Unlocks.LockedSkinArmors`). The slot reappears the instant the level is reached. Separately, `AffinitySystem.ApplyUnlocks` grants the owned instance (`OwnedItems.AddItem`, idempotent on `GetInstanceCount`) at the unlock level so the now-visible skin is equippable, and the skins are kept out of the squad template's starting `Items` so a fresh save does not own them early.
 - **The mech form is gated at the swap button.** The Pilot form is reachable only through `VoymastinaFormSwapSystem`'s swap (the pilot template is not pickable or dossier-unlocked), so locking that one affordance fully locks the form. Below the unlock level the button is greyed and non-clickable (`SetEnabled(false)` blocks the click, the `.wm-locked` USS class supplies the look since the game theme is not relied on to style `:disabled` for `.text-button`) and `DoSwap` re-checks defensively.
+- **SSR weapons are granted at the unlock level, then boosted in code** (`SsrImprintSystem`). A `Feature.Weapon` unlock adds a `special_weapon` anyone can equip to the shared inventory (`ApplyUnlocks`, same idempotent `AddItem` as skins). The owner-only combat bonus (extra damage, extra shots, on-hit effects like +1 freeze) and the green-for-owner / greyed-otherwise "<Doll> Imprint Boost" tooltip section live in `SsrImprintSystem`, one `Entry` per weapon. Base stats stay authored in KDL. Only the owner overrides live in code.
+
+Two non-obvious constraints shaped `SsrImprintSystem`, both expensive to rediscover:
+
+- **Owner identity in a mission comes from the speaker, not tags.** A combat entity DROPS its `EntityTemplate` tags but keeps its `SpeakerTemplate`, so "is the owning doll firing this?" must be read via `Entity.GetSpeakerTemplate()` (wrapped as `Affinity.CharacterTag(Entity)`), never `HasAnyOfTheseTagsAnywhere("wmgfl_…")` or the tags on `Skill.GetActor()` (that actor exists but carries none of the doll's template tags).
+- **The boost never leaves the shared template mutated at rest.** Damage is added per shot to the `DamageInfo` in a `Skill.FillDamageInfo` postfix, so `WeaponTemplate.Damage` stays at its authored base and a buffed value can never leak into another wielder's loadout/preview UI. Extra shots have no per-hit lever, so `SkillTemplate.Repetitions` must be set on the shared template before the shot loop reads it, and that loop reads asynchronously AFTER `Use` returns, so it cannot be restored in a postfix (doing so fires a single shot). The tooltip sets the viewer's numbers in the Pre hook and restores base in the Post hook so the resting template is never left buffed.
 
 The badge hover popover is the game's **native tooltip**, via the SDK `Jiangyu.Game.Ui.Components.Tooltip` wrapper (`UIManager.ShowTooltip`, sticks to the mouse). `AffinitySystem` builds it from `Unlocks.RowsFor` on each hover (`Tooltip.OnHover`): a subheading then one row per level, every reached level (current and below) in `Positive` and every level not yet reached in `Disabled`. Each label is the zero-padded level (`01`, `02`, ...) followed by that level's reward text, or a `·` for a level that grants nothing.
 

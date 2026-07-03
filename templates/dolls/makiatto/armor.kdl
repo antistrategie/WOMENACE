@@ -1,0 +1,76 @@
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.makiatto_default" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
+    set "Title" {
+        set "m_DefaultTranslation" "Caramel Melody"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Field Outfit"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Makiatto's usual outfit. She rarely opens her violin case; it holds her most cherished weapon."
+    }
+    set "Icon" asset="makiatto/armor/default/Icon"
+    set "IconEquipment" asset="makiatto/armor/default/IconEquipment"
+    set "IconSkillBar" asset="makiatto/armor/default/IconSkillBar"
+    clear "MaleModels"
+    append "MaleModels" asset="makiatto/default/main"
+    clear "FemaleModels"
+    append "FemaleModels" asset="makiatto/default/main"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_makiatto"
+}
+
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.makiatto_ballroom" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
+    set "Title" {
+        set "m_DefaultTranslation" "Ballroom Interlude"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Formal Wear"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "This is the dress that Makaitto wears to the ball. Its simple style adorned with a familiar ribbon, carries a secret hope-that her dance partner will finally take notice of her."
+    }
+    set "Icon" asset="makiatto/armor/ballroom/Icon"
+    set "IconEquipment" asset="makiatto/armor/ballroom/IconEquipment"
+    set "IconSkillBar" asset="makiatto/armor/ballroom/IconSkillBar"
+    clear "MaleModels"
+    append "MaleModels" asset="makiatto/ballroom/main"
+    clear "FemaleModels"
+    append "FemaleModels" asset="makiatto/ballroom/main"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_makiatto"
+    append "Tags" "jy_no_sell"
+}
+
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.makiatto_steamy_vacance" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
+    set "Title" {
+        set "m_DefaultTranslation" "Steamy Vacance"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Bathing Wear"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            "W-what do you mean by "we should bathe together?! I'm already done bathing! (Groan) Still, I don't mind going in again. Honestly, why did you take so long to show up..."
+            --Having just put on her bathrobe, Makiatto prompty keels over after saying those words.
+            """
+    }
+    set "Icon" asset="makiatto/armor/steamy_vacance/Icon"
+    set "IconEquipment" asset="makiatto/armor/steamy_vacance/IconEquipment"
+    set "IconSkillBar" asset="makiatto/armor/steamy_vacance/IconSkillBar"
+    clear "MaleModels"
+    append "MaleModels" asset="makiatto/steamy_vacance/main"
+    clear "FemaleModels"
+    append "FemaleModels" asset="makiatto/steamy_vacance/main"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_makiatto"
+    append "Tags" "jy_no_sell"
+}

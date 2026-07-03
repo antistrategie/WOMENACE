@@ -1,0 +1,24 @@
+clone "ConversationTemplate" from="Carda_Early/arrival_carda" id="Makiatto/arrival_makiatto" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_makiatto"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_makiatto_va"
+                        set "itemId" "Single_Login_001"
+                    }
+                    set "RoleGuid" "Carda"
+                    set "Text" "Don’t just stand there, get over here, now!"
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}

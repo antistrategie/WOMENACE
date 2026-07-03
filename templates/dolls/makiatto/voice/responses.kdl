@@ -1,0 +1,24 @@
+clone "ConversationTemplate" from="Carda_Early/response_taking_fire_anyone" id="Makiatto/response_taking_fire_anyone_makiatto" {
+    set "Active" #true
+    set "Roles" index=2 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_makiatto"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_makiatto_va"
+                        set "itemId" "Series_Tone_Negative_001"
+                    }
+                    set "RoleGuid" "SL"
+                    set "Text" "Impossible."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}

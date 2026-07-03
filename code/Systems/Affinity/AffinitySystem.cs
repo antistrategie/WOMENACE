@@ -32,9 +32,10 @@ public sealed class AffinitySystem : JiangyuSystem
     private readonly List<Box> _boxes = [];
     private readonly Dictionary<Gift, int> _chosen = [];
 
-    // Resolved gated-skin armour templates, cached so the unlock pass does not rescan the template
+    // Resolved gated-skin / SSR-weapon templates, cached so the unlock pass does not rescan the template
     // loader on every window refresh.
-    private readonly Dictionary<string, BaseItemTemplate> _armorCache = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, ArmorTemplate> _armorCache = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, WeaponTemplate> _weaponCache = new(StringComparer.Ordinal);
 
     // The game's rarity palette, read once from UIConfig (with the shipped values as a fallback) so
     // gift tiles in the picker show the same common/uncommon/rare colours the game uses elsewhere.
@@ -203,29 +204,27 @@ public sealed class AffinitySystem : JiangyuSystem
             if (owned == null)
                 return;
 
-            foreach (var id in Unlocks.UnlockedSkinArmors(Affinity.CharacterTag(leader), level))
+            var characterTag = Affinity.CharacterTag(leader);
+
+            foreach (var id in Unlocks.UnlockedSkinArmors(characterTag, level))
             {
-                var template = ResolveArmor(id);
+                var template = Templates.Resolve<ArmorTemplate>(id, _armorCache, msg => Context.Log.Warn($"affinity: {msg}"));
                 if (template == null || owned.GetInstanceCount(template) > 0)
                     continue;
                 owned.AddItem(template, false, false);
                 Context.Log.Info($"affinity: unlocked skin '{id}' (level {level})");
             }
-        }
-        catch (Exception ex) { Context.Log.Warn($"affinity: skin unlock failed: {ex.Message}"); }
-    }
 
-    // An armour template by id, cached after the first resolve.
-    private BaseItemTemplate ResolveArmor(string id)
-    {
-        if (_armorCache.TryGetValue(id, out var cached))
-            return cached;
-        var found = Templates.ById<ArmorTemplate>(id, msg => Context.Log.Warn($"affinity: {msg}"));
-        // Cache only a hit. Caching a miss would pin the skin as unresolvable for the session if the
-        // lookup happened before the armour template was registered, so the unlock would never land.
-        if (found != null)
-            _armorCache[id] = found;
-        return found;
+            foreach (var id in Unlocks.UnlockedWeapons(characterTag, level))
+            {
+                var template = Templates.Resolve<WeaponTemplate>(id, _weaponCache, msg => Context.Log.Warn($"affinity: {msg}"));
+                if (template == null || owned.GetInstanceCount(template) > 0)
+                    continue;
+                owned.AddItem(template, false, false);
+                Context.Log.Info($"affinity: unlocked weapon '{id}' (level {level})");
+            }
+        }
+        catch (Exception ex) { Context.Log.Warn($"affinity: unlock failed: {ex.Message}"); }
     }
 
     // Read the rarity brackets and colours from the game's UIConfig once. Falls back to the shipped

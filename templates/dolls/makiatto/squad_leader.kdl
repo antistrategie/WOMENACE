@@ -1,0 +1,218 @@
+clone "TagTemplate" from="unique" id="wmgfl_makiatto"
+
+clone "SpeakerTemplate" from="carda" id="wmgfl_makiatto_speaker" {
+    set "Tags" "wmgfl_makiatto female infantry waybacker"
+    set "Nickname" {
+        set "m_DefaultTranslation" "Makiatto"
+    }
+    set "Forename" {
+        set "m_DefaultTranslation" "Makiatto"
+    }
+    set "Surname" {
+        set "m_DefaultTranslation" ""
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            Name: Makiatto (WA 2000)
+
+            Proficiency: First Strike & Marksmanship
+
+            Birth: Unknown
+
+            Age: Classified
+
+            Affiliation(s): Zucchero Café
+            """
+    }
+
+    set "BarkImage" asset="makiatto/bark"
+    set "StandLookLeftImage" asset="makiatto/stand_look_left"
+    set "StandLookRightImage" asset="makiatto/stand_look_right"
+    set "StandLookRightInactiveImage" asset="makiatto/stand_look_right_inactive"
+}
+
+clone "EntityTemplate" from="player_squad.carda" id="player_squad.makiatto" {
+    append "Tags" "wmgfl_makiatto"
+    append "Tags" "jy_armor_restricted"
+    set "Title" {
+        set "m_DefaultTranslation" "Zucchero Café"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "A calm, proud, yet awkward Doll who isn't good at expressing herself. She loves fluffy little animals and overly sweet macchiatos. Always a loner, her gaze often lingers somewhere. When will she finally get the response she's been longing for?"
+    }
+
+    set "Badge" asset="makiatto/badge_mini"
+    set "BadgeWhite" asset="makiatto/badge_mini"
+    clear "Items"
+    append "Items" "armor.makiatto_default"
+    append "Items" "weapon.makiatto_wa2000"
+}
+
+clone "UnitLeaderTemplate" from="squad_leader.carda" id="squad_leader.makiatto" {
+    set "InfantryUnitTemplate" "player_squad.makiatto"
+    set "SpeakerTemplate" "wmgfl_makiatto_speaker"
+    set "CustomHead" #null
+    set "UnitTitle" {
+        set "m_DefaultTranslation" "Tactical Doll"
+    }
+    set "UnitDescription" {
+        set "m_DefaultTranslation" "A calm, proud, yet awkward Doll who isn't good at expressing herself. She loves fluffy little animals and overly sweet macchiatos. Always a loner, her gaze often lingers somewhere. When will she finally get the response she's been longing for?"
+    }
+
+    set "InitialAttributes" index=0 75
+    set "InitialAttributes" index=1 90
+    set "InitialAttributes" index=2 80
+    set "InitialAttributes" index=3 100
+    set "InitialAttributes" index=4 100
+    set "InitialAttributes" index=5 25
+    set "InitialAttributes" index=6 70
+
+    set "QualityLevel" 3
+    set "GrowthPotential" 5
+    set "FixedSupplyCost" 60
+    set "SquaddieTax" 60
+    set "Rarity" 5
+
+    set "InitialPerk" "perk.full_send"
+    set "PerkTrees" index=0 "perk_tree.makiatto"
+
+    set "Slot" asset="makiatto/slot"
+    set "SlotInactive" asset="makiatto/slot_inactive"
+    set "SlotBadge" asset="makiatto/slot_badge"
+
+    set "BadgeDragged" asset="makiatto/badge_dragged"
+    set "BigBadge" asset="makiatto/big_badge"
+    set "BadgeUnitWindow" asset="makiatto/badge_unit_window"
+    set "BadgeMini" asset="makiatto/badge_mini"
+
+    set "HiringSelectBarkSound" {
+        set "bankId" "wmgfl_tactical_barks_makiatto_va"
+        set "itemId" "Series_Chosen_Series_Up_008"
+    }
+    set "HiredBarkSound" {
+        set "bankId" "wmgfl_tactical_barks_makiatto_va"
+        set "itemId" "Series_Tone_Positive_007"
+    }
+    set "PromotionBarkSounds" index=0 {
+        set "PerkTier" 1
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_makiatto_va"
+            set "itemId" "Series_Up_002"
+        }
+    }
+    set "PromotionBarkSounds" index=1 {
+        set "PerkTier" 2
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_makiatto_va"
+            set "itemId" "Series_Up_003"
+        }
+    }
+    set "PromotionBarkSounds" index=2 {
+        set "PerkTier" 3
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_makiatto_va"
+            set "itemId" "Series_Up_004"
+        }
+    }
+    set "PromotionBarkSounds" index=3 {
+        set "PerkTier" 4
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_makiatto_va"
+            set "itemId" "Series_Up_005"
+        }
+    }
+
+    clear "EmotionalStateResponses"
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Eager"
+        set "Text" {
+            set "m_DefaultTranslation" "I made these treats using the recipe Centaureissi gave me. If you want… I-I didn’t make them for you or anything!"
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_makiatto_va"
+            set "itemId" "Series_Daily_003"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Determined"
+        set "Text" {
+            set "m_DefaultTranslation" "If you run into trouble, tell me. Whether I help depends on my mood, though."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_makiatto_va"
+            set "itemId" "Single_Friendliness_002"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Overconfident"
+        set "Text" {
+            set "m_DefaultTranslation" "Sniping takes immense patience and absolute skill. Naturally, I’ve got both."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_makiatto_va"
+            set "itemId" "Single_Friendliness_007"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Euphoric"
+        set "Text" {
+            set "m_DefaultTranslation" "Wow, this fluffiness... and the meowing... W-What are you looking at?! I don't like cats! I just happened to stumble upon this video!"
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_makiatto_va"
+            set "itemId" "Series_Daily_004"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Hesitant"
+        set "Text" {
+            set "m_DefaultTranslation" "By the way, why didn't you say anything when you—ugh. If you don't want to answer, then don't! "
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_makiatto_va"
+            set "itemId" "Series_Daily_002"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Frustrated"
+        set "Text" {
+            set "m_DefaultTranslation" "(Hmph)"
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_makiatto_va"
+            set "itemId" "End"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Disheartened"
+        set "Text" {
+            set "m_DefaultTranslation" "You think I’m not fitting in with the team? No way! Dealing with people is just a hassle!"
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_makiatto_va"
+            set "itemId" "Single_Friendliness_006"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Miserable"
+        set "Text" {
+            set "m_DefaultTranslation" "About earlier, uh... sorry."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_makiatto_va"
+            set "itemId" "Series_Lose_Single_Lose_001"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "GoodwillTowards"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "AnimosityTowards"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+}

@@ -1,4 +1,5 @@
 using Il2CppMenace.Strategy;
+using Il2CppMenace.Tactical;
 using Il2CppMenace.UI.Strategy;
 using Jiangyu.Game;
 using Jiangyu.Sdk;
@@ -105,9 +106,29 @@ public static class Affinity
 
     // The character's own tag (e.g. "wmgfl_voymastina"), parsed out of the speaker Tags string so
     // the Unlocks registry can be keyed by character. Null if the leader is not one of ours.
-    public static string CharacterTag(BaseUnitLeader leader)
+    public static string CharacterTag(BaseUnitLeader leader) => ParseCharacterTag(OurSpeakerTags(leader));
+
+    // The character's own tag parsed from an in-combat entity. Combat entities do NOT carry the doll's
+    // EntityTemplate tag, but they keep their SpeakerTemplate (Tags "wmgfl_<name> ..."), so this is the
+    // reliable in-mission identity: the SSR imprint system reads it to tell whose weapon just fired.
+    public static string CharacterTag(Entity entity)
     {
-        var tags = OurSpeakerTags(leader);
+        try
+        {
+            var speaker = entity != null ? entity.GetSpeakerTemplate() : null;
+            var tags = speaker.IsAlive() ? speaker.Tags : null;
+            return string.IsNullOrEmpty(tags) || !tags.Contains(Tag) ? null : ParseCharacterTag(tags);
+        }
+        catch (Exception ex)
+        {
+            Warn?.Invoke($"affinity: entity speaker-tag resolve failed: {ex.Message}");
+            return null;
+        }
+    }
+
+    // The "wmgfl_<name>" identity token out of a speaker Tags string, or null if none is present.
+    private static string ParseCharacterTag(string tags)
+    {
         if (tags == null)
             return null;
         foreach (var token in tags.Split(' '))

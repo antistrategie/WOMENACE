@@ -32,7 +32,16 @@ def load_bank(char):
     Returns (bank_id, {clip_stem: sound_name}). The sound_name is the itemId a
     conversation / squad-leader template references. Empty if the char has no bank.
     """
-    kdl = TEMPLATES_ROOT / char / 'voice' / 'soundbank.kdl'
+    # Canonical location. Fall back to a recursive glob for older layouts, but warn on ambiguity so a
+    # stale duplicate soundbank.kdl under the same <char> segment can't silently shadow the real one.
+    canonical = TEMPLATES_ROOT / 'dolls' / char / 'voice' / 'soundbank.kdl'
+    if canonical.exists():
+        kdl = canonical
+    else:
+        matches = sorted(TEMPLATES_ROOT.glob(f'**/{char}/voice/soundbank.kdl'))
+        if len(matches) > 1:
+            print(f'warning: {len(matches)} soundbanks match {char!r}, using {matches[0]}: {matches}', file=sys.stderr)
+        kdl = matches[0] if matches else canonical
     if not kdl.exists():
         return None, {}
     text = kdl.read_text(encoding='utf-8')

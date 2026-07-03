@@ -39,4 +39,19 @@ public static class Templates
         catch (Exception ex) { onError?.Invoke($"template resolve <{typeof(T).Name}> '{id}' failed: {ex.Message}"); }
         return null;
     }
+
+    // A template by id, memoised in the caller's cache. Cache a HIT ONLY: caching a miss would pin the
+    // id as unresolvable for the whole session if the lookup ran before the template was registered, so
+    // the thing that id gates (a skin/weapon unlock, an imprint boost) would then never resolve.
+    public static T Resolve<T>(string id, Dictionary<string, T> cache, Action<string> onError = null) where T : DataTemplate
+    {
+        if (id == null)
+            return null;
+        if (cache.TryGetValue(id, out var cached))
+            return cached;
+        var found = ById<T>(id, onError);
+        if (found != null)
+            cache[id] = found;
+        return found;
+    }
 }
