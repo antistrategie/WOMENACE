@@ -68,6 +68,9 @@ class TransferConfig:
     lod_mesh_basename: str
     fist_pose: bool
     keep_right_index_extended: bool
+    rigid_bind_meshes: dict[str, str]
+    mesh_textures: dict[str, str]
+    fist_rotations: dict[str, float]
 
     @staticmethod
     def load(path: Path) -> "TransferConfig":
@@ -89,6 +92,9 @@ class TransferConfig:
             lod_mesh_basename=str(data.get("lod_mesh_basename", "character")),
             fist_pose=bool(data.get("fist_pose", True)),
             keep_right_index_extended=bool(data.get("keep_right_index_extended", True)),
+            rigid_bind_meshes=dict(data.get("rigid_bind_meshes", {})),
+            mesh_textures=dict(data.get("mesh_textures", {})),
+            fist_rotations={k: float(v) for k, v in data.get("fist_rotations", {}).items()},
         )
 
 
@@ -613,6 +619,46 @@ def pose_arm_chains_and_bake(
         ("UpperArm_R", "LowerArm_R", "Hand_R"),
     )
 
+    # Stub-bone rigs (AssetStudio FBX rips export bones as null nodes, so
+    # Blender imports every bone as a short world-+Y stub) break the pose
+    # math below: it derives each bone's rotation from its REST basis, which
+    # is only meaningful when bone Y runs along the limb. Detect stubs by
+    # comparing bone Y against the direction to the anatomical child and
+    # re-orient in EDIT mode first: tail toward the child, roll chosen as
+    # the minimal-twist frame against the avatar target basis so the bake
+    # swings the arm without spiralling the mesh around the limb axis.
+    # MMD imports already point along the limb, the gate leaves them alone.
+    clear_selection()
+    bpy.context.view_layer.objects.active = armature_obj
+    armature_obj.select_set(True)
+    bpy.ops.object.mode_set(mode="EDIT")
+    reoriented = 0
+    for chain in chain_bones:
+        edit_bones = armature_obj.data.edit_bones
+        prev_dir = None
+        for i, bone_name in enumerate(chain):
+            eb = edit_bones.get(bone_name)
+            if eb is None:
+                continue
+            child = edit_bones.get(chain[i + 1]) if i + 1 < len(chain) else None
+            direction = (child.head - eb.head) if child is not None else prev_dir
+            if direction is None or direction.length < 1e-9:
+                continue
+            prev_dir = direction.copy()
+            current_y = (eb.tail - eb.head).normalized()
+            if current_y.angle(direction.normalized()) < math.radians(30.0):
+                continue  # already limb-aligned (PMX/MMD rigs)
+            basis = _resolve_bone_basis(bone_name, reference_tpose, frame, apply_y=False)
+            eb.tail = eb.head + direction
+            if basis is not None:
+                target_x, target_y, target_z = basis
+                swing = target_y.rotation_difference(direction.normalized())
+                eb.align_roll(swing @ target_z)
+            reoriented += 1
+    bpy.ops.object.mode_set(mode="OBJECT")
+    if reoriented:
+        print(f"[info] re-oriented {reoriented} stub arm bone(s) along the limb before T-pose calibration")
+
     clear_selection()
     bpy.context.view_layer.objects.active = armature_obj
     armature_obj.select_set(True)
@@ -889,11 +935,19 @@ def ensure_mmd_tools_enabled() -> None:
 
 
 def import_pmx(path: Path) -> list:
+    """Import the character source model. PMX goes through mmd_tools. FBX
+    (AssetStudio/VoyExport rips, e.g. GFL2 characters) goes through the
+    native FBX importer with animation takes skipped: the model glTF only
+    needs mesh + skeleton, clips ship separately as a Unity-side humanoid
+    animation donor."""
     if not path.exists():
-        raise FileNotFoundError(f"PMX file not found: {path}")
-    ensure_mmd_tools_enabled()
+        raise FileNotFoundError(f"source model not found: {path}")
     before = {obj.name for obj in bpy.data.objects}
-    bpy.ops.mmd_tools.import_model(filepath=str(path))
+    if path.suffix.lower() == ".fbx":
+        bpy.ops.import_scene.fbx(filepath=str(path), use_anim=False)
+    else:
+        ensure_mmd_tools_enabled()
+        bpy.ops.mmd_tools.import_model(filepath=str(path))
     return [obj for obj in bpy.data.objects if obj.name not in before]
 
 
@@ -964,6 +1018,7 @@ def apply_fist_pose(
     mesh_objects: list["bpy.types.Object"],
     *,
     keep_right_index_extended: bool = True,
+    custom_rotations: dict[str, float] | None = None,
 ) -> int:
     """Curl PMX finger bones into a fist pose, bake the deformation, apply
     the new rest. Returns the number of finger bones rotated.
@@ -997,14 +1052,24 @@ def apply_fist_pose(
     THUMB_ANGLES = [20, 30, 40]
 
     rotations: list[tuple[str, float]] = []
-    for side in (".L", ".R"):
-        for finger in NON_THUMB_FINGERS:
-            if keep_right_index_extended and finger == "人指" and side == ".R":
-                continue
-            for joint, deg in zip("１２３", NON_THUMB_ANGLES):
-                rotations.append((f"{finger}{joint}{side}", math.radians(deg)))
-        for joint, deg in zip("０１２", THUMB_ANGLES):
-            rotations.append((f"親指{joint}{side}", math.radians(deg)))
+    if custom_rotations:
+        # Non-PMX rigs (e.g. GFL2 AdvancedSkeleton) name their fingers
+        # differently, so the config supplies bone-name -> curl-degrees
+        # directly instead of the PMX name templates below. The explicit
+        # list is authoritative: keep_right_index_extended does not apply
+        # (leave the index-finger bones out of the list instead).
+        if keep_right_index_extended:
+            print("[info] fist-pose: custom fist_rotations supplied, keep_right_index_extended is ignored")
+        rotations = [(name, math.radians(deg)) for name, deg in custom_rotations.items()]
+    else:
+        for side in (".L", ".R"):
+            for finger in NON_THUMB_FINGERS:
+                if keep_right_index_extended and finger == "人指" and side == ".R":
+                    continue
+                for joint, deg in zip("１２３", NON_THUMB_ANGLES):
+                    rotations.append((f"{finger}{joint}{side}", math.radians(deg)))
+            for joint, deg in zip("０１２", THUMB_ANGLES):
+                rotations.append((f"親指{joint}{side}", math.radians(deg)))
 
     clear_selection()
     bpy.context.view_layer.objects.active = armature_obj
@@ -1236,6 +1301,46 @@ def rebuild_materials_for_gltf(mesh_objects: list["bpy.types.Object"], pmx_path:
         rebuild_material_for_gltf(mat)
 
 
+def apply_mesh_textures(mesh_objects: list["bpy.types.Object"], mesh_textures: dict[str, str]) -> None:
+    """Give texture-less meshes a material carrying the configured diffuse.
+
+    AssetStudio FBX rips export no materials or textures at all, so each mesh
+    arrives as a single bare slot. For each configured mesh this creates one
+    material named after the texture stem, loads the image, and wires the
+    minimal Principled graph rebuild_material_for_gltf expects to find. The
+    mesh's first UV layer is renamed to "UVMap" to match the graph's UV node.
+    """
+    if not mesh_textures:
+        return
+    for mesh in mesh_objects:
+        tex_path = mesh_textures.get(mesh.name)
+        if tex_path is None:
+            continue
+        tex = Path(tex_path)
+        if not tex.exists():
+            raise FileNotFoundError(f"mesh_textures: texture not found for {mesh.name}: {tex}")
+        if mesh.data.uv_layers and mesh.data.uv_layers[0].name != "UVMap":
+            mesh.data.uv_layers[0].name = "UVMap"
+        image = bpy.data.images.load(str(tex), check_existing=True)
+        mat = bpy.data.materials.new(name=tex.stem)
+        mat.use_nodes = True
+        tree = mat.node_tree
+        while tree.nodes:
+            tree.nodes.remove(tree.nodes[0])
+        out = tree.nodes.new(type="ShaderNodeOutputMaterial")
+        bsdf = tree.nodes.new(type="ShaderNodeBsdfPrincipled")
+        tex_node = tree.nodes.new(type="ShaderNodeTexImage")
+        tex_node.image = image
+        uv = tree.nodes.new(type="ShaderNodeUVMap")
+        uv.uv_map = "UVMap"
+        tree.links.new(uv.outputs["UV"], tex_node.inputs["Vector"])
+        tree.links.new(tex_node.outputs["Color"], bsdf.inputs["Base Color"])
+        tree.links.new(bsdf.outputs["BSDF"], out.inputs["Surface"])
+        mesh.data.materials.clear()
+        mesh.data.materials.append(mat)
+        print(f"[info] mesh_textures: {mesh.name} <- {tex.name}")
+
+
 # -----------------------------------------------------------------------------
 # Weight transfer + binding
 # -----------------------------------------------------------------------------
@@ -1273,12 +1378,111 @@ def merge_vertex_group(mesh_obj: "bpy.types.Object", source_name: str, target_na
         target.add([v_idx], weight, "ADD")
 
 
-def remap_vertex_groups(mesh_obj: "bpy.types.Object", config: TransferConfig) -> None:
-    for source, target in config.bone_map.items():
+def orient_stub_core_bones(armature_obj: "bpy.types.Object") -> None:
+    """Point core skeleton bones at their anatomical child. Stub-bone rigs
+    (AssetStudio FBX rips) import every bone as a short world-+Y stub, which
+    reads as "bones pointing the wrong way" during inspection and makes hand
+    posing awkward. Orientation of a REST bone does not move the bound mesh,
+    the exported skin stays consistent.
+
+    The arm chain (UpperArm/LowerArm/Hand) is deliberately left alone: the
+    T-pose calibration re-orients it with a minimal-twist roll against the
+    reference basis, and pre-orienting it here with an arbitrary roll would
+    make that bake spiral the arm mesh. Feet likewise belong to
+    retarget_foot_bones_rest. The >30 degree gate leaves PMX/MMD rigs (bones
+    already limb-aligned) untouched."""
+    chains = {
+        "Hips": "Spine",
+        "Spine": "Spine2",
+        "Spine2": "Neck",
+        "Neck": "Head",
+        "Shoulder_L": "UpperArm_L",
+        "Shoulder_R": "UpperArm_R",
+        "UpperLeg_L": "LowerLeg_L",
+        "UpperLeg_R": "LowerLeg_R",
+        "LowerLeg_L": "Foot_L",
+        "LowerLeg_R": "Foot_R",
+    }
+    # The reference rig carries local Z = character FRONT on the spine chain,
+    # and socket grafting composes reference parent-LOCAL offsets with these
+    # frames (the backpack hangs off Spine2's local -Z, "behind"). A stub
+    # bone's roll is arbitrary after a tail edit, which swings such sockets
+    # sideways, so the spine chain's roll is pinned to the same convention.
+    # The pipeline normalises characters to face -Y, so front = -Y.
+    spine_chain = {"Hips", "Spine", "Spine2", "Neck", "Head"}
+    front = mathutils.Vector((0.0, -1.0, 0.0))
+
+    clear_selection()
+    bpy.context.view_layer.objects.active = armature_obj
+    armature_obj.select_set(True)
+    bpy.ops.object.mode_set(mode="EDIT")
+    edit_bones = armature_obj.data.edit_bones
+    oriented = 0
+    for bone_name, child_name in chains.items():
+        eb = edit_bones.get(bone_name)
+        child = edit_bones.get(child_name)
+        if eb is None or child is None:
+            continue
+        direction = child.head - eb.head
+        if direction.length < 1e-9:
+            continue
+        current_y = (eb.tail - eb.head).normalized()
+        if current_y.angle(direction.normalized()) < math.radians(30.0):
+            continue
+        eb.tail = eb.head + direction
+        if bone_name in spine_chain:
+            eb.align_roll(front)
+        oriented += 1
+    # Head has no mapped child: give it an up-pointing tail matching its
+    # neck-to-head direction so it reads naturally in pose mode.
+    head = edit_bones.get("Head")
+    neck = edit_bones.get("Neck")
+    if head is not None and neck is not None:
+        direction = head.head - neck.head
+        if direction.length > 1e-9:
+            current_y = (head.tail - head.head).normalized()
+            if current_y.angle(direction.normalized()) >= math.radians(30.0):
+                head.tail = head.head + direction
+                head.align_roll(front)
+                oriented += 1
+    bpy.ops.object.mode_set(mode="OBJECT")
+    if oriented:
+        print(f"[info] oriented {oriented} stub core bone(s) toward their anatomical child")
+
+
+def apply_rigid_binds(mesh_objects: list["bpy.types.Object"], rigid_bind_meshes: dict[str, str]) -> None:
+    """Weight every vertex of the configured meshes 1.0 to a single SOURCE
+    bone. For rips whose exporter lost a mesh's skin (AssetStudio collapses
+    single-influence skins, e.g. GFL2 faces bound rigidly to the head), the
+    correct binding is a rigid attach to that one bone. Runs before the
+    vertex-group remap, so the source bone name folds into its MENACE target
+    with everything else."""
+    if not rigid_bind_meshes:
+        return
+    for mesh in mesh_objects:
+        bone_name = rigid_bind_meshes.get(mesh.name)
+        if bone_name is None:
+            continue
+        for vg in list(mesh.vertex_groups):
+            mesh.vertex_groups.remove(vg)
+        group = mesh.vertex_groups.new(name=bone_name)
+        group.add(list(range(len(mesh.data.vertices))), 1.0, "REPLACE")
+        print(f"[info] rigid-bind: {mesh.name} -> {bone_name} ({len(mesh.data.vertices)} verts)")
+
+
+def remap_vertex_groups(
+    mesh_obj: "bpy.types.Object",
+    config: TransferConfig,
+    extra_map: dict[str, str] | None = None,
+) -> None:
+    merges = dict(config.bone_map)
+    if extra_map:
+        merges.update(extra_map)
+    for source, target in merges.items():
         if source == target:
             continue
         merge_vertex_group(mesh_obj, source, target)
-    removable = set(config.bone_map.keys()) | set(config.ignore_bones)
+    removable = set(merges.keys()) | set(config.ignore_bones)
     for name in list(removable):
         vg = mesh_obj.vertex_groups.get(name)
         if vg is not None:
@@ -1290,6 +1494,50 @@ def remove_unmapped_vertex_groups(mesh_obj: "bpy.types.Object", target_armature:
     for vg in list(mesh_obj.vertex_groups):
         if vg.name not in allowed:
             mesh_obj.vertex_groups.remove(vg)
+
+
+def bind_unweighted_to_nearest_bone(mesh_obj: "bpy.types.Object", armature_obj: "bpy.types.Object") -> int:
+    """Rigid-bind any vertex with no deform weight to the nearest bone.
+
+    AssetStudio rips zero out single-influence skins, and when the affected
+    part is a submesh inside a larger mesh (accessory pearls inside a cloth
+    mesh) the rigid_bind_meshes whole-mesh fix cannot target it. Leaving the
+    verts unweighted pins them to the model origin at runtime. Nearest-bone
+    distance is measured against the head-to-tail segment of each deform
+    bone, in world space. Returns the number of verts bound."""
+    bones = [
+        (b.name, armature_obj.matrix_world @ b.head_local, armature_obj.matrix_world @ b.tail_local)
+        for b in armature_obj.data.bones
+        if b.use_deform
+    ]
+    if not bones:
+        return 0
+
+    def segment_distance(p, a, b):
+        ab = b - a
+        denom = ab.length_squared
+        if denom < 1e-12:
+            return (p - a).length
+        t = max(0.0, min(1.0, (p - a).dot(ab) / denom))
+        return (p - (a + ab * t)).length
+
+    world = mesh_obj.matrix_world
+    bound = 0
+    per_group: dict[str, list[int]] = {}
+    for vert in mesh_obj.data.vertices:
+        if sum(g.weight for g in vert.groups) >= 0.001:
+            continue
+        p = world @ vert.co
+        name = min(bones, key=lambda entry: segment_distance(p, entry[1], entry[2]))[0]
+        per_group.setdefault(name, []).append(vert.index)
+        bound += 1
+    for name, indices in per_group.items():
+        group = mesh_obj.vertex_groups.get(name) or mesh_obj.vertex_groups.new(name=name)
+        group.add(indices, 1.0, "REPLACE")
+    if bound:
+        summary = ", ".join(f"{n}:{len(ix)}" for n, ix in sorted(per_group.items()))
+        print(f"[info] bound {bound} unweighted vert(s) on {mesh_obj.name} to nearest bone ({summary})")
+    return bound
 
 
 def blend_hips_to_upperleg_weights(
@@ -1489,7 +1737,7 @@ def rename_pmx_bones_to_menace(
     pmx_armature_obj,
     bone_map: dict[str, str],
     ignore_bones: list[str],
-) -> None:
+) -> dict[str, str]:
     """Rename and prune the PMX character's armature bones in-place.
 
     PMX bones in ``bone_map`` are renamed to their MENACE target names so
@@ -1540,29 +1788,66 @@ def rename_pmx_bones_to_menace(
     for pmx_name, menace_name in bone_map.items():
         by_target.setdefault(menace_name, []).append(pmx_name)
 
+    # Source names can equal OTHER groups' target names (GFL2 names its upper
+    # arm "Shoulder_L", which is MENACE's clavicle name), and any rename onto
+    # a still-occupied name is silently uniquified to "Name.001", losing the
+    # bone. Name lookups made while names mutate can likewise grab the wrong
+    # bone. So: park EVERY mapped bone on a reserved unique name first, then
+    # do all renames and deletions through the park names, where no collision
+    # or aliasing is possible.
+    parked: dict[str, list[str]] = {}
+    park_counter = 0
     for menace_name, pmx_names in by_target.items():
-        primary_set = False
+        park_names: list[str] = []
         for pmx_name in pmx_names:
             eb = edit_bones.get(pmx_name)
             if eb is None:
                 continue
-            if not primary_set:
-                # Reparent children of this bone to point at... itself, since
-                # we'll rename it. No-op structurally. The rename below is the
-                # actual work.
-                eb.name = menace_name
-                primary_set = True
-                renamed += 1
-            else:
-                # Reparent this bone's children onto the primary (already
-                # renamed to menace_name) so we don't orphan a chain when we
-                # delete the duplicate. Common for twist bones whose children
-                # are hand finger bones.
-                primary_eb = edit_bones.get(menace_name)
-                for child in list(eb.children):
-                    child.parent = primary_eb
-                edit_bones.remove(eb)
-                dedup_deleted += 1
+            park = f"__jy_park_{park_counter}"
+            park_counter += 1
+            eb.name = park
+            park_names.append(park)
+        if park_names:
+            parked[menace_name] = park_names
+
+    # Blender renames vertex groups in sync with bone renames on bound
+    # meshes, so parking moves every mesh's vertex groups onto the park
+    # names too. Primaries fold back automatically (their park -> target
+    # rename syncs the group to the target). Duplicates are DELETED while
+    # holding a park name, stranding their groups there, so the park -> target
+    # mapping is returned for remap_vertex_groups to fold explicitly.
+    park_to_target: dict[str, str] = {}
+    # An UNMAPPED bone can still hold a MENACE target name (GFL2 rigs use
+    # names like "Shoulder_L" natively). Renaming the primary onto an
+    # occupied name is silently uniquified to "Name.001" and the avatar
+    # builder later misses the bone, so occupying bones are parked aside
+    # first. Their vertex groups follow the rename and get dropped by
+    # remove_unmapped_vertex_groups, same as any unmapped bone's.
+    for menace_name in list(parked):
+        shadow = edit_bones.get(menace_name)
+        if shadow is not None:
+            print(
+                f"[warn] unmapped bone '{menace_name}' occupies a MENACE target name. "
+                "Parking it aside. Map or ignore it in the config to silence this."
+            )
+            shadow.name = f"__jy_shadowed_{menace_name}"
+
+    for menace_name, park_names in parked.items():
+        # First parked bone per target is the primary: renamed to the MENACE
+        # name. The rest are duplicates: children reparent onto the primary
+        # (common for twist bones whose children are hand finger bones), the
+        # bone is deleted, and its weights fold into the primary later via
+        # remap_vertex_groups.
+        edit_bones.get(park_names[0]).name = menace_name
+        renamed += 1
+        for park in park_names[1:]:
+            park_to_target[park] = menace_name
+            eb = edit_bones.get(park)
+            primary_eb = edit_bones.get(menace_name)
+            for child in list(eb.children):
+                child.parent = primary_eb
+            edit_bones.remove(eb)
+            dedup_deleted += 1
 
     bpy.ops.object.mode_set(mode="OBJECT")
     print(
@@ -1588,6 +1873,7 @@ def rename_pmx_bones_to_menace(
     # IK-evaluated state, which then misleads downstream detection
     # heuristics (e.g. character-facing direction read from foot direction).
     bpy.context.view_layer.update()
+    return park_to_target
 
 
 # -----------------------------------------------------------------------------
@@ -1821,19 +2107,27 @@ def prep_pmx(config: "TransferConfig") -> tuple:
         apply_fist_pose(
             pmx_armature, pmx_meshes,
             keep_right_index_extended=config.keep_right_index_extended,
+            custom_rotations=config.fist_rotations,
         )
 
     print("[info] renaming PMX bones to MENACE humanoid names")
-    rename_pmx_bones_to_menace(pmx_armature, config.bone_map, config.ignore_bones)
+    park_map = rename_pmx_bones_to_menace(pmx_armature, config.bone_map, config.ignore_bones)
+
+    orient_stub_core_bones(pmx_armature)
+
+    apply_mesh_textures(pmx_meshes, config.mesh_textures)
 
     print("[info] rebuilding PMX materials for glTF")
     rebuild_materials_for_gltf(pmx_meshes, config.pmx_path)
 
+    apply_rigid_binds(pmx_meshes, config.rigid_bind_meshes)
+
     print("[info] folding renamed vertex groups (merge duplicates after bone rename)")
     for mesh in pmx_meshes:
         remove_all_modifiers(mesh)
-        remap_vertex_groups(mesh, config)
+        remap_vertex_groups(mesh, config, park_map)
         remove_unmapped_vertex_groups(mesh, pmx_armature)
+        bind_unweighted_to_nearest_bone(mesh, pmx_armature)
         # Re-bind the mesh to the armature so the Armature modifier ties
         # vertex groups back to bones, without this the exported glTF has
         # no skin and the mesh ships unweighted.
@@ -1866,10 +2160,28 @@ def prep_pmx(config: "TransferConfig") -> tuple:
     return pmx_armature, pmx_meshes
 
 
+def join_source_meshes(pmx_meshes: list) -> list:
+    """Join multi-mesh sources (FBX rips split body/face/hair/cloth) into
+    one mesh so the LOD chain has a single root. Material slots and vertex
+    groups survive the join. Single-mesh sources pass through unchanged."""
+    if len(pmx_meshes) <= 1:
+        return pmx_meshes
+    print(f"[info] joining {len(pmx_meshes)} source meshes into one")
+    clear_selection()
+    for mesh in pmx_meshes:
+        mesh.select_set(True)
+    bpy.context.view_layer.objects.active = pmx_meshes[0]
+    bpy.ops.object.join()
+    clear_selection()
+    return [pmx_meshes[0]]
+
+
 def finish_pmx(config: "TransferConfig", pmx_armature, pmx_meshes) -> None:
     """Stages 9-11: conform LOD names, decimate LOD1-N, purge, export glTF.
     Decimation runs on copies of LOD0, so any hand-painted weights on LOD0
     (the full-res mesh) propagate down to the lower LODs automatically."""
+    pmx_meshes = join_source_meshes(pmx_meshes)
+
     print("[info] conforming mesh names to LOD naming convention")
     lod_names = [
         f"{config.lod_mesh_basename}_LOD{i}"
@@ -1944,12 +2256,15 @@ def main() -> None:
                 if datum.users == 0:
                     block.remove(datum)
         print(f"[info] handoff scene reduced to {len(bpy.data.objects)} object(s)")
+        # Multi-mesh sources join BEFORE the handoff: the finish stage
+        # recovers exactly one mesh from the .blend, so unjoined siblings
+        # would be silently purged after the weight-painting round-trip.
+        meshes = join_source_meshes(meshes)
         # Name the single full-res mesh LOD0 so the finish stage can find it,
         # then hand the bound, T-posed scene off for manual weight painting.
-        if len(meshes) == 1:
-            lod0_name = f"{config.lod_mesh_basename}_LOD0"
-            meshes[0].name = lod0_name
-            meshes[0].data.name = lod0_name
+        lod0_name = f"{config.lod_mesh_basename}_LOD0"
+        meshes[0].name = lod0_name
+        meshes[0].data.name = lod0_name
         blend_path = Path(args.blend).resolve()
         blend_path.parent.mkdir(parents=True, exist_ok=True)
         bpy.ops.wm.save_as_mainfile(filepath=str(blend_path))

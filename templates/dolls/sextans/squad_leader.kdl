@@ -1,0 +1,100 @@
+clone "TagTemplate" from="unique" id="wmgfl_sextans"
+
+clone "SpeakerTemplate" from="carda" id="wmgfl_sextans_speaker" {
+    set "Tags" "wmgfl_sextans female infantry waybacker"
+    set "Nickname" {
+        set "m_DefaultTranslation" "Sextans"
+    }
+    set "Forename" {
+        set "m_DefaultTranslation" "Sextans"
+    }
+    set "Surname" {
+        set "m_DefaultTranslation" ""
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            Name: Sextans
+
+            Proficiency: Close Quarters & Pursuit
+
+            Birth: Unknown
+
+            Age: Classified
+
+            Affiliation(s): Unknown
+            """
+    }
+
+    set "BarkImage" asset="sextans/bark"
+    set "StandLookLeftImage" asset="sextans/stand_look_left"
+    set "StandLookRightImage" asset="sextans/stand_look_right"
+    set "StandLookRightInactiveImage" asset="sextans/stand_look_right_inactive"
+}
+
+// Melee driver: HumanIK constantly bends the arms to grip the equipped
+// weapon like a rifle (right hand on the grip socket, left arm IK-dragged to
+// the foregrip). On Sextans that folds the left arm into her body and
+// fights every retargeted pose, so IK is off and the clips own the arms.
+clone "ElementAnimatorTemplate" from="animator.human" id="animator.sextans" {
+    set "HumanIK" #false
+}
+
+clone "EntityTemplate" from="player_squad.carda" id="player_squad.sextans" {
+    append "Tags" "wmgfl_sextans"
+    append "Tags" "jy_armor_restricted"
+    // Carda ships OverrideAnimatorController = aco.human_soldier, which
+    // stomps the prefab's baked Animator controller at spawn. Sextans'
+    // melee controller rides her prefab, so the override must go.
+    set "OverrideAnimatorController" #null
+    set "AnimatorTemplate" "animator.sextans"
+    set "Title" {
+        set "m_DefaultTranslation" "Nightwatch"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "A third generation Doll who fights alone, blade in hand. She closes the distance before her enemies know she has moved, and leaves before the dust settles."
+    }
+
+    set "Badge" asset="sextans/badge_mini"
+    set "BadgeWhite" asset="sextans/badge_mini"
+    clear "Items"
+    append "Items" "armor.sextans_default"
+    append "Items" "weapon.generic_carbine_tier1_spc"
+}
+
+clone "UnitLeaderTemplate" from="squad_leader.carda" id="squad_leader.sextans" {
+    set "InfantryUnitTemplate" "player_squad.sextans"
+    set "SpeakerTemplate" "wmgfl_sextans_speaker"
+    set "CustomHead" #null
+    set "UnitTitle" {
+        set "m_DefaultTranslation" "Tactical Doll"
+    }
+    set "UnitDescription" {
+        set "m_DefaultTranslation" "A third generation Doll who fights alone, blade in hand. She closes the distance before her enemies know she has moved, and leaves before the dust settles."
+    }
+
+    set "InitialAttributes" index=0 100
+    set "InitialAttributes" index=1 90
+    set "InitialAttributes" index=2 90
+    set "InitialAttributes" index=3 85
+    set "InitialAttributes" index=4 100
+    set "InitialAttributes" index=5 60
+    set "InitialAttributes" index=6 85
+
+    set "QualityLevel" 3
+    set "GrowthPotential" 5
+    set "FixedSupplyCost" 60
+    set "SquaddieTax" 60
+    set "Rarity" 5
+
+    set "InitialPerk" "perk.full_send"
+    set "PerkTrees" index=0 "perk_tree.sextans"
+
+    set "Slot" asset="sextans/slot"
+    set "SlotInactive" asset="sextans/slot_inactive"
+    set "SlotBadge" asset="sextans/slot_badge"
+
+    set "BadgeDragged" asset="sextans/badge_dragged"
+    set "BigBadge" asset="sextans/big_badge"
+    set "BadgeUnitWindow" asset="sextans/badge_unit_window"
+    set "BadgeMini" asset="sextans/badge_mini"
+}

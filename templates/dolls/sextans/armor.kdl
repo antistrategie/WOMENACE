@@ -1,0 +1,23 @@
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.sextans_default" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
+    set "Title" {
+        set "m_DefaultTranslation" "Nightwatch Regalia"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Field Outfit"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Sextans' usual attire. The tattered cloak swallows what little light reaches her, and the hat never seems to come off."
+    }
+    set "Icon" asset="sextans/armor/default/Icon"
+    set "IconEquipment" asset="sextans/armor/default/IconEquipment"
+    set "IconSkillBar" asset="sextans/armor/default/IconSkillBar"
+    clear "MaleModels"
+    append "MaleModels" asset="sextans/default/main"
+    clear "FemaleModels"
+    append "FemaleModels" asset="sextans/default/main"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_sextans"
+}
