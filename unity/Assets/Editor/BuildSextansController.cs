@@ -23,7 +23,13 @@ namespace Womenace.EditorTools
 
         private const string ClipsDir = "Assets/Authored/sextans/clips";
         private const string OutputControllerPath = "Assets/Prefabs/sextans/_bake/sextans.controller";
-        private const string PrefabPath = "Assets/Prefabs/sextans/default/main.prefab";
+        // every variant prefab (skins included) carries the same controller:
+        // a skin baked without this wiring plays the vanilla soldier set
+        private static readonly string[] PrefabPaths =
+        {
+            "Assets/Prefabs/sextans/default/main.prefab",
+            "Assets/Prefabs/sextans/nocte/main.prefab",
+        };
 
         // Vanilla clip name -> Sextans clip name. Name-based so the swap
         // lands in every state and blend-tree slot referencing the clip.
@@ -114,7 +120,7 @@ namespace Womenace.EditorTools
             var clips = new Dictionary<string, AnimationClip>();
             foreach (var swapTarget in ClipSwap.Values.Distinct()
                          .Where(n => !n.EndsWith("_inplace"))
-                         .Concat(new[] { "UltraSkill_God_Pre", "UltraSkill_God_Main", "NormalSkill1", "Fire", "KnockBack", "RunStop" }))
+                         .Concat(new[] { "UltraSkill_God_Pre", "UltraSkill_God_Main", "NormalSkill1", "Fire", "KnockBack", "KnockBackRecover", "RunStop" }))
             {
                 var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>($"{ClipsDir}/{swapTarget}.anim");
                 if (clip == null)
@@ -222,21 +228,12 @@ namespace Womenace.EditorTools
                 }
             }
 
-            // The rip loses additive reference poses, so every ADDITIVE layer
-            // (aim-turn counters, neck-lean correctives, rifle recoil, hit
-            // flinch, tripod/MG/jetpack machinery) adds distorted deltas: the
-            // owl-head during turns. A melee doll needs none of it. Stripping
-            // the motions leaves the layers inert regardless of the weights
-            // the driver sets (empty states write no curves). The lost hit
-            // flinch is replaced by her own KnockBack on the action layer.
-            int strippedStates = 0;
-            foreach (var layer in controller.layers)
-            {
-                if (layer.blendingMode != AnimatorLayerBlendingMode.Additive)
-                    continue;
-                strippedStates += StripMotions(layer.stateMachine);
-            }
-            Debug.Log($"BuildSextansController: stripped motions from {strippedStates} additive-layer state(s).");
+            // The additive layers (aim-turn counters, neck-lean correctives,
+            // rifle recoil, hit flinch) ship intact: their clips are hollow
+            // rips in the editor, but the compile's AnimationClipRestoration
+            // step replaces them in the bundle with the game's original
+            // bytes, additive reference poses included, so accessory weapons
+            // (sidearms, grenades) keep the vanilla shot presentation.
 
             // The WeaponSocket layer ships at weight 1 playing the full-body
             // weapon-calibration clip. In vanilla, StateMachineBehaviours on
@@ -261,11 +258,16 @@ namespace Womenace.EditorTools
             // game ramps its weight through every attack. A topmost layer
             // whose default state is EMPTY contributes nothing at rest (empty
             // states animate no curves) and fully owns the body during an
-            // action. Slash keys off the native Shoot_Single trigger the game
-            // fires per shot; thrust and ultimate use custom triggers the code
-            // mod fires (the mech precedent).
-            controller.AddParameter("SextansUltra", AnimatorControllerParameterType.Trigger);
-            controller.AddParameter("SextansSkill1", AnimatorControllerParameterType.Trigger);
+            // action. The triggers are the NATIVE names the game's skill
+            // presentation fires per AnimationType: "Attack" for melee
+            // attacks (the alien controllers carry the same trigger) and
+            // "Special_Attack_1..4" for the SpecialAttack types (construct
+            // controllers). The ultimate rides "Special_Attack_2"
+            // (AnimationType SpecialAttack2 on the ult skill), so no code
+            // bridging is needed for any action.
+            controller.AddParameter("Attack", AnimatorControllerParameterType.Trigger);
+            controller.AddParameter("Special_Attack_1", AnimatorControllerParameterType.Trigger);
+            controller.AddParameter("Special_Attack_2", AnimatorControllerParameterType.Trigger);
             controller.AddLayer("Sextans_Actions");
             var allLayers = controller.layers;
             var actionLayer = allLayers[allLayers.Length - 1];
@@ -297,6 +299,13 @@ namespace Womenace.EditorTools
             // synthetic T-pose calibrates the neck slightly off, and these
             // clips swing it hard: in-game the head snaps to face straight up
             // during the slash. With the curves gone the head rides the body.
+            //
+            // Also bake root motion into the pose. The clips carry authored
+            // root rotation and a lunge (the slash turns her ~45 degrees and
+            // steps in), but in-game root motion is discarded, so without the
+            // bake the body stays square to the target and the swing reads
+            // misaligned. Baked, the motion becomes part of the evaluated
+            // pose and plays on the action layer in place.
             foreach (var actionClip in new[] { "Fire", "NormalSkill1", "UltraSkill_God_Pre", "UltraSkill_God_Main" })
             {
                 int strippedCurves = 0;
@@ -308,17 +317,35 @@ namespace Womenace.EditorTools
                         strippedCurves++;
                     }
                 }
+                var actionSettings = AnimationUtility.GetAnimationClipSettings(clips[actionClip]);
+                actionSettings.loopBlendOrientation = true;
+                actionSettings.loopBlendPositionXZ = true;
+                actionSettings.loopBlendPositionY = true;
+                AnimationUtility.SetAnimationClipSettings(clips[actionClip], actionSettings);
+                EditorUtility.SetDirty(clips[actionClip]);
                 if (strippedCurves > 0)
-                {
-                    EditorUtility.SetDirty(clips[actionClip]);
                     Debug.Log($"BuildSextansController: stripped {strippedCurves} neck/head curve(s) from {actionClip}.");
-                }
+                Debug.Log($"BuildSextansController: baked root motion into pose for {actionClip}.");
             }
 
-            AddAction("SextansSlash", clips["Fire"], "Shoot_Single", 0.9f, 0.2f);
-            AddAction("SextansThrust", clips["NormalSkill1"], "SextansSkill1", 0.95f, 0.25f);
-            AddAction("SextansKnockback", clips["KnockBack"], "Hit", 0.85f, 0.2f);
-            var ultraPre = AddAction("SextansUltraPre", clips["UltraSkill_God_Pre"], "SextansUltra", 0.97f, 0.05f);
+            AddAction("SextansSlash", clips["Fire"], "Attack", 0.9f, 0.2f);
+            AddAction("SextansThrust", clips["NormalSkill1"], "Special_Attack_1", 0.95f, 0.25f);
+            var knockback = AddAction("SextansKnockback", clips["KnockBack"], "Hit", 0.85f, 0.2f);
+            // chain the get-up clip after the fall so she does not snap from
+            // the floor pose straight back to idle
+            var knockbackRecover = actionSm.AddState("SextansKnockbackRecover");
+            knockbackRecover.motion = clips["KnockBackRecover"];
+            foreach (var t in knockback.transitions)
+                knockback.RemoveTransition(t);
+            var fallToRecover = knockback.AddTransition(knockbackRecover);
+            fallToRecover.hasExitTime = true;
+            fallToRecover.exitTime = 0.95f;
+            fallToRecover.duration = 0.05f;
+            var recoverOut = knockbackRecover.AddTransition(rest);
+            recoverOut.hasExitTime = true;
+            recoverOut.exitTime = 0.9f;
+            recoverOut.duration = 0.25f;
+            var ultraPre = AddAction("SextansUltraPre", clips["UltraSkill_God_Pre"], "Special_Attack_2", 0.97f, 0.05f);
             var ultraMain = actionSm.AddState("SextansUltraMain");
             ultraMain.motion = clips["UltraSkill_God_Main"];
             // re-route the pre state's exit to the main state instead of rest
@@ -337,28 +364,31 @@ namespace Womenace.EditorTools
             EditorUtility.SetDirty(controller);
             AssetDatabase.SaveAssets();
 
-            // Wire the prefab's Animator to the new controller. BakeHumanoid
-            // copies the vanilla controller on every bake, so this step must
-            // re-run after any re-bake.
-            var prefabRoot = PrefabUtility.LoadPrefabContents(PrefabPath);
-            try
+            // Wire every variant prefab's Animator to the new controller.
+            // BakeHumanoid copies the vanilla controller on every bake, so
+            // this step must re-run after any re-bake.
+            foreach (var prefabPath in PrefabPaths)
             {
-                var animator = prefabRoot.GetComponentInChildren<Animator>(true);
-                if (animator == null)
+                var prefabRoot = PrefabUtility.LoadPrefabContents(prefabPath);
+                try
                 {
-                    Debug.LogError("BuildSextansController: prefab has no Animator.");
-                    EditorApplication.Exit(1);
-                    return;
+                    var animator = prefabRoot.GetComponentInChildren<Animator>(true);
+                    if (animator == null)
+                    {
+                        Debug.LogError($"BuildSextansController: {prefabPath} has no Animator.");
+                        EditorApplication.Exit(1);
+                        return;
+                    }
+                    animator.runtimeAnimatorController = controller;
+                    PrefabUtility.SaveAsPrefabAsset(prefabRoot, prefabPath);
                 }
-                animator.runtimeAnimatorController = controller;
-                PrefabUtility.SaveAsPrefabAsset(prefabRoot, PrefabPath);
-            }
-            finally
-            {
-                PrefabUtility.UnloadPrefabContents(prefabRoot);
+                finally
+                {
+                    PrefabUtility.UnloadPrefabContents(prefabRoot);
+                }
             }
 
-            Debug.Log($"BuildSextansController: wrote {OutputControllerPath} and wired {PrefabPath}.");
+            Debug.Log($"BuildSextansController: wrote {OutputControllerPath} and wired {PrefabPaths.Length} prefab(s).");
             EditorApplication.Exit(0);
         }
 

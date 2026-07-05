@@ -15,7 +15,7 @@ clone "SpeakerTemplate" from="carda" id="wmgfl_sextans_speaker" {
         set "m_DefaultTranslation" """
             Name: Sextans
 
-            Proficiency: Close Quarters & Pursuit
+            Proficiency: Close Quarters & Support
 
             Birth: Unknown
 
@@ -31,10 +31,6 @@ clone "SpeakerTemplate" from="carda" id="wmgfl_sextans_speaker" {
     set "StandLookRightInactiveImage" asset="sextans/stand_look_right_inactive"
 }
 
-// Melee driver: HumanIK constantly bends the arms to grip the equipped
-// weapon like a rifle (right hand on the grip socket, left arm IK-dragged to
-// the foregrip). On Sextans that folds the left arm into her body and
-// fights every retargeted pose, so IK is off and the clips own the arms.
 clone "ElementAnimatorTemplate" from="animator.human" id="animator.sextans" {
     set "HumanIK" #false
 }
@@ -42,23 +38,33 @@ clone "ElementAnimatorTemplate" from="animator.human" id="animator.sextans" {
 clone "EntityTemplate" from="player_squad.carda" id="player_squad.sextans" {
     append "Tags" "wmgfl_sextans"
     append "Tags" "jy_armor_restricted"
-    // Carda ships OverrideAnimatorController = aco.human_soldier, which
-    // stomps the prefab's baked Animator controller at spawn. Sextans'
-    // melee controller rides her prefab, so the override must go.
+    append "Tags" "jy_weapon_restricted"
+    append "Tags" "jy_special_restricted"
+
     set "OverrideAnimatorController" #null
     set "AnimatorTemplate" "animator.sextans"
-    set "Title" {
-        set "m_DefaultTranslation" "Nightwatch"
+
+    set "Properties" {
+        set "AdditionalMovementCost" -6
     }
+
+    set "Title" {
+        set "m_DefaultTranslation" "Elmo 3rd Generation Squad"
+    }
+
     set "Description" {
-        set "m_DefaultTranslation" "A third generation Doll who fights alone, blade in hand. She closes the distance before her enemies know she has moved, and leaves before the dust settles."
+        set "m_DefaultTranslation" """
+            Agile and cunning Doll, formerly under the Orlog Corporation, was abandoned after a failed mission, suffering severe mental damage. She was subsequently rescued by the ELMO and became reliable companions.
+
+            "Compared to my former colleagues, the Dolls around you seem somewhat... naive."
+            """
     }
 
     set "Badge" asset="sextans/badge_mini"
     set "BadgeWhite" asset="sextans/badge_mini"
     clear "Items"
     append "Items" "armor.sextans_default"
-    append "Items" "weapon.generic_carbine_tier1_spc"
+    append "Items" "weapon.sextans_sword"
 }
 
 clone "UnitLeaderTemplate" from="squad_leader.carda" id="squad_leader.sextans" {
@@ -69,24 +75,32 @@ clone "UnitLeaderTemplate" from="squad_leader.carda" id="squad_leader.sextans" {
         set "m_DefaultTranslation" "Tactical Doll"
     }
     set "UnitDescription" {
-        set "m_DefaultTranslation" "A third generation Doll who fights alone, blade in hand. She closes the distance before her enemies know she has moved, and leaves before the dust settles."
+        set "m_DefaultTranslation" """
+            Agile and cunning Doll, formerly under the Orlog Corporation, was abandoned after a failed mission, suffering severe mental damage. She was subsequently rescued by the ELMO and became reliable companions.
+
+            "Compared to my former colleagues, the Dolls around you seem somewhat... naive."
+            """
     }
 
     set "InitialAttributes" index=0 100
     set "InitialAttributes" index=1 90
     set "InitialAttributes" index=2 90
-    set "InitialAttributes" index=3 85
-    set "InitialAttributes" index=4 100
+    set "InitialAttributes" index=3 100
+    // InitialAttributes store as bytes, so 255 is the template's hard
+    // ceiling: her real Vitality target (400 = 80 HP) lives in
+    // SoloSquadSystem.AttributeOverrides and is applied by the attribute
+    // repair on top of this
+    set "InitialAttributes" index=4 255
     set "InitialAttributes" index=5 60
-    set "InitialAttributes" index=6 85
+    set "InitialAttributes" index=6 100
 
-    set "QualityLevel" 3
+    set "QualityLevel" 4
     set "GrowthPotential" 5
-    set "FixedSupplyCost" 60
+    set "FixedSupplyCost" 300
     set "SquaddieTax" 60
     set "Rarity" 5
 
-    set "InitialPerk" "perk.full_send"
+    set "InitialPerk" "perk.sextans_rally"
     set "PerkTrees" index=0 "perk_tree.sextans"
 
     set "Slot" asset="sextans/slot"
@@ -97,4 +111,135 @@ clone "UnitLeaderTemplate" from="squad_leader.carda" id="squad_leader.sextans" {
     set "BigBadge" asset="sextans/big_badge"
     set "BadgeUnitWindow" asset="sextans/badge_unit_window"
     set "BadgeMini" asset="sextans/badge_mini"
+
+    set "HiredBarkSound" {
+        set "bankId" "wmgfl_tactical_barks_sextans_va"
+        set "itemId" "Series_Set_Click_Series_Tone_Positive_004"
+    }
+    set "HiringSelectBarkSound" {
+        set "bankId" "wmgfl_tactical_barks_sextans_va"
+        set "itemId" "Series_Chosen_Auto_Series_Tone_Positive_007"
+    }
+
+    set "PromotionBarkSounds" index=0 {
+        set "PerkTier" 1
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_sextans_va"
+            set "itemId" "Series_Up_002"
+        }
+    }
+    set "PromotionBarkSounds" index=1 {
+        set "PerkTier" 2
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_sextans_va"
+            set "itemId" "Series_Up_003"
+        }
+    }
+    set "PromotionBarkSounds" index=2 {
+        set "PerkTier" 3
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_sextans_va"
+            set "itemId" "Series_Up_004"
+        }
+    }
+    set "PromotionBarkSounds" index=3 {
+        set "PerkTier" 4
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_sextans_va"
+            set "itemId" "Series_Up_005"
+        }
+    }
+    clear "EmotionalStateResponses"
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Eager"
+        set "Text" {
+            set "m_DefaultTranslation" "Your Excellency, from now on, keep me by your side. I will guard your peace from foul footsteps."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_sextans_va"
+            set "itemId" "Single_Friendliness_005"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Determined"
+        set "Text" {
+            set "m_DefaultTranslation" "If Mother wishes to touch the divine, I shall offer up a god-slaying feast. I look forward to hearing her sceptre ring with scorn."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_sextans_va"
+            set "itemId" "Series_Daily_004"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Overconfident"
+        set "Text" {
+            set "m_DefaultTranslation" "Compared to my previous colleagues, I get the impression your Dolls are a bit too simple. How on earth have you managed to weather that chaos?"
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_sextans_va"
+            set "itemId" "Series_Daily_005"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Euphoric"
+        set "Text" {
+            set "m_DefaultTranslation" "Would you do me the honour of being my partner tonight? Your steps would lend a distinctive charm to this never-ending waltz."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_sextans_va"
+            set "itemId" "Single_Friendliness_008"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Hesitant"
+        set "Text" {
+            set "m_DefaultTranslation" "A being like me, devoid of any warmth, should not touch your body."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_sextans_va"
+            set "itemId" "Single_Friendliness_003"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Frustrated"
+        set "Text" {
+            set "m_DefaultTranslation" "I have laid my past bare. And yet, why does the distance between us remain?"
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_sextans_va"
+            set "itemId" "Single_Friendliness_004"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Disheartened"
+        set "Text" {
+            set "m_DefaultTranslation" "The cradle that sent us back is a weathered headstone. It nurtures us even as it carries us toward death. That is what third-generation dolls are."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_sextans_va"
+            set "itemId" "Series_Daily_002"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Miserable"
+        set "Text" {
+            set "m_DefaultTranslation" "We are nothing but exhibits she put on display in her lab. When hope, faith, and the future proved to be empty names and everything fell apart, their false glamour and beauty became nothing but ash settling on ruins raised on pretence."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_sextans_va"
+            set "itemId" "Series_Daily_001"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "GoodwillTowards"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "AnimosityTowards"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
 }

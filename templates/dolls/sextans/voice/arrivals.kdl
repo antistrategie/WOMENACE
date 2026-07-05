@@ -1,0 +1,34 @@
+clone "ConversationTemplate" from="Carda_Early/arrival_carda" id="Sextans/arrival_sextans" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_sextans"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_sextans_va"
+                        set "itemId" "Series_Battle_Start_Series_Tone_Positive_002"
+                    }
+                    set "RoleGuid" "Carda"
+                    set "Text" "I'll hold them back."
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_sextans_va"
+                        set "itemId" "Series_Tone_Positive_001"
+                    }
+                    set "RoleGuid" "Carda"
+                    set "Text" "We have full intel on the enemy."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}

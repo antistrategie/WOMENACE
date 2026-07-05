@@ -1,0 +1,29 @@
+clone "PerkTemplate" from="perk.full_send" id="perk.sextans_rally" {
+    set "Title" {
+        set "m_DefaultTranslation" "Blood Rally"
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "Damage taken lingers as recoverable vitality. Striking back claws it home."
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            "Hunters have told me about the Church, about the Gods and their love. But, do the Gods love their creations. I am a doll created by you humans, would you ever think to love me? Of course, I do love you, isn't that how you've made me?"
+
+            – An Ordinary Doll
+
+
+            <style="Highlight">• Damage taken lingers as recoverable grey health. Every enemy her attacks find restores 50% of the damage dealt, up to 20 health per hit. Whatever is not reclaimed by the end of her next turn is lost.</style>
+            """
+    }
+
+    set "Icon" asset="sextans/perks/rally_badge"
+    set "IconDisabled" asset="sextans/perks/rally_inactive"
+    set "PerkIcon" asset="sextans/perks/rally_badge"
+
+    clear "EventHandlers"
+    append "EventHandlers" type="WOMENACE:Rally" {
+        set "RecoverFraction" 0.5
+        set "RecoverCap" 20
+        set "WindowTurns" 1
+    }
+}

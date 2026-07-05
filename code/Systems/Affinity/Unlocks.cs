@@ -58,6 +58,10 @@ public static class Unlocks
             new Entry { Level = 3, Feature = Feature.Weapon, Weapons = new[] { "specialweapon.makiatto_ssr" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_makiatto/lv3", "SSR Weapon: Bittersweet Caramel") },
             new Entry { Level = 4, Feature = Feature.Skins, Armors = new[] { "armor.makiatto_steamy_vacance" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_makiatto/lv4", "Outfit(s): Steamy Vacance") },
         },
+        ["wmgfl_sextans"] = new[]
+        {
+            new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.sextans_nocte" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_sextans/lv2", "Outfit(s): Nocte Bewitchment") },
+        },
     };
 
     public static IReadOnlyList<Entry> EntriesFor(string characterTag)

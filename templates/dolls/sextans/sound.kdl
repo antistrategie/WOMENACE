@@ -1,0 +1,76 @@
+clone "SoundBank" from="weapons_soundbank" id="wmgfl_sextans_sfx" {
+    clear "sounds"
+    clear "busIndices"
+
+    append "sounds" {
+        set "name" "Atk"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="sextans/Atk"
+        }
+    }
+
+    append "sounds" {
+        set "name" "Patk"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="sextans/Patk"
+        }
+    }
+
+    append "sounds" {
+        set "name" "Skill01"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="sextans/Skill01"
+        }
+    }
+
+    append "sounds" {
+        set "name" "Skill02"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="sextans/Skill02"
+        }
+    }
+
+    append "sounds" {
+        set "name" "Buff"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="sextans/Buff"
+        }
+    }
+
+    append "sounds" {
+        set "name" "UltraSkill"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="sextans/UltraSkill"
+        }
+    }
+
+    append "sounds" {
+        set "name" "UltraSkill_Cast"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="sextans/UltraSkill_Cast"
+        }
+    }
+
+    append "sounds" {
+        set "name" "UltraSkill_Hit"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="sextans/UltraSkill_Hit"
+        }
+    }
+
+    append "sounds" {
+        set "name" "UltraSkill_Skip"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="sextans/UltraSkill_Skip"
+        }
+    }
+}

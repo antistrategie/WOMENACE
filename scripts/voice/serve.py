@@ -7,8 +7,9 @@ Run from the repo root:
 Then open http://localhost:8765/. Pick a character; play the WAV files
 alongside their JP transcript and EN translation.
 
-Discovers any directory under assets/additions/audio/<char>/ that has a
-.trans.csv file. Pure stdlib; no extra deps.
+Discovers any directory under assets/additions/audio/ that has a .trans.csv
+file, however deep (sextans keeps her VO in sextans/voice/ beside the sword
+SFX). Pure stdlib; no extra deps.
 """
 import csv
 import http.server
@@ -26,12 +27,20 @@ TEMPLATES_ROOT = REPO / 'templates'
 PORT = 8765
 
 
+def discover_chars():
+    """Relative dir paths under AUDIO_ROOT holding a .trans.csv (e.g. 'lewis', 'sextans/voice')."""
+    return sorted(str(p.parent.relative_to(AUDIO_ROOT)) for p in AUDIO_ROOT.rglob('.trans.csv'))
+
+
 def load_bank(char):
     """Map each clip to its SoundBank entry from templates/<char>/voice/soundbank.kdl.
 
     Returns (bank_id, {clip_stem: sound_name}). The sound_name is the itemId a
     conversation / squad-leader template references. Empty if the char has no bank.
+    char may be a nested dir key like 'sextans/voice'; the character name is its
+    first segment.
     """
+    char = char.split('/')[0]
     # Canonical location. Fall back to a recursive glob for older layouts, but warn on ambiguity so a
     # stale duplicate soundbank.kdl under the same <char> segment can't silently shadow the real one.
     canonical = TEMPLATES_ROOT / 'dolls' / char / 'voice' / 'soundbank.kdl'
@@ -269,14 +278,12 @@ class Handler(http.server.BaseHTTPRequestHandler):
             if self.path == '/' or self.path == '/index.html':
                 return self._send(200, 'text/html; charset=utf-8', INDEX_HTML.encode('utf-8'))
             if self.path == '/api/chars':
-                chars = sorted(
-                    p.name for p in AUDIO_ROOT.iterdir()
-                    if p.is_dir() and (p / '.trans.csv').exists()
-                )
-                return self._send(200, 'application/json', json.dumps(chars).encode())
+                return self._send(200, 'application/json', json.dumps(discover_chars()).encode())
             if self.path.startswith('/api/trans/'):
                 char = unquote(self.path[len('/api/trans/'):])
-                csv_path = AUDIO_ROOT / char / '.trans.csv'
+                csv_path = (AUDIO_ROOT / char / '.trans.csv').resolve()
+                if not str(csv_path).startswith(str(AUDIO_ROOT.resolve())):
+                    return self._send(403, 'text/plain', b'forbidden')
                 if not csv_path.exists():
                     return self._send(404, 'text/plain', b'not found')
                 with csv_path.open(newline='', encoding='utf-8') as f:
@@ -317,7 +324,7 @@ def main() -> int:
         print(f'error: {AUDIO_ROOT} not found', file=sys.stderr)
         return 1
 
-    chars = [p.name for p in AUDIO_ROOT.iterdir() if p.is_dir() and (p / '.trans.csv').exists()]
+    chars = discover_chars()
     print(f'serving on http://localhost:{PORT}/  ({len(chars)} character(s): {", ".join(chars)})', file=sys.stderr)
     print('Ctrl+C to stop.', file=sys.stderr)
     try:

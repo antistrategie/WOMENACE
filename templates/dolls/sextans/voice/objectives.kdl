@@ -1,0 +1,74 @@
+clone "ConversationTemplate" from="Carda_Early/objective_first" id="Sextans/objective_first" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_sextans"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_sextans_va"
+                        set "itemId" "Series_Win_Single_Win_001"
+                    }
+                    set "RoleGuid" "Entity"
+                    set "Text" "I've bled a little, but it shouldn't be a problem."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="Carda_Early/objective_second" id="Sextans/objective_second" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_sextans"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_sextans_va"
+                        set "itemId" "Series_Daily_003"
+                    }
+                    set "RoleGuid" "Entity"
+                    set "Text" "When you gaze into the beyond, the beyond gazes back at you."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="Carda_Early/objective_third" id="Sextans/objective_third" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_sextans"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_sextans_va"
+                        set "itemId" "Series_Daily_004"
+                    }
+                    set "RoleGuid" "Entity"
+                    set "Text" "If Mother wishes to touch the divine, I shall offer up a god-slaying feast. I look forward to hearing her sceptre ring with scorn."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}

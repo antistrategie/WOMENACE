@@ -3,7 +3,7 @@ clone "SkillTemplate" from="active.fire_assault_rifle_tier1_762" id="active.voym
         set "m_DefaultTranslation" "Dread Ultimatum"
     }
 
-    set "ActionPointCost" 10
+    set "ActionPointCost" 20
     set "Uses" 16
 
     set "MuzzleType" enum="MuzzleType" "Muzzle"
@@ -17,7 +17,7 @@ clone "SkillTemplate" from="active.fire_assault_rifle_tier1_762" id="active.voym
     set "DelayAfterAnimationTrigger" 1.35
 
     set "EventHandlers" index=0 {
-        set "Damage" 12.0
+        set "Damage" 7.0
         set "ArmorPenetration" 20.0
         set "Suppression" 3.0
     }
@@ -49,7 +49,7 @@ clone "SkillTemplate" from="active.launch_construct_rocket" id="active.voymastin
         set "m_DefaultTranslation" "Sirius Fall"
     }
 
-    set "ActionPointCost" 20
+    set "ActionPointCost" 50
     set "Uses" 5
 
     set "MuzzleType" enum="MuzzleType" "Muzzle2"
@@ -60,9 +60,10 @@ clone "SkillTemplate" from="active.launch_construct_rocket" id="active.voymastin
     set "DelayAfterAnimationTrigger" 1.333
 
     set "EventHandlers" index=0 {
-        set "Damage" 120.0
+        set "Damage" 100.0
         set "ArmorPenetration" 80.0
         set "Suppression" 50.0
+        set "DamageToArmorDurability" 50.0
     }
 }
 
@@ -89,6 +90,7 @@ clone "SkillTemplate" from="active.wetteroth_thats_a_knife" id="active.voymastin
         set "Damage" 70.0
         set "ArmorPenetration" 120.0
         set "Suppression" 80.0
+        set "DamageToArmorDurability" 80.0
     }
 
     clear "SoundsOnUse"

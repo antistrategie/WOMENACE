@@ -1,5 +1,8 @@
 clone "SkillTemplate" from="effect.stunned" id="effect.voymastina_death_defying" {
     clear "EventHandlers"
+
+    set "Icon" asset="voymastina/buff_death_defying"
+
     set "Title" {
         set "m_CategoryName" ""
         set "m_FieldName" ""
@@ -15,10 +18,15 @@ clone "SkillTemplate" from="effect.stunned" id="effect.voymastina_death_defying"
         set "m_FieldName" ""
         set "m_DefaultTranslation" "Clinging to life. Invulnerable and immune to suppression while active."
     }
+
     append "EventHandlers" type="WOMENACE:DeathDefyingStatus" {}
 }
 
 clone "PerkTemplate" from="perk.fury" id="perk.voymastina_death_defying" {
+    set "Icon" asset="voymastina/perks/death_defying_badge"
+    set "IconDisabled" asset="voymastina/perks/death_defying_inactive"
+    set "PerkIcon" asset="voymastina/perks/death_defying_badge"
+
     set "Title" {
         set "m_CategoryName" ""
         set "m_FieldName" ""
@@ -38,6 +46,9 @@ clone "PerkTemplate" from="perk.fury" id="perk.voymastina_death_defying" {
             "I refuse."
 
             – Voymastina, bleeding out
+
+
+            <style="Highlight">• The first lethal hit each mission is survived at 1 Hitpoint. Invulnerable and immune to <link="suppression">Suppression</link> for 3 turns after.</style>
             """
     }
 

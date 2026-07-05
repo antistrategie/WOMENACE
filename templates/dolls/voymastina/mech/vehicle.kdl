@@ -20,7 +20,8 @@ clone "EntityTemplate" from="player_vehicle.generic_heavy_attack_walker" id="pla
     set "ModularVehicle" "modular_vehicle.voymastina_mech"
 
     set "Properties" {
-        set "AdditionalMovementCost" -13
+        set "AdditionalMovementCost" -12
+        set "Vision" 9
         set "Damage" 30.0
         set "SoundOnMovementStart" {
             set "bankId" "wmgfl_voymastina_mech_sfx"

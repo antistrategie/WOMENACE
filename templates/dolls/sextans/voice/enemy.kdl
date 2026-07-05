@@ -1,0 +1,74 @@
+clone "ConversationTemplate" from="Carda_Early/building_destroyed" id="Sextans/building_destroyed" {
+    set "Active" #true
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_sextans"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_sextans_va"
+                        set "itemId" "Series_Up_005"
+                    }
+                    set "RoleGuid" "Killer"
+                    set "Text" "With a blossom born of my blade, I shall offer you a hymn for your end."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="Carda_Early/enemy_damaged" id="Sextans/enemy_damaged" {
+    set "Active" #true
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_sextans"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_sextans_va"
+                        set "itemId" "Series_Hit_Single_Hit_001"
+                    }
+                    set "RoleGuid" "Attacker"
+                    set "Text" "Let's see how you react."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="Carda_Early/enemy_killed" id="Sextans/enemy_killed" {
+    set "Active" #true
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_sextans"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_sextans_va"
+                        set "itemId" "Series_Kill_Single_Kill_001"
+                    }
+                    set "RoleGuid" "Killer"
+                    set "Text" "Too weak."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}

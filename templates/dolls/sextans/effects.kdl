@@ -1,0 +1,117 @@
+// Sextans' status effects: the mark her blades leave, the charge her strikes
+// build, and the blessing her ultimate confers on the squad.
+
+// Blood Kiss: applied by the slash and the thrust to everything they hit.
+// Cloned from bleeding so the marked keep the blood-drip visual and the apply
+// sound, but the mark itself draws no blood.
+clone "SkillTemplate" from="effect.bleeding" id="effect.sextans_blood_kiss" {
+    set "Icon" asset="sextans/buff_blood_kiss"
+    set "Title" {
+        set "m_DefaultTranslation" "Blood Kiss"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Marked by Sextans' blade. <link=\"sextans_midnight_vesper\">Midnight Vesper</link> feeds on the marked: they take bonus damage and every one of them restores her vitality."
+    }
+
+    // bleeding ticks for 2 turns, the mark lingers for 3
+    set "EventHandlers" index=0 {
+        set "Lifetime" 3
+    }
+    // zero the bleed tick
+    set "EventHandlers" index=1 {
+        set "DamagePctMaxHitpoints" 0.0
+    }
+}
+
+// Coagulation: the ult charge, one stack for every enemy the slash or the
+// thrust hits (the ult itself generates none). A single effect instance
+// whose icon carries the game's own stack-count badge: the
+// WOMENACE:StackBadge handler flips the display on and SextansUltHandler
+// owns the arithmetic. Stacks cap at MaxCharges, the ultimate unlocks at
+// ChargesNeeded and consumes that many, keeping the rest.
+clone "SkillTemplate" from="effect.bleeding" id="effect.sextans_coagulation" {
+    set "Icon" asset="sextans/buff_coagulation"
+    set "Title" {
+        set "m_DefaultTranslation" "Coagulation"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Spilled blood thickens on Sextans' blade, one stack for every enemy her strikes find, up to 7. At 5 charges <link=\"sextans_midnight_vesper\">Midnight Vesper</link> is ready."
+    }
+    clear "EventHandlers"
+    append "EventHandlers" type="WOMENACE:StackBadge" {}
+}
+
+// Holy Blood Mark: every ally is consecrated whenever Sextans uses her
+// ultimate (she herself is not). Refreshes if already carried, lasts 2
+// turns. Cloned from bleeding rather than a vanilla buff: bleeding-shaped
+// effects are the ones proven to list in the unit window.
+clone "SkillTemplate" from="effect.bleeding" id="effect.sextans_holy_blood_mark" {
+    set "Icon" asset="sextans/buff_holy_blood_mark"
+    set "Title" {
+        set "m_DefaultTranslation" "Holy Blood Mark"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Consecrated by Sextans' communion. Critical hit chance and critical damage rise while the blessing lasts."
+    }
+
+    clear "EventHandlers"
+    append "EventHandlers" type="ChangeProperty" {
+        set "Trigger" enum="UpdateEvent" "OnUpdate"
+        set "PropertyType" enum="EntityPropertyType" "CriticalChance"
+        set "Amount" 10
+        set "AmountMult" 0.0
+    }
+    append "EventHandlers" type="ChangeProperty" {
+        set "Trigger" enum="UpdateEvent" "OnUpdate"
+        set "PropertyType" enum="EntityPropertyType" "CriticalDamageMult"
+        set "Amount" 0
+        set "AmountMult" 0.15
+    }
+    append "EventHandlers" type="LifetimeLimit" {
+        set "Event" enum="LifetimeType" "OnTurnEnd"
+        set "Lifetime" 2
+        set "ResetLifetimeOnRefresh" #true
+    }
+}
+
+// The highlighted keywords: hovering "Blood Kiss", "Coagulation" or "Holy
+// Blood Mark" inside a skill description opens these as nested tooltips,
+// via the game's own <link="id"> markup registry.
+patch "TextTooltipsConfig" "text_tooltips_config" {
+    append "Tooltips" {
+        set "LinkId" "sextans_blood_kiss"
+        set "TooltipHeading" {
+            set "m_DefaultTranslation" "Blood Kiss"
+        }
+        set "TooltipText" {
+            set "m_DefaultTranslation" "Marked by Sextans' blade for 3 turns. <link=\"sextans_midnight_vesper\">Midnight Vesper</link> deals bonus damage to the marked and feeds on them for extra vitality."
+        }
+    }
+    append "Tooltips" {
+        set "LinkId" "sextans_coagulation"
+        set "TooltipHeading" {
+            set "m_DefaultTranslation" "Coagulation"
+        }
+        set "TooltipText" {
+            set "m_DefaultTranslation" "Sextans gains a charge for every enemy her blade finds, up to 7. At 5 charges <link=\"sextans_midnight_vesper\">Midnight Vesper</link> is ready. Using it consumes 5 and keeps the rest."
+        }
+    }
+    append "Tooltips" {
+        set "LinkId" "sextans_midnight_vesper"
+        set "TooltipHeading" {
+            set "m_DefaultTranslation" "Midnight Vesper"
+        }
+        set "TooltipText" {
+            set "m_DefaultTranslation" "Sextans' ultimate. She dashes to a point of her choosing, cutting through everything on the way. Every victim struck restores her vitality. Marked enemies take extra damage, restore more, and lose their mark. Her allies receive the Holy Blood Mark. Requires 4 charges of Coagulation."
+        }
+    }
+    append "Tooltips" {
+        set "LinkId" "sextans_holy_blood_mark"
+        set "TooltipHeading" {
+            set "m_DefaultTranslation" "Holy Blood Mark"
+        }
+        set "TooltipText" {
+            set "m_DefaultTranslation" "Critical hit chance and critical damage rise while the blessing lasts. Lasts 2 turns."
+        }
+    }
+}

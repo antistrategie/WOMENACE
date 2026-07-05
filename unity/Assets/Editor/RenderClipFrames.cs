@@ -18,6 +18,8 @@ namespace Womenace.EditorTools
     //     -times 0.0,0.25,0.5,0.75 -lod 0 -out /tmp/frames
     public static class RenderClipFrames
     {
+        private static bool _camPlaced;
+
         public static void Run()
         {
             var args = System.Environment.GetCommandLineArgs();
@@ -55,6 +57,41 @@ namespace Womenace.EditorTools
             var lodGroup = instance.GetComponentInChildren<LODGroup>();
             if (lodGroup != null)
                 lodGroup.ForceLOD(lod);
+
+            // -attach Assets/.../weapon.prefab:Hand_R mounts a prefab at a
+            // named bone with identity local TRS, mirroring how the game
+            // parents an equipped weapon model, so grip alignment can be
+            // checked offline against the character's actual hand pose.
+            var attachSpec = Arg("-attach", null);
+            Transform socket = null;
+            if (attachSpec != null)
+            {
+                var sep = attachSpec.LastIndexOf(':');
+                var attachPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(attachSpec.Substring(0, sep));
+                socket = FindChildDeep(instance.transform, attachSpec.Substring(sep + 1));
+                if (attachPrefab == null || socket == null)
+                {
+                    Debug.LogError($"RenderClipFrames: bad -attach '{attachSpec}' (prefab={attachPrefab}, socket={socket}).");
+                    EditorApplication.Exit(1);
+                    return;
+                }
+                var attached = Object.Instantiate(attachPrefab, socket, false);
+                attached.transform.localPosition = Vector3.zero;
+                attached.transform.localRotation = Quaternion.identity;
+                // -attachRot x,y,z: local euler offset for the attachment, to
+                // trial mounting orientations before baking one into the GLB
+                var attachRot = Arg("-attachRot", null);
+                if (attachRot != null)
+                {
+                    var e = attachRot.Split(',').Select(float.Parse).ToArray();
+                    attached.transform.localRotation = Quaternion.Euler(e[0], e[1], e[2]);
+                }
+                // flat-lit batchmode renders read as silhouettes, so tint the
+                // attachment to keep it legible against the character
+                var tint = new Material(Shader.Find("Unlit/Color")) { color = new Color(0.9f, 0.2f, 0.2f) };
+                foreach (var r in attached.GetComponentsInChildren<Renderer>())
+                    r.sharedMaterial = tint;
+            }
 
             var light = new GameObject("KeyLight").AddComponent<Light>();
             light.type = LightType.Directional;
@@ -202,6 +239,13 @@ namespace Womenace.EditorTools
                             Debug.Log($"RenderClipFrames: LAYER {li} '{animator.GetLayerName(li)}' weight={w:0.00} clip={playing}");
                     }
                 }
+                if (socket != null)
+                {
+                    // socket basis in world space: what the attachment's
+                    // local axes resolve to under an identity local TRS
+                    Debug.Log($"RenderClipFrames: SOCKET '{socket.name}' t={t:0.00} pos={socket.position:F3} "
+                        + $"X->{socket.right:F3} Y->{socket.up:F3} Z->{socket.forward:F3} charFwd={instance.transform.forward:F3}");
+                }
                 var hips = animator.GetBoneTransform(HumanBodyBones.Hips);
                 var footL = animator.GetBoneTransform(HumanBodyBones.LeftFoot);
                 Debug.Log($"RenderClipFrames: {clipName} t={t:0.00} lowestVertexY={lowestY:+0.000;-0.000} boundsY=[{bounds.min.y:0.00},{bounds.max.y:0.00}] hipsY={(hips ? hips.position.y : -99f):0.000} footLY={(footL ? footL.position.y : -99f):0.000} rootY={animator.transform.position.y:0.000} bodyY={animator.bodyPosition.y:0.000}");
@@ -209,8 +253,18 @@ namespace Womenace.EditorTools
                 var centre = bounds.center;
                 var size = Mathf.Max(bounds.size.y, bounds.size.x) * 1.15f;
                 var dist = size / (2f * Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad));
-                cam.transform.position = centre + new Vector3(0.4f, 0.05f, -1f).normalized * dist;
-                cam.transform.LookAt(centre);
+                // -camYaw rotates the view direction around the character
+                // (degrees, 0 = the default three-quarter angle). -fixedCam 1
+                // frames the first sample and holds, so frame sequences can
+                // be assembled into a steady animation.
+                var camYaw = float.Parse(Arg("-camYaw", "0"));
+                if (Arg("-fixedCam", "0") != "1" || !_camPlaced)
+                {
+                    var viewDir = Quaternion.Euler(0f, camYaw, 0f) * new Vector3(0.4f, 0.05f, -1f).normalized;
+                    cam.transform.position = centre + viewDir * (dist * (Arg("-fixedCam", "0") == "1" ? 1.4f : 1f));
+                    cam.transform.LookAt(centre);
+                    _camPlaced = true;
+                }
 
                 cam.Render();
                 var prev = RenderTexture.active;
@@ -229,6 +283,19 @@ namespace Womenace.EditorTools
                 graph.Destroy();
 
             EditorApplication.Exit(0);
+        }
+
+        private static Transform FindChildDeep(Transform node, string name)
+        {
+            if (node.name == name)
+                return node;
+            for (int i = 0; i < node.childCount; i++)
+            {
+                var hit = FindChildDeep(node.GetChild(i), name);
+                if (hit != null)
+                    return hit;
+            }
+            return null;
         }
     }
 }
