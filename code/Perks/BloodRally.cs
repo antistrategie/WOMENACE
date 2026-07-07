@@ -217,7 +217,7 @@ public sealed class RallyBarsSystem : JiangyuSystem
 {
     private static RallyBarsSystem _instance;
 
-    private static readonly Color RallyGrey = new(0.63f, 0.63f, 0.63f, 1f);
+    private static readonly Color RallyGrey = new(211f / 255f, 215f / 255f, 193f / 255f, 1f);
 
     private Il2CppMenace.UI.Tactical.SelectedUnitPanel _panel;
     private Actor _panelActor;

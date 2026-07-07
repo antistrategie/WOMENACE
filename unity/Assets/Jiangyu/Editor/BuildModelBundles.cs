@@ -88,6 +88,19 @@ namespace Jiangyu.Mod
                 }
             }
 
+            // No model imported to a GameObject: every staged file was skipped above (null load).
+            // Report that directly instead of letting the build proceed to write nothing and then
+            // surface as the generic "wrote no bundle" message, which misdirects the modder toward
+            // caching/locks rather than their unsupported or corrupt model file.
+            if (prefabCount == 0)
+            {
+                Debug.LogError(
+                    "Jiangyu BuildModelBundles: none of the staged model files imported to a GameObject. " +
+                    "The model is likely an unsupported or corrupt format (expected .glb, .fbx, .obj).");
+                EditorApplication.Exit(1);
+                return;
+            }
+
             var projectRoot = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
             var modRoot = Path.GetFullPath(Path.Combine(projectRoot, ".."));
             var outputDir = Path.Combine(modRoot, ".jiangyu", "unity_build");
@@ -95,14 +108,27 @@ namespace Jiangyu.Mod
 
             Debug.Log("Jiangyu BuildModelBundles: building bundle '" + bundleName + "' with " + prefabCount + " prefab(s)");
 
+            // ForceRebuildAssetBundle: never trust Unity's own incremental bundle cache. A stale
+            // .manifest surviving in the output dir otherwise makes Unity skip the rebuild and
+            // emit no file while still succeeding. Jiangyu already gates the Unity invocation on
+            // its own input fingerprints, so forcing a full rebuild here costs nothing extra.
             var manifest = BuildPipeline.BuildAssetBundles(
                 outputDir,
-                BuildAssetBundleOptions.ChunkBasedCompression,
+                BuildAssetBundleOptions.ChunkBasedCompression | BuildAssetBundleOptions.ForceRebuildAssetBundle,
                 EditorUserBuildSettings.activeBuildTarget);
 
             if (manifest == null)
             {
                 Debug.LogError("Jiangyu BuildModelBundles: BuildAssetBundles returned null.");
+                EditorApplication.Exit(1);
+                return;
+            }
+
+            // A non-null manifest does not guarantee our bundle was written (a cold-project
+            // import pass can leave the generated prefabs unimported). Fail with an exit code so
+            // the compiler surfaces this log rather than the opaque downstream message.
+            if (!BundleBuildVerify.AllWritten(outputDir, new[] { bundleName }, manifest, "Jiangyu BuildModelBundles"))
+            {
                 EditorApplication.Exit(1);
                 return;
             }

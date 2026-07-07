@@ -29,6 +29,11 @@ namespace WOMENACE.Code;
 // a growth roll pushed ABOVE the template are left alone.
 public sealed class SoloSquadSystem : JiangyuSystem
 {
+
+    // InitialAttributes index order: agility 0, weapon_skill 1, valour 2,
+    // toughness 3, vitality 4, precision 5, positioning 6.
+    private const int VitalityIndex = 4;
+
     // Unit template ids of leaders that run solo (BaseUnitLeader.GetTemplate
     // returns the unit template, not the leader template). Add new solo
     // dolls here.
@@ -46,13 +51,9 @@ public sealed class SoloSquadSystem : JiangyuSystem
     {
         ["player_squad.sextans"] = new()
         {
-            [VitalityIndex] = 400f, // 80 HP
+            [VitalityIndex] = 500f,
         },
     };
-
-    // InitialAttributes index order: agility 0, weapon_skill 1, valour 2,
-    // toughness 3, vitality 4, precision 5, positioning 6.
-    private const int VitalityIndex = 4;
 
     public override void OnInit()
     {

@@ -33,7 +33,6 @@ clone "SpeakerTemplate" from="carda" id="wmgfl_lewis_speaker" {
 
 clone "EntityTemplate" from="player_squad.carda" id="player_squad.lewis" {
     append "Tags" "wmgfl_lewis"
-    append "Tags" "jy_armor_restricted"
     set "Title" {
         set "m_DefaultTranslation" "42LAB"
     }
@@ -44,7 +43,7 @@ clone "EntityTemplate" from="player_squad.carda" id="player_squad.lewis" {
     set "Badge" asset="lewis/badge_mini"
     set "BadgeWhite" asset="lewis/badge_mini"
     clear "Items"
-    append "Items" "armor.lewis_default"
+    append "Items" "armor.player_fatigues"
     append "Items" "weapon.lewis"
 }
 

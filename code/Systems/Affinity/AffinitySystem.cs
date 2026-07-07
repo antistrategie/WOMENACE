@@ -32,9 +32,8 @@ public sealed class AffinitySystem : JiangyuSystem
     private readonly List<Box> _boxes = [];
     private readonly Dictionary<Gift, int> _chosen = [];
 
-    // Resolved gated-skin / SSR-weapon templates, cached so the unlock pass does not rescan the template
+    // Resolved SSR-weapon templates, cached so the unlock pass does not rescan the template
     // loader on every window refresh.
-    private readonly Dictionary<string, ArmorTemplate> _armorCache = new(StringComparer.Ordinal);
     private readonly Dictionary<string, WeaponTemplate> _weaponCache = new(StringComparer.Ordinal);
 
     // The game's rarity palette, read once from UIConfig (with the shipped values as a fallback) so
@@ -189,9 +188,10 @@ public sealed class AffinitySystem : JiangyuSystem
         ApplyUnlocks(key, Affinity.LeaderOf(window));
     }
 
-    // Grant the character's level-gated skins into the shared inventory once they are unlocked, so
-    // they appear in the armour picker (its alternatives list is driven by owned instances). Keyed
-    // off the Unlocks registry and idempotent: a skin already owned is skipped.
+    // Grant the character's level-gated SSR weapons into the shared inventory once they are
+    // unlocked. Keyed off the Unlocks registry and idempotent: a weapon already owned is skipped.
+    // Skins need no grant: they are transmog outfits, not items, and the transmog picker reads
+    // their unlock level straight from Unlocks.
     private void ApplyUnlocks(int key, BaseUnitLeader leader)
     {
         try
@@ -205,15 +205,6 @@ public sealed class AffinitySystem : JiangyuSystem
                 return;
 
             var characterTag = Affinity.CharacterTag(leader);
-
-            foreach (var id in Unlocks.UnlockedSkinArmors(characterTag, level))
-            {
-                var template = Templates.Resolve<ArmorTemplate>(id, _armorCache, msg => Context.Log.Warn($"affinity: {msg}"));
-                if (template == null || owned.GetInstanceCount(template) > 0)
-                    continue;
-                owned.AddItem(template, false, false);
-                Context.Log.Info($"affinity: unlocked skin '{id}' (level {level})");
-            }
 
             foreach (var id in Unlocks.UnlockedWeapons(characterTag, level))
             {
@@ -564,18 +555,7 @@ public sealed class AffinitySystem : JiangyuSystem
             });
     }
 
-    private static string GiftName(CommodityTemplate template)
-    {
-        try
-        {
-            var title = template.Title;
-            var text = title?.m_DefaultTranslation;
-            if (!string.IsNullOrEmpty(text))
-                return text;
-        }
-        catch { }
-        return template.name;
-    }
+    private static string GiftName(CommodityTemplate template) => Templates.DefaultText(template?.Title, template?.name);
 
     private static OwnedItems Owned()
     {

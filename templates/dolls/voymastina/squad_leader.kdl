@@ -33,7 +33,6 @@ clone "SpeakerTemplate" from="sy" id="wmgfl_voymastina_speaker" {
 
 clone "EntityTemplate" from="player_squad.sy" id="player_squad.voymastina" {
     append "Tags" "wmgfl_voymastina"
-    append "Tags" "jy_armor_restricted"
     set "Title" {
         set "m_DefaultTranslation" "Task Force DEFY"
     }
@@ -47,7 +46,7 @@ clone "EntityTemplate" from="player_squad.sy" id="player_squad.voymastina" {
     set "Badge" asset="voymastina/badge_mini"
     set "BadgeWhite" asset="voymastina/badge_mini"
     clear "Items"
-    append "Items" "armor.voymastina_default"
+    append "Items" "armor.player_fatigues"
     append "Items" "weapon.voymastina_ak15"
 }
 

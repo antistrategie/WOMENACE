@@ -16,12 +16,13 @@ public static class Unlocks
     {
         // A flavour-only row: shows its Title in the popover, unlocks nothing mechanically.
         None,
-        // Alternate outfits. Armors lists the gated skin armour template ids to grant on unlock.
+        // Alternate outfits. Armors lists the transmog outfit ids unlocked at this level. The
+        // transmog picker greys them out until the level is reached.
         Skins,
         // A deployable mech form (gated in VoymastinaFormSwapSystem).
         Mech,
         // An SSR special weapon granted to the shared inventory at this level. Weapons lists the
-        // weapon template ids. Equippable by anyone; the owner-only bonus lives in SsrImprintSystem.
+        // weapon template ids. Equippable by anyone, but the owner-only bonus lives in SsrImprintSystem.
         Weapon,
     }
 
@@ -38,9 +39,8 @@ public static class Unlocks
         public LocalisedText Title;
     }
 
-    // The per-character unlock map. Skin armours listed here are deliberately NOT in the character's
-    // squad-template starting Items (so they are not minted at hire). AffinitySystem grants them at
-    // the unlock level and SkinGateSystem hides their picker slot until then.
+    // The per-character unlock map. Skin outfits listed here are pure transmog carriers (no unit
+    // can equip them); the transmog picker offers each once the character reaches its level.
     public static readonly Dictionary<string, Entry[]> ByCharacter = new(StringComparer.Ordinal)
     {
         ["wmgfl_voymastina"] = new[]
@@ -69,27 +69,8 @@ public static class Unlocks
             ? entries
             : Array.Empty<Entry>();
 
-    // The skin armour ids a character has unlocked at this level (every Skins entry at or below it).
-    public static IEnumerable<string> UnlockedSkinArmors(string characterTag, int level)
-    {
-        foreach (var entry in EntriesFor(characterTag))
-            if (entry.Feature == Feature.Skins && level >= entry.Level && entry.Armors != null)
-                foreach (var id in entry.Armors)
-                    yield return id;
-    }
-
-    // The skin armour ids a character has NOT yet unlocked at this level (every Skins entry above
-    // it). These are hidden from the armour picker until the level is reached.
-    public static IEnumerable<string> LockedSkinArmors(string characterTag, int level)
-    {
-        foreach (var entry in EntriesFor(characterTag))
-            if (entry.Feature == Feature.Skins && level < entry.Level && entry.Armors != null)
-                foreach (var id in entry.Armors)
-                    yield return id;
-    }
-
     // The SSR weapon ids a character has unlocked at this level (every Weapon entry at or below it).
-    // Granted to the shared inventory; equippable by anyone regardless of who unlocked it.
+    // Granted to the shared inventory, equippable by anyone regardless of who unlocked it.
     public static IEnumerable<string> UnlockedWeapons(string characterTag, int level)
     {
         foreach (var entry in EntriesFor(characterTag))

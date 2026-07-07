@@ -53,10 +53,9 @@ clone "SpeakerTemplate" from="<parent_speaker>" id="wmgfl_<character>_speaker" {
 
 clone "EntityTemplate" from="player_squad.<parent>" id="player_squad.<character>" {
     append "Tags" "wmgfl_<character>"
-    append "Tags" "armor_restricted"
     ...
     clear "Items"
-    append "Items" "armor.<character>_default"
+    append "Items" "armor.player_fatigues"
     append "Items" "weapon.<character>_<weapon_name>"   // optional
 }
 
@@ -82,19 +81,20 @@ The five clones depend on each other by ID:
 - `UnitLeaderTemplate.InfantryUnitTemplate` → `player_squad.<character>` (the EntityTemplate)
 - `UnitLeaderTemplate.SpeakerTemplate` → `<character>_speaker` (the SpeakerTemplate)
 - `UnitLeaderTemplate.PerkTrees[0]` → `perk_tree.<character>` (the PerkTreeTemplate, in a different file)
-- `EntityTemplate.Items[]` → `armor.<character>_*` and optionally `weapon.<character>_*`
-- `EntityTemplate.Tags[]` includes the `<character>` TagTemplate
+- `EntityTemplate.Items[]` → vanilla starting armour (`armor.player_fatigues`) and optionally `weapon.<character>_*`
+- `EntityTemplate.Tags[]` includes the `wmgfl_<character>` TagTemplate. The transmog system reads this
+  tag off the spawning EntityTemplate to decide whose outfit to render, and weapon `OnlyEquipableBy`
+  gating matches against it.
 
 ## Tag and equipment restriction
 
-Tags gate which items each unit can equip. Two tags do the work:
+Tags gate which items each unit can equip.
 
-- **`<character>`** — unique per character. The character's `EntityTemplate.Tags` adds it; their armor/weapon `OnlyEquipableBy` references it.
-- **`armor_restricted` / `weapon_restricted`** — slot-restriction tags. When the unit has one of these, Jiangyu's `InventoryFilterPatch` Harmony hook filters the loadout-UI dropdown so only items with a matching `OnlyEquipableBy` show.
+- **`wmgfl_<character>`** — unique per character. The character's `EntityTemplate.Tags` adds it; their weapon `OnlyEquipableBy` references it, so the weapon shows only in that character's dropdown (vanilla `OnlyEquipableBy` filtering hides it from everyone else).
+- **`jy_weapon_restricted` / `jy_special_restricted`** — slot-restriction tags on the EntityTemplate for a doll locked TO her own gear (Sextans carries both: melee only). When the unit has one, Jiangyu's `InventoryFilterPatch` Harmony hook filters that slot's loadout-UI dropdown to items with a matching `OnlyEquipableBy`. Without it the character equips vanilla items in that slot too.
+- **`wmgfl_transmog`** — carried by no unit. An outfit `ArmorTemplate` whose `OnlyEquipableBy` names only this tag never appears in any equip dropdown: outfits are cosmetic carriers for the transmog picker, never equippable armour. Dolls equip vanilla armour for stats.
 
-Concrete: a unit tagged `cheyanne` + `armor_restricted` opens her armor slot. The filter runs because `armor_restricted` is on her. For each candidate item, it checks `OnlyEquipableBy ∩ unit.Tags`. `armor.cheyanne_default` has `OnlyEquipableBy=[cheyanne]`, which intersects, so it shows. `armor.voymastina_default` has `OnlyEquipableBy=[voymastina]`, no intersection, hidden.
-
-**The filter only runs in the strategy-mode loadout dropdown** (`UnitWindowEquipment.UpdateEquipmentAlternatives` → `SortedFilteredItemList.GetSortedAndFilteredItems`). Other UI paths (blackmarket, debug menus) bypass it; `OnlyEquipableBy` is documentation-only there.
+**The `InventoryFilterPatch` filter only runs in the strategy-mode loadout dropdown** (`UnitWindowEquipment.UpdateEquipmentAlternatives` → `SortedFilteredItemList.GetSortedAndFilteredItems`). Other UI paths (blackmarket, debug menus) bypass it; `OnlyEquipableBy` is documentation-only there.
 
 ## Sprite slots
 
@@ -111,13 +111,13 @@ Several portrait/badge fields exist on both `UnitLeaderTemplate` and `EntityTemp
 
 The full bestiary lives in [`../../AGENTS.md`](../../AGENTS.md) under "Sprite slots".
 
-## armor.kdl
+## armor.kdl (transmog outfits)
 
-One `ArmorTemplate` clone per visual variant:
+One `ArmorTemplate` clone per outfit. Outfits carry the character's look (model, icons, name) for the transmog picker; they hold no combat stats and no unit can equip them. The character wears vanilla armour for stats and always renders her selected outfit:
 
 ```kdl
 clone "ArmorTemplate" from="armor.player_fatigues" id="armor.<character>_<variant>" {
-    set "Title" { set "m_DefaultTranslation" "<armor name>" }
+    set "Title" { set "m_DefaultTranslation" "<outfit name>" }
     set "ShortName" { set "m_DefaultTranslation" "<short name>" }
     set "Description" { set "m_DefaultTranslation" "<flavour>" }
     set "Icon" asset="<character>/armor/<variant>/Icon"
@@ -128,13 +128,17 @@ clone "ArmorTemplate" from="armor.player_fatigues" id="armor.<character>_<varian
     clear "FemaleModels"
     append "FemaleModels" asset="<character>/<variant>/main"
     set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
-    append "OnlyEquipableBy" "wmgfl_<character>"
+    append "OnlyEquipableBy" "wmgfl_transmog"
+    append "Tags" "jy_no_sell"
 }
 ```
 
 The model `asset=` ref points at the per-variant subdir under `unity/Assets/Prefabs/<character>/<variant>/main.prefab`. The PMX-to-MENACE pipeline produces that prefab (see [`../pmx-to-menace/SKILL.md`](../pmx-to-menace/SKILL.md)).
 
-`SquadLeaderMode = SameAsOthers` means everyone in the squad wearing this armor uses the same 3D model (the character's). Other options exist on the enum but are rarely useful for character-locked armor.
+Code-side registration, both in `code/`:
+
+- `Transmog.DefaultOutfits` (`Systems/Transmog/Transmog.cs`) maps `wmgfl_<character>` → `armor.<character>_default`. Without this entry the character is not a transmog character and renders whatever armour she wears.
+- Extra outfits (skins) are `Unlocks` entries (`Feature.Skins`) with the affinity level that unlocks them; the picker lists them greyed until then.
 
 ## perk_tree.kdl
 
@@ -174,8 +178,8 @@ A `clone` deep-copies the parent's typed state, then applies the patches in your
 ## Common shape mistakes
 
 - **Cloning the wrong parent class** — e.g. cloning from `specialweapon.X` if you don't want the unit to consume the specialweapon slot. For a sniper-style weapon in the normal slot, pick `weapon.generic_battle_rifle_tier1_crowbar_marksman` or similar.
-- **Forgetting `append "Tags" "wmgfl_<character>"`** on the EntityTemplate. The armor restriction silently fails (no match in `OnlyEquipableBy ∩ unit.Tags`).
-- **Forgetting `append "Tags" "armor_restricted"`** — the filter doesn't activate and the unit sees ALL armor.
+- **Forgetting `append "Tags" "wmgfl_<character>"`** on the EntityTemplate. The transmog swap never matches (the character renders her equipped vanilla armour as a vanilla soldier body) and weapon `OnlyEquipableBy` gating fails.
+- **Forgetting the `Transmog.DefaultOutfits` entry** — the outfits exist but the picker tile never appears and nothing renders them.
 - **Wrong RoleGuid in cloned ConversationTemplates** — must match the role NAME in the actual parent template, which differs per-template (see [voice-pipeline](../voice-pipeline/SKILL.md)).
 
 ## Cross-references

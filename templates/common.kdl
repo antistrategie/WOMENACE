@@ -1,5 +1,3 @@
-clone "TagTemplate" from="unique" id="jy_armor_restricted"
-
 clone "TagTemplate" from="unique" id="jy_weapon_restricted"
 
 clone "TagTemplate" from="unique" id="jy_special_restricted"
@@ -9,6 +7,11 @@ clone "TagTemplate" from="unique" id="jy_vehicle_restricted"
 clone "TagTemplate" from="unique" id="jy_no_sell"
 
 clone "TagTemplate" from="unique" id="wmgfl_gift"
+
+// Carried by no unit: an armour whose OnlyEquipableBy names only this tag never
+// appears in any equip dropdown. Doll outfits use it, so they exist purely as
+// transmog carriers (model, icons, name) for the transmog picker.
+clone "TagTemplate" from="unique" id="wmgfl_transmog"
 
 patch "StrategyConfig" "strategy_config" {
     append "InitialPickableUnitLeaders" "squad_leader.voymastina"

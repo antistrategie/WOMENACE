@@ -19,7 +19,7 @@ clone "ArmorTemplate" from="armor.player_fatigues" id="armor.leva_default" {
     clear "FemaleModels"
     append "FemaleModels" asset="leva/default/main"
     set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
-    append "OnlyEquipableBy" "wmgfl_leva"
+    append "OnlyEquipableBy" "wmgfl_transmog"
     append "Tags" "jy_no_sell"
 }
 
@@ -47,6 +47,6 @@ clone "ArmorTemplate" from="armor.player_fatigues" id="armor.leva_diamond_flower
     clear "FemaleModels"
     append "FemaleModels" asset="leva/diamond_flower/main"
     set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
-    append "OnlyEquipableBy" "wmgfl_leva"
+    append "OnlyEquipableBy" "wmgfl_transmog"
     append "Tags" "jy_no_sell"
 }

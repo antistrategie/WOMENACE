@@ -33,7 +33,6 @@ clone "SpeakerTemplate" from="carda" id="wmgfl_makiatto_speaker" {
 
 clone "EntityTemplate" from="player_squad.carda" id="player_squad.makiatto" {
     append "Tags" "wmgfl_makiatto"
-    append "Tags" "jy_armor_restricted"
     set "Title" {
         set "m_DefaultTranslation" "Zucchero Café"
     }
@@ -44,7 +43,7 @@ clone "EntityTemplate" from="player_squad.carda" id="player_squad.makiatto" {
     set "Badge" asset="makiatto/badge_mini"
     set "BadgeWhite" asset="makiatto/badge_mini"
     clear "Items"
-    append "Items" "armor.makiatto_default"
+    append "Items" "armor.player_fatigues"
     append "Items" "weapon.makiatto_wa2000"
 }
 

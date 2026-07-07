@@ -19,7 +19,7 @@ clone "WeaponTemplate" from="weapon.generic_carbine_tier1_spc" id="weapon.sextan
     set "Damage" 0.0
     set "ArmorPenetration" 0.0
     set "Suppression" 0.0
-    set "AccuracyBonus" 0
+    set "AccuracyBonus" 0.0
 
     set "DeployCosts" {
         set "m_Supplies" 15
@@ -216,9 +216,6 @@ clone "SkillTemplate" from="active.wetteroth_thats_a_knife" id="active.sextans_u
         set "TeleportDelay" 1.0
         set "DashDuration" 0.075
         set "PayoffDelay" 2.4
-        // one combined heal, capped at HealCap: lifesteal of the damage dealt
-        // (HealFraction per enemy, HealFractionMarked for Blood Kiss victims)
-        // plus a reduced UltRallyFraction reclaim drawn from the grey pool
         set "HealFraction" 0.3
         set "HealFractionMarked" 0.4
         set "UltRallyFraction" 0.1

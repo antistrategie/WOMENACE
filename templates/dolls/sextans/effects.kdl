@@ -1,6 +1,5 @@
 // Sextans' status effects: the mark her blades leave, the charge her strikes
 // build, and the blessing her ultimate confers on the squad.
-
 // Blood Kiss: applied by the slash and the thrust to everything they hit.
 // Cloned from bleeding so the marked keep the blood-drip visual and the apply
 // sound, but the mark itself draws no blood.
@@ -35,7 +34,7 @@ clone "SkillTemplate" from="effect.bleeding" id="effect.sextans_coagulation" {
         set "m_DefaultTranslation" "Coagulation"
     }
     set "Description" {
-        set "m_DefaultTranslation" "Spilled blood thickens on Sextans' blade, one stack for every enemy her strikes find, up to 7. At 5 charges <link=\"sextans_midnight_vesper\">Midnight Vesper</link> is ready."
+        set "m_DefaultTranslation" "Spilled blood thickens on Sextans' blade, one stack for every enemy her strikes find, up to 6. At 4 charges <link=\"sextans_midnight_vesper\">Midnight Vesper</link> is ready."
     }
     clear "EventHandlers"
     append "EventHandlers" type="WOMENACE:StackBadge" {}
@@ -93,7 +92,7 @@ patch "TextTooltipsConfig" "text_tooltips_config" {
             set "m_DefaultTranslation" "Coagulation"
         }
         set "TooltipText" {
-            set "m_DefaultTranslation" "Sextans gains a charge for every enemy her blade finds, up to 7. At 5 charges <link=\"sextans_midnight_vesper\">Midnight Vesper</link> is ready. Using it consumes 5 and keeps the rest."
+            set "m_DefaultTranslation" "Sextans gains a charge for every enemy her blade finds, up to 6. At 4 charges <link=\"sextans_midnight_vesper\">Midnight Vesper</link> is ready. Using it consumes 4 and keeps the rest."
         }
     }
     append "Tooltips" {

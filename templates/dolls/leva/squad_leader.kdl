@@ -33,7 +33,6 @@ clone "SpeakerTemplate" from="sy" id="wmgfl_leva_speaker" {
 
 clone "EntityTemplate" from="player_squad.sy" id="player_squad.leva" {
     append "Tags" "wmgfl_leva"
-    append "Tags" "jy_armor_restricted"
     set "Title" {
         set "m_DefaultTranslation" "H.I.D.E. 404"
     }
@@ -48,7 +47,7 @@ clone "EntityTemplate" from="player_squad.sy" id="player_squad.leva" {
     set "Badge" asset="leva/badge_mini"
     set "BadgeWhite" asset="leva/badge_mini"
     clear "Items"
-    append "Items" "armor.leva_default"
+    append "Items" "armor.player_fatigues"
     append "Items" "weapon.leva_ump45"
 }
 

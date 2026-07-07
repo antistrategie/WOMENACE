@@ -27,6 +27,22 @@ public static class Templates
         }
     }
 
+    // The default-locale text of a template's localised line (Title / ShortName / Description),
+    // or the fallback when it is empty or unreadable. Reading a dead Il2Cpp object's field can
+    // throw, so this swallows and falls back. Shared by the transmog picker and gift catalogue,
+    // which all pull a display name off a BaseLocalizedString the same way.
+    public static string DefaultText(Il2CppMenace.Tools.BaseLocalizedString line, string fallback = "")
+    {
+        try
+        {
+            var text = line?.m_DefaultTranslation;
+            if (!string.IsNullOrEmpty(text))
+                return text;
+        }
+        catch { }
+        return fallback;
+    }
+
     // A template by id, or null if none matches.
     public static T ById<T>(string id, Action<string> onError = null) where T : DataTemplate
     {

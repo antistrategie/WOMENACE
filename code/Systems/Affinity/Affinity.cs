@@ -9,7 +9,7 @@ namespace WOMENACE.Code;
 
 // The shared affinity model: the single thing every WOMENACE system reads to coordinate on
 // affinity. AffinitySystem owns the points (it is the only writer). Any system that gates on
-// affinity (the Sinbreaker form swap, the skin grants) reads the level through here, and the
+// affinity (the Sinbreaker form swap, the transmog picker) reads the level through here, and the
 // badge popover lists its unlocks from the same Unlocks table. The systems never call each
 // other directly. They share one Context.State (Get<AffinityState>() hands the same live
 // instance to all of them) plus these rules, so they cannot drift out of step.
@@ -82,9 +82,12 @@ public static class Affinity
     // speaker) and stays put when unrelated tags change (a trait added, a tag renamed). Hashing the
     // full Tags string would move the key whenever any token changed, orphaning saved progress. 0 is
     // reserved for "not ours", so a tag that happens to hash to 0 is nudged to a non-zero key.
-    public static int KeyFor(BaseUnitLeader leader)
+    public static int KeyFor(BaseUnitLeader leader) => KeyForTag(CharacterTag(leader));
+
+    // The stable key for a character tag directly, for callers that already hold the tag
+    // (the transmog model keys its selections the same way affinity keys its points).
+    public static int KeyForTag(string characterTag)
     {
-        var characterTag = CharacterTag(leader);
         if (characterTag == null)
             return 0;
         var key = StableHash(characterTag);

@@ -16,13 +16,8 @@ clone "ArmorTemplate" from="armor.player_fatigues" id="armor.sextans_default" {
     clear "FemaleModels"
     append "FemaleModels" asset="sextans/default/main"
     set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
-    append "OnlyEquipableBy" "wmgfl_sextans"
-
-    set "Armor" 30
-    set "DurabilityPerElement" 80
-    set "DefenseMult" 1.5
-    set "SuppressionImpactMult" 0.8
-    set "Concealment" 3
+    append "OnlyEquipableBy" "wmgfl_transmog"
+    append "Tags" "jy_no_sell"
 }
 
 clone "ArmorTemplate" from="armor.sextans_default" id="armor.sextans_nocte" {
@@ -43,11 +38,6 @@ clone "ArmorTemplate" from="armor.sextans_default" id="armor.sextans_nocte" {
     clear "FemaleModels"
     append "FemaleModels" asset="sextans/nocte/main"
     set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
-    append "OnlyEquipableBy" "wmgfl_sextans"
-
-    set "Armor" 30
-    set "DurabilityPerElement" 80
-    set "DefenseMult" 1.5
-    set "SuppressionImpactMult" 0.8
-    set "Concealment" 3
+    append "OnlyEquipableBy" "wmgfl_transmog"
+    append "Tags" "jy_no_sell"
 }

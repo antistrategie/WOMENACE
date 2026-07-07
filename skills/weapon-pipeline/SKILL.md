@@ -144,7 +144,7 @@ clone "WeaponTemplate" from="<parent_weapon>" id="weapon.<character>_<name>" {
 
 `SkillsGranted` indices match the parent's positions — typically [0] = primary semi-auto/burst and [1] = aimed/sustained/marksman. Inspecting the parent reveals what's at each index.
 
-`OnlyEquipableBy` works the same as on armor — only units with the listed tag(s) in their `EntityTemplate.Tags` will see the weapon in their loadout dropdown. See [`character-authoring`](../character-authoring/SKILL.md) for the `armor_restricted` / `weapon_restricted` gating.
+`OnlyEquipableBy` gates visibility: only units with the listed tag(s) in their `EntityTemplate.Tags` will see the weapon in their loadout dropdown. See [`character-authoring`](../character-authoring/SKILL.md) for the tag and equipment restriction model (including the `jy_weapon_restricted` slot lock).
 
 ## 6. Custom gunshot audio (optional)
 

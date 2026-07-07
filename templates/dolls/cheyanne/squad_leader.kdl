@@ -33,7 +33,6 @@ clone "SpeakerTemplate" from="carda" id="wmgfl_cheyanne_speaker" {
 
 clone "EntityTemplate" from="player_squad.carda" id="player_squad.cheyanne" {
     append "Tags" "wmgfl_cheyanne"
-    append "Tags" "jy_armor_restricted"
     set "Title" {
         set "m_DefaultTranslation" "Elmo Combined Echelon"
     }
@@ -44,7 +43,7 @@ clone "EntityTemplate" from="player_squad.carda" id="player_squad.cheyanne" {
     set "Badge" asset="cheyanne/badge_mini"
     set "BadgeWhite" asset="cheyanne/badge_mini"
     clear "Items"
-    append "Items" "armor.cheyanne_default"
+    append "Items" "armor.player_fatigues"
     append "Items" "weapon.cheyanne_m200"
 }
 

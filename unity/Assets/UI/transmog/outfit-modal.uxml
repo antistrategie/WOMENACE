@@ -1,0 +1,10 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="../theme.uss" />
+    <Style src="transmog.uss" />
+    <ui:VisualElement name="TransmogAlternatives" class="window wm-outfit-modal">
+        <ui:VisualElement class="unit-window-background" />
+        <ui:VisualElement class="unit-window-border" />
+        <ui:Label name="@WOMENACE::ui/select_outfit" text="Select Outfit" class="wm-outfit-title" />
+        <ui:VisualElement name="outfit-list" class="wm-outfit-list" />
+    </ui:VisualElement>
+</ui:UXML>

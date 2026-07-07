@@ -19,5 +19,6 @@ clone "ArmorTemplate" from="armor.player_fatigues" id="armor.lewis_default" {
     clear "FemaleModels"
     append "FemaleModels" asset="lewis/default/main"
     set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
-    append "OnlyEquipableBy" "wmgfl_lewis"
+    append "OnlyEquipableBy" "wmgfl_transmog"
+    append "Tags" "jy_no_sell"
 }

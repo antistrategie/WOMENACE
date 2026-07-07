@@ -19,7 +19,8 @@ clone "ArmorTemplate" from="armor.player_fatigues" id="armor.makiatto_default" {
     clear "FemaleModels"
     append "FemaleModels" asset="makiatto/default/main"
     set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
-    append "OnlyEquipableBy" "wmgfl_makiatto"
+    append "OnlyEquipableBy" "wmgfl_transmog"
+    append "Tags" "jy_no_sell"
 }
 
 clone "ArmorTemplate" from="armor.player_fatigues" id="armor.makiatto_ballroom" {
@@ -43,7 +44,7 @@ clone "ArmorTemplate" from="armor.player_fatigues" id="armor.makiatto_ballroom" 
     clear "FemaleModels"
     append "FemaleModels" asset="makiatto/ballroom/main"
     set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
-    append "OnlyEquipableBy" "wmgfl_makiatto"
+    append "OnlyEquipableBy" "wmgfl_transmog"
     append "Tags" "jy_no_sell"
 }
 
@@ -71,6 +72,6 @@ clone "ArmorTemplate" from="armor.player_fatigues" id="armor.makiatto_steamy_vac
     clear "FemaleModels"
     append "FemaleModels" asset="makiatto/steamy_vacance/main"
     set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
-    append "OnlyEquipableBy" "wmgfl_makiatto"
+    append "OnlyEquipableBy" "wmgfl_transmog"
     append "Tags" "jy_no_sell"
 }

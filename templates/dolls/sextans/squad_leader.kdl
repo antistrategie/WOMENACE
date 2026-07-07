@@ -37,7 +37,6 @@ clone "ElementAnimatorTemplate" from="animator.human" id="animator.sextans" {
 
 clone "EntityTemplate" from="player_squad.carda" id="player_squad.sextans" {
     append "Tags" "wmgfl_sextans"
-    append "Tags" "jy_armor_restricted"
     append "Tags" "jy_weapon_restricted"
     append "Tags" "jy_special_restricted"
 
@@ -63,7 +62,7 @@ clone "EntityTemplate" from="player_squad.carda" id="player_squad.sextans" {
     set "Badge" asset="sextans/badge_mini"
     set "BadgeWhite" asset="sextans/badge_mini"
     clear "Items"
-    append "Items" "armor.sextans_default"
+    append "Items" "armor.player_fatigues"
     append "Items" "weapon.sextans_sword"
 }
 
