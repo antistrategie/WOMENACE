@@ -76,6 +76,9 @@ clone "SkillTemplate" from="active.wetteroth_thats_a_knife" id="active.sextans_s
         set "EffectId" "effect.sextans_blood_kiss"
         set "GrantsCharge" #true
     }
+
+    append "Tags" "armor_piercing"
+    append "Tags" "anti_infantry"
 }
 
 clone "SkillTemplate" from="active.wetteroth_thats_a_knife" id="active.sextans_thrust" {
@@ -122,6 +125,10 @@ clone "SkillTemplate" from="active.wetteroth_thats_a_knife" id="active.sextans_t
         set "Suppression" 0.0
         set "DamageToArmorDurability" 40.0
     }
+
+    append "Tags" "area_of_effect"
+    append "Tags" "armor_piercing"
+    append "Tags" "anti_infantry"
 
     append "EventHandlers" type="WOMENACE:PierceLine" {
         set "Tiles" 5
@@ -221,6 +228,9 @@ clone "SkillTemplate" from="active.wetteroth_thats_a_knife" id="active.sextans_u
         set "UltRallyFraction" 0.1
         set "HealCap" 20
     }
+
+    append "Tags" "area_of_effect"
+    append "Tags" "unique"
 }
 
 // Hidden rider: the ultimate's lane damage, applied by SextansUltSystem to
