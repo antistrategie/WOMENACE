@@ -140,25 +140,40 @@ public sealed class AffinitySystem : JiangyuSystem
     // Returns null when the window is not one of ours (no tooltip shown).
     private Tooltip BuildAffinityTooltip(VisualElement window)
     {
-        var key = Affinity.KeyFor(window);
+        // Resolve the leader's speaker Tags once and derive everything from it, rather than
+        // re-fetching the speaker through KeyFor, CharacterTag and HasClass separately.
+        var speakerTags = Affinity.OurSpeakerTags(Affinity.LeaderOf(window));
+        var characterTag = Affinity.ParseCharacterTag(speakerTags);
+        var key = Affinity.KeyForTag(characterTag);
         if (key == 0)
             return null;
 
         var current = Affinity.LevelFor(Context, key);
-        var characterTag = Affinity.CharacterTag(Affinity.LeaderOf(window));
+        var showProficiency = Proficiency.ClassFromSpeakerTags(speakerTags) != Proficiency.WeaponClass.None;
 
-        var tooltip = new Tooltip("wm-affinity", 230)
+        var tooltip = new Tooltip("wm-affinity", 280)
             .Subheading(Locale.Text("WOMENACE::ui/affinity_unlocks", "AFFINITY UNLOCKS"))
             .Line();
 
         foreach (var row in Unlocks.RowsFor(characterTag))
         {
-            var text = $"{row.Level:00}    {(string.IsNullOrEmpty(row.Text) ? "·" : row.Text)}";
+            // For a proficiency doll, one compact row per level: the weapon-type accuracy bonus for
+            // that level, then any unlock. The bonus fills every row, so empty levels need no dot
+            // placeholder. No leading whitespace: the game's tooltip tokeniser index-faults on a
+            // paragraph that starts with a space.
+            var reward = string.IsNullOrEmpty(row.Text) ? string.Empty : "   " + row.Text;
+            var text = showProficiency
+                ? $"{row.Level:00}   +{Proficiency.AccuracyBonusForLevel(row.Level)} acc{reward}"
+                : $"{row.Level:00}    {(string.IsNullOrEmpty(row.Text) ? "·" : row.Text)}";
             // Every reached level (current and below) is highlighted, including ones that grant
             // nothing. Levels still to come read as locked.
             var style = row.Level <= current ? Tooltip.Style.Positive : Tooltip.Style.Disabled;
             tooltip.Paragraph(text, style);
         }
+        if (showProficiency)
+            tooltip.Line().Paragraph(
+                Locale.Text("WOMENACE::ui/affinity_wpn_acc_note", "+acc: accuracy while wielding her weapon type."),
+                Tooltip.Style.Hint);
         return tooltip;
     }
 

@@ -13,6 +13,19 @@ clone "TagTemplate" from="unique" id="wmgfl_gift"
 // transmog carriers (model, icons, name) for the transmog picker.
 clone "TagTemplate" from="unique" id="wmgfl_transmog"
 
+// Weapon-type proficiency. A doll's speaker carries one of these to name the weapon
+// class she is trained on. WeaponProficiencySystem reads the tag and grants an
+// affinity-scaled accuracy bonus while she wields a weapon of that class.
+clone "TagTemplate" from="unique" id="wmgfl_class_ar"
+
+clone "TagTemplate" from="unique" id="wmgfl_class_smg"
+
+clone "TagTemplate" from="unique" id="wmgfl_class_rifle"
+
+clone "TagTemplate" from="unique" id="wmgfl_class_mg"
+
+clone "TagTemplate" from="unique" id="wmgfl_class_blade"
+
 patch "StrategyConfig" "strategy_config" {
     append "InitialPickableUnitLeaders" "squad_leader.voymastina"
     append "InitialPickableUnitLeaders" "squad_leader.cheyanne"

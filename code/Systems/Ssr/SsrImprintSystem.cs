@@ -58,6 +58,20 @@ public sealed class SsrImprintSystem : JiangyuSystem
 
     private static Entry ByWeapon(string id) => id == null ? null : Registry.Find(e => e.WeaponId == id);
 
+    // Whether a weapon is one of the SSR imprint weapons. The single source of truth for "is this an
+    // SSR weapon", so other systems (e.g. WeaponProficiencySystem, which excludes SSR from its
+    // weapon-type bonus) never keep a second list that could drift from this registry. Capture-free
+    // (no lambda per call): it is reached per equipped weapon on the proficiency recompute path.
+    public static bool IsImprintWeapon(string weaponId)
+    {
+        if (weaponId == null)
+            return false;
+        foreach (var entry in Registry)
+            if (entry.WeaponId == weaponId)
+                return true;
+        return false;
+    }
+
     private static (Entry entry, SkillImprint skill) BySkill(string id)
     {
         if (id != null)

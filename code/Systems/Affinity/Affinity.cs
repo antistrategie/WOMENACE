@@ -111,16 +111,16 @@ public static class Affinity
     // the Unlocks registry can be keyed by character. Null if the leader is not one of ours.
     public static string CharacterTag(BaseUnitLeader leader) => ParseCharacterTag(OurSpeakerTags(leader));
 
-    // The character's own tag parsed from an in-combat entity. Combat entities do NOT carry the doll's
-    // EntityTemplate tag, but they keep their SpeakerTemplate (Tags "wmgfl_<name> ..."), so this is the
-    // reliable in-mission identity: the SSR imprint system reads it to tell whose weapon just fired.
-    public static string CharacterTag(Entity entity)
+    // The speaker's Tags string for an in-combat entity, or null if it is not one of ours. Combat
+    // entities do NOT carry the doll's EntityTemplate tag, but they keep their SpeakerTemplate (Tags
+    // "wmgfl_<name> ..."), so this is the reliable in-mission identity source.
+    public static string OurSpeakerTags(Entity entity)
     {
         try
         {
             var speaker = entity != null ? entity.GetSpeakerTemplate() : null;
             var tags = speaker.IsAlive() ? speaker.Tags : null;
-            return string.IsNullOrEmpty(tags) || !tags.Contains(Tag) ? null : ParseCharacterTag(tags);
+            return string.IsNullOrEmpty(tags) || !tags.Contains(Tag) ? null : tags;
         }
         catch (Exception ex)
         {
@@ -129,13 +129,21 @@ public static class Affinity
         }
     }
 
+    // The character's own tag parsed from an in-combat entity: the SSR imprint system reads it to
+    // tell whose weapon just fired.
+    public static string CharacterTag(Entity entity) => ParseCharacterTag(OurSpeakerTags(entity));
+
     // The "wmgfl_<name>" identity token out of a speaker Tags string, or null if none is present.
-    private static string ParseCharacterTag(string tags)
+    // The "wmgfl_class_<x>" proficiency marker is skipped so it can never be taken as the identity
+    // (which would move the character's affinity save key). Other tokens, including multi-segment
+    // character names, stay valid identities, so a doll's name is not constrained to one segment.
+    public static string ParseCharacterTag(string tags)
     {
         if (tags == null)
             return null;
         foreach (var token in tags.Split(' '))
-            if (token.StartsWith(Tag + "_", StringComparison.Ordinal))
+            if (token.StartsWith(Tag + "_", StringComparison.Ordinal)
+                && !token.StartsWith(Tag + "_class_", StringComparison.Ordinal))
                 return token;
         return null;
     }
