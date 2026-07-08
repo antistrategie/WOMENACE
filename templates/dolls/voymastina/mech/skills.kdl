@@ -72,6 +72,11 @@ clone "SkillTemplate" from="active.wetteroth_thats_a_knife" id="active.voymastin
         set "m_DefaultTranslation" "Pile Bunker"
     }
 
+    // The knife base is culled after combat and the per-mission grant does not
+    // reliably restore it, so a granted clone goes missing on later missions.
+    // This is permanent kit: keep it out of the cull.
+    set "IsRemovedAfterCombat" #false
+
     set "ActionPointCost" 90
 
     set "MuzzleType" enum="MuzzleType" "Muzzle3"

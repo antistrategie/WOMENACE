@@ -37,6 +37,11 @@ clone "WeaponTemplate" from="weapon.generic_carbine_tier1_spc" id="weapon.sextan
 }
 
 clone "SkillTemplate" from="active.wetteroth_thats_a_knife" id="active.sextans_slash" {
+    // The knife base is culled after combat and the per-mission grant does not
+    // reliably restore it, so a granted clone goes missing on later missions.
+    // These are permanent weapon skills: keep them out of the cull.
+    set "IsRemovedAfterCombat" #false
+
     set "Title" {
         set "m_DefaultTranslation" "Dreamscape Garrote"
     }
@@ -82,6 +87,8 @@ clone "SkillTemplate" from="active.wetteroth_thats_a_knife" id="active.sextans_s
 }
 
 clone "SkillTemplate" from="active.wetteroth_thats_a_knife" id="active.sextans_thrust" {
+    set "IsRemovedAfterCombat" #false
+
     set "Title" {
         set "m_DefaultTranslation" "Sanctuary Lauds"
     }
@@ -152,6 +159,8 @@ clone "SkillTemplate" from="active.wetteroth_thats_a_knife" id="active.sextans_t
 // each marked enemy restores her vitality, and every ally is consecrated
 // with the Holy Blood Mark.
 clone "SkillTemplate" from="active.wetteroth_thats_a_knife" id="active.sextans_ult" {
+    set "IsRemovedAfterCombat" #false
+
     set "Title" {
         set "m_DefaultTranslation" "Midnight Vesper"
     }
@@ -236,6 +245,8 @@ clone "SkillTemplate" from="active.wetteroth_thats_a_knife" id="active.sextans_u
 // Hidden rider: the ultimate's lane damage, applied by SextansUltSystem to
 // every hostile on the dash lane after the teleport. Never shown on the bar.
 clone "SkillTemplate" from="active.wetteroth_thats_a_knife" id="active.sextans_ult_strike" {
+    set "IsRemovedAfterCombat" #false
+
     set "Title" {
         set "m_DefaultTranslation" "Midnight Vesper"
     }
@@ -267,6 +278,8 @@ clone "SkillTemplate" from="active.wetteroth_thats_a_knife" id="active.sextans_u
 // Hidden rider: the bonus damage enemies marked with Blood Kiss take from the
 // ultimate. Applied tile by tile by SextansUltSystem, never shown on the bar.
 clone "SkillTemplate" from="active.wetteroth_thats_a_knife" id="active.sextans_ult_rend" {
+    set "IsRemovedAfterCombat" #false
+
     set "Title" {
         set "m_DefaultTranslation" "Midnight Vesper"
     }
