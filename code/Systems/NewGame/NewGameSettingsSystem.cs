@@ -17,6 +17,13 @@ namespace WOMENACE.Code;
 public sealed class NewGameSettingsSystem : JiangyuSystem
 {
     private const string SectionName = "wm-newgame-section";
+    private const string ScrollName = "wm-settings-scroll";
+
+    // Cap for the scrollable settings area. Turning on "Customize Difficulty" adds a long stack of
+    // rows that, with the WOMENACE section below them, runs the box off the bottom of the 720-tall
+    // UI panel. Capping the settings list keeps the header and START GAME button fixed, and the
+    // scrollbar only appears once the rows exceed this.
+    private const float ScrollMaxHeight = 600f;
 
     // A snapshot of the box choices, taken at CreateNewGame and written to the new campaign's state
     // one frame later. Snapshotting binds the commit to THIS new game: a later scene load (e.g.
@@ -77,6 +84,7 @@ public sealed class NewGameSettingsSystem : JiangyuSystem
             var window = (info.Args.Count > 0 ? info.Args[0] as Il2CppObjectBase : null)?.TryCast<NewGameWindow>();
             if (window == null)
                 return;
+            EnsureScrollable(window);
             _injection?.Refresh();
             Context.Coroutines.Start(RefreshNextFrame());
         }
@@ -86,8 +94,63 @@ public sealed class NewGameSettingsSystem : JiangyuSystem
     private IEnumerator RefreshNextFrame()
     {
         yield return null;
-        try { _injection?.Refresh(); }
+        try
+        {
+            var window = UI.Find(GameRoot(), UiSelector.TypeName("NewGameWindow"));
+            if (window != null)
+                EnsureScrollable(window);
+            _injection?.Refresh();
+        }
         catch (Exception ex) { Context.Log.Warn($"new game options: deferred refresh failed: {ex.Message}"); }
+    }
+
+    private static VisualElement GameRoot()
+    {
+        try { return UIManager.Get()?.GetActiveScreen()?.GetRootElement(); }
+        catch { return null; }
+    }
+
+    // Wrap the difficulty/settings list in a height-capped ScrollView so the box stays on screen
+    // when Customize Difficulty expands it. The header and START GAME button stay outside the scroll
+    // (they are siblings of SettingsContainer), so only the settings list scrolls. The game keeps
+    // its reference to SettingsContainer, so re-parenting it does not disturb how difficulty rows
+    // are added.
+    private void EnsureScrollable(VisualElement window)
+    {
+        try
+        {
+            var settings = UI.Find(window, UiSelector.Name("SettingsContainer"));
+            var parent = settings?.parent;
+            if (settings == null || parent == null)
+                return;
+
+            // Skip if the settings list is already inside a ScrollView: our own wrapper on a repeat
+            // call (so this is idempotent), or a native one should the game add scrolling here in a
+            // future update, in which case ours would be redundant and would fight theirs.
+            if (IsInsideScrollView(settings))
+                return;
+
+            var index = parent.IndexOf(settings);
+            var scroll = new ScrollView(ScrollViewMode.Vertical) { name = ScrollName };
+            scroll.verticalScrollerVisibility = ScrollerVisibility.Auto;
+            scroll.horizontalScrollerVisibility = ScrollerVisibility.Hidden;
+            scroll.style.maxHeight = new StyleLength(ScrollMaxHeight);
+            scroll.style.flexShrink = 0f;
+
+            parent.Insert(index, scroll);
+            settings.RemoveFromHierarchy();
+            scroll.Add(settings);
+        }
+        catch (Exception ex) { Context.Log.Warn($"new game options: scroll wrap failed: {ex.Message}"); }
+    }
+
+    // Whether any ancestor of the element is a ScrollView (ours from a prior wrap, or a native one).
+    private static bool IsInsideScrollView(VisualElement element)
+    {
+        for (var e = element.parent; e != null; e = e.parent)
+            if (e.TryCast<ScrollView>() != null)
+                return true;
+        return false;
     }
 
     // The WOMENACE section: a thin separator off the difficulty rows above, a heading, then one

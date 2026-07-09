@@ -9,14 +9,19 @@ namespace WOMENACE.Code;
 public static class NewGameSettings
 {
     // The choices being edited in the new-game box, before a campaign (and its state) exists. Not
-    // persisted: it seeds the per-campaign NewGameOptions at creation. Defaults to all-off (vanilla
-    // behaviour) and remembers the last choice across box openings within a session.
-    public static NewGameOptions Pending { get; } = new();
+    // persisted: it seeds the per-campaign NewGameOptions at creation, and remembers the last choice
+    // across box openings within a session. Box defaults are set here (they are the state a fresh
+    // new game commits when the box is left untouched); the NewGameOptions class defaults stay off so
+    // a pre-existing save with no sidecar is never changed by a default flipping on.
+    public static NewGameOptions Pending { get; } = new() { LimitDollSquadSize = true };
 
-    // The committed, per-campaign value, read by mid-campaign effects (survives save/load via the
+    // The committed, per-campaign values, read by mid-campaign effects (survive save/load via the
     // per-save-slot Context.State).
     public static bool DisableVanillaLeaders(ModContext context)
         => context.State.Get<NewGameOptions>().DisableVanillaLeaders;
+
+    public static bool LimitDollSquadSize(ModContext context)
+        => context.State.Get<NewGameOptions>().LimitDollSquadSize;
 
     // One toggle in the WOMENACE section: its label and how it reads and writes an option.
     public sealed class Setting
@@ -37,6 +42,13 @@ public static class NewGameSettings
             Get = o => o.DisableVanillaLeaders,
             Set = (o, v) => o.DisableVanillaLeaders = v,
         },
+        new Setting
+        {
+            LabelKey = "WOMENACE::ui/newgame/limit_doll_squad_size",
+            LabelFallback = "Limit max number of dummy links to 5",
+            Get = o => o.LimitDollSquadSize,
+            Set = (o, v) => o.LimitDollSquadSize = v,
+        },
     };
 }
 
@@ -48,5 +60,13 @@ public sealed class NewGameOptions
     // and pilots are removed from the new-game initial pick and from the dossier hiring pools.
     public bool DisableVanillaLeaders { get; set; }
 
-    public void CopyFrom(NewGameOptions other) => DisableVanillaLeaders = other.DisableVanillaLeaders;
+    // When true, a WOMENACE leader's squad is capped at five bodies (the doll plus at most four
+    // squaddie copies).
+    public bool LimitDollSquadSize { get; set; }
+
+    public void CopyFrom(NewGameOptions other)
+    {
+        DisableVanillaLeaders = other.DisableVanillaLeaders;
+        LimitDollSquadSize = other.LimitDollSquadSize;
+    }
 }

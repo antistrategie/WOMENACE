@@ -29,18 +29,72 @@ namespace WOMENACE.Code;
 // Proficiency" line, green when the weapon matches her class and greyed when it does not.
 public sealed class WeaponProficiencySystem : JiangyuSystem
 {
-    // MENACE has no weapon-class field, so classify a weapon by its template id's naming convention
-    // (weapon.generic_<class>_tier..., specialweapon.<class>_...). Ordered most-specific first: a
-    // battle-rifle carbine/marksman variant is a rifle, a bare carbine an assault rifle. Our own
-    // weapons match via OnlyEquipableBy, so this only sees weapons a doll picked up from the armoury.
-    private static WeaponClass Classify(string id)
+    // MENACE has no weapon-class field. A weapon's ShortName IS its category label ("Battle Rifle",
+    // "SMG", "Light Machinegun", ...) shown as the tooltip subtitle, so classify by that first: it is
+    // the reliable signal even when the id gives none (weapon.pirate_outcast_pipe_gun is a Battle
+    // Rifle but its id says nothing). About twenty enemy/cut weapons carry no ShortName, so the id's
+    // naming convention (weapon.generic_<class>_tier..., specialweapon.<class>_...) is the fallback.
+    // Our own weapons match via OnlyEquipableBy, so this only sees weapons a doll picked up elsewhere.
+    private static WeaponClass Classify(WeaponTemplate weapon)
+    {
+        if (weapon == null)
+            return WeaponClass.None;
+        var byShortName = ClassifyByShortName(weapon);
+        return byShortName != WeaponClass.None ? byShortName : ClassifyById(weapon.GetID());
+    }
+
+    // The ShortName category as it reads in the armoury/tooltip subtitle, mapped to a proficiency
+    // class. Anything not here (Laser Rifle, Plasma, launchers, mortars, ...) is left unclassified.
+    private static readonly Dictionary<string, WeaponClass> ShortNameClasses = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Assault Rifle"] = WeaponClass.AssaultRifle,
+        ["Heavy Assault Rifle"] = WeaponClass.AssaultRifle,
+        ["Enhanced AR"] = WeaponClass.AssaultRifle,
+        ["Carbine"] = WeaponClass.AssaultRifle,
+        ["Automatic Rifle"] = WeaponClass.AssaultRifle,
+        ["SMG"] = WeaponClass.Smg,
+        ["Heavy SMG"] = WeaponClass.Smg,
+        ["PDW"] = WeaponClass.Smg,
+        ["Battle Rifle"] = WeaponClass.Rifle,
+        ["Sniper Rifle"] = WeaponClass.Rifle,
+        ["Sniper"] = WeaponClass.Rifle,
+        ["DMR"] = WeaponClass.Rifle,
+        ["AT Rifle"] = WeaponClass.Rifle,
+        ["Light Machinegun"] = WeaponClass.MachineGun,
+        ["Medium MG"] = WeaponClass.MachineGun,
+        ["MMG"] = WeaponClass.MachineGun,
+        ["HMG"] = WeaponClass.MachineGun,
+        ["Minigun"] = WeaponClass.MachineGun,
+        ["Shotgun"] = WeaponClass.Shotgun,
+        ["Sweeper"] = WeaponClass.Shotgun,
+    };
+
+    private static WeaponClass ClassifyByShortName(WeaponTemplate weapon)
+    {
+        try
+        {
+            var line = weapon.ShortName;
+            var text = line != null ? line.GetTranslated(null) : null;
+            return !string.IsNullOrEmpty(text) && ShortNameClasses.TryGetValue(text.Trim(), out var wc)
+                ? wc
+                : WeaponClass.None;
+        }
+        catch { return WeaponClass.None; }
+    }
+
+    // Fallback for weapons with no ShortName (enemy constructs, cut tier3 guns). Ordered so a
+    // battle-rifle marksman variant is a rifle before the carbine (assault-rifle) rule, and the
+    // sniper/marksman family classifies as rifle. A bare "rifle" is deliberately not matched, so an
+    // energy "laser_rifle"/"plasma_rifle" stays unclassified.
+    private static WeaponClass ClassifyById(string id)
     {
         if (string.IsNullOrEmpty(id))
             return WeaponClass.None;
         if (id.Contains("sword") || id.Contains("blade") || id.Contains("melee")) return WeaponClass.Blade;
         if (id.Contains("battle_rifle")) return WeaponClass.Rifle;
+        if (id.Contains("sniper") || id.Contains("marksman") || id.Contains("dmr") || id.Contains("anti_materiel")) return WeaponClass.Rifle;
         if (id.Contains("assault_rifle") || id.Contains("carbine")) return WeaponClass.AssaultRifle;
-        if (id.Contains("shotgun")) return WeaponClass.Shotgun;
+        if (id.Contains("shotgun") || id.Contains("sweeper")) return WeaponClass.Shotgun;
         if (id.Contains("smg") || id.Contains("pdw")) return WeaponClass.Smg;
         if (id.Contains("machinegun") || id.Contains("chaingun") || id.Contains("minigun") || id.Contains("repeater")) return WeaponClass.MachineGun;
         return WeaponClass.None;
@@ -234,7 +288,7 @@ public sealed class WeaponProficiencySystem : JiangyuSystem
             return false;
         if (LockedTo(weapon, dollTag))
             return true;
-        return Classify(id) == dollClass;
+        return Classify(weapon) == dollClass;
     }
 
     private static bool LockedTo(WeaponTemplate weapon, string dollTag)
