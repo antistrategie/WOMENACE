@@ -26,6 +26,10 @@ clone "WeaponTemplate" from="weapon.generic_carbine_tier1_spc" id="weapon.sextan
     }
 
     append "OnlyEquipableBy" "wmgfl_sextans"
+    // Hers alone: the loader's inventory filter drops an item self-tagged with the slot restriction
+    // tag from every non-restricted leader's dropdown, and keeps it for a restricted unit (Sextans is
+    // jy_weapon_restricted). Same mechanism the mech chassis uses via jy_vehicle_restricted.
+    append "Tags" "jy_weapon_restricted"
     set "BlackMarketMaxQuantity" 0
 
     clear "SkillsGranted"
