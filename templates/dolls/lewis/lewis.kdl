@@ -24,7 +24,7 @@ clone "WeaponTemplate" from="specialweapon.light_machinegun_tier1_m10E" id="weap
     set "IconSkillBar" asset="weapon/lewis/IconSkillBar"
     set "IconSkillBarDisabled" asset="weapon/lewis/IconSkillBarDisabled"
 
-    set "Damage" 12.0
+    set "Damage" 13.0
     set "ArmorPenetration" 28.0
     set "Suppression" 9.0
     set "DeployCosts" {
@@ -52,6 +52,7 @@ clone "SkillTemplate" from="active.light_mg_suppressive_fire" id="active.fire_le
 }
 
 clone "SkillTemplate" from="active.fire_assault_rifle_sustained_fire_tier1_762" id="active.fire_lewis_direct" {
+    set "ActionPointCost" 52
     clear "SoundsOnAttack"
     append "SoundsOnAttack" {
         set "bankId" "wmgfl_weapons_mg_addition_bank"

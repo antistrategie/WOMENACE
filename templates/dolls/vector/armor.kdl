@@ -1,0 +1,52 @@
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.vector_default" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
+    set "Title" {
+        set "m_DefaultTranslation" "Concealment Gear"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Field Outfit"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Vector's usual outfit. The discreet color scheme allows her to easily hide traces of her activity, allowing Vector to perpetually gain an advantage by always staying ahead in combat."
+    }
+    set "Icon" asset="vector/armor/default/Icon"
+    set "IconEquipment" asset="vector/armor/default/IconEquipment"
+    set "IconSkillBar" asset="vector/armor/default/IconSkillBar"
+    clear "MaleModels"
+    append "MaleModels" asset="vector/default/main"
+    clear "FemaleModels"
+    append "FemaleModels" asset="vector/default/main"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_transmog"
+    append "Tags" "jy_no_sell"
+}
+
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.vector_vivi" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
+    set "Title" {
+        set "m_DefaultTranslation" "Vivi Sometimes Hides Her Molotovs"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "School Uniform"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            "I know I still have much room for improvement, Commander. If you have any suggestions, please feel free to tell me."
+            Her eyes are sincere as she meets your gaze, yet there's a hint of worry in them.
+            """
+    }
+    set "Icon" asset="vector/armor/vivi/Icon"
+    set "IconEquipment" asset="vector/armor/vivi/IconEquipment"
+    set "IconSkillBar" asset="vector/armor/vivi/IconSkillBar"
+    clear "MaleModels"
+    append "MaleModels" asset="vector/vivi/main"
+    clear "FemaleModels"
+    append "FemaleModels" asset="vector/vivi/main"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_transmog"
+    append "Tags" "jy_no_sell"
+}

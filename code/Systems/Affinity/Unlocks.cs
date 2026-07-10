@@ -62,6 +62,10 @@ public static class Unlocks
         {
             new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.sextans_nocte" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_sextans/lv2", "Outfit(s): Nocte Bewitchment") },
         },
+        ["wmgfl_vector"] = new[]
+        {
+            new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.vector_vivi" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_vector/lv2", "Outfit(s): Vivi Sometimes Hides Her Molotovs") },
+        },
     };
 
     public static IReadOnlyList<Entry> EntriesFor(string characterTag)

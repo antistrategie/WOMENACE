@@ -1,0 +1,218 @@
+clone "TagTemplate" from="unique" id="wmgfl_vector"
+
+clone "SpeakerTemplate" from="sy" id="wmgfl_vector_speaker" {
+    set "Tags" "wmgfl_vector pirate_sl female infantry waybacker wmgfl_class_smg"
+    set "Nickname" {
+        set "m_DefaultTranslation" "Vector"
+    }
+    set "Forename" {
+        set "m_DefaultTranslation" "Vector"
+    }
+    set "Surname" {
+        set "m_DefaultTranslation" ""
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            Name: Vector (KRISS Vector)
+
+            Proficiency: CQC & Demolition
+
+            Birth: Unknown
+
+            Age: Classified
+
+            Affiliation(s): H.I.D.E. 404
+            """
+    }
+
+    set "BarkImage" asset="vector/bark"
+    set "StandLookLeftImage" asset="vector/stand_look_left"
+    set "StandLookRightImage" asset="vector/stand_look_right"
+    set "StandLookRightInactiveImage" asset="vector/stand_look_right_inactive"
+}
+
+clone "EntityTemplate" from="player_squad.sy" id="player_squad.vector" {
+    append "Tags" "wmgfl_vector"
+    set "Title" {
+        set "m_DefaultTranslation" "H.I.D.E. 404 Team B"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "A regularly pessimistic Doll. However, as the leader of H.I.D.E 404's Team B, Vector will absolutely push through and endure till the very last moment with her teammates in the face of adversity, no matter how depressing the outcomes of her calculations."
+    }
+
+    set "Badge" asset="vector/badge_mini"
+    set "BadgeWhite" asset="vector/badge_mini"
+    clear "Items"
+    append "Items" "armor.player_fatigues"
+    append "Items" "weapon.vector_kriss"
+}
+
+clone "UnitLeaderTemplate" from="squad_leader.sy" id="squad_leader.vector" {
+    set "InfantryUnitTemplate" "player_squad.vector"
+    set "SpeakerTemplate" "wmgfl_vector_speaker"
+    set "CustomHead" #null
+    set "UnitTitle" {
+        set "m_DefaultTranslation" "Tactical Doll"
+    }
+    set "UnitDescription" {
+        set "m_DefaultTranslation" "A regularly pessimistic Doll. However, as the leader of H.I.D.E 404's Team B, Vector will absolutely push through and endure till the very last moment with her teammates in the face of adversity, no matter how depressing the outcomes of her calculations."
+    }
+
+    set "InitialAttributes" index=0 100
+    set "InitialAttributes" index=1 75
+    set "InitialAttributes" index=2 70
+    set "InitialAttributes" index=3 100
+    set "InitialAttributes" index=4 100
+    set "InitialAttributes" index=5 20
+    set "InitialAttributes" index=6 100
+
+    set "QualityLevel" 3
+    set "GrowthPotential" 5
+    set "FixedSupplyCost" 60
+    set "SquaddieTax" 35
+    set "Rarity" 5
+
+    set "InitialPerk" "perk.unique_carda_out_of_the_craters"
+    set "PerkTrees" index=0 "perk_tree.vector"
+
+    set "Slot" asset="vector/slot"
+    set "SlotInactive" asset="vector/slot_inactive"
+    set "SlotBadge" asset="vector/slot_badge"
+
+    set "BadgeDragged" asset="vector/badge_dragged"
+    set "BigBadge" asset="vector/big_badge"
+    set "BadgeUnitWindow" asset="vector/badge_unit_window"
+    set "BadgeMini" asset="vector/badge_mini"
+
+    set "HiringSelectBarkSound" {
+        set "bankId" "wmgfl_tactical_barks_vector_va"
+        set "itemId" "Series_Chosen_Series_Tone_Positive_003"
+    }
+    set "HiredBarkSound" {
+        set "bankId" "wmgfl_tactical_barks_vector_va"
+        set "itemId" "Series_Chosen_Auto_Series_Tone_Positive_005"
+    }
+
+    set "PromotionBarkSounds" index=0 {
+        set "PerkTier" 1
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_vector_va"
+            set "itemId" "Series_Up_001"
+        }
+    }
+    set "PromotionBarkSounds" index=1 {
+        set "PerkTier" 2
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_vector_va"
+            set "itemId" "Series_Up_002"
+        }
+    }
+    set "PromotionBarkSounds" index=2 {
+        set "PerkTier" 3
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_vector_va"
+            set "itemId" "Series_Up_003"
+        }
+    }
+    set "PromotionBarkSounds" index=3 {
+        set "PerkTier" 4
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_vector_va"
+            set "itemId" "Series_Up_006"
+        }
+    }
+
+    clear "EmotionalStateResponses"
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Eager"
+        set "Text" {
+            set "m_DefaultTranslation" "Alright, let's get started."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_vector_va"
+            set "itemId" "Series_Tone_Positive_001"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Determined"
+        set "Text" {
+            set "m_DefaultTranslation" "I can be a useful weapon for you, but don't expect anything else."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_vector_va"
+            set "itemId" "Series_Daily_004"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Overconfident"
+        set "Text" {
+            set "m_DefaultTranslation" "Is that all?"
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_vector_va"
+            set "itemId" "Series_Tone_Positive_010"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Euphoric"
+        set "Text" {
+            set "m_DefaultTranslation" "I-I didn't think I'd see you again. Maybe I'm a little happy."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_vector_va"
+            set "itemId" "Single_Obtain_SSR_001"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Hesitant"
+        set "Text" {
+            set "m_DefaultTranslation" "This world is full of unfairness and contradictions. Sometimes I don't know what to do."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_vector_va"
+            set "itemId" "Single_Friendliness_008"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Frustrated"
+        set "Text" {
+            set "m_DefaultTranslation" "Quit worrying about what I think and do your job."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_vector_va"
+            set "itemId" "Series_Daily_001"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Disheartened"
+        set "Text" {
+            set "m_DefaultTranslation" "Just as we expected."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_vector_va"
+            set "itemId" "Series_Lose_Single_Lose_001"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Miserable"
+        set "Text" {
+            set "m_DefaultTranslation" "What's the point?"
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_vector_va"
+            set "itemId" "Series_Up_005"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "GoodwillTowards"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "AnimosityTowards"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+}

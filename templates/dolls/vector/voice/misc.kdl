@@ -1,0 +1,74 @@
+clone "ConversationTemplate" from="JeanSy/morale_recovery" id="Vector/morale_recovery" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=1 type="HasOneTag" {
+            set "Tags" "wmgfl_vector"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_vector_va"
+                        set "itemId" "Series_Up_002"
+                    }
+                    set "RoleGuid" "Recovered"
+                    set "Text" "Me? You sure?"
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/morale_wavering" id="Vector/morale_wavering" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=1 type="HasOneTag" {
+            set "Tags" "wmgfl_vector"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_vector_va"
+                        set "itemId" "Series_Lose_Single_Lose_001"
+                    }
+                    set "RoleGuid" "Wavering"
+                    set "Text" "Just as we expected."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/squaddie_death_bleed" id="Vector/squaddie_death_bleed" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=1 type="HasOneTag" {
+            set "Tags" "wmgfl_vector"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_vector_va"
+                        set "itemId" "Series_Tone_Positive_007"
+                    }
+                    set "RoleGuid" "Victim"
+                    set "Text" "It's pointless."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}

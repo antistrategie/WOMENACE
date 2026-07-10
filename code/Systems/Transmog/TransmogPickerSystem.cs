@@ -80,10 +80,16 @@ public sealed class TransmogPickerSystem : JiangyuSystem
     // Start hidden and wire the outside-click dismiss. The injection binds once, and the panel
     // may not be attached yet at bind time, so the actual hookup is EnsureDismissHooked, which
     // EnsureUi retries on later passes once the modal is on a panel.
+    //
+    // Also build the tile here: on the first squad-menu open the window's SetLeader can run
+    // before this injection lands, so that OnWindowChanged pass bails at modal == null and no
+    // tile appears until a later SetLeader (e.g. selecting another doll). Running EnsureUi once
+    // the modal is in the tree heals that first-open case; the leader is already set by then.
     private void WireModal(VisualElement root, VisualElement window)
     {
         root.SetVisible(false);
         EnsureDismissHooked(root, window);
+        EnsureUi(window);
     }
 
     // Hook the modal's outside-click dismiss once it is on a panel, guarded so it runs a single

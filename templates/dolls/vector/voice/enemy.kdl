@@ -1,0 +1,149 @@
+clone "ConversationTemplate" from="JeanSy/building_destroyed" id="Vector/building_destroyed" {
+    set "Active" #true
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_vector"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_vector_va"
+                        set "itemId" "Series_Ultimate_Single_Ultimate_SSR_001"
+                    }
+                    set "RoleGuid" "Killer"
+                    set "Text" "Shatter!"
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/building_destroyed_neighborhood" id="Vector/building_destroyed_neighborhood" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_vector"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_vector_va"
+                        set "itemId" "Series_Ultimate_Single_Ultimate_SSR_001"
+                    }
+                    set "RoleGuid" "Entity"
+                    set "Text" "Shatter!"
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/enemy_damaged" id="Vector/enemy_damaged" {
+    set "Active" #true
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_vector"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_vector_va"
+                        set "itemId" "Series_Hit_Single_Hit_001"
+                    }
+                    set "RoleGuid" "Attacker"
+                    set "Text" "The tide of battle has turned."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/enemy_fleeing" id="Vector/enemy_fleeing" {
+    set "Active" #true
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_vector"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_vector_va"
+                        set "itemId" "Series_Skill02_Single_Skill_002"
+                    }
+                    set "RoleGuid" "JeanSy"
+                    set "Text" "Think you can run?"
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/enemy_killed" id="Vector/enemy_killed" {
+    set "Active" #true
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_vector"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_vector_va"
+                        set "itemId" "Series_Kill_Single_Kill_001"
+                    }
+                    set "RoleGuid" "Killer"
+                    set "Text" "It’s over."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/enemy_suppressed" id="Vector/enemy_suppressed" {
+    set "Active" #true
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=3 type="HasOneTag" {
+            set "Tags" "wmgfl_vector"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_vector_va"
+                        set "itemId" "Series_Hit_Single_Hit_001"
+                    }
+                    set "RoleGuid" "JeanSy"
+                    set "Text" "The tide of battle has turned."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}

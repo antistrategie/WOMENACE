@@ -1,0 +1,49 @@
+clone "ConversationTemplate" from="JeanSy/moving_finished" id="Vector/moving_finished" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=1 type="HasOneTag" {
+            set "Tags" "wmgfl_vector"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_vector_va"
+                        set "itemId" "Series_Tone_Positive_001"
+                    }
+                    set "RoleGuid" "Entity"
+                    set "Text" "Alright, let’s get started."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/taking_fire" id="Vector/taking_fire" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=1 type="HasOneTag" {
+            set "Tags" "wmgfl_vector"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_vector_va"
+                        set "itemId" "Series_Hitted_Series_HittedLast_Series_Shield_Broken"
+                    }
+                    set "RoleGuid" "Damaged"
+                    set "Text" "(Tch)"
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
