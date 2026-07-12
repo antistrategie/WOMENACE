@@ -2,7 +2,6 @@ using Il2CppInterop.Runtime.InteropTypes;
 using Il2CppMenace.Items;
 using Il2CppMenace.Tactical;
 using Il2CppMenace.Tactical.Skills;
-using Il2CppMenace.Tactical.Skills.Effects;
 using Il2CppMenace.UI;
 using Jiangyu.Sdk;
 using UnityEngine.UIElements;
@@ -22,9 +21,10 @@ public sealed class SsrImprintSystem : JiangyuSystem
     public sealed class SkillImprint
     {
         public string SkillId;
-        public int OwnerRepetitions;    // owner's Repetitions for this skill (0 = never change it). The
-                                        // base comes from the skill template's authored Repetitions (KDL).
-        public Action<Entity> OnHit;    // per-skill on-hit effect (e.g. extend the stun)
+        public int OwnerRepetitions;      // owner's Repetitions for this skill (0 = never change it). The
+                                          // base comes from the skill template's authored Repetitions (KDL).
+        public float OwnerElementalMult;  // owner's multiplier on the skill's elemental build-up per hit
+                                          // (0 = no boost). Read by ElementalDamageHandler at hit time.
     }
 
     public sealed class Entry
@@ -47,12 +47,38 @@ public sealed class SsrImprintSystem : JiangyuSystem
             WeaponId = "specialweapon.makiatto_ssr",
             OwnerTag = "wmgfl_makiatto",
             OwnerName = "Makiatto",
-            BonusText = "Fires twice, hits harder, and adds +1 turn of freeze.",
+            BonusText = "Fires twice, hits harder, and builds Freeze faster.",
             OwnerDamage = 30,
             Skills = new[]
             {
-                new SkillImprint { SkillId = "active.makiatto_ssr_freeze", OwnerRepetitions = 2, OnHit = t => SetStunAtLeast(t, 2) },
+                new SkillImprint { SkillId = "active.makiatto_ssr_freeze", OwnerRepetitions = 2, OwnerElementalMult = 1.5f },
             },
+        },
+        new Entry
+        {
+            WeaponId = "specialweapon.soppo_ssr",
+            OwnerTag = "wmgfl_soppo",
+            OwnerName = "Soppo",
+            BonusText = "Hits harder, builds Freeze and Burn faster, and unlocks her stances.",
+            OwnerDamage = 15,
+            Skills = new[]
+            {
+                new SkillImprint { SkillId = "active.soppo_ssr_pursuit", OwnerElementalMult = 1.25f },
+                new SkillImprint { SkillId = "active.soppo_ssr_bite", OwnerElementalMult = 1.25f },
+            },
+        },
+        new Entry
+        {
+            // Sextans' SSR sword. Unlike Makiatto/Soppo it is OnlyEquipableBy its owner, so there is no
+            // owner-vs-other split to gate. The extra damage lives on the skills' Attack handler and the
+            // Shock build-up on their ElementalDamage handler, both always on (see sword.kdl). This entry
+            // carries no owner bonus: OwnerDamage would be a no-op because the weapon's own Damage is 0
+            // (the Attack handler carries the damage). It exists only for the "Sextans Imprint Boost"
+            // tooltip and IsImprintWeapon (SSR-weapon status, keeps it out of the proficiency bonus).
+            WeaponId = "weapon.sextans_ssr",
+            OwnerTag = "wmgfl_sextans",
+            OwnerName = "Sextans",
+            BonusText = "Builds Shock on every hit.",
         },
     };
 
@@ -100,9 +126,6 @@ public sealed class SsrImprintSystem : JiangyuSystem
 
     public override void OnInit()
     {
-        // Owner-only on-hit (e.g. +1 freeze): after an SSR skill's proc applies its status, extend it.
-        Context.Patches.Postfix("Il2CppMenace.Tactical.Skills.Effects.AttackProcHandler", "OnTargetHit", OnAttackProc);
-
         // Owner damage boost: applied per shot to the DamageInfo the game just built from the weapon, so
         // the shared WeaponTemplate.Damage is NEVER mutated and can't leak a stale buffed value to other
         // readers (non-owner loadout panel / damage preview). Also covers the owner's own damage preview,
@@ -176,26 +199,14 @@ public sealed class SsrImprintSystem : JiangyuSystem
         catch (Exception ex) { Context.Log.Warn($"ssr: damage boost failed: {ex.Message}"); }
     }
 
-    private void OnAttackProc(PatchInfo info)
+    // The owner's multiplier on a skill's elemental build-up, 1 for everyone else and for skills with
+    // no imprint. ElementalDamageHandler calls this per hit.
+    public static float ElementalMultiplier(BaseSkill skill)
     {
-        try
-        {
-            var proc = (info.Instance as Il2CppSystem.Object)?.TryCast<AttackProcHandler>();
-            var parent = proc?.ParentSkill;
-            var (entry, imp) = BySkill(parent?.GetID());
-            if (imp?.OnHit == null)
-                return;
-
-            if (!SkillOwnedBy(parent, entry.OwnerTag))
-                return;
-
-            var target = info.Args != null && info.Args.Count > 1
-                ? (info.Args[1] as Il2CppSystem.Object)?.TryCast<Entity>()
-                : null;
-            if (target != null)
-                imp.OnHit(target);
-        }
-        catch (Exception ex) { Context.Log.Warn($"ssr: on-hit failed: {ex.Message}"); }
+        var (entry, imp) = BySkill(skill?.GetID());
+        if (entry == null || imp == null || imp.OwnerElementalMult <= 0f)
+            return 1f;
+        return SkillOwnedBy(skill, entry.OwnerTag) ? imp.OwnerElementalMult : 1f;
     }
 
     // Set the hovered SSR weapon's Damage + its skills' Repetitions to the VIEWER's values before the
@@ -345,18 +356,6 @@ public sealed class SsrImprintSystem : JiangyuSystem
         if (wielder != null)
             return Affinity.CharacterTag(wielder) == entry.OwnerTag;
         return _currentLeaderTag != null && _currentLeaderTag == entry.OwnerTag;
-    }
-
-    // Ensure the target's active stun lasts at least `turns` (Makiatto's freeze imprint: base 1 + 1).
-    // This runs in the per-hit OnTargetHit proc, which fires once per shot - so the owner's 2 shots would
-    // call it twice on one target. A clamp (not an increment) makes it idempotent: repeated hits leave
-    // the freeze at `turns`, never stacking to `turns * shots`, and it never shortens a longer freeze.
-    private static void SetStunAtLeast(Entity target, int turns)
-    {
-        var stun = target.GetSkills()?.GetSkillByID("effect.stunned")?.TryCast<Skill>();
-        if (stun != null && stun.GetEventHandlerOfType<LifetimeLimitHandler>(out var lifetime)
-            && lifetime != null && lifetime.m_TurnsLeft < turns)
-            lifetime.m_TurnsLeft = turns;
     }
 
     // Resolve + memoise via the shared Templates.Resolve, then capture the authored base ONCE on the

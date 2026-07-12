@@ -61,10 +61,16 @@ public static class Unlocks
         ["wmgfl_sextans"] = new[]
         {
             new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.sextans_nocte" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_sextans/lv2", "Outfit(s): Nocte Bewitchment") },
+            new Entry { Level = 3, Feature = Feature.Weapon, Weapons = new[] { "weapon.sextans_ssr" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_sextans/lv3", "SSR Weapon: Twilight Rose") },
         },
         ["wmgfl_vector"] = new[]
         {
             new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.vector_vivi" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_vector/lv2", "Outfit(s): Vivi Sometimes Hides Her Molotovs") },
+        },
+        ["wmgfl_soppo"] = new[]
+        {
+            new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.soppo_redline" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_soppo/lv2", "Outfit(s): Redline Racer") },
+            new Entry { Level = 3, Feature = Feature.Weapon, Weapons = new[] { "specialweapon.soppo_ssr" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_soppo/lv3", "SSR Weapon: Skysunderer's Howl") },
         },
     };
 

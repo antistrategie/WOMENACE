@@ -1,0 +1,113 @@
+// The mod's keyword tooltips, all in one place: Jiangyu permits a single
+// patch block per template target across the mod, so every <link="id">
+// registered with the game's TextTooltipsConfig lives here. A skill
+// description writes <link="wmgfl_burn">Burn</link> and hovering the word
+// opens the matching entry as a nested tooltip.
+patch "TextTooltipsConfig" "text_tooltips_config" {
+    // The elements. Elemental damage is exclusive to SSR weapons: hits build
+    // the element on the victim and at 100 the effect (templates/elements/)
+    // procs.
+    append "Tooltips" {
+        set "LinkId" "wmgfl_burn"
+        set "TooltipHeading" {
+            set "m_DefaultTranslation" "Burn"
+        }
+        set "TooltipText" {
+            set "m_DefaultTranslation" "Burn damage builds up on the target. At 100 they are set alight, losing 10% max Hitpoints per turn for 3 turns. Build-up is ignored while the fire lasts."
+        }
+    }
+    append "Tooltips" {
+        set "LinkId" "wmgfl_shock"
+        set "TooltipHeading" {
+            set "m_DefaultTranslation" "Electric"
+        }
+        set "TooltipText" {
+            set "m_DefaultTranslation" "Electric damage builds up on the target. At 100 they are Electrified, reducing Accuracy by 15% for 5 turns. Build-up is ignored while the charge lasts."
+        }
+    }
+    append "Tooltips" {
+        set "LinkId" "wmgfl_freeze"
+        set "TooltipHeading" {
+            set "m_DefaultTranslation" "Freeze"
+        }
+        set "TooltipText" {
+            set "m_DefaultTranslation" "Freeze damage builds up on the target. At 100 they are Frozen, reducing Action Points by 25% for 5 turns. Build-up is ignored while the frost lasts."
+        }
+    }
+    append "Tooltips" {
+        set "LinkId" "wmgfl_corrosion"
+        set "TooltipHeading" {
+            set "m_DefaultTranslation" "Corrosion"
+        }
+        set "TooltipText" {
+            set "m_DefaultTranslation" "Corrosion damage builds up on the target. At 100 they are Corroded, losing 20% of current Armour per turn for 3 turns. Build-up is ignored while the acid lasts."
+        }
+    }
+    append "Tooltips" {
+        set "LinkId" "wmgfl_hydro"
+        set "TooltipHeading" {
+            set "m_DefaultTranslation" "Hydro"
+        }
+        set "TooltipText" {
+            set "m_DefaultTranslation" "Hydro damage builds up on the target. At 100 they are Drenched and their cover counts one tier worse for 3 turns. Build-up is ignored while they stay soaked."
+        }
+    }
+
+    // Soppo's stances (applied by her SSR fire skills, mutually exclusive).
+    append "Tooltips" {
+        set "LinkId" "soppo_hunter_form"
+        set "TooltipHeading" {
+            set "m_DefaultTranslation" "Hunter Form"
+        }
+        set "TooltipText" {
+            set "m_DefaultTranslation" "Accuracy increased by 15%."
+        }
+    }
+    append "Tooltips" {
+        set "LinkId" "soppo_feral_form"
+        set "TooltipHeading" {
+            set "m_DefaultTranslation" "Feral Form"
+        }
+        set "TooltipText" {
+            set "m_DefaultTranslation" "Damage dealt increased by 10%."
+        }
+    }
+
+    // Sextans' kit keywords.
+    append "Tooltips" {
+        set "LinkId" "sextans_blood_kiss"
+        set "TooltipHeading" {
+            set "m_DefaultTranslation" "Blood Kiss"
+        }
+        set "TooltipText" {
+            set "m_DefaultTranslation" "Marked by Sextans' blade for 3 turns. <link=\"sextans_midnight_vesper\">Midnight Vesper</link> deals bonus damage to the marked and feeds on them for extra vitality."
+        }
+    }
+    append "Tooltips" {
+        set "LinkId" "sextans_coagulation"
+        set "TooltipHeading" {
+            set "m_DefaultTranslation" "Coagulation"
+        }
+        set "TooltipText" {
+            set "m_DefaultTranslation" "Sextans gains a charge for every enemy her blade finds, up to 6. At 4 charges <link=\"sextans_midnight_vesper\">Midnight Vesper</link> is ready. Using it consumes 4 and keeps the rest."
+        }
+    }
+    append "Tooltips" {
+        set "LinkId" "sextans_midnight_vesper"
+        set "TooltipHeading" {
+            set "m_DefaultTranslation" "Midnight Vesper"
+        }
+        set "TooltipText" {
+            set "m_DefaultTranslation" "Sextans' ultimate. She dashes to a point of her choosing, cutting through everything on the way. Every victim struck restores her vitality. Marked enemies take extra damage, restore more, and lose their mark. Her allies receive the Holy Blood Mark. Requires 4 charges of Coagulation."
+        }
+    }
+    append "Tooltips" {
+        set "LinkId" "sextans_holy_blood_mark"
+        set "TooltipHeading" {
+            set "m_DefaultTranslation" "Holy Blood Mark"
+        }
+        set "TooltipText" {
+            set "m_DefaultTranslation" "Critical hit chance and critical damage rise while the blessing lasts. Lasts 2 turns."
+        }
+    }
+}

@@ -1,0 +1,202 @@
+clone "WeaponTemplate" from="weapon.generic_assault_rifle_tier1_ARC_762" id="weapon.soppo_m4" {
+    set "Title" {
+        set "m_DefaultTranslation" "M4 SOPMOD II"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Assault Rifle"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "[PLACEHOLDER] A firearm highly compatible with Soppo."
+    }
+    set "Model" asset="weapon/m4/main"
+    set "SkillsGranted" index=0 "active.fire_soppo_m4"
+    set "SkillsGranted" index=1 "active.fire_soppo_m4_sustained"
+    set "Icon" asset="weapon/m4/Icon"
+    set "IconEquipment" asset="weapon/m4/IconEquipment"
+    set "IconEquipmentDisabled" asset="weapon/m4/IconEquipmentDisabled"
+    set "IconSkillBar" asset="weapon/m4/IconSkillBar"
+    set "IconSkillBarDisabled" asset="weapon/m4/IconSkillBarDisabled"
+
+    set "Damage" 12.0
+    set "ArmorPenetration" 20.0
+    set "Suppression" 3.5
+    set "DeployCosts" {
+        set "m_Supplies" 13
+    }
+
+    set "BlackMarketMaxQuantity" 0
+}
+
+clone "SkillTemplate" from="active.fire_assault_rifle_tier1_762" id="active.fire_soppo_m4" {
+    clear "SoundsOnAttack"
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "weapons_soundbank"
+        set "itemId" "small_caliber_brass_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_burst_distant"
+    }
+    clear "SoundsOnAttackFar"
+    append "SoundsOnAttackFar" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_burst_distant"
+    }
+}
+
+clone "SkillTemplate" from="active.fire_assault_rifle_sustained_fire_tier1_762" id="active.fire_soppo_m4_sustained" {
+    clear "SoundsOnAttack"
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_single"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "weapons_soundbank"
+        set "itemId" "small_caliber_brass_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_single_distant"
+    }
+    clear "SoundsOnAttackFar"
+    append "SoundsOnAttackFar" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_single_distant"
+    }
+}
+
+// SSR weapon
+clone "WeaponTemplate" from="specialweapon.infantry_automatic_rifle_tier2" id="specialweapon.soppo_ssr" {
+    set "Title" {
+        set "m_DefaultTranslation" "Skysunderer's Howl"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Assault Rifle"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "[PLACEHOLDER] Gun shooty shooty bang bang."
+    }
+
+    set "Model" asset="weapon/m4_ssr/main"
+    set "Icon" asset="weapon/m4_ssr/Icon"
+    set "IconEquipment" asset="weapon/m4_ssr/IconEquipment"
+    set "IconEquipmentDisabled" asset="weapon/m4_ssr/IconEquipmentDisabled"
+    set "IconSkillBar" asset="weapon/m4_ssr/IconSkillBar"
+    set "IconSkillBarDisabled" asset="weapon/m4_ssr/IconSkillBarDisabled"
+
+    set "Damage" 13.0
+    set "Suppression" 25.0
+    set "DeployCosts" {
+        set "m_Supplies" 30
+    }
+
+    set "BlackMarketMaxQuantity" 0
+
+    clear "SkillsGranted"
+    append "SkillsGranted" "active.soppo_ssr_pursuit"
+    append "SkillsGranted" "active.soppo_ssr_bite"
+}
+
+clone "SkillTemplate" from="active.fire_automatic_rifle" id="active.soppo_ssr_pursuit" {
+    set "Title" {
+        set "m_DefaultTranslation" "Predator's Pursuit"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Fires cryo rounds dealing <link=\"wmgfl_freeze\">Freeze</link> damage. Soppo enters <link=\"soppo_hunter_form\">Hunter Form</link>."
+    }
+    append "EventHandlers" type="WOMENACE:ElementalDamage" {
+        set "Element" "Freeze"
+        set "AmountPerHit" 25.0
+    }
+    // opens the holder in Hunter Form at every mission start
+    append "EventHandlers" type="WOMENACE:HunterOpening" {}
+
+    clear "SoundsOnAttack"
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_single"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "weapons_soundbank"
+        set "itemId" "small_caliber_brass_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_single_distant"
+    }
+    clear "SoundsOnAttackFar"
+    append "SoundsOnAttackFar" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_single_distant"
+    }
+}
+
+clone "SkillTemplate" from="active.fire_automatic_rifle" id="active.soppo_ssr_bite" {
+    set "Title" {
+        set "m_DefaultTranslation" "Ferocious Bite"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Fires incendiary rounds dealing <link=\"wmgfl_burn\">Burn</link> damage. Soppo enters <link=\"soppo_feral_form\">Feral Form</link>."
+    }
+    append "EventHandlers" type="WOMENACE:ElementalDamage" {
+        set "Element" "Burn"
+        set "AmountPerHit" 25.0
+    }
+
+    clear "SoundsOnAttack"
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_single"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "weapons_soundbank"
+        set "itemId" "small_caliber_brass_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_single_distant"
+    }
+    clear "SoundsOnAttackFar"
+    append "SoundsOnAttackFar" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_single_distant"
+    }
+}
+
+clone "SkillTemplate" from="effect.bleeding" id="effect.soppo_hunter_form" {
+    set "Icon" asset="soppo/ssr/buff_5"
+    set "Title" {
+        set "m_DefaultTranslation" "Hunter Form"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Accuracy increased by 15%."
+    }
+    clear "EventHandlers"
+    append "EventHandlers" type="ChangeProperty" {
+        set "Trigger" enum="UpdateEvent" "OnUpdate"
+        set "PropertyType" enum="EntityPropertyType" "AccuracyMult"
+        set "Amount" 0
+        set "AmountMult" 1.15
+    }
+}
+
+clone "SkillTemplate" from="effect.bleeding" id="effect.soppo_feral_form" {
+    set "Icon" asset="soppo/ssr/buff_4"
+    set "Title" {
+        set "m_DefaultTranslation" "Feral Form"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Damage dealt increased by 10%."
+    }
+    clear "EventHandlers"
+    append "EventHandlers" type="ChangeProperty" {
+        set "Trigger" enum="UpdateEvent" "OnUpdate"
+        set "PropertyType" enum="EntityPropertyType" "DamageMult"
+        set "Amount" 0
+        set "AmountMult" 1.1
+    }
+}

@@ -100,7 +100,7 @@ clone "SkillTemplate" from="active.fire_dmr" id="active.makiatto_ssr_freeze" {
 
     set "Description" {
         set "m_DefaultTranslation" """
-            Fire a shot that stuns/freezes the enemy.
+            Fire a cryo round dealing <link="wmgfl_freeze">Freeze</link> damage.
             “Pull the trigger with absolute confidence in victory!”
             """
     }
@@ -108,9 +108,8 @@ clone "SkillTemplate" from="active.fire_dmr" id="active.makiatto_ssr_freeze" {
     // Base shot count for everyone. The imprint system overrides this to 2 while Makiatto wields it.
     set "Repetitions" 1
 
-    append "EventHandlers" type="AttackProc" {
-        set "SkillToAdd" "effect.stunned"
-        set "Chance" 100
-        set "ShowHUDText" #true
+    append "EventHandlers" type="WOMENACE:ElementalDamage" {
+        set "Element" "Freeze"
+        set "AmountPerHit" 30.0
     }
 }

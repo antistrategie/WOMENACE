@@ -2,6 +2,7 @@ using Il2CppMenace.Tactical;
 using Il2CppMenace.Tactical.Skills;
 using Il2CppMenace.UI;
 using Jiangyu.Sdk;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace WOMENACE.Code;
@@ -12,14 +13,19 @@ namespace WOMENACE.Code;
 // cannot do this: it wires itself up at OnMissionStarted only, so an effect
 // applied mid-mission never registers an icon.
 //
+// The same row carries the elemental build-up gauges (ElementsSystem): a
+// greyscale element icon filling with colour from the bottom, replaced by
+// the full-colour effect icon once the element procs.
+//
 // The mirror keys off SkillContainer mutations. `Remove` is overloaded and
 // therefore unpatchable by name, but natural expiry sweeps go through
 // RemoveSkillByIndex, and the mod's own template-based strips call Resync
 // directly.
 public sealed class EffectHudIconSystem : JiangyuSystem
 {
-    // effect template ids whose presence shows as overhead icons. Enemy
-    // marks only: friendly units have the unit window for their effects.
+    // effect template ids whose presence shows as overhead icons, on top of
+    // the five element effects (ElementsSystem.EffectIds). Enemy marks only:
+    // friendly units have the unit window for their effects.
     private static readonly string[] TrackedEffectIds =
     {
         "effect.sextans_blood_kiss",
@@ -52,7 +58,9 @@ public sealed class EffectHudIconSystem : JiangyuSystem
     public override void OnTemplatesApplied()
     {
         _tracked.Clear();
-        foreach (var id in TrackedEffectIds)
+        var ids = new List<string>(TrackedEffectIds);
+        ids.AddRange(ElementsSystem.EffectIds);
+        foreach (var id in ids)
         {
             var template = Templates.ById<SkillTemplate>(id, msg => Context.Log.Warn($"effect icons: {msg}"));
             if (template == null)
@@ -124,7 +132,7 @@ public sealed class EffectHudIconSystem : JiangyuSystem
     {
         if (actor == null || _tracked.Count == 0)
             return;
-        if (CountTracked(actor) == 0 && !_iconized.Contains(actor.Pointer))
+        if (CountTracked(actor) == 0 && !HasGauges(actor) && !_iconized.Contains(actor.Pointer))
             return;
         // no overhead HUD is normal: units off-screen or not yet detected
         // have none, and the icons re-sync when one next appears
@@ -182,6 +190,7 @@ public sealed class EffectHudIconSystem : JiangyuSystem
             }
             total += count;
         }
+        total += AppendGaugeIcons(actor, icons);
 
         if (total == 0)
         {
@@ -210,30 +219,68 @@ public sealed class EffectHudIconSystem : JiangyuSystem
         _iconized.Add(actor.Pointer);
     }
 
+    private static bool HasGauges(Actor actor)
+    {
+        var gauges = ElementsSystem.GaugesFor(actor);
+        for (var i = 0; gauges != null && i < gauges.Length; i++)
+            if (gauges[i] > 0f)
+                return true;
+        return false;
+    }
+
+    // The elemental build-up gauges: a greyscale element icon whose colour
+    // version rises from the bottom as the gauge fills. Built as a clip
+    // reveal, the colour layer bottom-anchored inside a bottom-anchored
+    // clipping band whose height is the fill percentage.
+    private static int AppendGaugeIcons(Actor actor, List<VisualElement> icons)
+    {
+        var gauges = actor != null ? ElementsSystem.GaugesFor(actor) : null;
+        if (gauges == null)
+            return 0;
+        var added = 0;
+        for (var element = 0; element < gauges.Length; element++)
+        {
+            if (gauges[element] <= 0f || ElementsSystem.HasLiveEffect(actor, element))
+                continue;
+            var grey = ElementsSystem.GaugeTexture(element);
+            var colour = ElementsSystem.EffectSprite(element);
+            if (grey == null || colour == null)
+                continue;
+
+            var icon = new VisualElement();
+            icon.style.width = new StyleLength(10f);
+            icon.style.height = new StyleLength(10f);
+            icon.style.backgroundImage = new StyleBackground(grey);
+
+            var pct = Mathf.Clamp01(gauges[element] / ElementsSystem.Threshold) * 100f;
+            var clip = new VisualElement();
+            clip.style.position = new StyleEnum<Position>(Position.Absolute);
+            clip.style.left = new StyleLength(0f);
+            clip.style.right = new StyleLength(0f);
+            clip.style.bottom = new StyleLength(0f);
+            clip.style.height = new StyleLength(new Length(pct, LengthUnit.Percent));
+            clip.style.overflow = new StyleEnum<Overflow>(Overflow.Hidden);
+
+            var fill = new VisualElement();
+            fill.style.position = new StyleEnum<Position>(Position.Absolute);
+            fill.style.left = new StyleLength(0f);
+            fill.style.bottom = new StyleLength(0f);
+            fill.style.width = new StyleLength(10f);
+            fill.style.height = new StyleLength(10f);
+            fill.style.backgroundImage = new StyleBackground(Background.FromSprite(colour));
+
+            clip.Add(fill);
+            icon.Add(clip);
+            icons.Add(icon);
+            added++;
+        }
+        return added;
+    }
+
     // Live instances, including ones still sitting in the container's add
     // queue: the Add postfix fires before the queue is drained.
     private static int CountLive(Actor actor, SkillTemplate template)
-    {
-        var skills = actor.GetSkills();
-        if (skills == null)
-            return 0;
-        var count = 0;
-        var all = skills.GetAllSkills();
-        for (var i = 0; all != null && i < all.Count; i++)
-        {
-            var skill = all[i];
-            if (skill != null && skill.GetTemplate()?.Pointer == template.Pointer)
-                count++;
-        }
-        var queued = skills.GetSkillsInAddQueue();
-        for (var i = 0; queued != null && i < queued.Count; i++)
-        {
-            var skill = queued[i];
-            if (skill != null && skill.GetTemplate()?.Pointer == template.Pointer)
-                count++;
-        }
-        return count;
-    }
+        => SkillEffects.CountInstances(actor.GetSkills(), template);
 
     internal static Il2CppMenace.UI.Tactical.UnitHUD FindHud(Actor actor)
     {

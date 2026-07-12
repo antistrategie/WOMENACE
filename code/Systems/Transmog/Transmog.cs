@@ -20,6 +20,7 @@ public static class Transmog
         ["wmgfl_lewis"] = "armor.lewis_default",
         ["wmgfl_makiatto"] = "armor.makiatto_default",
         ["wmgfl_sextans"] = "armor.sextans_default",
+        ["wmgfl_soppo"] = "armor.soppo_default",
         ["wmgfl_vector"] = "armor.vector_default",
         ["wmgfl_voymastina"] = "armor.voymastina_default",
     };

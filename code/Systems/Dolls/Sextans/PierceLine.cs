@@ -1,38 +1,8 @@
 using Il2CppMenace.Tactical;
 using Il2CppMenace.Tactical.Skills;
-using Il2CppMenace.Tactical.Skills.Effects;
 using Jiangyu.Sdk;
 
 namespace WOMENACE.Code;
-
-// PierceLine: the tuning-data carrier for the piercing skills (thrust and
-// ult). It holds the swathe's reach (Tiles), its width, and the thrust's
-// per-row accuracy falloff. The pierce itself is driven natively by
-// PierceAoEShape, which SextansPierceShapeSystem assigns to the skill after
-// reading these fields off the template; the ult sequence reads Tiles/Width
-// too. Slotted onto a skill via KDL type="WOMENACE:PierceLine".
-[JiangyuType("PierceLine")]
-public sealed partial class PierceLine : SkillEventHandlerTemplate
-{
-    public int Tiles = 4;
-    public int Width = 1;
-
-    // Hit chance lost per row past the aimed tile, applied on top of the
-    // native accuracy roll (PierceAoEShape rolls it per victim during the
-    // application pass). Zero keeps every row equally certain.
-    public float FalloffPerTile;
-
-    public override SkillEventHandler Create()
-        => new PierceLineHandler();
-}
-
-// No runtime behaviour: PierceLine's data is consumed by PierceAoEShape and
-// the ult sequence, not by a per-instance handler. This exists only so the
-// template's Create returns a valid registered handler.
-[JiangyuType("PierceLineHandler")]
-public sealed partial class PierceLineHandler : SkillEventHandler
-{
-}
 
 // The blade only bites hostiles: allies of the attacker are spared, and so
 // are the bystander factions. There is no IsHostileTo in the game API, so
@@ -245,31 +215,59 @@ public sealed partial class PierceAoEShape : Il2CppSystem.Object
 }
 
 // Assigns the pierce shape to the piercing skills (thrust and ult) once
-// templates are applied. The CustomAoEShape field is an Odin-serialised
-// interface, which KDL cannot author, so the KDL-authored PierceLine handler
-// stays the tuning source: its Tiles/Width are read here, and the handler
-// itself goes dormant (UseCustomAoEShape gates its OnApply) as the fallback
-// path.
+// templates are applied (retried on scene load until each is registered). The
+// CustomAoEShape field is an Odin-serialised interface KDL cannot author, so
+// this system builds it from the Shapes table below and enables
+// UseCustomAoEShape.
 public sealed class SextansPierceShapeSystem : JiangyuSystem
 {
-    public override void OnTemplatesApplied()
+    // one skill's swathe: tile length, width, thrust falloff, and whether the
+    // aim point is a destination (ult) or a direction (thrust). See ToTarget.
+    internal readonly record struct Shape(int Tiles, int Width, float Falloff, bool ToTarget);
+
+    // The native swathe shape per skill, and the single source of truth for
+    // its geometry. It lives in code because the CustomAoEShape it feeds cannot
+    // be authored in KDL anyway (Odin interface field), and because reading the
+    // numbers back off a mod-injected il2cpp handler at runtime is unreliable
+    // (it returns field initialisers, not authored values, the same reason the
+    // loader keeps injected handlers shared rather than deep-copying them). The
+    // ult sequence reads its lane geometry from here too.
+    //
+    // ToTarget: the thrust aims a direction (swathe runs onward through an
+    // enemy or empty tile). The ult aims a destination it dashes to (empty
+    // tiles only, swathe from her to it).
+    internal static readonly IReadOnlyDictionary<string, Shape> Shapes = new Dictionary<string, Shape>(StringComparer.Ordinal)
     {
-        // the thrust aims a direction: enemy or empty tile, swathe runs onward
-        Assign("active.sextans_thrust", toTarget: false);
-        // the ult aims a destination: empty tiles only (she has to be able to
-        // stand there), swathe runs from her to it
-        Assign("active.sextans_ult", toTarget: true);
+        ["active.sextans_thrust"] = new Shape(5, 3, 0.025f, false),
+        // the SSR sword's thrust is the same shape
+        ["active.sextans_ssr_thrust"] = new Shape(5, 3, 0.025f, false),
+        ["active.sextans_ult"] = new Shape(8, 3, 0f, true),
+    };
+
+    private readonly List<string> _pending = new(Shapes.Keys);
+
+    public override void OnTemplatesApplied()
+        => AssignPending();
+
+    public override void OnSceneLoaded(int buildIndex, string sceneName)
+        => AssignPending();
+
+    private void AssignPending()
+    {
+        for (var i = _pending.Count - 1; i >= 0; i--)
+            if (Assign(_pending[i], Shapes[_pending[i]]))
+                _pending.RemoveAt(i);
     }
 
-    private void Assign(string skillId, bool toTarget)
+    private bool Assign(string skillId, Shape shape)
     {
         try
         {
-            var template = Templates.ById<SkillTemplate>(skillId, msg => Context.Log.Warn($"pierce shape: {msg}"));
+            var template = Templates.ById<SkillTemplate>(skillId, msg => Context.Log.Debug($"pierce shape: {msg}"));
             if (template == null)
             {
-                Context.Log.Warn($"pierce shape: skill template '{skillId}' not found; pierce stays handler-driven");
-                return;
+                Context.Log.Debug($"pierce shape: skill template '{skillId}' not registered yet, pierce stays handler-driven until it appears");
+                return false;
             }
 
             // Aimable without a victim: empty tiles become valid targets, so
@@ -281,33 +279,22 @@ public sealed class SextansPierceShapeSystem : JiangyuSystem
             // as targets: its aim point is the landing tile, and she cannot
             // land on an occupied one.
             template.TargetsAllowed |= SkillTarget.EmptyTile;
-            if (toTarget)
+            if (shape.ToTarget)
                 template.TargetsAllowed &= ~SkillTarget.EnemyActor;
 
-            var tiles = 4;
-            var width = 1;
-            var falloff = 0f;
-            var handlers = template.EventHandlers;
-            for (var i = 0; handlers != null && i < handlers.Count; i++)
-            {
-                var pierce = handlers[i]?.TryCast<PierceLine>();
-                if (pierce == null)
-                    continue;
-                tiles = pierce.Tiles;
-                width = pierce.Width;
-                falloff = pierce.FalloffPerTile;
-                break;
-            }
-
-            var shape = new PierceAoEShape { Tiles = tiles, Width = width, ToTarget = toTarget, FalloffPerTile = falloff };
-            template.CustomAoEShape = shape.Cast<ICustomAoEShape>();
+            var aoe = new PierceAoEShape { Tiles = shape.Tiles, Width = shape.Width, ToTarget = shape.ToTarget, FalloffPerTile = shape.Falloff };
+            template.CustomAoEShape = aoe.Cast<ICustomAoEShape>();
             template.UseCustomAoEShape = true;
             template.AoEType = SkillAoEType.AllTiles;
-            Context.Log.Debug($"pierce shape: assigned to '{skillId}' (tiles={tiles}, width={width}, toTarget={toTarget})");
+            Context.Log.Debug($"pierce shape: assigned to '{skillId}' (tiles={shape.Tiles}, width={shape.Width}, toTarget={shape.ToTarget})");
+            return true;
         }
         catch (Exception ex)
         {
+            // a throw is not a missing template: report assigned so the
+            // retry loop does not warn every scene against a broken skill
             Context.Log.Warn($"pierce shape: assignment failed for '{skillId}', pierce stays handler-driven: {ex.GetType().Name}: {ex.Message}");
+            return true;
         }
     }
 }

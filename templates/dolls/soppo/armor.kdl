@@ -1,0 +1,49 @@
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.soppo_default" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
+    set "Title" {
+        set "m_DefaultTranslation" "Outfit"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Combat Gear"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "[PLACEHOLDER] outfit description"
+    }
+    set "Icon" asset="soppo/armor/default/Icon"
+    set "IconEquipment" asset="soppo/armor/default/IconEquipment"
+    set "IconSkillBar" asset="soppo/armor/default/IconSkillBar"
+    clear "MaleModels"
+    append "MaleModels" asset="soppo/default/main"
+    clear "FemaleModels"
+    append "FemaleModels" asset="soppo/default/main"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_transmog"
+    append "Tags" "jy_no_sell"
+}
+
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.soppo_redline" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
+    set "Title" {
+        set "m_DefaultTranslation" "Redline Racer"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Racing Suit"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "[PLACEHOLDER] outfit description"
+    }
+    set "Icon" asset="soppo/armor/redline/Icon"
+    set "IconEquipment" asset="soppo/armor/redline/IconEquipment"
+    set "IconSkillBar" asset="soppo/armor/redline/IconSkillBar"
+    clear "MaleModels"
+    append "MaleModels" asset="soppo/redline/main"
+    clear "FemaleModels"
+    append "FemaleModels" asset="soppo/redline/main"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_transmog"
+    append "Tags" "jy_no_sell"
+}

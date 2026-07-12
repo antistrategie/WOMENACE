@@ -34,6 +34,7 @@ patch "StrategyConfig" "strategy_config" {
     append "InitialPickableUnitLeaders" "squad_leader.makiatto"
     append "InitialPickableUnitLeaders" "squad_leader.sextans"
     append "InitialPickableUnitLeaders" "squad_leader.vector"
+    append "InitialPickableUnitLeaders" "squad_leader.soppo"
 }
 
 patch "GlobalDifficultyTemplate" "global_difficulty.normal" {
@@ -59,6 +60,7 @@ patch "DossierItemTemplate" "dossier.squad_leader" {
     append "m_UnlockedLeaders" "squad_leader.makiatto"
     append "m_UnlockedLeaders" "squad_leader.sextans"
     append "m_UnlockedLeaders" "squad_leader.vector"
+    append "m_UnlockedLeaders" "squad_leader.soppo"
 }
 
 //   patch "DossierItemTemplate" "dossier.pilot" {

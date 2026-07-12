@@ -1,0 +1,144 @@
+// The elemental status effects. Elemental damage is exclusive to SSR weapons:
+// their skills carry a WOMENACE:ElementalDamage handler naming an element and
+// a per-hit amount. Hits accumulate build-up on the victim (tracked by the
+// ElementsSystem), shown as a greyscale icon that fills with colour from the
+// bottom. At 100 build-up the victim gains the element's real effect below
+// and the gauge resets. Reapplication is ignored while the effect is live, so
+// nothing stacks.
+clone "SkillTemplate" from="effect.bleeding" id="effect.wmgfl_burn" {
+    set "Icon" asset="elements/burn"
+    set "Title" {
+        set "m_DefaultTranslation" "Burning"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Set alight by elemental fire. Loses 10% max <link=\"hitpoints\">Hitpoints</link> per turn for 3 turns. Can only kill one element per turn."
+    }
+    clear "EventHandlers"
+    append "EventHandlers" type="LifetimeLimit" {
+        set "Event" enum="LifetimeType" "OnTurnEnd"
+        set "Lifetime" 3
+        set "ResetLifetimeOnRefresh" #false
+    }
+    append "EventHandlers" type="DamageOverTime" {
+        set "ElementsHit" 1
+        set "DamagePctMaxHitpoints" 0.1
+        set "ArmorPenetration" 1000.0
+        set "FatalityType" enum="FatalityType" "Burning"
+        set "DamageVisualizationType" enum="DamageVisualizationType" "Burn"
+    }
+    append "EventHandlers" type="DisplayText" {
+        set "Event" enum="DisplayEvent" "OnAdded"
+        set "LocaKey" "wmgfl_burn"
+        set "DefaultText" "Ignited!"
+    }
+}
+
+clone "SkillTemplate" from="effect.bleeding" id="effect.wmgfl_shock" {
+    set "Icon" asset="elements/shock"
+    set "Title" {
+        set "m_DefaultTranslation" "Electrified"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Nervous systems and optics misfire. <link=\"accuracy\">Accuracy</link> reduced by 15% for 5 turns."
+    }
+    clear "EventHandlers"
+    append "EventHandlers" type="LifetimeLimit" {
+        set "Event" enum="LifetimeType" "OnTurnEnd"
+        set "Lifetime" 5
+        set "ResetLifetimeOnRefresh" #false
+    }
+    append "EventHandlers" type="ChangeProperty" {
+        set "Trigger" enum="UpdateEvent" "OnUpdate"
+        set "PropertyType" enum="EntityPropertyType" "AccuracyMult"
+        set "Amount" 0
+        set "AmountMult" 0.85
+    }
+    append "EventHandlers" type="DisplayText" {
+        set "Event" enum="DisplayEvent" "OnAdded"
+        set "LocaKey" "wmgfl_shock"
+        set "DefaultText" "Electrified!"
+    }
+}
+
+clone "SkillTemplate" from="effect.bleeding" id="effect.wmgfl_freeze" {
+    set "Icon" asset="elements/freeze"
+    set "Title" {
+        set "m_DefaultTranslation" "Frozen"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Frost seizes servos and joints. <link=\"action_points\">Action Points</link> reduced by 25% for 5 turns."
+    }
+    clear "EventHandlers"
+    append "EventHandlers" type="LifetimeLimit" {
+        set "Event" enum="LifetimeType" "OnTurnEnd"
+        set "Lifetime" 5
+        set "ResetLifetimeOnRefresh" #false
+    }
+    append "EventHandlers" type="ChangeProperty" {
+        set "Trigger" enum="UpdateEvent" "OnUpdate"
+        set "PropertyType" enum="EntityPropertyType" "ActionPointsMult"
+        set "Amount" 0
+        set "AmountMult" 0.75
+    }
+    append "EventHandlers" type="DisplayText" {
+        set "Event" enum="DisplayEvent" "OnAdded"
+        set "LocaKey" "wmgfl_freeze"
+        set "DefaultText" "Frozen!"
+    }
+}
+
+clone "SkillTemplate" from="effect.bleeding" id="effect.wmgfl_corrosion" {
+    set "Icon" asset="elements/corrosion"
+    set "Title" {
+        set "m_DefaultTranslation" "Corroded"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Corrosive agents dissolve plating. Loses 20% of current <link=\"armor\">Armour</link> per turn for 3 turns."
+    }
+    clear "EventHandlers"
+    append "EventHandlers" type="LifetimeLimit" {
+        set "Event" enum="LifetimeType" "OnTurnEnd"
+        set "Lifetime" 3
+        set "ResetLifetimeOnRefresh" #false
+    }
+    append "EventHandlers" type="DamageOverTime" {
+        set "ElementsHitPercentage" 1.0
+        set "DamagesArmorFirst" #true
+        set "DamageArmorPctOfCurrent" 0.2
+        set "ArmorPenetration" 1000.0
+        set "FatalityType" enum="FatalityType" "Burning"
+        set "DamageVisualizationType" enum="DamageVisualizationType" "Burn"
+    }
+    append "EventHandlers" type="DisplayText" {
+        set "Event" enum="DisplayEvent" "OnAdded"
+        set "LocaKey" "wmgfl_corrosion"
+        set "DefaultText" "Corroded!"
+    }
+}
+
+clone "SkillTemplate" from="effect.bleeding" id="effect.wmgfl_hydro" {
+    set "Icon" asset="elements/hydro"
+    set "Title" {
+        set "m_DefaultTranslation" "Drenched"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Waterlogged and exposed. Cover counts one tier worse for 3 turns."
+    }
+    clear "EventHandlers"
+    append "EventHandlers" type="LifetimeLimit" {
+        set "Event" enum="LifetimeType" "OnTurnEnd"
+        set "Lifetime" 3
+        set "ResetLifetimeOnRefresh" #false
+    }
+    append "EventHandlers" type="ChangeProperty" {
+        set "Trigger" enum="UpdateEvent" "OnUpdate"
+        set "PropertyType" enum="EntityPropertyType" "CoverTypeOffset"
+        set "Amount" -1
+        set "AmountMult" 1.0
+    }
+    append "EventHandlers" type="DisplayText" {
+        set "Event" enum="DisplayEvent" "OnAdded"
+        set "LocaKey" "wmgfl_hydro"
+        set "DefaultText" "Drenched!"
+    }
+}

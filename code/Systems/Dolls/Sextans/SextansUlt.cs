@@ -125,6 +125,13 @@ public sealed class SextansUltSystem : JiangyuSystem
     private const string CoagulationId = "effect.sextans_coagulation";
     private const string MarkId = "effect.sextans_holy_blood_mark";
 
+    // The SSR sword grants the SAME ult (and hidden riders) as the SR sword, so the electric charge
+    // its basic attacks carry cannot live on a KDL ElementalDamage handler on the shared ult riders
+    // (that would electrify the SR sword's ult too). Instead the ult's lane hits build Shock in code,
+    // gated on this weapon having granted the cast. UltShockPerHit is the per-victim build-up.
+    private const string SsrSwordId = "weapon.sextans_ssr";
+    private const float UltShockPerHit = 100f;
+
     private static SextansUltSystem _instance;
 
     // True only while the ult's own strike/rend applications are landing, so
@@ -294,9 +301,19 @@ public sealed class SextansUltSystem : JiangyuSystem
         if (origin == null)
             yield break;
 
-        // tuning from the KDL handler blocks on the ult template
-        var tiles = 8;
-        var width = 1;
+        var template = ult.GetTemplate();
+
+        // Lane geometry comes from the shared shape table (the single source
+        // of truth, see SextansPierceShapeSystem.Shapes). The rest of the
+        // tuning below comes from the KDL SextansUlt handler block on the ult
+        // template.
+        var id = template?.GetID();
+        var geometry = id != null && SextansPierceShapeSystem.Shapes.TryGetValue(id, out var g)
+            ? g
+            : new SextansPierceShapeSystem.Shape(8, 3, 0f, true);
+        var tiles = geometry.Tiles;
+        var width = geometry.Width;
+
         var teleportDelay = 1.0f;
         var dashDuration = 0.2f;
         var payoffDelay = 2.4f;
@@ -304,17 +321,9 @@ public sealed class SextansUltSystem : JiangyuSystem
         var healFractionMarked = 0.4f;
         var ultRallyFraction = 0.1f;
         var healCap = 20;
-        var template = ult.GetTemplate();
         var handlers = template?.EventHandlers;
         for (var i = 0; handlers != null && i < handlers.Count; i++)
         {
-            var pierce = handlers[i]?.TryCast<PierceLine>();
-            if (pierce != null)
-            {
-                tiles = pierce.Tiles;
-                width = pierce.Width;
-                continue;
-            }
             var tuning = handlers[i]?.TryCast<SextansUlt>();
             if (tuning == null)
                 continue;
@@ -493,6 +502,17 @@ public sealed class SextansUltSystem : JiangyuSystem
             UltStrikesResolving = false;
         }
         Context.Log.Debug($"ult: struck {struck} victim(s), rent {rent} marked");
+
+        // SSR sword: the ult's lane hits carry the same electric charge as its basic attacks. The ult
+        // skill is shared with the SR sword, so gate on which weapon granted this cast: only the SSR
+        // sword electrifies. Applied to the survivors (a corpse has no accuracy left to dampen).
+        if (string.Equals(ult.GetItem()?.GetTemplate()?.GetID(), SsrSwordId, StringComparison.Ordinal))
+        {
+            var shock = ElementsSystem.ElementIndex("Shock");
+            foreach (var enemy in victims)
+                if (enemy != null && enemy.IsAlive())
+                    ElementsSystem.AddBuildUp(enemy, shock, UltShockPerHit);
+        }
 
         // 2. The feast: ONE combined heal, capped per cast, healing her real
         // HP past the grey pool. Lifesteal takes healFraction of the raw
