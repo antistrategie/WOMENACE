@@ -67,6 +67,7 @@ public sealed class WeaponProficiencySystem : JiangyuSystem
         ["Minigun"] = WeaponClass.MachineGun,
         ["Shotgun"] = WeaponClass.Shotgun,
         ["Sweeper"] = WeaponClass.Shotgun,
+        ["Sword"] = WeaponClass.Blade,
     };
 
     private static WeaponClass ClassifyByShortName(WeaponTemplate weapon)
