@@ -260,11 +260,11 @@ public sealed class SsrImprintSystem : JiangyuSystem
 
             // Subheading (11px) + a manual bottom border + top margin: the section-divider look at the
             // body text size (AddSectionHeading is oversized; AddSubheading alone drops the divider).
-            var heading = data.AddSubheading($"{entry.OwnerName} Imprint Boost", null, NoIconSize, true);
+            var heading = data.AddSubheading($"{entry.OwnerName} Imprint Boost", null, NoIconSize, NoIconColour, true);
             heading?.SetBorderBottom(true);
             heading?.SetMarginTop(6);
             var para = data.AddParagraph(
-                entry.BonusText, owned ? ParagraphStyle.Positive : ParagraphStyle.Default, null, NoIconSize, true, false);
+                entry.BonusText, owned ? ParagraphStyle.Positive : ParagraphStyle.Default, null, NoIconSize, NoIconColour, true, false);
             if (!owned)
             {
                 var grey = new UnityEngine.Color(0.45f, 0.45f, 0.45f, 1f);
@@ -393,4 +393,5 @@ public sealed class SsrImprintSystem : JiangyuSystem
 
     // Boxed-empty Il2Cpp nullable: a C# null default throws in the tooltip's nullable marshalling.
     private static readonly Il2CppSystem.Nullable<int> NoIconSize = new();
+    private static readonly Il2CppSystem.Nullable<UnityEngine.Color> NoIconColour = new();
 }

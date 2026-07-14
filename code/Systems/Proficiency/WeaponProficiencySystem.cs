@@ -332,7 +332,7 @@ public sealed class WeaponProficiencySystem : JiangyuSystem
 
             var matches = WeaponMatches(weapon, viewerTag, viewerClass);
 
-            var heading = data.AddSubheading($"{NameFromTag(viewerTag)} Weapon Proficiency", null, NoIconSize, true);
+            var heading = data.AddSubheading($"{NameFromTag(viewerTag)} Weapon Proficiency", null, NoIconSize, NoIconColour, true);
             heading?.SetBorderBottom(true);
             heading?.SetMarginTop(6);
 
@@ -340,7 +340,7 @@ public sealed class WeaponProficiencySystem : JiangyuSystem
                 ? $"Bonus accuracy for wielding her weapon type ({ClassNoun(viewerClass)})."
                 : $"Wield {ClassNoun(viewerClass)} for bonus accuracy.";
             var para = data.AddParagraph(
-                text, matches ? ParagraphStyle.Positive : ParagraphStyle.Default, null, NoIconSize, true, false);
+                text, matches ? ParagraphStyle.Positive : ParagraphStyle.Default, null, NoIconSize, NoIconColour, true, false);
             if (!matches)
             {
                 var grey = new UnityEngine.Color(0.45f, 0.45f, 0.45f, 1f);
@@ -388,4 +388,5 @@ public sealed class WeaponProficiencySystem : JiangyuSystem
 
     // Boxed-empty Il2Cpp nullable: a C# null default throws in the tooltip's nullable marshalling.
     private static readonly Il2CppSystem.Nullable<int> NoIconSize = new();
+    private static readonly Il2CppSystem.Nullable<UnityEngine.Color> NoIconColour = new();
 }
