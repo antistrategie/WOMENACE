@@ -56,8 +56,9 @@ public static class NewGameSettings
 // Add a property here for each new toggle and extend CopyFrom.
 public sealed class NewGameOptions
 {
-    // When true, only WOMENACE (Girls' Frontline) leaders are offered: the vanilla squad leaders
-    // and pilots are removed from the new-game initial pick and from the dossier hiring pools.
+    // When true, the vanilla squad leaders and pilots are removed from the new-game initial pick
+    // and from the dossier hiring pools. Every mod-added leader stays offered, WOMENACE dolls and
+    // other mods' custom leaders alike: see VanillaLeadersSystem for how vanilla is recognised.
     public bool DisableVanillaLeaders { get; set; }
 
     // When true, a WOMENACE leader's squad is capped at five bodies (the doll plus at most four
