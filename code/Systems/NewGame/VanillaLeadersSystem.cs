@@ -269,10 +269,14 @@ public sealed class VanillaLeadersSystem : JiangyuSystem
 
     // A leader still grantable by a dossier: mod-added and never acquired (status Unknown, the same
     // entry the game's own redeem would roll). Shared by the market scrub and the Redeem skip so the
-    // two cannot disagree on what "exhausted" means.
+    // two cannot disagree on what "exhausted" means. A form-swap doll wearing her alt form reads as
+    // Unknown here (the swap stashes her base form out of the roster), but she is acquired: her base
+    // form is never grantable while the alt is active.
     private static bool IsGrantable(UnitLeaderTemplate leader, Roster roster)
     {
         if (leader == null || IsVanilla(leader))
+            return false;
+        if (FormSwapSystem.BaseFormStashed(leader.GetID()))
             return false;
         roster.GetLeaderByTemplate(leader, out var status);
         return status == UnitLeaderStatus.Unknown;

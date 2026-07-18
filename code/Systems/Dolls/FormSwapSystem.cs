@@ -127,6 +127,14 @@ public sealed class FormSwapSystem : JiangyuSystem
     private int _lastHiringStatus;
     private string _shownFormId;
 
+    // The StrategyState instance the session caches were built against. BaseUnitLeader is
+    // Il2CppSystem.Object-rooted, so IsAlive is only a collected/pointer check, and the cache
+    // dictionaries themselves root the wrappers: an entry from a PREVIOUS save passes every liveness
+    // test, and a swap could install a leader whose items, squaddies and statistics belong to another
+    // campaign. A save load builds a new StrategyState, so its identity names the session: whenever it
+    // changes, every session cache is dropped (see EnsureSession).
+    private IntPtr _sessionState = IntPtr.Zero;
+
     public override void OnInit()
     {
         // The swap button sits after the native unit-window button on the Armory (squad-menu) screen
@@ -165,6 +173,27 @@ public sealed class FormSwapSystem : JiangyuSystem
     }
 
     private void OnAffinityChanged(VisualElement window) => UpdateSwapButton(window);
+
+    // Drop the session caches when the live StrategyState is not the one they were built against
+    // (a save load or a return to the menu). Runs at every entry point that reads or writes them.
+    private void EnsureSession()
+    {
+        try
+        {
+            var state = StrategyState.Get();
+            var ptr = state != null ? state.Pointer : IntPtr.Zero;
+            if (ptr == _sessionState)
+                return;
+            _sessionState = ptr;
+            if (_stashed.Count > 0 || _previewLeaders.Count > 0 || _shownLeaders.Count > 0)
+                Context.Log.Info("form swap: new session, dropping stashed/preview leader caches");
+            _stashed.Clear();
+            _previewLeaders.Clear();
+            _shownLeaders.Clear();
+            _shownFormId = null;
+        }
+        catch (Exception ex) { Context.Log.Warn($"form swap: session check failed: {ex.Message}"); }
+    }
 
     private void OnWindowChanged(PatchInfo info)
     {
@@ -229,6 +258,7 @@ public sealed class FormSwapSystem : JiangyuSystem
     {
         try
         {
+            EnsureSession();
             _maskedBaseIds.Clear();
             var hirable = StrategyState.Get()?.Roster?.m_HirableLeaders;
             if (hirable == null)
@@ -236,10 +266,22 @@ public sealed class FormSwapSystem : JiangyuSystem
 
             foreach (var pair in Pairs)
             {
-                if (!FormActive(pair.AltFormId))
-                    continue;
                 var baseTemplate = ResolveTemplate<UnitLeaderTemplate>(pair.BaseFormId);
-                if (baseTemplate == null || hirable.Contains(baseTemplate))
+                if (baseTemplate == null)
+                    continue;
+
+                // Heal a leaked mask first: if the redeem that added it threw, the postfix never ran
+                // and the mask stayed in the hirable list, where the old membership check would have
+                // declined to re-record it, making the leak permanent and the doll hireable as a
+                // duplicate. While the doll is acquired IN EITHER FORM she is never legitimately
+                // hirable, so every copy found then is a leak. While she is unacquired, a hirable
+                // entry is a real dossier grant and stays.
+                bool altActive = FormActive(pair.AltFormId);
+                if (altActive || FormActive(pair.BaseFormId))
+                    while (hirable.Contains(baseTemplate))
+                        hirable.Remove(baseTemplate);
+
+                if (!altActive)
                     continue;
                 hirable.Add(baseTemplate);
                 _maskedBaseIds.Add(pair.BaseFormId);
@@ -289,8 +331,18 @@ public sealed class FormSwapSystem : JiangyuSystem
         }
     }
 
+    // True when this template is a pair's base form and the doll is currently wearing her alt form
+    // (the base is stashed out of the roster, so the game's status lookup reads it as never
+    // acquired). VanillaLeadersSystem folds this into dossier grantability, so a swapped doll is
+    // treated as acquired rather than offered again.
+    public static bool BaseFormStashed(string templateId)
+    {
+        var pair = PairFor(templateId);
+        return pair != null && pair.BaseFormId == templateId && FormActive(pair.AltFormId);
+    }
+
     // True when the form with this template id currently occupies a roster slot.
-    private bool FormActive(string templateId)
+    private static bool FormActive(string templateId)
     {
         var hired = StrategyState.Get()?.Roster?.m_HiredLeaders;
         if (hired == null)
@@ -312,6 +364,7 @@ public sealed class FormSwapSystem : JiangyuSystem
     {
         try
         {
+            EnsureSession();
             var panel = (info.Instance as VisualElement)?.TryCast<HiringUnitInfo>();
             var leader = (info.Args is { Count: > 0 } ? info.Args[0] : null) as BaseUnitLeader;
             if (panel == null || leader == null || !leader.IsAlive())
@@ -405,6 +458,7 @@ public sealed class FormSwapSystem : JiangyuSystem
     {
         try
         {
+            EnsureSession();
             var pair = PairFor(_shownFormId);
             if (pair == null)
                 return;
@@ -611,6 +665,7 @@ public sealed class FormSwapSystem : JiangyuSystem
     {
         try
         {
+            EnsureSession();
             var unitWindow = window.TryCast<UnitWindow>();
             var leader = unitWindow?.m_CurrentLeader;
             if (leader == null || !leader.IsAlive())
@@ -703,8 +758,8 @@ public sealed class FormSwapSystem : JiangyuSystem
                 ApplyForm(targetId, target);
             }
 
-            // Carry the shared state (attribute growth + the merged statistics total) onto the
-            // incoming form. Perks, squaddies and equipment stay per-form.
+            // Carry the shared state (the merged statistics total + emotional state) onto the
+            // incoming form. Attributes, perks, squaddies and equipment stay per-form.
             CarrySharedState(leader, target);
 
             // Commit the roster swap first, so the swap takes effect even if a later UI step throws.
@@ -726,6 +781,10 @@ public sealed class FormSwapSystem : JiangyuSystem
                 // saved loadout is equipped from existing instances, drop the minted surplus so the swap
                 // leaves the inventory count unchanged (the leftover free copies are the duplicates).
                 ReconcileMintedItems(ownedBefore);
+            }
+            else
+            {
+                ValidateReusedChassis(pair, target);
             }
 
             Context.Log.Info($"form swap: {curId} -> {targetId}");
@@ -857,12 +916,15 @@ public sealed class FormSwapSystem : JiangyuSystem
 
             // A pilot's selected chassis is its equipment. Record the chassis item template id so a
             // rebuilt Pilot rebinds the same owned chassis rather than a minted or arbitrary one.
+            // Chassis-less is a real state (vanilla-chassis pilots): record it as null rather than
+            // keeping a stale previous ride that a later rebuild would silently re-bind.
             if (leader.IsVehicle())
             {
                 var pilot = leader.TryCast<Pilot>();
                 var veh = pilot?.GetVehicle();
-                if (veh != null && veh.IsAlive())
-                    snap.VehicleTemplateId = VehicleTemplateId(StrategyState.Get().OwnedItems, veh);
+                snap.VehicleTemplateId = veh != null && veh.IsAlive()
+                    ? VehicleTemplateId(StrategyState.Get().OwnedItems, veh)
+                    : null;
             }
 
             // Attributes: this form's own grown values. Pilot and SquadLeader have different attribute
@@ -1172,6 +1234,46 @@ public sealed class FormSwapSystem : JiangyuSystem
         {
             Context.Log.Warn($"form swap: vehicle restore failed: {ex.Message}");
         }
+    }
+
+    // A vehicle form reused from the stash still holds the chassis binding it went to sleep with,
+    // but a stashed pilot is invisible to the armoury's chassis picker, so another pilot may have
+    // taken that walker in the meantime. Riding a taken chassis would put two pilots on one vehicle:
+    // rebind a free owned instance of the same template, else ride nothing (the armoury assigns one).
+    // Restricted pairs are exempt, their chassis never enter the shared pool.
+    private void ValidateReusedChassis(FormPair pair, BaseUnitLeader leader)
+    {
+        try
+        {
+            if (pair.RestrictedChassisIds.Length > 0 || !leader.IsVehicle())
+                return;
+            var pilot = leader.TryCast<Pilot>();
+            var owned = StrategyState.Get()?.OwnedItems;
+            var riding = pilot?.GetVehicle();
+            if (pilot == null || owned == null || riding == null || !riding.IsAlive())
+                return;
+            var inUse = VehicleGuidsInUse(pilot);
+            if (!inUse.Contains(riding.GetItemGuid()))
+                return;
+
+            var wantedId = VehicleTemplateId(owned, riding);
+            var vehicles = owned.GetVehicles();
+            if (vehicles != null)
+                for (int i = 0; i < vehicles.Count; i++)
+                {
+                    var v = vehicles[i];
+                    if (v == null || !v.IsAlive() || inUse.Contains(v.GetItemGuid()))
+                        continue;
+                    if (VehicleTemplateId(owned, v) != wantedId)
+                        continue;
+                    Context.Log.Info($"form swap: chassis '{wantedId}' was taken while stashed, rebinding a free instance");
+                    pilot.SetVehicle(v);
+                    return;
+                }
+            Context.Log.Info($"form swap: chassis '{wantedId}' was taken while stashed, leaving the pilot unassigned");
+            pilot.SetVehicle(null);
+        }
+        catch (Exception ex) { Context.Log.Warn($"form swap: reused-chassis check failed: {ex.Message}"); }
     }
 
     // Rebind a vanilla-chassis pilot's saved choice from an owned instance no other pilot is riding.
