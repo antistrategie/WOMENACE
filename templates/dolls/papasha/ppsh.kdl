@@ -1,0 +1,69 @@
+clone "WeaponTemplate" from="weapon.generic_smg_tier1_ppp" id="weapon.papasha_ppsh" {
+    set "Title" {
+        set "m_DefaultTranslation" "PPSh-41"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "SMG"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "A firearm that is highly compatible with Papasha. It has been modified to suit Papasha's fighting style. While the material is still the same, its frame is more solid."
+    }
+    set "Model" asset="weapon/ppsh/main"
+    set "SkillsGranted" index=0 "active.fire_papasha_ppsh"
+    set "SkillsGranted" index=1 "active.fire_papasha_ppsh_tap"
+    set "IconEquipment" asset="weapon/ppsh/IconEquipment"
+    set "IconEquipmentDisabled" asset="weapon/ppsh/IconEquipmentDisabled"
+    set "IconSkillBar" asset="weapon/ppsh/IconSkillBar"
+    set "IconSkillBarDisabled" asset="weapon/ppsh/IconSkillBarDisabled"
+
+    set "Damage" 13.0
+    set "ArmorPenetration" 12.0
+    set "Suppression" 6.0
+    set "DeployCosts" {
+        set "m_Supplies" 13
+    }
+
+    set "BlackMarketMaxQuantity" 0
+}
+
+clone "SkillTemplate" from="active.fire_smg_tier1_burst" id="active.fire_papasha_ppsh" {
+    clear "SoundsOnAttack"
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_smg_addition_bank"
+        set "itemId" "smg_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "weapons_soundbank"
+        set "itemId" "small_caliber_brass_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_smg_addition_bank"
+        set "itemId" "smg_burst_distant"
+    }
+    clear "SoundsOnAttackFar"
+    append "SoundsOnAttackFar" {
+        set "bankId" "wmgfl_weapons_smg_addition_bank"
+        set "itemId" "smg_burst_distant"
+    }
+}
+
+clone "SkillTemplate" from="active.fire_smg_tier_1_tap_fire" id="active.fire_papasha_ppsh_tap" {
+    clear "SoundsOnAttack"
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_smg_addition_bank"
+        set "itemId" "smg_single"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "weapons_soundbank"
+        set "itemId" "small_caliber_brass_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_smg_addition_bank"
+        set "itemId" "smg_single_distant"
+    }
+    clear "SoundsOnAttackFar"
+    append "SoundsOnAttackFar" {
+        set "bankId" "wmgfl_weapons_smg_addition_bank"
+        set "itemId" "smg_single_distant"
+    }
+}

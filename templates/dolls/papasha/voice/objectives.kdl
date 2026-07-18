@@ -1,0 +1,99 @@
+clone "ConversationTemplate" from="JeanSy/objective_first" id="Papasha/objective_first" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_papasha"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_papasha_va"
+                        set "itemId" "Series_Up_007"
+                    }
+                    set "RoleGuid" "Entity"
+                    set "Text" "I will see it through."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/objective_second" id="Papasha/objective_second" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_papasha"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_papasha_va"
+                        set "itemId" "Series_Up_008"
+                    }
+                    set "RoleGuid" "Entity"
+                    set "Text" "I will protect everyone!"
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/objective_third" id="Papasha/objective_third" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_papasha"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_papasha_va"
+                        set "itemId" "Series_Hit_Single_Hit_001"
+                    }
+                    set "RoleGuid" "Entity"
+                    set "Text" "I'll get it done!"
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/success_any_jeansy" id="Papasha/success_any_papasha" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_papasha"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_papasha_va"
+                        set "itemId" "Series_Win_Single_Win_001"
+                    }
+                    set "RoleGuid" "JeanSy"
+                    set "Text" "Mission accomplished! Good work, everyone!"
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}

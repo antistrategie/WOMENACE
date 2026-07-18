@@ -181,6 +181,7 @@ A `clone` deep-copies the parent's typed state, then applies the patches in your
 - **Forgetting `append "Tags" "wmgfl_<character>"`** on the EntityTemplate. The transmog swap never matches (the character renders her equipped vanilla armour as a vanilla soldier body) and weapon `OnlyEquipableBy` gating fails.
 - **Forgetting the `Transmog.DefaultOutfits` entry** — the outfits exist but the picker tile never appears and nothing renders them.
 - **Wrong RoleGuid in cloned ConversationTemplates** — must match the role NAME in the actual parent template, which differs per-template (see [voice-pipeline](../voice-pipeline/SKILL.md)).
+- **Two UnitLeaderTemplates sharing an id segment** — the game's `GameConditionVars` static ctor builds a `LEADER_STATUS_<SEGMENT>` conversation var per leader template from the id segment after the dot. `pilot.papasha` plus `squad_leader.papasha` both yield `LEADER_STATUS_PAPASHA`, which throws a duplicate-key `TypeInitializationException` and crashes new-game creation. A character with two forms needs a unique segment per form (`pilot.papasha` + `squad_leader.papasha_foot`, `squad_leader.voymastina` + `pilot.voymastina_mech`).
 
 ## Cross-references
 

@@ -1,0 +1,49 @@
+clone "ConversationTemplate" from="JeanSy/moving_finished" id="Papasha/moving_finished" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=1 type="HasOneTag" {
+            set "Tags" "wmgfl_papasha"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_papasha_va"
+                        set "itemId" "Series_Set_Fall_Series_Tone_Positive_008"
+                    }
+                    set "RoleGuid" "Entity"
+                    set "Text" "Target acquired!"
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/taking_fire" id="Papasha/taking_fire" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=1 type="HasOneTag" {
+            set "Tags" "wmgfl_papasha"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_papasha_va"
+                        set "itemId" "Series_Hitted_Series_HittedLast"
+                    }
+                    set "RoleGuid" "Damaged"
+                    set "Text" "(Eh?!)"
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}

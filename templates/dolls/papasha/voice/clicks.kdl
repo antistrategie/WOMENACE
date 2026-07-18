@@ -1,0 +1,101 @@
+clone "ConversationTemplate" from="JeanSy/click_bark" id="Papasha/click_bark" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_papasha"
+        }
+    }
+    set "Priority" 100
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="ACTION" {
+            set "m_SerAction" type="SetFlag" {
+                set "FlagName" "click_bark_papasha"
+                set "FlagValue" #true
+            }
+        }
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_papasha_va"
+                        set "itemId" "Series_Set_Click_Series_Tone_Positive_005"
+                    }
+                    set "RoleGuid" "Entity"
+                    set "Text" "Understood."
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_papasha_va"
+                        set "itemId" "Series_Chosen_Series_Tone_Positive_002"
+                    }
+                    set "RoleGuid" "Entity"
+                    set "Text" "Form up!"
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_papasha_va"
+                        set "itemId" "Series_Tone_Positive_004"
+                    }
+                    set "RoleGuid" "Entity"
+                    set "Text" "My turn?"
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/click_enemy_threatening_obj_zone" id="Papasha/click_enemy_threatening_obj_zone" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_papasha"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_papasha_va"
+                        set "itemId" "Series_Tone_Positive_006"
+                    }
+                    set "RoleGuid" "Entity"
+                    set "Text" "I will hold the line."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/idle_bark_combat" id="Papasha/idle_bark_combat" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_papasha"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_papasha_va"
+                        set "itemId" "Series_Tone_Positive_007"
+                    }
+                    set "RoleGuid" "JeanSy"
+                    set "Text" "For honour!"
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}

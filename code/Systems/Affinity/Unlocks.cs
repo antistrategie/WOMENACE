@@ -19,7 +19,7 @@ public static class Unlocks
         // Alternate outfits. Armors lists the transmog outfit ids unlocked at this level. The
         // transmog picker greys them out until the level is reached.
         Skins,
-        // A deployable mech form (gated in VoymastinaFormSwapSystem).
+        // A deployable mech form (gated in FormSwapSystem).
         Mech,
         // An SSR special weapon granted to the shared inventory at this level. Weapons lists the
         // weapon template ids. Equippable by anyone, but the owner-only bonus lives in SsrImprintSystem.

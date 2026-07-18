@@ -1,0 +1,49 @@
+clone "ConversationTemplate" from="JeanSy/response_kill_anyone_nice" id="Papasha/response_kill" {
+    set "Active" #true
+    set "Roles" index=2 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_papasha"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_papasha_va"
+                        set "itemId" "Series_Kill_Single_Kill_001"
+                    }
+                    set "RoleGuid" "JeanSy"
+                    set "Text" "We held it."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/response_taking_fire_anyone" id="Papasha/response_taking_fire_anyone" {
+    set "Active" #true
+    set "Roles" index=2 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_papasha"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_papasha_va"
+                        set "itemId" "Series_Skill01_Single_Skill_001"
+                    }
+                    set "RoleGuid" "JeanSy"
+                    set "Text" "I will protect everyone, no matter what."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}

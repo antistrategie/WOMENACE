@@ -1,0 +1,181 @@
+clone "EntityTemplate" from="player_squad.sy" id="player_squad.papasha" {
+    append "Tags" "wmgfl_papasha"
+    set "Title" {
+        set "m_DefaultTranslation" "POL-03 Security Management Department"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "A warm-hearted Doll who doesn't know how to say \"no\", she has become a versatile helper through self-study in order to better handle any request. She is willing to give everything to protect everyone. When you encounter difficulties, feel free to rely on her. No matter what it is, Papasha will make it happen!"
+    }
+
+    set "Badge" asset="papasha/badge_mini"
+    set "BadgeWhite" asset="papasha/badge_mini"
+    clear "Items"
+    append "Items" "armor.player_fatigues"
+    append "Items" "weapon.papasha_ppsh"
+}
+
+clone "UnitLeaderTemplate" from="squad_leader.sy" id="squad_leader.papasha_foot" {
+    set "InfantryUnitTemplate" "player_squad.papasha"
+    set "SpeakerTemplate" "wmgfl_papasha_speaker"
+    set "CustomHead" #null
+    set "UnitTitle" {
+        set "m_DefaultTranslation" "Tactical Doll"
+    }
+    set "UnitDescription" {
+        set "m_DefaultTranslation" "A warm-hearted Doll who doesn't know how to say \"no\", she has become a versatile helper through self-study in order to better handle any request. She is willing to give everything to protect everyone. When you encounter difficulties, feel free to rely on her. No matter what it is, Papasha will make it happen!"
+    }
+
+    set "InitialAttributes" index=0 88
+    set "InitialAttributes" index=1 70
+    set "InitialAttributes" index=2 75
+    set "InitialAttributes" index=3 100
+    set "InitialAttributes" index=4 100
+    set "InitialAttributes" index=5 20
+    set "InitialAttributes" index=6 80
+
+    set "QualityLevel" 3
+    set "GrowthPotential" 5
+    set "FixedSupplyCost" 60
+    set "SquaddieTax" 35
+    set "Rarity" 4
+
+    set "InitialPerk" "perk.deploy_decoy"
+    set "PerkTrees" index=0 "perk_tree.papasha"
+
+    set "Slot" asset="papasha/slot"
+    set "SlotInactive" asset="papasha/slot_inactive"
+    set "SlotBadge" asset="papasha/slot_badge"
+
+    set "BadgeDragged" asset="papasha/badge_dragged"
+    set "BigBadge" asset="papasha/big_badge"
+    set "BadgeUnitWindow" asset="papasha/badge_unit_window"
+    set "BadgeMini" asset="papasha/badge_mini"
+
+    set "HiringSelectBarkSound" {
+        set "bankId" "wmgfl_tactical_barks_papasha_va"
+        set "itemId" "Series_Chosen_Series_Tone_Positive_002"
+    }
+    set "HiredBarkSound" {
+        set "bankId" "wmgfl_tactical_barks_papasha_va"
+        set "itemId" "Single_Obtain_SSR_001"
+    }
+
+    set "PromotionBarkSounds" index=0 {
+        set "PerkTier" 1
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_papasha_va"
+            set "itemId" "Series_Up_002"
+        }
+    }
+    set "PromotionBarkSounds" index=1 {
+        set "PerkTier" 2
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_papasha_va"
+            set "itemId" "Series_Up_004"
+        }
+    }
+    set "PromotionBarkSounds" index=2 {
+        set "PerkTier" 3
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_papasha_va"
+            set "itemId" "Series_Up_005"
+        }
+    }
+    set "PromotionBarkSounds" index=3 {
+        set "PerkTier" 4
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_papasha_va"
+            set "itemId" "Series_Up_006"
+        }
+    }
+
+    clear "EmotionalStateResponses"
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Eager"
+        set "Text" {
+            set "m_DefaultTranslation" "Hello, Commander. Can I help you with anything?"
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_papasha_va"
+            set "itemId" "Single_Login_001"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Determined"
+        set "Text" {
+            set "m_DefaultTranslation" "Still lots of work to do. If we're outclassed, effort is our only option."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_papasha_va"
+            set "itemId" "Single_Friendliness_003"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Overconfident"
+        set "Text" {
+            set "m_DefaultTranslation" "It's an honour to serve with you, Commander. I'll keep upholding that honour, I promise."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_papasha_va"
+            set "itemId" "Single_Friendliness_010"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Euphoric"
+        set "Text" {
+            set "m_DefaultTranslation" "Today's a really happy day. Commander, just say the word, whatever you need."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_papasha_va"
+            set "itemId" "Single_Acquire_R_001"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Hesitant"
+        set "Text" {
+            set "m_DefaultTranslation" "Even an old model like me can still help the team if I work hard... right, Commander?"
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_papasha_va"
+            set "itemId" "Series_Daily_007"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Frustrated"
+        set "Text" {
+            set "m_DefaultTranslation" "Commander, please don't scare me like that again."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_papasha_va"
+            set "itemId" "Series_Daily_002"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Disheartened"
+        set "Text" {
+            set "m_DefaultTranslation" "If I keep making you and the Captain worry, I still have work to do."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_papasha_va"
+            set "itemId" "Single_Friendliness_008"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Miserable"
+        set "Text" {
+            set "m_DefaultTranslation" "..."
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "GoodwillTowards"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "AnimosityTowards"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+}

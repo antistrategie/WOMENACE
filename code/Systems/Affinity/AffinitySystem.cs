@@ -76,7 +76,7 @@ public sealed class AffinitySystem : JiangyuSystem
     public override void OnUnload()
     {
         // Drop the warn sink so the shared static does not keep this (torn-down) system's Context
-        // alive, mirroring how VoymastinaFormSwapSystem unsubscribes Affinity.Changed.
+        // alive, mirroring how FormSwapSystem unsubscribes Affinity.Changed.
         Affinity.Warn = null;
     }
 

@@ -11,9 +11,16 @@ using UnityEngine.UIElements;
 
 namespace WOMENACE.Code;
 
-// The Voymastina form swap: a button on her Armory (squad-menu) leader panel that converts her
-// between her squad-leader form and her mech-pilot form. SquadLeader and Pilot are separate runtime
-// classes, so the "swap" replaces her entry in the roster's hired list with the other form.
+// The form swap: a button on the Armory (squad-menu) leader panel that converts a doll between her
+// two forms. SquadLeader and Pilot are separate runtime classes, so the "swap" replaces her entry in
+// the roster's hired list with the other form. Which dolls swap, and between which forms, is the
+// Pairs table: Voymastina is a squad leader with a mech-pilot alternate, Papasha a squad leader with
+// a vanilla-walker-pilot alternate.
+//
+// Each pair names its BASE form (the acquirable one: pickable at new game and dossier-granted) and
+// its ALT form (reachable only through this swap). The alt form is affinity-gated exactly when the
+// character has a Feature.Mech entry in Unlocks; a pair without one swaps freely. Returning to the
+// base form is always free.
 //
 // What carries vs. what is per-form:
 //   - Attributes are PER-FORM. A Pilot and a SquadLeader have different attribute sets, so each form
@@ -24,7 +31,7 @@ namespace WOMENACE.Code;
 //
 // Both forms are kept alive and reused within a session (see DoSwap): the swap hands the roster slot
 // the OTHER form's live object and stashes the outgoing one. Reusing the live object mints nothing and
-// preserves everything (attributes, equipped gear, the mech's chassis + icon) exactly. The stashes are
+// preserves everything (attributes, equipped gear, a pilot's chassis + icon) exactly. The stashes are
 // session-only, so the FIRST swap to a form after a reload has no stash and rebuilds it from template +
 // the persisted snapshot.
 //
@@ -36,31 +43,89 @@ namespace WOMENACE.Code;
 //     invisibly while the real owned instance still shows unequipped (e.g. 0/1) in the choose-armour
 //     list. Items live in the single global inventory shared by every leader, so this never snapshots
 //     or dedupes item counts.
-//   - The MECH's chassis is restored the same way: bind an existing owned Vehicle (default or the erwin
-//     skin, each separately owned) and discard the freshly-minted ghost chassis, so the equipped
-//     chassis shows in the list. Duplicate owned mech chassis (from pre-fix swaps) are collapsed to one
-//     of each.
-public sealed class VoymastinaFormSwapSystem : JiangyuSystem
+//   - A pilot's chassis is restored the same way, but the policy depends on the pair. A pair with
+//     RestrictedChassisIds (Voymastina's mech) owns a private chassis set: bind an existing owned
+//     instance, grant one if none exists, and collapse duplicates. A pair without (Papasha) rides the
+//     player's regular vehicles: rebind the saved choice only if an owned instance is free, never
+//     grant, never dedupe, and riding none is a valid state (the armoury assigns one).
+public sealed class FormSwapSystem : JiangyuSystem
 {
-    private const string HumanTemplateId = "squad_leader.voymastina";
-    private const string MechTemplateId = "pilot.voymastina_mech";
+    private sealed class FormPair
+    {
+        // Log/diagnostic label.
+        public string Character;
+        // The acquirable form: pickable at new game and granted by its dossier.
+        public string BaseFormId;
+        // The swap-only form: never in a pick pool or dossier.
+        public string AltFormId;
+        // Non-empty for a pilot form with a private chassis set (granted, deduped, never shared).
+        // Empty for a pilot form that rides the player's regular vehicles.
+        public string[] RestrictedChassisIds = [];
+        // The chassis the pilot template's InitialVehicleItem mints, kept on a fresh rebuild.
+        public string DefaultChassisId;
+        public Func<string> ToAltLabel;
+        // Label while the alt form is affinity-locked, formatted with the unlock level. Null for a
+        // pair whose alt form is never gated.
+        public Func<int, string> ToAltLockedLabel;
+        public Func<string> ToBaseLabel;
+        // Role names for the stats-preview tab row on hiring info panels (see OnHiringInfoInit).
+        public Func<string> BaseTabLabel;
+        public Func<string> AltTabLabel;
+    }
 
-    // The mech's two switchable chassis (default + erwin skin). Each is a separately-owned vehicle item.
-    // Exactly one of each should exist in the shared inventory.
-    private const string MechDefaultVehicleId = "vehicle.voymastina_mech";
-    private const string MechErwinVehicleId = "vehicle.voymastina_mech_erwin";
+    private static readonly FormPair[] Pairs =
+    [
+        new FormPair
+        {
+            Character = "voymastina",
+            BaseFormId = "squad_leader.voymastina",
+            AltFormId = "pilot.voymastina_mech",
+            RestrictedChassisIds = ["vehicle.voymastina_mech", "vehicle.voymastina_mech_erwin"],
+            DefaultChassisId = "vehicle.voymastina_mech",
+            ToAltLabel = () => Locale.Text("WOMENACE::ui/deploy_sinbreaker", "DEPLOY SINBREAKER"),
+            ToAltLockedLabel = lv => string.Format(
+                Locale.Text("WOMENACE::ui/deploy_sinbreaker_locked", "SINBREAKER (LV.{0})"), lv),
+            ToBaseLabel = () => Locale.Text("WOMENACE::ui/deploy_infantry", "DEPLOY INFANTRY"),
+            BaseTabLabel = () => Locale.Text("WOMENACE::ui/form_tab_sl", "SQUAD LEADER"),
+            AltTabLabel = () => Locale.Text("WOMENACE::ui/form_tab_sinbreaker", "SINBREAKER"),
+        },
+        new FormPair
+        {
+            Character = "papasha",
+            BaseFormId = "squad_leader.papasha_foot",
+            AltFormId = "pilot.papasha",
+            ToAltLabel = () => Locale.Text("WOMENACE::ui/deploy_pilot", "DEPLOY PILOT"),
+            ToBaseLabel = () => Locale.Text("WOMENACE::ui/deploy_infantry", "DEPLOY INFANTRY"),
+            BaseTabLabel = () => Locale.Text("WOMENACE::ui/form_tab_sl", "SQUAD LEADER"),
+            AltTabLabel = () => Locale.Text("WOMENACE::ui/form_tab_pilot", "PILOT"),
+        },
+    ];
 
-    // Both forms are kept alive between swaps so each preserves its own state exactly (attributes,
-    // perks, squaddies, equipment, the mech's equipped vehicle + icon). Reusing the live object avoids
-    // rebuilding it, which would mint fresh gear into the global owned-items list (duplicates) and
-    // reset the form to template defaults. Session-only: null after a reload, where the first swap to
-    // a form rebuilds it from template + snapshot.
-    private BaseUnitLeader _stashedMech;
-    private BaseUnitLeader _stashedHuman;
+    // Both forms of a pair are kept alive between swaps so each preserves its own state exactly
+    // (attributes, perks, squaddies, equipment, a pilot's equipped vehicle + icon), keyed by form
+    // template id. Reusing the live object avoids rebuilding it, which would mint fresh gear into the
+    // global owned-items list (duplicates) and reset the form to template defaults. Session-only:
+    // empty after a reload, where the first swap to a form rebuilds it from template + snapshot.
+    private readonly Dictionary<string, BaseUnitLeader> _stashed = new(StringComparer.Ordinal);
 
-    // Set while a dossier redeem is masking Voymastina's stashed squad-leader form as already-hirable
-    // (see OnDossierRedeemPre), so the postfix knows to unmask it.
-    private bool _maskedHumanInHirable;
+    // Base-form template ids a dossier redeem is currently masking as already-hirable
+    // (see OnDossierRedeemPre), so the postfix knows what to unmask.
+    private readonly List<string> _maskedBaseIds = [];
+
+    // Stats-preview leaders built for hiring info panels, keyed by form template id. Never hired,
+    // never in the roster: they exist so UnitStatsAndAttributesPanel has a leader to derive stat
+    // values from. Session-only.
+    private readonly Dictionary<string, BaseUnitLeader> _previewLeaders = new(StringComparer.Ordinal);
+
+    // The last leader instance a hiring info panel showed for each form template id (real roster or
+    // pick-dialog instances and previews alike), so flipping back to a form re-shows the instance the
+    // game itself rendered rather than a fresh preview.
+    private readonly Dictionary<string, BaseUnitLeader> _shownLeaders = new(StringComparer.Ordinal);
+
+    // Context of the most recent hiring-info render, for the tab-click re-render. One set suffices:
+    // only one info panel is interactable at a time.
+    private int _lastHiringStatus;
+    private string _shownFormId;
 
     public override void OnInit()
     {
@@ -77,14 +142,20 @@ public sealed class VoymastinaFormSwapSystem : JiangyuSystem
         Context.Patches.Postfix("Il2CppMenace.UI.Strategy.UnitWindow", "SetLeader", OnWindowChanged);
         Context.Patches.Postfix("Il2CppMenace.UI.Strategy.UnitWindow", "Refresh", OnWindowChanged);
 
-        // Stop a squad-leader dossier from rolling a duplicate Voymastina while she is in her mech
-        // form (her squad-leader form is stashed out of the roster then, so it reads as unacquired).
+        // Stats preview on hiring info panels (the initial-leaders pick dialog and the hiring screen
+        // share HiringUnitInfo): a SQUAD LEADER / PILOT tab row above the native STATS / ATTRIBUTES
+        // tabs flips the displayed template between a pair doll's two forms. Display-only: the pick
+        // and hire selections are slot-based, so re-rendering the info panel changes nothing they act on.
+        Context.Patches.Postfix("Il2CppMenace.UI.Strategy.HiringUnitInfo", "Init", OnHiringInfoInit);
+
+        // Stop a dossier from rolling a duplicate of a doll whose base form is stashed out of the
+        // roster while her alt form is active (the stashed form reads as unacquired then).
         // See OnDossierRedeemPre.
         Context.Patches.Prefix("Il2CppMenace.Items.DossierItemTemplate", "Redeem", OnDossierRedeemPre);
         Context.Patches.Postfix("Il2CppMenace.Items.DossierItemTemplate", "Redeem", OnDossierRedeemPost);
 
-        // Re-evaluate the button when affinity changes (a gift), so reaching the mech level ungreys
-        // it without leaving and re-entering the screen.
+        // Re-evaluate the button when affinity changes (a gift), so reaching a gated form's level
+        // ungreys it without leaving and re-entering the screen.
         Affinity.Changed += OnAffinityChanged;
     }
 
@@ -101,30 +172,78 @@ public sealed class VoymastinaFormSwapSystem : JiangyuSystem
             UpdateSwapButton(window);
     }
 
-    // A squad-leader dossier redeems a random not-yet-acquired squad leader. While Voymastina is in
-    // her mech form, her squad-leader form (squad_leader.voymastina) is stashed OUT of the roster
-    // (DoSwap replaces her roster slot with the pilot), so the game reads it as never-acquired and the
-    // dossier could roll it, handing out a SECOND Voymastina squad leader alongside the mech.
+    // The pair a leader template id belongs to, or null.
+    private static FormPair PairFor(string templateId)
+    {
+        if (templateId == null)
+            return null;
+        foreach (var pair in Pairs)
+            if (pair.BaseFormId == templateId || pair.AltFormId == templateId)
+                return pair;
+        return null;
+    }
+
+    // The persisted per-form snapshots. Saves recorded when the swap was Voymastina-only store them
+    // under the legacy VoymastinaFormSwapSystem+FormSwapState identity: fold that blob in on first
+    // access, then leave it empty.
+    // TODO: remove this migration (the fold-in below and the VoymastinaFormSwapSystem holder at the
+    // bottom of the file) once released saves have had a release or two to fold in.
+    private FormSwapState SwapState
+    {
+        get
+        {
+            var state = Context.State.Get<FormSwapState>();
+            var legacy = Context.State.Get<VoymastinaFormSwapSystem.FormSwapState>();
+            if (legacy.Forms.Count > 0)
+            {
+                foreach (var kv in legacy.Forms)
+                {
+                    if (kv.Value == null || state.Forms.ContainsKey(kv.Key))
+                        continue;
+                    state.Forms[kv.Key] = new FormSnapshot
+                    {
+                        Attributes = kv.Value.Attributes ?? [],
+                        Perks = kv.Value.Perks ?? [],
+                        SquaddieIds = kv.Value.SquaddieIds ?? [],
+                        EquippedItemTemplateIds = kv.Value.EquippedItemTemplateIds ?? [],
+                        VehicleTemplateId = kv.Value.VehicleTemplateId,
+                    };
+                }
+                legacy.Forms.Clear();
+                Context.Log.Info("form swap: migrated legacy Voymastina snapshots");
+            }
+            return state;
+        }
+    }
+
+    // A dossier redeems a random not-yet-acquired leader. While a doll is in her alt form, her base
+    // form is stashed OUT of the roster (DoSwap replaces her roster slot with the alt), so the game
+    // reads it as never-acquired and the dossier could roll it, handing out a SECOND copy alongside
+    // the alt form.
     //
-    // To exclude her from the roll WITHOUT wasting the dossier, mask her form as already-hirable for
-    // the duration of the redeem: add her template to the roster's hirable list so the pick treats her
-    // as already available and skips her, then remove it again in the postfix. The add + remove are
+    // To exclude her from the roll WITHOUT wasting the dossier, mask the base form as already-hirable
+    // for the duration of the redeem: add its template to the roster's hirable list so the pick treats
+    // it as already available and skips it, then remove it again in the postfix. The add + remove are
     // fully contained in the synchronous redeem, so she never actually surfaces in the recruit pool.
     private void OnDossierRedeemPre(PatchInfo info)
     {
         try
         {
-            _maskedHumanInHirable = false;
-            if (!MechFormActive())
-                return;
-
+            _maskedBaseIds.Clear();
             var hirable = StrategyState.Get()?.Roster?.m_HirableLeaders;
-            var human = ResolveTemplate<UnitLeaderTemplate>(HumanTemplateId);
-            if (hirable == null || human == null || hirable.Contains(human))
+            if (hirable == null)
                 return;
 
-            hirable.Add(human);
-            _maskedHumanInHirable = true;
+            foreach (var pair in Pairs)
+            {
+                if (!FormActive(pair.AltFormId))
+                    continue;
+                var baseTemplate = ResolveTemplate<UnitLeaderTemplate>(pair.BaseFormId);
+                if (baseTemplate == null || hirable.Contains(baseTemplate))
+                    continue;
+                hirable.Add(baseTemplate);
+                _maskedBaseIds.Add(pair.BaseFormId);
+            }
         }
         catch (Exception ex)
         {
@@ -136,30 +255,33 @@ public sealed class VoymastinaFormSwapSystem : JiangyuSystem
     {
         try
         {
-            if (!_maskedHumanInHirable)
+            if (_maskedBaseIds.Count == 0)
                 return;
-            _maskedHumanInHirable = false;
 
             var hirable = StrategyState.Get()?.Roster?.m_HirableLeaders;
-            var human = ResolveTemplate<UnitLeaderTemplate>(HumanTemplateId);
-            if (hirable == null || human == null)
-                return;
-
-            hirable.Remove(human);
-
-            // Tripwire: after removing our mask she should be gone. If she is still hirable, the
-            // redeem granted her despite the mask, i.e. the game no longer skips already-hirable
-            // leaders when it rolls (a behavioural change from a game update). Warn loudly so it
-            // surfaces in the log rather than as a silent duplicate, and scrub the extra so the
-            // failure degrades to a wasted roll, never a duplicate Voymastina.
-            if (hirable.Contains(human))
+            foreach (var baseId in _maskedBaseIds)
             {
-                Context.Log.Warn("dossier guard: squad_leader.voymastina still hirable after unmask - "
-                    + "the redeem picked her despite the mask. The 'skip already-hirable' assumption has "
-                    + "broken (game update?). Scrubbing the duplicate; the guard needs revisiting.");
-                while (hirable.Contains(human))
-                    hirable.Remove(human);
+                var baseTemplate = ResolveTemplate<UnitLeaderTemplate>(baseId);
+                if (hirable == null || baseTemplate == null)
+                    continue;
+
+                hirable.Remove(baseTemplate);
+
+                // Tripwire: after removing our mask the form should be gone. If it is still hirable,
+                // the redeem granted it despite the mask, i.e. the game no longer skips
+                // already-hirable leaders when it rolls (a behavioural change from a game update).
+                // Warn loudly so it surfaces in the log rather than as a silent duplicate, and scrub
+                // the extra so the failure degrades to a wasted roll, never a duplicate doll.
+                if (hirable.Contains(baseTemplate))
+                {
+                    Context.Log.Warn($"dossier guard: {baseId} still hirable after unmask - the redeem "
+                        + "picked it despite the mask. The 'skip already-hirable' assumption has broken "
+                        + "(game update?). Scrubbing the duplicate; the guard needs revisiting.");
+                    while (hirable.Contains(baseTemplate))
+                        hirable.Remove(baseTemplate);
+                }
             }
+            _maskedBaseIds.Clear();
         }
         catch (Exception ex)
         {
@@ -167,9 +289,8 @@ public sealed class VoymastinaFormSwapSystem : JiangyuSystem
         }
     }
 
-    // True when Voymastina is currently in her mech form: the pilot occupies her roster slot, so her
-    // squad-leader form is stashed out of the roster and would otherwise read as unacquired.
-    private bool MechFormActive()
+    // True when the form with this template id currently occupies a roster slot.
+    private bool FormActive(string templateId)
     {
         var hired = StrategyState.Get()?.Roster?.m_HiredLeaders;
         if (hired == null)
@@ -177,60 +298,296 @@ public sealed class VoymastinaFormSwapSystem : JiangyuSystem
         for (int i = 0; i < hired.Count; i++)
         {
             var t = hired[i]?.LeaderTemplate;
-            if (t.IsAlive() && t.GetID() == MechTemplateId)
+            if (t.IsAlive() && t.GetID() == templateId)
                 return true;
         }
         return false;
     }
 
+    // A doll with a form pair gets a SQUAD LEADER / PILOT tab row on hiring info panels, above the
+    // native STATS / ATTRIBUTES tabs, flipping the DISPLAYED template between her two forms. The pick
+    // dialog and hiring screen act on slot selections, never on what the info panel renders, so the
+    // flip is pure preview.
+    private void OnHiringInfoInit(PatchInfo info)
+    {
+        try
+        {
+            var panel = (info.Instance as VisualElement)?.TryCast<HiringUnitInfo>();
+            var leader = (info.Args is { Count: > 0 } ? info.Args[0] : null) as BaseUnitLeader;
+            if (panel == null || leader == null || !leader.IsAlive())
+                return;
+
+            if (info.Args is { Count: > 1 } && info.Args[1] != null)
+            {
+                try { _lastHiringStatus = Convert.ToInt32(info.Args[1]); }
+                catch { }
+            }
+
+            string id = leader.LeaderTemplate.IsAlive() ? leader.LeaderTemplate.GetID() : null;
+            var pair = PairFor(id);
+
+            var row = UI.Find(panel, UiSelector.Name("wm-formtabs"))?.TryCast<VisualElement>();
+            if (pair == null)
+            {
+                if (row != null)
+                    SetVisible(row, false);
+                return;
+            }
+
+            _shownFormId = id;
+            _shownLeaders[id] = leader;
+
+            row ??= BuildFormTabs(panel);
+            if (row == null)
+                return;
+            SetVisible(row, true);
+
+            SelectTab(row, "wm-formtab-base", pair.BaseTabLabel(), id == pair.BaseFormId);
+            SelectTab(row, "wm-formtab-alt", pair.AltTabLabel(), id == pair.AltFormId);
+        }
+        catch (Exception ex)
+        {
+            Context.Log.Warn($"form tabs: init failed: {ex.GetType().Name}: {ex.Message}");
+        }
+    }
+
+    // Build the tab row and insert it directly above the native stats/attributes panel.
+    private VisualElement BuildFormTabs(HiringUnitInfo panel)
+    {
+        try
+        {
+            var stats = panel.m_StatsAndAttributesPanel;
+            var parent = stats?.parent;
+            if (parent == null)
+                return null;
+
+            var row = new VisualElement { name = "wm-formtabs" };
+            row.style.flexDirection = FlexDirection.Row;
+            row.style.marginBottom = new StyleLength(2f);
+            // The row's parent is the info Container, which is 20px wider than the stats panel below
+            // (the panel carries a 10px inset each side). Match it so the tabs line up.
+            row.style.marginLeft = new StyleLength(10f);
+            row.style.marginRight = new StyleLength(10f);
+            row.Add(BuildFormTab(panel, "wm-formtab-base", isBase: true));
+            row.Add(BuildFormTab(panel, "wm-formtab-alt", isBase: false));
+
+            parent.Insert(parent.IndexOf(stats), row);
+            return row;
+        }
+        catch (Exception ex)
+        {
+            Context.Log.Warn($"form tabs: build failed: {ex.GetType().Name}: {ex.Message}");
+            return null;
+        }
+    }
+
+    // One tab: the game's own TabButton, so the row inherits the native tab look. The parameterless
+    // ctor loads the default tab UXML (the string overload treats its argument as a UXML path). Its
+    // Pickable child is the clickable Button.
+    private VisualElement BuildFormTab(HiringUnitInfo panel, string name, bool isBase)
+    {
+        var tab = new Il2CppMenace.UI.TabButton();
+        tab.name = name;
+        tab.style.flexGrow = 1f;
+        var button = UI.Find(tab, UiSelector.TypeName("Button"))?.TryCast<Button>();
+        if (button != null)
+        {
+            button.clickable.clicked += (Action)Jiangyu.Game.Audio.Sound.Click;
+            button.clickable.clicked += (Action)(() => ShowForm(panel, isBase));
+        }
+        return tab;
+    }
+
+    // Re-render an info panel with the requested form. The instance shown is the one the game last
+    // rendered for that form when one exists (the pick dialog's own leader, the hired roster copy),
+    // else a preview minted just for display.
+    private void ShowForm(HiringUnitInfo panel, bool baseForm)
+    {
+        try
+        {
+            var pair = PairFor(_shownFormId);
+            if (pair == null)
+                return;
+            string targetId = baseForm ? pair.BaseFormId : pair.AltFormId;
+            if (targetId == _shownFormId)
+                return;
+
+            _shownLeaders.TryGetValue(targetId, out var target);
+            if (target == null || !target.IsAlive())
+                target = PreviewFor(targetId);
+            if (target == null)
+                return;
+
+            var status = (UnitLeaderStatus)_lastHiringStatus;
+
+            // The perk tree and the standing image on these screens are SIBLINGS of the info panel,
+            // owned by the dialog/screen, so re-render through the game's shared helper that fills
+            // all three (the same one the slot-click path uses).
+            var ui = Il2CppMenace.UI.UIManager.Get();
+            var dialog = ui?.GetCurrentDialog()?.TryCast<Il2CppMenace.UI.PickInitialLeadersDialog>();
+            if (dialog != null)
+            {
+                HiringUIScreen.InitSelectedLeaderHiringScreenElements(
+                    target, status, dialog.m_UnitInfo,
+                    dialog.m_LeaderElement, dialog.m_LeaderBackgroundElement, dialog.m_Perks);
+                return;
+            }
+            var hiring = ui?.GetActiveScreen()?.TryCast<HiringUIScreen>();
+            if (hiring != null)
+            {
+                HiringUIScreen.InitSelectedLeaderHiringScreenElements(
+                    target, status, hiring.m_UnitInfo,
+                    hiring.m_LeaderElement, hiring.m_LeaderBackgroundElement, hiring.m_Perks);
+                return;
+            }
+
+            // No known host: refresh the info panel alone.
+            panel.Init(target, status);
+        }
+        catch (Exception ex)
+        {
+            Context.Log.Warn($"form tabs: show failed: {ex.GetType().Name}: {ex.Message}");
+        }
+    }
+
+    private static void SelectTab(VisualElement row, string name, string label, bool selected)
+    {
+        var tab = UI.Find(row, UiSelector.Name(name))?.TryCast<Il2CppMenace.UI.TabButton>();
+        if (tab == null)
+            return;
+        // ButtonText is a bare auto-property: it never reaches the label child, so set the text
+        // element directly.
+        var text = UI.Find(tab, UiSelector.Name("Text"))?.TryCast<Label>();
+        if (text != null)
+            text.text = label;
+        tab.SetSelected(selected);
+    }
+
+    // A display-only leader for a form template: built once per session, never hired, never in the
+    // roster. It exists so UnitStatsAndAttributesPanel has a leader to derive stat values from.
+    // CreateUnitLeader mints a default loadout into the shared inventory, so the surplus is reconciled
+    // straight away (the preview keeps referencing the item objects for its stat display). A
+    // vehicle-form preview also mints its chassis as an owned vehicle: that record is removed the same
+    // way, the preview never deploys.
+    private BaseUnitLeader PreviewFor(string templateId)
+    {
+        try
+        {
+            if (_previewLeaders.TryGetValue(templateId, out var cached) && cached != null && cached.IsAlive())
+                return cached;
+
+            var template = ResolveTemplate<UnitLeaderTemplate>(templateId);
+            if (template == null)
+                return null;
+
+            var before = CaptureOwnedItemCounts();
+            var vehiclesBefore = OwnedVehicleGuids();
+            var leader = Roster.CreateUnitLeader(template, false);
+            ReconcileMintedItems(before);
+            RemoveMintedVehicles(vehiclesBefore);
+            if (leader == null || !leader.IsAlive())
+                return null;
+            _previewLeaders[templateId] = leader;
+            return leader;
+        }
+        catch (Exception ex)
+        {
+            Context.Log.Warn($"form tabs: preview build failed: {ex.GetType().Name}: {ex.Message}");
+            return null;
+        }
+    }
+
+    private HashSet<string> OwnedVehicleGuids()
+    {
+        var guids = new HashSet<string>(StringComparer.Ordinal);
+        try
+        {
+            var vehicles = StrategyState.Get()?.OwnedItems?.GetVehicles();
+            if (vehicles != null)
+                for (int i = 0; i < vehicles.Count; i++)
+                    if (vehicles[i] != null && vehicles[i].IsAlive())
+                        guids.Add(vehicles[i].GetItemGuid());
+        }
+        catch { }
+        return guids;
+    }
+
+    // Remove owned vehicle records that appeared since the snapshot (a preview pilot's minted chassis).
+    private void RemoveMintedVehicles(HashSet<string> before)
+    {
+        try
+        {
+            var owned = StrategyState.Get()?.OwnedItems;
+            var vehicles = owned?.GetVehicles();
+            if (vehicles == null)
+                return;
+            var minted = new List<string>();
+            for (int i = 0; i < vehicles.Count; i++)
+            {
+                var v = vehicles[i];
+                if (v != null && v.IsAlive() && !before.Contains(v.GetItemGuid()))
+                    minted.Add(v.GetItemGuid());
+            }
+            foreach (var guid in minted)
+            {
+                var item = owned.GetItemByGuid(guid);
+                if (item != null && item.IsAlive())
+                    owned.TryRemoveVehicle(item);
+            }
+        }
+        catch (Exception ex) { Context.Log.Warn($"form tabs: vehicle cleanup failed: {ex.Message}"); }
+    }
+
     private VisualElement BuildSwapButton(VisualElement window)
     {
         var button = new TextButton(Locale.Text("WOMENACE::ui/swap_form", "SWAP FORM"));
-        button.Root.name = "voymastina-formswap";
+        button.Root.name = "wm-formswap";
         button.Root.style.marginRight = new StyleLength(4f);
         button.OnClick(() => DoSwap(window));
         return button.Root;
     }
 
-    // Show the button only on Voymastina (either form), and label it for the target form.
+    // Show the button only on a doll with a form pair (either form), and label it for the target form.
     private void UpdateSwapButton(VisualElement window)
     {
-        var button = UI.Find(window, UiSelector.Name("voymastina-formswap"))?.TryCast<VisualElement>();
+        var button = UI.Find(window, UiSelector.Name("wm-formswap"))?.TryCast<VisualElement>();
         if (button == null)
             return;
 
         string id = CurrentTemplateId(window);
-        bool ours = id == HumanTemplateId || id == MechTemplateId;
-        SetVisible(button, ours);
-        if (!ours)
+        var pair = PairFor(id);
+        SetVisible(button, pair != null);
+        if (pair == null)
             return;
 
         var label = UI.Find(button, UiSelector.TypeName("Label"))?.TryCast<Label>();
 
-        // Returning to the infantry form is always allowed once she is the mech.
-        if (id == MechTemplateId)
+        // Returning to the base form is always allowed once the alt form is active.
+        if (id == pair.AltFormId)
         {
             SetLocked(button, false);
-            label?.text = Locale.Text("WOMENACE::ui/deploy_on_foot", "DEPLOY ON FOOT");
+            label?.text = pair.ToBaseLabel();
             return;
         }
 
-        // Infantry form: deploying the Sinbreaker is gated behind the affinity mech-unlock level.
-        // Below it the button is locked (greyed and non-clickable) and labelled with the level it
-        // needs, so the unlock advertises itself.
+        // Base form: entering the alt form is gated behind the affinity unlock level when the
+        // character has one (Unlocks Feature.Mech). Below it the button is locked (greyed and
+        // non-clickable) and labelled with the level it needs, so the unlock advertises itself.
+        // A pair without an unlock entry swaps freely.
         var leader = window.TryCast<UnitWindow>()?.m_CurrentLeader;
         var characterTag = Affinity.CharacterTag(leader);
-        if (Unlocks.MechUnlocked(characterTag, Affinity.LevelFor(Context, leader)))
+        if (!Unlocks.HasMech(characterTag) || Unlocks.MechUnlocked(characterTag, Affinity.LevelFor(Context, leader)))
         {
             SetLocked(button, false);
-            label?.text = Locale.Text("WOMENACE::ui/deploy_sinbreaker", "DEPLOY SINBREAKER");
+            label?.text = pair.ToAltLabel();
         }
         else
         {
             SetLocked(button, true);
-            label?.text = string.Format(
-                Locale.Text("WOMENACE::ui/deploy_sinbreaker_locked", "SINBREAKER (LV.{0})"),
-                Unlocks.MechLevel(characterTag));
+            int level = Unlocks.MechLevel(characterTag);
+            label?.text = pair.ToAltLockedLabel != null
+                ? pair.ToAltLockedLabel(level)
+                : string.Format(Locale.Text("WOMENACE::ui/swap_form_locked", "FORM LOCKED (LV.{0})"), level);
         }
     }
 
@@ -263,18 +620,21 @@ public sealed class VoymastinaFormSwapSystem : JiangyuSystem
             }
 
             string curId = leader.LeaderTemplate.IsAlive() ? leader.LeaderTemplate.GetID() : null;
-            if (curId != HumanTemplateId && curId != MechTemplateId)
+            var pair = PairFor(curId);
+            if (pair == null)
                 return;
-            string targetId = curId == MechTemplateId ? HumanTemplateId : MechTemplateId;
+            string targetId = curId == pair.AltFormId ? pair.BaseFormId : pair.AltFormId;
 
-            // Gate the infantry -> mech direction by affinity. The button is disabled while locked, so
-            // this only matters if the swap is reached another way. Returning to infantry is free.
-            if (targetId == MechTemplateId)
+            // Gate the base -> alt direction by affinity when the character has an unlock entry. The
+            // button is disabled while locked, so this only matters if the swap is reached another
+            // way. Returning to the base form is free.
+            if (targetId == pair.AltFormId)
             {
                 var characterTag = Affinity.CharacterTag(leader);
-                if (!Unlocks.MechUnlocked(characterTag, Affinity.LevelFor(Context, leader)))
+                if (Unlocks.HasMech(characterTag)
+                    && !Unlocks.MechUnlocked(characterTag, Affinity.LevelFor(Context, leader)))
                 {
-                    Context.Log.Info($"form swap: Sinbreaker locked (needs affinity level {Unlocks.MechLevel(characterTag)})");
+                    Context.Log.Info($"form swap: {pair.AltFormId} locked (needs affinity level {Unlocks.MechLevel(characterTag)})");
                     return;
                 }
             }
@@ -307,27 +667,21 @@ public sealed class VoymastinaFormSwapSystem : JiangyuSystem
             SnapshotForm(curId, leader);
 
             // Keep the outgoing form alive for reuse.
-            if (curId == MechTemplateId)
-                _stashedMech = leader;
-            else
-                _stashedHuman = leader;
+            _stashed[curId] = leader;
 
             // Reuse the stashed target if it is still alive this session, so nothing is minted or
             // reset. Otherwise build it fresh from template and reapply its snapshot (first swap of a
             // session, or after a reload, when no stash exists). Reusing the infantry form is safe
             // because the loader guards the off-mission SuppressionHandler null-deref that its stale
             // squad would otherwise hit when re-shown.
-            BaseUnitLeader target = targetId == MechTemplateId ? _stashedMech : _stashedHuman;
+            _stashed.TryGetValue(targetId, out var target);
             bool reused = target != null && target.IsAlive();
             // Owned-item counts before a rebuild, so the default loadout CreateUnitLeader mints can be
             // reconciled away afterwards (see ReconcileMintedItems). Null when reusing (nothing minted).
             Dictionary<string, int> ownedBefore = null;
             if (reused)
             {
-                if (targetId == MechTemplateId)
-                    _stashedMech = null;
-                else
-                    _stashedHuman = null;
+                _stashed.Remove(targetId);
             }
             else
             {
@@ -367,7 +721,7 @@ public sealed class VoymastinaFormSwapSystem : JiangyuSystem
             // roster commit makes it stick. A reused form already carries its loadout, so skip it.
             if (!reused)
             {
-                ApplyLoadout(targetId, target);
+                ApplyLoadout(pair, targetId, target);
                 // CreateUnitLeader minted a fresh default loadout into the shared inventory. Now that the
                 // saved loadout is equipped from existing instances, drop the minted surplus so the swap
                 // leaves the inventory count unchanged (the leftover free copies are the duplicates).
@@ -477,7 +831,7 @@ public sealed class VoymastinaFormSwapSystem : JiangyuSystem
     {
         try
         {
-            var snap = Context.State.Get<FormSwapState>().For(templateId);
+            var snap = SwapState.For(templateId);
 
             var perks = new List<string>();
             var pl = leader.m_Perks;
@@ -501,8 +855,8 @@ public sealed class VoymastinaFormSwapSystem : JiangyuSystem
                 ? new List<string>()
                 : CurrentItemTemplateIds(leader.GetItems());
 
-            // The mech's selected chassis (default vs erwin) is its equipment. Record the chassis item
-            // template id so a rebuilt Pilot rebinds the same owned chassis rather than the minted default.
+            // A pilot's selected chassis is its equipment. Record the chassis item template id so a
+            // rebuilt Pilot rebinds the same owned chassis rather than a minted or arbitrary one.
             if (leader.IsVehicle())
             {
                 var pilot = leader.TryCast<Pilot>();
@@ -533,7 +887,7 @@ public sealed class VoymastinaFormSwapSystem : JiangyuSystem
     {
         try
         {
-            if (!Context.State.Get<FormSwapState>().Forms.TryGetValue(templateId, out var snap) || snap == null)
+            if (!SwapState.Forms.TryGetValue(templateId, out var snap) || snap == null)
                 return;
 
             // Attributes: a fresh build starts at the template base, so restore this form's own saved
@@ -585,7 +939,7 @@ public sealed class VoymastinaFormSwapSystem : JiangyuSystem
                 leader.TryAddSquaddie(sid);
             leader.ValidateSquaddies();
 
-            // Equipment (items + the mech chassis) is applied SEPARATELY, after the leader is committed to
+            // Equipment (items + a pilot's chassis) is applied SEPARATELY, after the leader is committed to
             // the roster (DoSwap -> ApplyLoadout). Equipping mid-rebuild does not register as in use.
         }
         catch (Exception ex)
@@ -597,20 +951,17 @@ public sealed class VoymastinaFormSwapSystem : JiangyuSystem
     // Equip a rebuilt form's saved loadout from EXISTING owned instances. MUST run after the leader is in
     // the roster (see DoSwap): a leader equipped before it is hired does not register its items as in use,
     // so the owned copy shows 0/1 and an unowned ghost rides the slot. Items bind via GetUnusedInstance
-    // (never minted). The mech chassis is restored the same way.
-    private void ApplyLoadout(string templateId, BaseUnitLeader leader)
+    // (never minted). A pilot's chassis is restored the same way.
+    private void ApplyLoadout(FormPair pair, string templateId, BaseUnitLeader leader)
     {
         try
         {
-            Context.State.Get<FormSwapState>().Forms.TryGetValue(templateId, out var snap);
+            SwapState.Forms.TryGetValue(templateId, out var snap);
 
-            // The mech's loadout is its chassis. Bind an owned chassis (the saved choice, or the
-            // default on the first-ever swap) so the pilot rides a registered instance that shows as
-            // selected, rather than the unregistered ghost CreateUnitLeader mints. The mech has no
-            // item slots beyond that.
+            // A pilot's loadout is its chassis. Restore policy depends on the pair (see RestoreVehicle).
             if (leader.IsVehicle())
             {
-                RestoreVehicle(leader, snap);
+                RestoreVehicle(pair, leader, snap);
                 return;
             }
 
@@ -693,7 +1044,7 @@ public sealed class VoymastinaFormSwapSystem : JiangyuSystem
     // Drop the surplus instances CreateUnitLeader minted: for each item template whose owned count rose
     // above the pre-build snapshot, remove that many UNUSED instances so the count returns to before. The
     // equipped loadout (used instances) is untouched. Only free minted copies go. Vehicle templates are
-    // skipped here (the mech chassis is reconciled in RestoreVehicle).
+    // skipped here (a pilot's chassis is reconciled in RestoreVehicle).
     private void ReconcileMintedItems(Dictionary<string, int> before)
     {
         if (before == null)
@@ -724,11 +1075,19 @@ public sealed class VoymastinaFormSwapSystem : JiangyuSystem
         catch (Exception ex) { Context.Log.Warn($"form swap: mint reconcile failed: {ex.Message}"); }
     }
 
-    // Restore the mech's selected chassis after a rebuild. CreateUnitLeader mints a fresh default
-    // chassis. Like a minted item it is not the player's owned, registered instance, so it rides
-    // invisibly while the owned chassis shows unequipped in the list. Bind an existing owned chassis of
-    // the saved choice instead, discarding the minted one, then collapse any duplicate owned chassis.
-    private void RestoreVehicle(BaseUnitLeader leader, FormSnapshot snap)
+    // Restore a rebuilt pilot's chassis. Two policies:
+    //
+    // RESTRICTED (pair.RestrictedChassisIds non-empty, Voymastina's mech): the chassis set is private
+    // to the doll. CreateUnitLeader mints the default chassis named by the pilot template's
+    // InitialVehicleItem. Like a minted item it is not the player's owned, registered instance, so it
+    // rides invisibly while the owned chassis shows unequipped in the list. Bind an existing owned
+    // chassis of the saved choice instead, granting one if none is owned, then collapse duplicates.
+    //
+    // VANILLA (empty set, Papasha): the chassis pool is the player's regular vehicles. Rebind the
+    // saved choice only from an owned instance no other pilot is riding. Never grant (that would
+    // fabricate a free walker), never dedupe (players legitimately own multiples), and riding none is
+    // a valid state (the armoury's native chassis picker assigns one).
+    private void RestoreVehicle(FormPair pair, BaseUnitLeader leader, FormSnapshot snap)
     {
         try
         {
@@ -736,6 +1095,12 @@ public sealed class VoymastinaFormSwapSystem : JiangyuSystem
             var owned = StrategyState.Get()?.OwnedItems;
             if (pilot == null || owned == null)
                 return;
+
+            if (pair.RestrictedChassisIds.Length == 0)
+            {
+                RestoreVanillaVehicle(pilot, owned, snap);
+                return;
+            }
 
             var minted = pilot.GetVehicle();
             string mintedGuid = minted != null && minted.IsAlive() ? minted.GetItemGuid() : null;
@@ -745,7 +1110,7 @@ public sealed class VoymastinaFormSwapSystem : JiangyuSystem
             // (no snapshot yet).
             var wantedId = snap != null && !string.IsNullOrEmpty(snap.VehicleTemplateId)
                 ? snap.VehicleTemplateId
-                : MechDefaultVehicleId;
+                : pair.DefaultChassisId;
 
             // CreateUnitLeader already minted the chassis named by the pilot template's InitialVehicleItem,
             // and the game set it up in full (modular slots + visual). When that IS the chassis we want
@@ -754,13 +1119,13 @@ public sealed class VoymastinaFormSwapSystem : JiangyuSystem
             // chassis to display.
             if (mintedId != null && mintedId == wantedId)
             {
-                DedupeMechVehicles(owned, pilot);   // collapse the spare owned copy (e.g. from InitialAdditionalUnlockedItems)
+                DedupeRestrictedVehicles(pair, owned, pilot);   // collapse the spare owned copy (e.g. from InitialAdditionalUnlockedItems)
                 return;
             }
 
             // The wanted chassis differs from the minted one (e.g. the erwin skin). Bind an owned
-            // instance of the wanted choice (else any owned mech chassis), excluding the minted one.
-            var existing = FindOwnedVehicle(owned, wantedId, mintedGuid);
+            // instance of the wanted choice (else any owned restricted chassis), excluding the minted one.
+            var existing = FindOwnedRestrictedVehicle(pair, owned, wantedId, mintedGuid);
 
             // No owned instance of the wanted chassis: grant one the same way skins are granted
             // (OwnedItems.AddItem returns the new owned instance).
@@ -776,14 +1141,15 @@ public sealed class VoymastinaFormSwapSystem : JiangyuSystem
 
             if (existing != null)
             {
-                // FindOwnedVehicle falls back to any owned mech chassis when the wanted one is not
-                // found. Surface that divergence rather than silently binding the wrong skin/stats.
+                // FindOwnedRestrictedVehicle falls back to any owned restricted chassis when the wanted
+                // one is not found. Surface that divergence rather than silently binding the wrong
+                // skin/stats.
                 var boundId = VehicleTemplateId(owned, existing);
                 if (boundId != wantedId)
                     Context.Log.Warn($"form swap: chassis '{wantedId}' not owned, binding '{boundId}' instead");
 
                 // Bind the owned chassis WITHOUT first destroying the engine-minted default, so the
-                // default survives as a fallback (DedupeMechVehicles collapses the surplus after).
+                // default survives as a fallback (DedupeRestrictedVehicles collapses the surplus after).
                 // The minted default is the only chassis the game fully sets up (modular slots +
                 // visual). A non-default chassis selected this way may not display until a chassis
                 // picker that initialises it properly exists, so never leave the mech chassis-less.
@@ -800,7 +1166,7 @@ public sealed class VoymastinaFormSwapSystem : JiangyuSystem
                 Context.Log.Warn($"form swap: no chassis to bind for '{wantedId}' (minted present: {mintedGuid != null})");
             }
 
-            DedupeMechVehicles(owned, pilot);
+            DedupeRestrictedVehicles(pair, owned, pilot);
         }
         catch (Exception ex)
         {
@@ -808,10 +1174,63 @@ public sealed class VoymastinaFormSwapSystem : JiangyuSystem
         }
     }
 
-    // An owned mech Vehicle whose item template matches wantedTemplateId (else any owned mech chassis),
-    // excluding the vehicle with excludeGuid (the freshly-minted one). Only the two WOMENACE mech chassis
-    // are candidates, so a non-mech owned vehicle is never bound here.
-    private Vehicle FindOwnedVehicle(OwnedItems owned, string wantedTemplateId, string excludeGuid)
+    // Rebind a vanilla-chassis pilot's saved choice from an owned instance no other pilot is riding.
+    // A rebuilt pilot from a template without InitialVehicleItem starts chassis-less, which is also
+    // the correct end state when the saved chassis is gone or taken.
+    private void RestoreVanillaVehicle(Pilot pilot, OwnedItems owned, FormSnapshot snap)
+    {
+        var wantedId = snap != null ? snap.VehicleTemplateId : null;
+        if (string.IsNullOrEmpty(wantedId))
+            return;
+
+        var inUse = VehicleGuidsInUse(pilot);
+        var vehicles = owned.GetVehicles();
+        if (vehicles == null)
+            return;
+        for (int i = 0; i < vehicles.Count; i++)
+        {
+            var v = vehicles[i];
+            if (v == null || !v.IsAlive() || inUse.Contains(v.GetItemGuid()))
+                continue;
+            if (VehicleTemplateId(owned, v) != wantedId)
+                continue;
+            pilot.SetVehicle(v);
+            return;
+        }
+        Context.Log.Info($"form swap: saved chassis '{wantedId}' not free, leaving the pilot unassigned");
+    }
+
+    // Guids of vehicles currently ridden by any hired or stashed pilot other than the one given.
+    private HashSet<string> VehicleGuidsInUse(Pilot except)
+    {
+        var guids = new HashSet<string>(StringComparer.Ordinal);
+        void Collect(BaseUnitLeader leader)
+        {
+            var p = leader?.TryCast<Pilot>();
+            if (p == null || p.Equals(except))
+                return;
+            var v = p.GetVehicle();
+            if (v != null && v.IsAlive())
+                guids.Add(v.GetItemGuid());
+        }
+        try
+        {
+            var hired = StrategyState.Get()?.Roster?.m_HiredLeaders;
+            if (hired != null)
+                for (int i = 0; i < hired.Count; i++)
+                    Collect(hired[i]);
+            foreach (var stashed in _stashed.Values)
+                if (stashed != null && stashed.IsAlive())
+                    Collect(stashed);
+        }
+        catch (Exception ex) { Context.Log.Warn($"form swap: in-use scan failed: {ex.Message}"); }
+        return guids;
+    }
+
+    // An owned Vehicle from the pair's restricted set whose item template matches wantedTemplateId
+    // (else any owned restricted chassis), excluding the vehicle with excludeGuid (the freshly-minted
+    // one). Only the pair's own chassis are candidates, so a regular owned vehicle is never bound here.
+    private Vehicle FindOwnedRestrictedVehicle(FormPair pair, OwnedItems owned, string wantedTemplateId, string excludeGuid)
     {
         var vehicles = owned.GetVehicles();
         if (vehicles == null)
@@ -825,7 +1244,7 @@ public sealed class VoymastinaFormSwapSystem : JiangyuSystem
             if (excludeGuid != null && v.GetItemGuid() == excludeGuid)
                 continue;
             string id = VehicleTemplateId(owned, v);
-            if (id != MechDefaultVehicleId && id != MechErwinVehicleId)
+            if (Array.IndexOf(pair.RestrictedChassisIds, id) < 0)
                 continue;
             if (id == wantedTemplateId)
                 return v;
@@ -834,10 +1253,10 @@ public sealed class VoymastinaFormSwapSystem : JiangyuSystem
         return fallback;
     }
 
-    // Keep at most one owned instance of each mech chassis. Pre-fix swaps (and a rebuild) can leave
-    // duplicate default chassis piled up in the shared inventory. Collapse them so the list shows one of
-    // each. The chassis the Pilot is riding is always kept. Surplus copies are removed.
-    private void DedupeMechVehicles(OwnedItems owned, Pilot pilot)
+    // Keep at most one owned instance of each restricted chassis. Pre-fix swaps (and a rebuild) can
+    // leave duplicate default chassis piled up in the shared inventory. Collapse them so the list shows
+    // one of each. The chassis the Pilot is riding is always kept. Surplus copies are removed.
+    private void DedupeRestrictedVehicles(FormPair pair, OwnedItems owned, Pilot pilot)
     {
         try
         {
@@ -866,7 +1285,7 @@ public sealed class VoymastinaFormSwapSystem : JiangyuSystem
                 if (guid == ridingGuid)
                     continue;
                 string id = VehicleTemplateId(owned, v);
-                if (id != MechDefaultVehicleId && id != MechErwinVehicleId)
+                if (Array.IndexOf(pair.RestrictedChassisIds, id) < 0)
                     continue;
                 if (seen.Add(id))
                     continue;             // first of this template: keep
@@ -944,7 +1363,27 @@ public sealed class VoymastinaFormSwapSystem : JiangyuSystem
         // inventory. This records the equip CHOICE so a rebuilt form re-equips the same loadout from
         // the existing owned instances (rather than reverting to the template default).
         public List<string> EquippedItemTemplateIds { get; set; } = [];
-        // The mech form's selected chassis item template id (default vs erwin skin). Null for infantry.
+        // A pilot form's selected chassis item template id. Null for infantry forms.
+        public string VehicleTemplateId { get; set; }
+    }
+}
+
+// Save-file identity for snapshots recorded when the form swap was Voymastina-only. Persisted state is
+// keyed by type full name, so this holder keeps those blobs readable: FormSwapSystem.SwapState folds
+// them into the multi-character FormSwapState on first access and leaves this one empty.
+public sealed class VoymastinaFormSwapSystem
+{
+    public sealed class FormSwapState
+    {
+        public Dictionary<string, FormSnapshot> Forms { get; set; } = [];
+    }
+
+    public sealed class FormSnapshot
+    {
+        public List<float> Attributes { get; set; } = [];
+        public List<string> Perks { get; set; } = [];
+        public List<int> SquaddieIds { get; set; } = [];
+        public List<string> EquippedItemTemplateIds { get; set; } = [];
         public string VehicleTemplateId { get; set; }
     }
 }

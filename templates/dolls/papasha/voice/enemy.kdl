@@ -1,0 +1,149 @@
+clone "ConversationTemplate" from="JeanSy/building_destroyed" id="Papasha/building_destroyed" {
+    set "Active" #true
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_papasha"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_papasha_va"
+                        set "itemId" "Series_Ultimate_Single_Ultimate_SSR_001"
+                    }
+                    set "RoleGuid" "Killer"
+                    set "Text" "Nobody dies on my watch!"
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/building_destroyed_neighborhood" id="Papasha/building_destroyed_neighborhood" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_papasha"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_papasha_va"
+                        set "itemId" "Series_Ultimate_Single_Ultimate_SSR_001"
+                    }
+                    set "RoleGuid" "Entity"
+                    set "Text" "Nobody dies on my watch!"
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/enemy_damaged" id="Papasha/enemy_damaged" {
+    set "Active" #true
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_papasha"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_papasha_va"
+                        set "itemId" "Series_Hit_Series_Tone_Positive_003"
+                    }
+                    set "RoleGuid" "Attacker"
+                    set "Text" "Here we go!"
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/enemy_fleeing" id="Papasha/enemy_fleeing" {
+    set "Active" #true
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_papasha"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_papasha_va"
+                        set "itemId" "Series_Skill02_Single_Skill_002"
+                    }
+                    set "RoleGuid" "JeanSy"
+                    set "Text" "Shall I assist?"
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/enemy_killed" id="Papasha/enemy_killed" {
+    set "Active" #true
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_papasha"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_papasha_va"
+                        set "itemId" "Series_Kill_Single_Kill_001"
+                    }
+                    set "RoleGuid" "Killer"
+                    set "Text" "We held it."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/enemy_suppressed" id="Papasha/enemy_suppressed" {
+    set "Active" #true
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=3 type="HasOneTag" {
+            set "Tags" "wmgfl_papasha"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_papasha_va"
+                        set "itemId" "Series_Chosen_Auto_Series_Hit_Series_Tone_Positive_001"
+                    }
+                    set "RoleGuid" "JeanSy"
+                    set "Text" "Charge!"
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
