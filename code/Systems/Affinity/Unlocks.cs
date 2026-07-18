@@ -72,6 +72,10 @@ public static class Unlocks
             new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.soppo_redline" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_soppo/lv2", "Outfit(s): Redline Racer") },
             new Entry { Level = 3, Feature = Feature.Weapon, Weapons = new[] { "specialweapon.soppo_ssr" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_soppo/lv3", "SSR Weapon: Skysunderer's Howl") },
         },
+        ["wmgfl_helen"] = new[]
+        {
+            new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.helen_starlit_waltz" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_helen/lv2", "Outfit(s): Starlit Waltz") },
+        },
     };
 
     public static IReadOnlyList<Entry> EntriesFor(string characterTag)

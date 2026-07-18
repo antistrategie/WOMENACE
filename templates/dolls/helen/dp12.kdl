@@ -1,0 +1,44 @@
+clone "WeaponTemplate" from="weapon.generic_combat_shotgun_tier_1_cs185" id="weapon.helen_dp12" {
+    set "Title" {
+        set "m_DefaultTranslation" "DP-12"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Shotgun"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "A firearm that is highly compatible with Helen. Modified based on her combat preferences. Its magazine capacity has been increased, making it more suitable for mobile tactics in additional situations."
+    }
+    set "Model" asset="weapon/dp12/main"
+    set "SkillsGranted" index=0 "active.fire_helen_dp12"
+    set "IconEquipment" asset="weapon/dp12/IconEquipment"
+    set "IconEquipmentDisabled" asset="weapon/dp12/IconEquipmentDisabled"
+    set "IconSkillBar" asset="weapon/dp12/IconSkillBar"
+    set "IconSkillBarDisabled" asset="weapon/dp12/IconSkillBarDisabled"
+
+    set "Damage" 10.0
+    set "ArmorPenetration" 10.0
+    set "Suppression" 4.0
+
+    set "BlackMarketMaxQuantity" 0
+}
+
+clone "SkillTemplate" from="active.fire_combat_shotgun_tier_1" id="active.fire_helen_dp12" {
+    clear "SoundsOnAttack"
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_sg_addition_bank"
+        set "itemId" "sg_single"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "weapons_soundbank"
+        set "itemId" "combat_shotgun_casings"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_sg_addition_bank"
+        set "itemId" "sg_single_distant"
+    }
+    clear "SoundsOnAttackFar"
+    append "SoundsOnAttackFar" {
+        set "bankId" "wmgfl_weapons_sg_addition_bank"
+        set "itemId" "sg_single_distant"
+    }
+}

@@ -1,0 +1,34 @@
+clone "ConversationTemplate" from="Carda_Early/arrival_carda" id="Helen/arrival_helen" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_helen"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_helen_va"
+                        set "itemId" "Series_Battle_Start_Series_Tone_Positive_002"
+                    }
+                    set "RoleGuid" "Carda"
+                    set "Text" "Let's move."
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_helen_va"
+                        set "itemId" "Series_Tone_Positive_001"
+                    }
+                    set "RoleGuid" "Carda"
+                    set "Text" "I will protect you."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}

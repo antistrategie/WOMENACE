@@ -1,0 +1,76 @@
+clone "ConversationTemplate" from="Carda_Early/click_bark" id="Helen/click_bark" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_helen"
+        }
+    }
+    set "Priority" 100
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="ACTION" {
+            set "m_SerAction" type="SetFlag" {
+                set "FlagName" "click_bark_helen"
+                set "FlagValue" #true
+            }
+        }
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_helen_va"
+                        set "itemId" "Series_Set_Click_Series_Tone_Positive_004"
+                    }
+                    set "RoleGuid" "Entity"
+                    set "Text" "Intel confirmed."
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_helen_va"
+                        set "itemId" "Series_Chosen_Auto_Series_Tone_Positive_007"
+                    }
+                    set "RoleGuid" "Entity"
+                    set "Text" "Understood."
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_helen_va"
+                        set "itemId" "Series_Chosen_Series_Tone_Positive_006"
+                    }
+                    set "RoleGuid" "Entity"
+                    set "Text" "Leave it to me."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/moving_finished" id="Helen/moving_finished" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=1 type="HasOneTag" {
+            set "Tags" "wmgfl_helen"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_helen_va"
+                        set "itemId" "Series_Set_Fall_Series_Tone_Positive_005"
+                    }
+                    set "RoleGuid" "Entity"
+                    set "Text" "Arrived at the designated location."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}

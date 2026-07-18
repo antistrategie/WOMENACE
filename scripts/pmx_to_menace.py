@@ -71,6 +71,8 @@ class TransferConfig:
     rigid_bind_meshes: dict[str, str]
     mesh_textures: dict[str, str]
     fist_rotations: dict[str, float]
+    hang_down_chain_prefixes: list[str]
+    dress_leg_prefixes: list[str]
 
     @staticmethod
     def load(path: Path) -> "TransferConfig":
@@ -95,6 +97,8 @@ class TransferConfig:
             rigid_bind_meshes=dict(data.get("rigid_bind_meshes", {})),
             mesh_textures=dict(data.get("mesh_textures", {})),
             fist_rotations={k: float(v) for k, v in data.get("fist_rotations", {}).items()},
+            hang_down_chain_prefixes=list(data.get("hang_down_chain_prefixes", [])),
+            dress_leg_prefixes=list(data.get("dress_leg_prefixes", [])),
         )
 
 
@@ -531,19 +535,57 @@ def _avatar_bone_yz(
     return y.copy(), z.copy()
 
 
+def _detect_facing_from_foot_mesh(
+    armature_obj: "bpy.types.Object", mesh_objects: list["bpy.types.Object"]
+) -> "bool | None":
+    """Whether the PMX character faces world +Y, read from the foot MESH.
+
+    The toe box holds most of a foot's vertex mass and extends forward of
+    the ankle joint, so the centroid of the Foot_L/Foot_R-weighted vertices
+    sits on the facing side of the ankle. Bone tail direction is NOT a
+    reliable facing signal: some riggers anchor 足首's tail at the heel,
+    others at the toe, and a wrong guess flips the foot rest retarget.
+
+    Returns None when no foot-weighted vertices exist.
+    """
+    offset = mathutils.Vector()
+    count = 0
+    for foot_name in ("Foot_L", "Foot_R"):
+        bone = armature_obj.data.bones.get(foot_name)
+        if bone is None:
+            continue
+        ankle = armature_obj.matrix_world @ bone.head_local
+        for mesh in mesh_objects:
+            vg = mesh.vertex_groups.get(foot_name)
+            if vg is None:
+                continue
+            group_index = vg.index
+            for v in mesh.data.vertices:
+                for gw in v.groups:
+                    if gw.group == group_index and gw.weight > 0.3:
+                        offset += (mesh.matrix_world @ v.co) - ankle
+                        count += 1
+                        break
+    if count == 0:
+        return None
+    return (offset / count).y > 0
+
+
 def detect_pmx_mirror_frame(
-    armature_obj: "bpy.types.Object", reference_tpose: ReferenceTPose
+    armature_obj: "bpy.types.Object",
+    mesh_objects: list["bpy.types.Object"],
+    reference_tpose: ReferenceTPose,
 ) -> MirrorFrame:
     """Detect L/R-side and facing-direction flips between the PMX rig and
     the reference Avatar.
 
     L/R side: compare the UpperArm_L tail-direction X sign on both rigs.
 
-    Facing: compare Foot_L tail-direction Y on both rigs. PMX/MMD's 足首.L
-    has its TAIL at the heel anchor (BEHIND the ankle, opposite facing).
-    Unity humanoid foot bones have their TAIL at the TOE (forward of the
-    ankle, same as facing). The foot's Y direction therefore has opposite
-    meaning between the two rigs.
+    Facing: the PMX side reads the foot MESH (toe mass forward of the
+    ankle), falling back to the MMD heel-anchor bone convention (足首.L
+    tail BEHIND the ankle) when no foot weights exist. The reference Avatar
+    uses Unity's toe-anchor convention, where foot tail direction matches
+    facing.
     """
     pmx_upper_l = armature_obj.pose.bones.get("UpperArm_L")
     pmx_l_on_plus_x = pmx_upper_l is not None and (pmx_upper_l.tail - pmx_upper_l.head).x > 0
@@ -551,16 +593,21 @@ def detect_pmx_mirror_frame(
     ref_l_on_plus_x = ref_upper_l_y is not None and ref_upper_l_y.x > 0
     mirror_x = pmx_l_on_plus_x != ref_l_on_plus_x
 
-    pmx_foot_l = armature_obj.pose.bones.get("Foot_L")
-    pmx_foot_dir_y = (pmx_foot_l.tail - pmx_foot_l.head).y if pmx_foot_l else 0.0
-    pmx_faces_plus_y = pmx_foot_dir_y < 0  # PMX heel-anchor: facing is opposite.
+    pmx_faces_plus_y = _detect_facing_from_foot_mesh(armature_obj, mesh_objects)
+    facing_source = "foot mesh"
+    if pmx_faces_plus_y is None:
+        facing_source = "foot bone heel-anchor fallback"
+        pmx_foot_l = armature_obj.pose.bones.get("Foot_L")
+        pmx_foot_dir_y = (pmx_foot_l.tail - pmx_foot_l.head).y if pmx_foot_l else 0.0
+        pmx_faces_plus_y = pmx_foot_dir_y < 0  # PMX heel-anchor: facing is opposite.
     ref_foot_l_y, _ = _avatar_bone_yz("Foot_L", reference_tpose)
     ref_faces_plus_y = ref_foot_l_y is not None and ref_foot_l_y.y > 0  # Unity toe-anchor: facing matches.
     mirror_y = pmx_faces_plus_y != ref_faces_plus_y
 
     print(
         f"[info] character mirror_x = {mirror_x} (pmx L on +X: {pmx_l_on_plus_x}, ref L on +X: {ref_l_on_plus_x}). "
-        f"mirror_y = {mirror_y} (pmx faces +Y: {pmx_faces_plus_y}, ref faces +Y: {ref_faces_plus_y})"
+        f"mirror_y = {mirror_y} (pmx faces +Y: {pmx_faces_plus_y} via {facing_source}, "
+        f"ref faces +Y: {ref_faces_plus_y})"
     )
     return MirrorFrame(mirror_x=mirror_x, mirror_y=mirror_y)
 
@@ -795,7 +842,7 @@ def apply_reference_tpose_calibration(
     if armature_obj.type != "ARMATURE":
         raise RuntimeError("apply_reference_tpose_calibration target must be an armature.")
 
-    frame = detect_pmx_mirror_frame(armature_obj, reference_tpose)
+    frame = detect_pmx_mirror_frame(armature_obj, mesh_objects, reference_tpose)
     rotated = pose_arm_chains_and_bake(armature_obj, mesh_objects, reference_tpose, frame)
     retarget_foot_bones_rest(armature_obj, reference_tpose, frame)
     return rotated
@@ -2064,6 +2111,192 @@ def _compute_height_scale_against_reference(
     return reference.yspan_metres / pmx_body_height
 
 
+def redistribute_dress_to_legs(
+    pmx_meshes: list,
+    pmx_armature,
+    config: "TransferConfig",
+) -> None:
+    """Convert physics-skirt weights into a cheap leg-following skirt rig.
+
+    Vertex groups matching ``dress_leg_prefixes`` (a physics bone grid like
+    Skirt_0_0..Skirt_9_17) would otherwise fold into a single torso bone and
+    the dress would hang rigidly while the legs animate through it. Instead
+    each vertex's skirt weight is rewritten onto the humanoid rig:
+
+      - at waistband height and above it stays on the pelvis,
+      - below the crotch it follows the legs, split left/right by the
+        vertex's X with a smooth 50/50 band at the centreline so the front
+        and back panels stretch between the legs instead of tearing.
+
+    Weights are written into the PRIMARY source groups for Hips and
+    UpperLeg_L/R from the bone map (they fold into those bones), so this
+    runs BEFORE bone rename, after scaling (thresholds are in metres).
+    """
+    prefixes = config.dress_leg_prefixes
+    if not prefixes:
+        return
+
+    primary: dict[str, str] = {}
+    for source, target in config.bone_map.items():
+        primary.setdefault(target, source)
+    try:
+        hips_group = primary["Hips"]
+        leg_l_group = primary["UpperLeg_L"]
+        leg_r_group = primary["UpperLeg_R"]
+    except KeyError as missing:
+        print(f"[warn] dress-to-legs: bone map has no primary for {missing}, skipping")
+        return
+
+    leg_l_bone = pmx_armature.data.bones.get(leg_l_group)
+    leg_r_bone = pmx_armature.data.bones.get(leg_r_group)
+    if leg_l_bone is None or leg_r_bone is None:
+        print("[warn] dress-to-legs: leg bones missing, skipping")
+        return
+    arm_mw = pmx_armature.matrix_world
+    crotch_z = ((arm_mw @ leg_l_bone.head_local).z + (arm_mw @ leg_r_bone.head_local).z) / 2
+    half_width = max(abs((arm_mw @ leg_l_bone.head_local).x), 0.06)
+
+    # Full pelvis above the crotch, full leg 20 cm below it, linear between.
+    blend_top = crotch_z + 0.02
+    blend_bottom = crotch_z - 0.20
+
+    for mesh in pmx_meshes:
+        groups = [
+            g for g in mesh.vertex_groups
+            if any(g.name.startswith(p) for p in prefixes)
+        ]
+        if not groups:
+            continue
+        group_indices = {g.index for g in groups}
+        for name in (hips_group, leg_l_group, leg_r_group):
+            if mesh.vertex_groups.get(name) is None:
+                mesh.vertex_groups.new(name=name)
+        hips_vg = mesh.vertex_groups[hips_group]
+        leg_l_vg = mesh.vertex_groups[leg_l_group]
+        leg_r_vg = mesh.vertex_groups[leg_r_group]
+
+        mw = mesh.matrix_world
+        rewritten = 0
+        for v in mesh.data.vertices:
+            skirt_weight = sum(
+                gw.weight for gw in v.groups if gw.group in group_indices
+            )
+            if skirt_weight <= 1e-4:
+                continue
+            world = mw @ v.co
+            leg_frac = min(1.0, max(0.0, (blend_top - world.z) / (blend_top - blend_bottom)))
+            side = min(1.0, max(0.0, 0.5 + world.x / (2.0 * half_width)))
+            index = [v.index]
+            hips_vg.add(index, skirt_weight * (1.0 - leg_frac), "ADD")
+            leg_l_vg.add(index, skirt_weight * leg_frac * side, "ADD")
+            leg_r_vg.add(index, skirt_weight * leg_frac * (1.0 - side), "ADD")
+            for g in groups:
+                g.remove(index)
+            rewritten += 1
+        if rewritten:
+            print(
+                f"[info] dress-to-legs ({mesh.name}): rewrote {rewritten} vert(s) "
+                f"from {len(groups)} skirt group(s) (crotch z={crotch_z:.3f}m)"
+            )
+
+
+def straighten_hang_chains(pmx_meshes: list, prefixes: list[str]) -> None:
+    """Re-drape dangling cloth chains so they hang straight down (world -Z).
+
+    A chain is every vertex group named ``<prefix><number>`` (e.g.
+    Cloth_RF01..Cloth_RF015), ordered by the number: lowest link is the
+    anchored top, highest the free tip. Some rigs author these strips
+    extending along the limb rather than hanging with gravity. Each link's
+    vertex ring is moved onto a vertical stack below the top anchor
+    (segment lengths preserved) and rotated so its cross-section faces the
+    new axis, weight-blended per vertex so the strip stays smooth and its
+    attachment seam to the garment doesn't tear.
+
+    Runs BEFORE bone rename (it needs the original group names) and expects
+    the chains' bone_map targets to be torso bones, so the T-pose arm bake
+    never moves the re-draped strip afterwards.
+    """
+    down = mathutils.Vector((0.0, 0.0, -1.0))
+    for mesh in pmx_meshes:
+        for prefix in prefixes:
+            groups = [
+                g for g in mesh.vertex_groups
+                if g.name.startswith(prefix) and g.name[len(prefix):].isdigit()
+            ]
+            if len(groups) < 2:
+                continue
+            groups.sort(key=lambda g: int(g.name[len(prefix):]))
+            order = [g.index for g in groups]
+            chain_set = set(order)
+
+            vert_chain_weights: dict[int, dict[int, float]] = {}
+            for v in mesh.data.vertices:
+                for gw in v.groups:
+                    if gw.group in chain_set and gw.weight > 1e-4:
+                        vert_chain_weights.setdefault(v.index, {})[gw.group] = gw.weight
+            if not vert_chain_weights:
+                print(f"[warn] hang chain '{prefix}' on {mesh.name}: no weighted verts, skipping")
+                continue
+
+            mw = mesh.matrix_world
+            verts = mesh.data.vertices
+            weighted_sum = {gi: mathutils.Vector() for gi in order}
+            weight_total = {gi: 0.0 for gi in order}
+            for vi, weights in vert_chain_weights.items():
+                world_co = mw @ verts[vi].co
+                for gi, w in weights.items():
+                    weighted_sum[gi] += world_co * w
+                    weight_total[gi] += w
+            links = [gi for gi in order if weight_total[gi] > 1e-6]
+            if len(links) < 2:
+                continue
+            centroid = {gi: weighted_sum[gi] / weight_total[gi] for gi in links}
+
+            # Stack link centroids vertically below the top anchor, keeping
+            # each segment's length so the strip neither stretches nor bunches.
+            new_centroid = {links[0]: centroid[links[0]].copy()}
+            for prev, cur in zip(links, links[1:]):
+                segment = (centroid[cur] - centroid[prev]).length
+                new_centroid[cur] = new_centroid[prev] + down * segment
+
+            # Per-link minimal-arc rotation from the local chain direction to
+            # -Z, so each ring's tilt follows the new vertical axis without
+            # accumulating twist.
+            link_rotation = {}
+            for j, gi in enumerate(links):
+                a = centroid[links[max(j - 1, 0)]]
+                b = centroid[links[min(j + 1, len(links) - 1)]]
+                direction = b - a
+                link_rotation[gi] = (
+                    direction.normalized().rotation_difference(down)
+                    if direction.length > 1e-6
+                    else mathutils.Quaternion()
+                )
+
+            inv = mw.inverted()
+            for vi, weights in vert_chain_weights.items():
+                world_co = mw @ verts[vi].co
+                target = mathutils.Vector()
+                chain_weight = 0.0
+                for gi, w in weights.items():
+                    if gi not in centroid:
+                        continue
+                    target += (new_centroid[gi] + link_rotation[gi] @ (world_co - centroid[gi])) * w
+                    chain_weight += w
+                if chain_weight <= 0.0:
+                    continue
+                target /= chain_weight
+                # Verts shared with the garment keep their garment share:
+                # blend by the chain's weight fraction (rigs normalise to 1).
+                fraction = min(1.0, chain_weight)
+                verts[vi].co = inv @ world_co.lerp(target, fraction)
+            mesh.data.update()
+            print(
+                f"[info] hang chain '{prefix}' ({mesh.name}): re-draped "
+                f"{len(vert_chain_weights)} vert(s) across {len(links)} link(s)"
+            )
+
+
 def prep_pmx(config: "TransferConfig") -> tuple:
     """Stages 1-8: import, scale, rig rename, T-pose calibration, attachment
     grafting and the optional hip-leg weight blend. Returns (armature, meshes)
@@ -2109,6 +2342,9 @@ def prep_pmx(config: "TransferConfig") -> tuple:
             keep_right_index_extended=config.keep_right_index_extended,
             custom_rotations=config.fist_rotations,
         )
+
+    straighten_hang_chains(pmx_meshes, config.hang_down_chain_prefixes)
+    redistribute_dress_to_legs(pmx_meshes, pmx_armature, config)
 
     print("[info] renaming PMX bones to MENACE humanoid names")
     park_map = rename_pmx_bones_to_menace(pmx_armature, config.bone_map, config.ignore_bones)

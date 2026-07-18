@@ -1,0 +1,52 @@
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.helen_default" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
+    set "Title" {
+        set "m_DefaultTranslation" "Cobalt Dream"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Combat Gear"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Helen's usual outfit. For the longest time, she has been protecting her friends with her combination of kindness and strength."
+    }
+    set "Icon" asset="helen/armor/default/Icon"
+    set "IconEquipment" asset="helen/armor/default/IconEquipment"
+    set "IconSkillBar" asset="helen/armor/default/IconSkillBar"
+    clear "MaleModels"
+    append "MaleModels" asset="helen/default/main"
+    clear "FemaleModels"
+    append "FemaleModels" asset="helen/default/main"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_transmog"
+    append "Tags" "jy_no_sell"
+}
+
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.helen_starlit_waltz" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
+    set "Title" {
+        set "m_DefaultTranslation" "Starlit Waltz"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Formal Wear"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            "Would you care to dance with me tonight? Hehe, then please... entrust everything to me."
+            She smiles and extends a hand to you, promising an unforgettable night.
+            """
+    }
+    set "Icon" asset="helen/armor/waltz/Icon"
+    set "IconEquipment" asset="helen/armor/waltz/IconEquipment"
+    set "IconSkillBar" asset="helen/armor/waltz/IconSkillBar"
+    clear "MaleModels"
+    append "MaleModels" asset="helen/starlit_waltz/main"
+    clear "FemaleModels"
+    append "FemaleModels" asset="helen/starlit_waltz/main"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_transmog"
+    append "Tags" "jy_no_sell"
+}

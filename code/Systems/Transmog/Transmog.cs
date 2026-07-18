@@ -16,6 +16,7 @@ public static class Transmog
     private static readonly Dictionary<string, string> DefaultOutfits = new(StringComparer.Ordinal)
     {
         ["wmgfl_cheyanne"] = "armor.cheyanne_default",
+        ["wmgfl_helen"] = "armor.helen_default",
         ["wmgfl_leva"] = "armor.leva_default",
         ["wmgfl_lewis"] = "armor.lewis_default",
         ["wmgfl_makiatto"] = "armor.makiatto_default",

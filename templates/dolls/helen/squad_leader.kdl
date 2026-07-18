@@ -1,0 +1,214 @@
+clone "TagTemplate" from="unique" id="wmgfl_helen"
+
+clone "SpeakerTemplate" from="carda" id="wmgfl_helen_speaker" {
+    set "Tags" "wmgfl_helen female infantry waybacker wmgfl_class_shotgun"
+    set "Nickname" {
+        set "m_DefaultTranslation" "Helen"
+    }
+    set "Forename" {
+        set "m_DefaultTranslation" "Helen"
+    }
+    set "Surname" {
+        set "m_DefaultTranslation" ""
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            Name: Helen (DP-12)
+
+            Proficiency: Shield Vanguard & Close-Quarters Suppression
+
+            Birth: Unknown
+
+            Age: Classified
+
+            Affiliation(s): Classified
+            """
+    }
+
+    set "BarkImage" asset="helen/bark"
+    set "StandLookLeftImage" asset="helen/stand_look_left"
+    set "StandLookRightImage" asset="helen/stand_look_right"
+    set "StandLookRightInactiveImage" asset="helen/stand_look_right_inactive"
+}
+
+clone "EntityTemplate" from="player_squad.carda" id="player_squad.helen" {
+    append "Tags" "wmgfl_helen"
+    set "Title" {
+        set "m_DefaultTranslation" "Doll Community"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Gentle in appearance, and extremely skilled at utilizing rules, adept at achieving desired goals through certain loopholes. Possesses extraordinary insight, always able to see through the essence of people's hearts beyond their surface behaviors. When interacting with those around her, she occasionally uses playful pranks to draw closer to others, guiding those who haven't realized their own feelings to epiphanies, and helping them overcome their weaknesses. In critical moments, she is also willing to sacrifice herself to protect the important people around her."
+    }
+
+    set "Badge" asset="helen/badge_mini"
+    set "BadgeWhite" asset="helen/badge_mini"
+    clear "Items"
+    append "Items" "armor.player_fatigues"
+    append "Items" "weapon.helen_dp12"
+}
+
+clone "UnitLeaderTemplate" from="squad_leader.carda" id="squad_leader.helen" {
+    set "InfantryUnitTemplate" "player_squad.helen"
+    set "SpeakerTemplate" "wmgfl_helen_speaker"
+    set "CustomHead" #null
+    set "UnitTitle" {
+        set "m_DefaultTranslation" "Tactical Doll"
+    }
+    set "UnitDescription" {
+        set "m_DefaultTranslation" "Gentle in appearance, and extremely skilled at utilizing rules, adept at achieving desired goals through certain loopholes. Possesses extraordinary insight, always able to see through the essence of people's hearts beyond their surface behaviors. When interacting with those around her, she occasionally uses playful pranks to draw closer to others, guiding those who haven't realized their own feelings to epiphanies, and helping them overcome their weaknesses. In critical moments, she is also willing to sacrifice herself to protect the important people around her."
+    }
+
+    set "InitialAttributes" index=0 75
+    set "InitialAttributes" index=1 70
+    set "InitialAttributes" index=2 85
+    set "InitialAttributes" index=3 100
+    set "InitialAttributes" index=4 100
+    set "InitialAttributes" index=5 30
+    set "InitialAttributes" index=6 70
+
+    set "QualityLevel" 3
+    set "GrowthPotential" 5
+    set "FixedSupplyCost" 60
+    set "SquaddieTax" 45
+    set "Rarity" 5
+
+    set "InitialPerk" "perk.zb_license_agreement_murdock"
+    set "PerkTrees" index=0 "perk_tree.helen"
+
+    set "Slot" asset="helen/slot"
+    set "SlotInactive" asset="helen/slot_inactive"
+    set "SlotBadge" asset="helen/slot_badge"
+
+    set "BadgeDragged" asset="helen/badge_dragged"
+    set "BigBadge" asset="helen/big_badge"
+    set "BadgeUnitWindow" asset="helen/badge_unit_window"
+    set "BadgeMini" asset="helen/badge_mini"
+
+    set "HiringSelectBarkSound" {
+        set "bankId" "wmgfl_tactical_barks_helen_va"
+        set "itemId" "Series_Chosen_Series_Tone_Positive_006"
+    }
+    set "HiredBarkSound" {
+        set "bankId" "wmgfl_tactical_barks_helen_va"
+        set "itemId" "Single_Obtain_SSR_001"
+    }
+
+    set "PromotionBarkSounds" index=0 {
+        set "PerkTier" 1
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_helen_va"
+            set "itemId" "Series_Up_002"
+        }
+    }
+    set "PromotionBarkSounds" index=1 {
+        set "PerkTier" 2
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_helen_va"
+            set "itemId" "Series_Up_003"
+        }
+    }
+    set "PromotionBarkSounds" index=2 {
+        set "PerkTier" 3
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_helen_va"
+            set "itemId" "Series_Up_004"
+        }
+    }
+    set "PromotionBarkSounds" index=3 {
+        set "PerkTier" 4
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_helen_va"
+            set "itemId" "Series_Up_005"
+        }
+    }
+
+    clear "EmotionalStateResponses"
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Eager"
+        set "Text" {
+            set "m_DefaultTranslation" "Hello. What's our plan today? Don't hesitate to tell me."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_helen_va"
+            set "itemId" "Single_Login_001"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Determined"
+        set "Text" {
+            set "m_DefaultTranslation" "I will protect you."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_helen_va"
+            set "itemId" "Series_Tone_Positive_001"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Overconfident"
+        set "Text" {
+            set "m_DefaultTranslation" "How naive."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_helen_va"
+            set "itemId" "Single_Passive_SSR_001"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Euphoric"
+        set "Text" {
+            set "m_DefaultTranslation" "Great weather today. Commander, don't stay cooped up in the command centre, how about we take a walk together?"
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_helen_va"
+            set "itemId" "Single_Friendliness_001"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Hesitant"
+        set "Text" {
+            set "m_DefaultTranslation" "When everyone's counting on you, who do you get to count on? If you'd like, lean on me now and then."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_helen_va"
+            set "itemId" "Single_Friendliness_003"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Frustrated"
+        set "Text" {
+            set "m_DefaultTranslation" "Give me the intel again. We can't give up now."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_helen_va"
+            set "itemId" "Series_Lose_Single_Lose_001"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Disheartened"
+        set "Text" {
+            set "m_DefaultTranslation" "Am I going to fall asleep again?"
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_helen_va"
+            set "itemId" "Series_Die_Series_Tone_Negative_001"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Miserable"
+        set "Text" {
+            set "m_DefaultTranslation" "..."
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "GoodwillTowards"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "AnimosityTowards"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+}

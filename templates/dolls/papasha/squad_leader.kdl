@@ -1,4 +1,4 @@
-clone "EntityTemplate" from="player_squad.sy" id="player_squad.papasha" {
+clone "EntityTemplate" from="player_squad.carda" id="player_squad.papasha" {
     append "Tags" "wmgfl_papasha"
     set "Title" {
         set "m_DefaultTranslation" "POL-03 Security Management Department"
@@ -14,7 +14,7 @@ clone "EntityTemplate" from="player_squad.sy" id="player_squad.papasha" {
     append "Items" "weapon.papasha_ppsh"
 }
 
-clone "UnitLeaderTemplate" from="squad_leader.sy" id="squad_leader.papasha_foot" {
+clone "UnitLeaderTemplate" from="squad_leader.carda" id="squad_leader.papasha_foot" {
     set "InfantryUnitTemplate" "player_squad.papasha"
     set "SpeakerTemplate" "wmgfl_papasha_speaker"
     set "CustomHead" #null
