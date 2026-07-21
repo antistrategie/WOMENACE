@@ -16,9 +16,19 @@ clone "WeaponTemplate" from="weapon.generic_smg_tier1_ppp_sof" id="weapon.leva_u
     set "IconSkillBar" asset="weapon/ump45/IconSkillBar"
     set "IconSkillBarDisabled" asset="weapon/ump45/IconSkillBarDisabled"
 
-    set "Damage" 12.0
-    set "ArmorPenetration" 15.0
+    set "AccuracyDropoff" -8.0
+    set "ArmorPenetration" 12.0
+    set "ArmorPenetrationDropoff" -2.3
+
+    set "Damage" 15.0
+    set "DamageDropoff" -1.15
+    set "DamageToArmorDurability" 11.0
+    set "DamageToArmorDurabilityDropoff" -1.3
+
+    set "MaxRange" 5
+    set "IdealRange" 2
     set "Suppression" 3.0
+
     set "DeployCosts" {
         set "m_Supplies" 13
     }
@@ -45,6 +55,7 @@ clone "SkillTemplate" from="active.fire_smg_tier_1_SOF_suppressed" id="active.fi
         set "bankId" "wmgfl_weapons_smg_addition_bank"
         set "itemId" "smg_burst_distant"
     }
+    set "Repetitions" 4
 }
 
 clone "SkillTemplate" from="active.fire_smg_tap_fire_suppressed" id="active.fire_leva_ump45_tap" {

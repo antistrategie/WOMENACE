@@ -6,7 +6,7 @@ clone "WeaponTemplate" from="weapon.generic_assault_rifle_tier1_ARC_762" id="wea
         set "m_DefaultTranslation" "Assault Rifle"
     }
     set "Description" {
-        set "m_DefaultTranslation" "[PLACEHOLDER] A firearm highly compatible with Soppo."
+        set "m_DefaultTranslation" "[PLACEHOLDER] A firearm highly compatible with Soppo. Based on the M4 Carbine with SOPMOD II special operation package."
     }
     set "Model" asset="weapon/m4/main"
     set "SkillsGranted" index=0 "active.fire_soppo_m4"
@@ -17,9 +17,19 @@ clone "WeaponTemplate" from="weapon.generic_assault_rifle_tier1_ARC_762" id="wea
     set "IconSkillBar" asset="weapon/m4/IconSkillBar"
     set "IconSkillBarDisabled" asset="weapon/m4/IconSkillBarDisabled"
 
-    set "Damage" 12.0
-    set "ArmorPenetration" 20.0
-    set "Suppression" 3.5
+    set "AccuracyBonus" 10.0
+    set "AccuracyDropoff" -5
+    set "ArmorPenetration" 28.0
+    set "ArmorPenetrationDropoff" -1.9
+
+    set "Damage" 9.0
+    set "DamageDropoff" -0.85
+    set "DamageToArmorDurability" 8.0
+    set "DamageToArmorDurabilityDropoff" -0.7
+
+    set "MaxRange" 7
+    set "IdealRange" 3
+    set "Suppression" 3.0
     set "DeployCosts" {
         set "m_Supplies" 13
     }
@@ -114,6 +124,7 @@ clone "SkillTemplate" from="active.fire_automatic_rifle" id="active.soppo_ssr_pu
     }
     // opens the holder in Hunter Form at every mission start
     append "EventHandlers" type="WOMENACE:HunterOpening" {}
+    append "EventHandlers" type="SynchronizeItemUses" {}
 
     clear "SoundsOnAttack"
     append "SoundsOnAttack" {
@@ -146,6 +157,7 @@ clone "SkillTemplate" from="active.fire_automatic_rifle" id="active.soppo_ssr_bi
         set "Element" "Burn"
         set "AmountPerHit" 25.0
     }
+    append "EventHandlers" type="SynchronizeItemUses" {}
 
     clear "SoundsOnAttack"
     append "SoundsOnAttack" {

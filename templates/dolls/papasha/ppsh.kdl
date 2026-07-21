@@ -16,9 +16,19 @@ clone "WeaponTemplate" from="weapon.generic_smg_tier1_ppp" id="weapon.papasha_pp
     set "IconSkillBar" asset="weapon/ppsh/IconSkillBar"
     set "IconSkillBarDisabled" asset="weapon/ppsh/IconSkillBarDisabled"
 
-    set "Damage" 13.0
-    set "ArmorPenetration" 12.0
-    set "Suppression" 6.0
+    set "AccuracyDropoff" -8.0
+    set "ArmorPenetration" 16.0
+    set "ArmorPenetrationDropoff" -2.0
+
+    set "Damage" 9.0
+    set "DamageDropoff" -1.0
+    set "DamageToArmorDurability" 8.0
+    set "DamageToArmorDurabilityDropoff" -1.1
+
+    set "MaxRange" 6
+    set "IdealRange" 3
+    set "Suppression" 3.0
+
     set "DeployCosts" {
         set "m_Supplies" 13
     }
@@ -45,9 +55,11 @@ clone "SkillTemplate" from="active.fire_smg_tier1_burst" id="active.fire_papasha
         set "bankId" "wmgfl_weapons_smg_addition_bank"
         set "itemId" "smg_burst_distant"
     }
+    set "Repetitions" 6
+    set "RepetitionDelay" 0.1
 }
 
-clone "SkillTemplate" from="active.fire_smg_tier_1_tap_fire" id="active.fire_papasha_ppsh_tap" {
+clone "SkillTemplate" from="active.fire_assault_rifle_sustained_fire_tier1_762" id="active.fire_papasha_ppsh_tap" {
     clear "SoundsOnAttack"
     append "SoundsOnAttack" {
         set "bankId" "wmgfl_weapons_smg_addition_bank"
@@ -66,4 +78,6 @@ clone "SkillTemplate" from="active.fire_smg_tier_1_tap_fire" id="active.fire_pap
         set "bankId" "wmgfl_weapons_smg_addition_bank"
         set "itemId" "smg_single_distant"
     }
+    set "Repetitions" 15
+    set "RepetitionDelay" 0.05
 }
