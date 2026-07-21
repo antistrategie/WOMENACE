@@ -10,6 +10,7 @@ clone "WeaponTemplate" from="weapon.generic_combat_shotgun_tier_1_cs185" id="wea
     }
     set "Model" asset="weapon/dp12/main"
     set "SkillsGranted" index=0 "active.fire_helen_dp12"
+    append "SkillsGranted" "active.fire_helen_dp12_slugshot"
     set "IconEquipment" asset="weapon/dp12/IconEquipment"
     set "IconEquipmentDisabled" asset="weapon/dp12/IconEquipmentDisabled"
     set "IconSkillBar" asset="weapon/dp12/IconSkillBar"
@@ -41,4 +42,43 @@ clone "SkillTemplate" from="active.fire_combat_shotgun_tier_1" id="active.fire_h
         set "bankId" "wmgfl_weapons_sg_addition_bank"
         set "itemId" "sg_single_distant"
     }
+    append "EventHandlers" type="SynchronizeItemUses" {}
+}
+
+clone "SkillTemplate" from="active.fire_battle_rifle_tier_1_aimed_fire_marksman" id="active.fire_helen_dp12_slugshot" {
+    set "Title" {
+        set "m_DefaultTranslation" "Slug Shot"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Switch to slug round and fire an accurate volley with higher penetration to target beyond normal range."
+    }
+    clear "SoundsOnAttack"
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_sg_addition_bank"
+        set "itemId" "sg_single"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "weapons_soundbank"
+        set "itemId" "combat_shotgun_casings"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_sg_addition_bank"
+        set "itemId" "sg_single_distant"
+    }
+    clear "SoundsOnAttackFar"
+    append "SoundsOnAttackFar" {
+        set "bankId" "wmgfl_weapons_sg_addition_bank"
+        set "itemId" "sg_single_distant"
+    }
+    set "Uses" 16
+    set "MaxRange" 6
+    set "IdealRange" 4
+    set "IsOverridingRanges" #true
+    set "EventHandlers" index=0 {
+        set "AccuracyBonus" 20.0
+        set "ArmorPenetrationMult" 3.5
+        set "DamageMult" 1.5
+        set "ElementsHitPercentage" 0.0
+    }
+    set "IsDeploymentRequired" #false
 }

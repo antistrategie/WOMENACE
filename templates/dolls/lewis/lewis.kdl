@@ -24,9 +24,20 @@ clone "WeaponTemplate" from="specialweapon.light_machinegun_tier1_m10E" id="weap
     set "IconSkillBar" asset="weapon/lewis/IconSkillBar"
     set "IconSkillBarDisabled" asset="weapon/lewis/IconSkillBarDisabled"
 
-    set "Damage" 13.0
-    set "ArmorPenetration" 28.0
+    set "AccuracyBonus" -10.0
+    set "AccuracyDropoff" -8.0
+    set "ArmorPenetration" 36.0
+    set "ArmorPenetrationDropoff" -1.33
+
+    set "Damage" 11.0
+    set "DamageDropoff" -0.76
+    set "DamageToArmorDurability" 14.0
+    set "DamageToArmorDurabilityDropoff" -0.48
+
+    set "MaxRange" 10
+    set "IdealRange" 7
     set "Suppression" 9.0
+
     set "DeployCosts" {
         set "m_Supplies" 13
     }
@@ -49,10 +60,13 @@ clone "SkillTemplate" from="active.light_mg_suppressive_fire" id="active.fire_le
         set "bankId" "wmgfl_weapons_mg_addition_bank"
         set "itemId" "mg_burst_distant"
     }
+    set "Uses" 12
+    set "ExecutingElement" enum="ExecutingElementType" "OneAtRandomExceptSpecial"
+    append "EventHandlers" type="SynchronizeItemUses" {}
 }
 
 clone "SkillTemplate" from="active.fire_assault_rifle_sustained_fire_tier1_762" id="active.fire_lewis_direct" {
-    set "ActionPointCost" 52
+    set "ActionPointCost" 50
     clear "SoundsOnAttack"
     append "SoundsOnAttack" {
         set "bankId" "wmgfl_weapons_mg_addition_bank"
@@ -67,4 +81,12 @@ clone "SkillTemplate" from="active.fire_assault_rifle_sustained_fire_tier1_762" 
         set "bankId" "wmgfl_weapons_mg_addition_bank"
         set "itemId" "mg_burst_distant"
     }
+    set "EventHandlers" index=0 {
+        set "AccuracyMult" 1.0
+        set "DamageMult" 1.0
+        set "SuppressionDealtMult" 1.0
+    }
+    set "Uses" 12
+    set "Repetitions" 8
+    set "IsDeploymentRequired" #true
 }

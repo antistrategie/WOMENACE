@@ -17,9 +17,20 @@ clone "WeaponTemplate" from="weapon.generic_assault_rifle_tier1_ARC_762" id="wea
     set "IconSkillBar" asset="weapon/ak15/IconSkillBar"
     set "IconSkillBarDisabled" asset="weapon/ak15/IconSkillBarDisabled"
 
+    set "AccuracyBonus" 10.0
+    set "AccuracyDropoff" -6
+    set "ArmorPenetration" 34.0
+    set "ArmorPenetrationDropoff" -2.0
+
     set "Damage" 12.0
-    set "ArmorPenetration" 20.0
+    set "DamageDropoff" -0.9
+    set "DamageToArmorDurability" 13.0
+    set "DamageToArmorDurabilityDropoff" -0.7
+
+    set "MaxRange" 8
+    set "IdealRange" 4
     set "Suppression" 3.5
+
     set "DeployCosts" {
         set "m_Supplies" 13
     }

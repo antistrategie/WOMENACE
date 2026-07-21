@@ -16,9 +16,19 @@ clone "WeaponTemplate" from="weapon.generic_smg_tier1_ppp" id="weapon.vector_kri
     set "IconSkillBar" asset="weapon/kriss/IconSkillBar"
     set "IconSkillBarDisabled" asset="weapon/kriss/IconSkillBarDisabled"
 
+    set "AccuracyDropoff" -6.0
+    set "ArmorPenetration" 12.0
+    set "ArmorPenetrationDropoff" -2.4
+
     set "Damage" 14.0
-    set "ArmorPenetration" 15.0
+    set "DamageDropoff" -1.2
+    set "DamageToArmorDurability" 10.0
+    set "DamageToArmorDurabilityDropoff" -1.35
+
+    set "MaxRange" 4
+    set "IdealRange" 2
     set "Suppression" 4.0
+
     set "DeployCosts" {
         set "m_Supplies" 13
     }
@@ -45,6 +55,7 @@ clone "SkillTemplate" from="active.fire_smg_tier1_burst" id="active.fire_vector_
         set "bankId" "wmgfl_weapons_smg_addition_bank"
         set "itemId" "smg_burst_distant"
     }
+    set "Repetitions" 7
 }
 
 clone "SkillTemplate" from="active.fire_smg_tier_1_tap_fire" id="active.fire_vector_kriss_tap" {
@@ -66,4 +77,5 @@ clone "SkillTemplate" from="active.fire_smg_tier_1_tap_fire" id="active.fire_vec
         set "bankId" "wmgfl_weapons_smg_addition_bank"
         set "itemId" "smg_single_distant"
     }
+    set "MaxRange" 6
 }
