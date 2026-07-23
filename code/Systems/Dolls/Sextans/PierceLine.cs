@@ -236,12 +236,17 @@ public sealed class SextansPierceShapeSystem : JiangyuSystem
     // ToTarget: the thrust aims a direction (swathe runs onward through an
     // enemy or empty tile). The ult aims a destination it dashes to (empty
     // tiles only, swathe from her to it).
+    //
+    // Keys are the BASE skill ids: calibration rank clones (active.sextans_ult_r3 etc.) get the
+    // same shape assigned (Assign covers every rank) and lookups strip the rank suffix.
     internal static readonly IReadOnlyDictionary<string, Shape> Shapes = new Dictionary<string, Shape>(StringComparer.Ordinal)
     {
         ["active.sextans_thrust"] = new Shape(5, 3, 0.025f, false),
         // the SSR sword's thrust is the same shape
         ["active.sextans_ssr_thrust"] = new Shape(5, 3, 0.025f, false),
         ["active.sextans_ult"] = new Shape(8, 3, 0f, true),
+        // the SSR sword's ult is the same shape
+        ["active.sextans_ssr_ult"] = new Shape(8, 3, 0f, true),
     };
 
     private readonly List<string> _pending = new(Shapes.Keys);
@@ -260,6 +265,17 @@ public sealed class SextansPierceShapeSystem : JiangyuSystem
     }
 
     private bool Assign(string skillId, Shape shape)
+    {
+        // The base skill plus its six calibration rank clones all need the shape. Only a fully
+        // assigned set counts as done, so a late-registering rank clone is retried on scene load.
+        var allAssigned = true;
+        for (var rank = 0; rank <= Calibration.MaxRank; rank++)
+            if (!AssignOne(Calibration.RankId(skillId, rank), shape))
+                allAssigned = false;
+        return allAssigned;
+    }
+
+    private bool AssignOne(string skillId, Shape shape)
     {
         try
         {

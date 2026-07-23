@@ -87,10 +87,13 @@ public sealed class SsrImprintSystem : JiangyuSystem
     private static Entry ByWeapon(string id)
         => id == null ? null : Registry.Find(e => Calibration.TryParseRank(id, e.WeaponId, out _));
 
-    // Whether a weapon is one of the SSR imprint weapons (any rank). The single source of truth for
-    // "is this an SSR weapon", so other systems (e.g. WeaponProficiencySystem, which excludes SSR from
-    // its weapon-type bonus) never keep a second list that could drift from this registry.
-    public static bool IsImprintWeapon(string weaponId) => ByWeapon(weaponId) != null;
+    // Whether a weapon is one of the SSR imprint weapons (any rank): an SSR is exactly a doll
+    // weapon whose base id carries the _ssr suffix (the Calibration id convention). The single
+    // source of truth for "is this an SSR weapon", so other systems (e.g. WeaponProficiencySystem,
+    // which excludes SSR from its weapon-type bonus) never keep a second list.
+    public static bool IsImprintWeapon(string weaponId)
+        => Calibration.TryResolveWeaponId(weaponId, out var baseId, out _)
+            && baseId.EndsWith("_ssr", StringComparison.Ordinal);
 
     private static (Entry entry, SkillImprint skill) BySkill(string id)
     {

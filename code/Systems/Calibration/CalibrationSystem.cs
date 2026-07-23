@@ -1,6 +1,7 @@
 using Il2CppMenace.Items;
 using Il2CppMenace.States;
 using Il2CppMenace.Strategy;
+using Il2CppMenace.Tactical.Skills;
 using Jiangyu.Game.Strategy;
 using Jiangyu.Game.Ui;
 using Jiangyu.Sdk;
@@ -398,17 +399,31 @@ public sealed class CalibrationSystem : JiangyuSystem
     // is returned as its final value with no delta.
     public List<StatDelta> Deltas(string baseWeaponId, int rank)
     {
-        // Blades keep their real stats on the skill Attack handlers (weapon fields are 0), so their
-        // rows come from BladeCalibrationSystem, not the weapon-field diff below.
-        var blade = BladeCalibrationSystem.Instance?.BladeDeltas(baseWeaponId, rank);
-        if (blade != null)
-            return blade;
-
         var current = Weapon(Calibration.RankId(baseWeaponId, rank), quiet: true);
         var next = rank < Calibration.MaxRank ? Weapon(Calibration.RankId(baseWeaponId, rank + 1), quiet: true) : null;
         var rows = new List<StatDelta>();
         if (current == null)
             return rows;
+
+        // Blades keep their real stats on the granted skills' Attack handlers and the weapon fields
+        // at 0 (the tooltip SUMS weapon.Damage with the granted skill's Attack.Damage, so a non-zero
+        // weapon field would double the shown number). Their rank rows diff the first granted skill's
+        // Attack handler between the rank templates, which carry per-rank skill clones in KDL.
+        if (current.Damage == 0f && current.SkillsGranted != null && current.SkillsGranted.Count > 0)
+        {
+            var attack = FirstAttack(current.SkillsGranted[0]);
+            if (attack != null)
+            {
+                var nextAttack = next != null && next.SkillsGranted != null && next.SkillsGranted.Count > 0
+                    ? FirstAttack(next.SkillsGranted[0])
+                    : null;
+                rows.Add(new StatDelta { Name = "DAMAGE", Current = attack.Damage, Next = nextAttack?.Damage ?? attack.Damage });
+                rows.Add(new StatDelta { Name = "ARMOR PEN", Current = attack.ArmorPenetration, Next = nextAttack?.ArmorPenetration ?? attack.ArmorPenetration });
+                rows.Add(new StatDelta { Name = "ARMOR DMG", Current = attack.DamageToArmorDurability, Next = nextAttack?.DamageToArmorDurability ?? attack.DamageToArmorDurability });
+            }
+            return rows;
+        }
+
         foreach (var (label, get) in StatFields)
         {
             var now = get(current);
@@ -417,6 +432,18 @@ public sealed class CalibrationSystem : JiangyuSystem
                 rows.Add(new StatDelta { Name = label, Current = now, Next = then });
         }
         return rows;
+    }
+
+    private static Il2CppMenace.Tactical.Skills.Effects.Attack FirstAttack(SkillTemplate skill)
+    {
+        var handlers = skill?.EventHandlers;
+        for (var i = 0; handlers != null && i < handlers.Count; i++)
+        {
+            var attack = handlers[i]?.TryCast<Il2CppMenace.Tactical.Skills.Effects.Attack>();
+            if (attack != null)
+                return attack;
+        }
+        return null;
     }
 
     private static readonly (string Label, Func<WeaponTemplate, float> Get)[] StatFields =
@@ -451,9 +478,6 @@ public sealed class CalibrationSystem : JiangyuSystem
         if (!Replace(target, nextTemplate, out var error))
             return (false, error);
         Inventory.RemoveItem(dupes[0]);
-        // Blade stats live on shared skill templates scaled per rank: bring them up to date now, or
-        // the weapon tooltip keeps the old rank's numbers until her next combat swing.
-        BladeCalibrationSystem.Instance?.ReconcileEquipped();
         Context.Log.Info($"calibration: merged '{target.BaseWeaponId}' r{target.Rank} -> r{target.Rank + 1}");
         return (true, null);
     }
@@ -475,7 +499,6 @@ public sealed class CalibrationSystem : JiangyuSystem
         if (!Replace(target, prevTemplate, out var error))
             return (false, error);
         Inventory.AddItem(baseTemplate);
-        BladeCalibrationSystem.Instance?.ReconcileEquipped();
         Context.Log.Info($"calibration: reverted '{target.BaseWeaponId}' r{target.Rank} -> r{target.Rank - 1}");
         return (true, null);
     }

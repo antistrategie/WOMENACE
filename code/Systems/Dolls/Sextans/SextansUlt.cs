@@ -118,17 +118,50 @@ public sealed partial class SextansUltHandler : SkillEventHandler
 // enemies the ult kills still feed the heal and the consecration.
 public sealed class SextansUltSystem : JiangyuSystem
 {
+    // The ult skill ids, per sword. Calibration ranks carry an _r<N> suffix on these (e.g.
+    // active.sextans_ult_r3), matched by stripping the suffix (IsUltId); the strike/rend riders a
+    // cast applies are derived from the USED skill's own id (RiderId), so every rank lands its own
+    // scaled numbers with no code change.
     private const string UltSkillId = "active.sextans_ult";
-    private const string StrikeSkillId = "active.sextans_ult_strike";
-    private const string RendSkillId = "active.sextans_ult_rend";
+    private const string SsrUltSkillId = "active.sextans_ssr_ult";
     private const string BloodKissId = "effect.sextans_blood_kiss";
     private const string CoagulationId = "effect.sextans_coagulation";
     private const string MarkId = "effect.sextans_holy_blood_mark";
 
-    // The SSR sword grants the SAME ult (and hidden riders) as the SR sword, so the electric charge
-    // its basic attacks carry cannot live on a KDL ElementalDamage handler on the shared ult riders
-    // (that would electrify the SR sword's ult too). Instead the ult's lane hits build Shock in code,
-    // gated on this weapon having granted the cast. UltShockPerHit is the per-victim build-up.
+    // Whether a skill template id is one of the two ults (any calibration rank).
+    private static bool IsUltId(string id)
+    {
+        var baseId = BaseSkillId(id);
+        return baseId == UltSkillId || baseId == SsrUltSkillId;
+    }
+
+    // A skill id with any calibration rank suffix stripped: active.sextans_ult_r3 -> active.sextans_ult.
+    private static string BaseSkillId(string id)
+    {
+        if (id == null)
+            return null;
+        var underscore = id.LastIndexOf('_');
+        if (underscore > 0)
+        {
+            var suffix = id.Substring(underscore + 1);
+            if (suffix.Length > 1 && suffix[0] == 'r' && int.TryParse(suffix.Substring(1), out _))
+                return id.Substring(0, underscore);
+        }
+        return id;
+    }
+
+    // A rider's id from the cast ult's id, rank suffix preserved: active.sextans_ssr_ult_r3 with
+    // "_strike" -> active.sextans_ssr_ult_strike_r3.
+    private static string RiderId(string ultId, string rider)
+    {
+        var i = ultId.IndexOf("_ult", StringComparison.Ordinal);
+        return i < 0 ? null : ultId.Insert(i + "_ult".Length, rider);
+    }
+
+    // The SSR sword's ult chain is a separate clone of the SR one, so the electric charge its lane
+    // hits carry cannot live on a KDL ElementalDamage handler (that would electrify the riders too).
+    // Instead the ult's lane hits build Shock in code, gated on this weapon having granted the cast.
+    // UltShockPerHit is the per-victim build-up.
     private const string SsrSwordId = "weapon.sextans_ssr";
     private const float UltShockPerHit = 100f;
 
@@ -149,9 +182,6 @@ public sealed class SextansUltSystem : JiangyuSystem
     private SkillTemplate _bloodKiss;
     private SkillTemplate _coagulation;
     private SkillTemplate _mark;
-    private SkillTemplate _strike;
-    private SkillTemplate _rend;
-    private SkillTemplate _ult;
 
     // MarkOnHit resolves its effect templates by id through here
     private readonly Dictionary<string, SkillTemplate> _effectsById = new();
@@ -167,10 +197,24 @@ public sealed class SextansUltSystem : JiangyuSystem
         _bloodKiss = Templates.ById<SkillTemplate>(BloodKissId, msg => Context.Log.Warn($"ult: {msg}"));
         _coagulation = Templates.ById<SkillTemplate>(CoagulationId, msg => Context.Log.Warn($"ult: {msg}"));
         _mark = Templates.ById<SkillTemplate>(MarkId, msg => Context.Log.Warn($"ult: {msg}"));
-        _strike = Templates.ById<SkillTemplate>(StrikeSkillId, msg => Context.Log.Warn($"ult: {msg}"));
-        _rend = Templates.ById<SkillTemplate>(RendSkillId, msg => Context.Log.Warn($"ult: {msg}"));
-        _ult = Templates.ById<SkillTemplate>(UltSkillId, msg => Context.Log.Warn($"ult: {msg}"));
     }
+
+    // The ult skill an actor has granted, whichever sword and calibration rank granted it (only
+    // Sextans carries these skills, so a scan of her skill list is enough).
+    private static Skill FindUltSkill(Actor actor)
+    {
+        var skills = actor?.GetSkills()?.GetAllSkills();
+        for (var i = 0; skills != null && i < skills.Count; i++)
+        {
+            var skill = skills[i]?.TryCast<Skill>();
+            if (skill != null && IsUltId(skill.GetTemplate()?.GetID()))
+                return skill;
+        }
+        return null;
+    }
+
+    private SkillTemplate ResolveSkill(string id)
+        => id == null ? null : Templates.ById<SkillTemplate>(id, msg => Context.Log.Warn($"ult: {msg}"));
 
     private Skill FindGrantedSkill(Actor user, SkillTemplate template, string id)
     {
@@ -267,7 +311,7 @@ public sealed class SextansUltSystem : JiangyuSystem
                 return;
 
             var id = skill.GetTemplate()?.GetID();
-            if (!string.Equals(id, UltSkillId, StringComparison.Ordinal))
+            if (!IsUltId(id))
                 return;
 
             FindUltHandler(actor)?.ConsumeCharges();
@@ -283,9 +327,7 @@ public sealed class SextansUltSystem : JiangyuSystem
 
     private SextansUltHandler FindUltHandler(Actor actor)
     {
-        if (_ult == null)
-            return null;
-        var handlers = actor?.GetSkills()?.GetSkillByTemplate(_ult, null)?.TryCast<Skill>()?.GetSkillEventHandlers();
+        var handlers = FindUltSkill(actor)?.GetSkillEventHandlers();
         for (var i = 0; handlers != null && i < handlers.Length; i++)
         {
             var handler = handlers[i]?.TryCast<SextansUltHandler>();
@@ -308,7 +350,7 @@ public sealed class SextansUltSystem : JiangyuSystem
         // tuning below comes from the KDL SextansUlt handler block on the ult
         // template.
         var id = template?.GetID();
-        var geometry = id != null && SextansPierceShapeSystem.Shapes.TryGetValue(id, out var g)
+        var geometry = id != null && SextansPierceShapeSystem.Shapes.TryGetValue(BaseSkillId(id), out var g)
             ? g
             : new SextansPierceShapeSystem.Shape(8, 3, 0f, true);
         var tiles = geometry.Tiles;
@@ -469,7 +511,11 @@ public sealed class SextansUltSystem : JiangyuSystem
         UltStrikesResolving = true;
         try
         {
-            var strike = FindGrantedSkill(user, _strike, StrikeSkillId);
+            // The riders come from the SAME rank line as the cast ult (derived off its id), so a
+            // calibrated sword's ult lands its own scaled strike and rend numbers.
+            var ultId = ult.GetTemplate()?.GetID();
+            var strikeId = ultId == null ? null : RiderId(ultId, "_strike");
+            var strike = FindGrantedSkill(user, ResolveSkill(strikeId), strikeId);
             foreach (var enemy in victims)
             {
                 if (strike == null)
@@ -483,7 +529,8 @@ public sealed class SextansUltSystem : JiangyuSystem
                 struck++;
             }
 
-            var rend = FindGrantedSkill(user, _rend, RendSkillId);
+            var rendId = ultId == null ? null : RiderId(ultId, "_rend");
+            var rend = FindGrantedSkill(user, ResolveSkill(rendId), rendId);
             foreach (var enemy in kissed)
             {
                 if (rend == null)
@@ -503,10 +550,10 @@ public sealed class SextansUltSystem : JiangyuSystem
         }
         Context.Log.Debug($"ult: struck {struck} victim(s), rent {rent} marked");
 
-        // SSR sword: the ult's lane hits carry the same electric charge as its basic attacks. The ult
-        // skill is shared with the SR sword, so gate on which weapon granted this cast: only the SSR
-        // sword electrifies. Applied to the survivors (a corpse has no accuracy left to dampen).
-        if (string.Equals(ult.GetItem()?.GetTemplate()?.GetID(), SsrSwordId, StringComparison.Ordinal))
+        // SSR sword: the ult's lane hits carry the same electric charge as its basic attacks, gated
+        // on which weapon granted this cast (any calibration rank): only the SSR sword electrifies.
+        // Applied to the survivors (a corpse has no accuracy left to dampen).
+        if (Calibration.TryParseRank(ult.GetItem()?.GetTemplate()?.GetID(), SsrSwordId, out _))
         {
             var shock = ElementsSystem.ElementIndex("Shock");
             foreach (var enemy in victims)

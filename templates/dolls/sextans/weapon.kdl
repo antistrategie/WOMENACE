@@ -312,9 +312,6 @@ clone "SkillTemplate" from="active.wetteroth_thats_a_knife" id="active.sextans_u
 // NOT on the weapon: the weapon's own Damage is 0 (the SR sword too), so a
 // weapon-level bonus deals nothing. It is registered in SsrImprintSystem only
 // for the SSR tooltip / SSR-weapon status, not for a weapon damage bonus.
-//
-// The ult and its riders are shared with Night Snake (only Sextans wields either
-// sword), so only the two basic attacks are cloned to carry the Shock handler.
 clone "WeaponTemplate" from="weapon.sextans" id="weapon.sextans_ssr" {
     append "Tags" "jy_no_sell"
     set "Title" {
@@ -340,10 +337,22 @@ clone "WeaponTemplate" from="weapon.sextans" id="weapon.sextans_ssr" {
     append "SkillsGranted" "active.sextans_ssr_slash"
     append "SkillsGranted" "active.sextans_ssr_thrust"
 
-    append "SkillsGranted" "active.sextans_ult"
-    append "SkillsGranted" "active.sextans_ult_strike"
-    append "SkillsGranted" "active.sextans_ult_rend"
+    append "SkillsGranted" "active.sextans_ssr_ult"
+    append "SkillsGranted" "active.sextans_ssr_ult_strike"
+    append "SkillsGranted" "active.sextans_ssr_ult_rend"
 }
+
+// The SSR ult chain. Cloned from Night Snake's with identical numbers (the swords' ults match at
+// every rank), but kept as SEPARATE skills so calibration ranks each sword's kit independently:
+// ranking up one sword never touches the other's skills (see weapon_ranks.kdl / ssr_ranks.kdl).
+// The SSR ult's lane hits build Shock in code, gated on this weapon granting the cast
+// (SextansUltSystem), not on a KDL ElementalDamage handler here, because the handler would also
+// electrify the strike/rend riders' applications.
+clone "SkillTemplate" from="active.sextans_ult" id="active.sextans_ssr_ult"
+
+clone "SkillTemplate" from="active.sextans_ult_strike" id="active.sextans_ssr_ult_strike"
+
+clone "SkillTemplate" from="active.sextans_ult_rend" id="active.sextans_ssr_ult_rend"
 
 clone "SkillTemplate" from="active.sextans_slash" id="active.sextans_ssr_slash" {
     set "Description" {
