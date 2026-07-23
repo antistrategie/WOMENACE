@@ -1,0 +1,83 @@
+clone "WeaponTemplate" from="weapon.generic_smg_tier1_ppp" id="weapon.vector" {
+    append "Tags" "jy_no_sell"
+    set "Title" {
+        set "m_DefaultTranslation" "Ksvec .45 ACP"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "SMG"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "A firearm highly compatible with Vector. Modified based on her combat preferences, it is highly maneuverable and stable."
+    }
+    set "Model" asset="weapon/vector/main"
+    set "SkillsGranted" index=0 "active.fire_vector_kriss"
+    set "SkillsGranted" index=1 "active.fire_vector_kriss_tap"
+    set "Icon" asset="weapon/vector/Icon"
+    set "IconEquipment" asset="weapon/vector/IconEquipment"
+    set "IconEquipmentDisabled" asset="weapon/vector/IconEquipmentDisabled"
+    set "IconSkillBar" asset="weapon/vector/IconSkillBar"
+    set "IconSkillBarDisabled" asset="weapon/vector/IconSkillBarDisabled"
+
+    set "AccuracyDropoff" -6.0
+    set "ArmorPenetration" 12.0
+    set "ArmorPenetrationDropoff" -2.4
+
+    set "Damage" 14.0
+    set "DamageDropoff" -1.2
+    set "DamageToArmorDurability" 10.0
+    set "DamageToArmorDurabilityDropoff" -1.35
+
+    set "MaxRange" 4
+    set "IdealRange" 2
+    set "Suppression" 4.0
+
+    set "DeployCosts" {
+        set "m_Supplies" 13
+    }
+
+    set "BlackMarketMaxQuantity" 0
+}
+
+clone "SkillTemplate" from="active.fire_smg_tier1_burst" id="active.fire_vector_kriss" {
+    clear "SoundsOnAttack"
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_smg_addition_bank"
+        set "itemId" "smg_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "weapons_soundbank"
+        set "itemId" "small_caliber_brass_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_smg_addition_bank"
+        set "itemId" "smg_burst_distant"
+    }
+    clear "SoundsOnAttackFar"
+    append "SoundsOnAttackFar" {
+        set "bankId" "wmgfl_weapons_smg_addition_bank"
+        set "itemId" "smg_burst_distant"
+    }
+    set "Repetitions" 7
+}
+
+clone "SkillTemplate" from="active.fire_smg_tier_1_tap_fire" id="active.fire_vector_kriss_tap" {
+    clear "SoundsOnAttack"
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_smg_addition_bank"
+        set "itemId" "smg_single"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "weapons_soundbank"
+        set "itemId" "small_caliber_brass_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_smg_addition_bank"
+        set "itemId" "smg_single_distant"
+    }
+    clear "SoundsOnAttackFar"
+    append "SoundsOnAttackFar" {
+        set "bankId" "wmgfl_weapons_smg_addition_bank"
+        set "itemId" "smg_single_distant"
+    }
+    set "MaxRange" 6
+}

@@ -1,34 +1,34 @@
-clone "WeaponTemplate" from="specialweapon.soppo_ssr" id="specialweapon.soppo_ssr_r1" {
+clone "WeaponTemplate" from="weapon.soppo_ssr" id="weapon.soppo_ssr_r1" {
     set "Damage" 14.0
     set "ArmorPenetration" 37.0
     set "Suppression" 25.0
 }
 
-clone "WeaponTemplate" from="specialweapon.soppo_ssr" id="specialweapon.soppo_ssr_r2" {
+clone "WeaponTemplate" from="weapon.soppo_ssr" id="weapon.soppo_ssr_r2" {
     set "Damage" 15.0
     set "ArmorPenetration" 39.0
     set "Suppression" 26.0
 }
 
-clone "WeaponTemplate" from="specialweapon.soppo_ssr" id="specialweapon.soppo_ssr_r3" {
+clone "WeaponTemplate" from="weapon.soppo_ssr" id="weapon.soppo_ssr_r3" {
     set "Damage" 16.0
     set "ArmorPenetration" 42.0
     set "Suppression" 27.0
 }
 
-clone "WeaponTemplate" from="specialweapon.soppo_ssr" id="specialweapon.soppo_ssr_r4" {
+clone "WeaponTemplate" from="weapon.soppo_ssr" id="weapon.soppo_ssr_r4" {
     set "Damage" 18.0
     set "ArmorPenetration" 45.0
     set "Suppression" 28.0
 }
 
-clone "WeaponTemplate" from="specialweapon.soppo_ssr" id="specialweapon.soppo_ssr_r5" {
+clone "WeaponTemplate" from="weapon.soppo_ssr" id="weapon.soppo_ssr_r5" {
     set "Damage" 20.0
     set "ArmorPenetration" 49.0
     set "Suppression" 30.0
 }
 
-clone "WeaponTemplate" from="specialweapon.soppo_ssr" id="specialweapon.soppo_ssr_r6" {
+clone "WeaponTemplate" from="weapon.soppo_ssr" id="weapon.soppo_ssr_r6" {
     set "Damage" 22.0
     set "ArmorPenetration" 53.0
     set "Suppression" 32.0
@@ -42,7 +42,7 @@ clone "CommodityTemplate" from="commodity.construct_weapon_parts" id="commodity.
         set "m_DefaultTranslation" "[PLACEHOLDER] Weapon component for Skysunderer's Howl"
     }
     append "Tags" "jy_no_sell"
-    set "Icon" asset="weapon/m4_ssr/Icon"
+    set "Icon" asset="weapon/soppo_ssr/Icon"
     set "Rarity" 0
     set "TradeValue" 0
     set "BlackMarketMaxQuantity" 0
@@ -50,7 +50,7 @@ clone "CommodityTemplate" from="commodity.construct_weapon_parts" id="commodity.
 }
 
 clone "BlueprintTemplate" from="blueprint.squad_weapon_electro_magnetic_enhanced_assault_rifle" id="blueprint.wmgfl_soppo_ssr_duplicate" {
-    set "m_CraftingResult" "specialweapon.soppo_ssr"
+    set "m_CraftingResult" "weapon.soppo_ssr"
     clear "m_CraftingMaterials"
     append "m_CraftingMaterials" {
         set "Template" "commodity.wmgfl_component_soppo_ssr"

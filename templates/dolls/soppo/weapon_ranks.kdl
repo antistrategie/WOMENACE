@@ -1,0 +1,67 @@
+clone "WeaponTemplate" from="weapon.soppo" id="weapon.soppo_r1" {
+    set "Damage" 9.5
+    set "ArmorPenetration" 29.0
+    set "DamageToArmorDurability" 8.5
+}
+
+clone "WeaponTemplate" from="weapon.soppo" id="weapon.soppo_r2" {
+    set "Damage" 10.0
+    set "ArmorPenetration" 31.0
+    set "DamageToArmorDurability" 9.0
+}
+
+clone "WeaponTemplate" from="weapon.soppo" id="weapon.soppo_r3" {
+    set "Damage" 11.0
+    set "ArmorPenetration" 33.0
+    set "DamageToArmorDurability" 10.0
+}
+
+clone "WeaponTemplate" from="weapon.soppo" id="weapon.soppo_r4" {
+    set "Damage" 12.0
+    set "ArmorPenetration" 36.0
+    set "DamageToArmorDurability" 11.0
+}
+
+clone "WeaponTemplate" from="weapon.soppo" id="weapon.soppo_r5" {
+    set "Damage" 13.0
+    set "ArmorPenetration" 40.0
+    set "DamageToArmorDurability" 12.0
+}
+
+clone "WeaponTemplate" from="weapon.soppo" id="weapon.soppo_r6" {
+    set "Damage" 14.0
+    set "ArmorPenetration" 44.0
+    set "DamageToArmorDurability" 13.0
+}
+
+clone "CommodityTemplate" from="commodity.construct_weapon_parts" id="commodity.wmgfl_component_soppo" {
+    set "Title" {
+        set "m_DefaultTranslation" "M4 SOPMOD II Component"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "[PLACEHOLDER] Weapon component for M4 SOPMOD II"
+    }
+    append "Tags" "jy_no_sell"
+    set "Icon" asset="weapon/soppo/Icon"
+    set "Rarity" 0
+    set "TradeValue" 0
+    set "BlackMarketMaxQuantity" 0
+    set "MinCampaignProgress" 0
+}
+
+clone "BlueprintTemplate" from="blueprint.squad_weapon_electro_magnetic_enhanced_assault_rifle" id="blueprint.wmgfl_soppo_duplicate" {
+    set "m_CraftingResult" "weapon.soppo"
+    clear "m_CraftingMaterials"
+    append "m_CraftingMaterials" {
+        set "Template" "commodity.wmgfl_component_soppo"
+        set "Count" 1
+    }
+    append "m_CraftingMaterials" {
+        set "Template" "commodity.construct_weapon_parts"
+        set "Count" 4
+    }
+    append "m_CraftingMaterials" {
+        set "Template" "commodity.construct_cybernetic_optics"
+        set "Count" 2
+    }
+}

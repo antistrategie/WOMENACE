@@ -6,10 +6,10 @@ namespace WOMENACE.Code;
 // The shared weapon-calibration model: the id conventions and the component schedule every
 // calibration consumer reads (CalibrationSystem, the affinity badge popover, the dev verbs).
 // A doll's weapon calibrates from rank 0 (the base template) to rank 6 by merging in freshly
-// crafted duplicates at the workshop. The rank templates are hand-authored KDL clones named
-// <base>_r<N>, a weapon's component commodity is commodity.wmgfl_component_<weapon tail> and its
-// duplicate recipe is blueprint.wmgfl_<weapon tail>_duplicate, so everything derives from the
-// weapon id and no second registry can drift out of step with the templates.
+// crafted duplicates at the workshop. Every id derives from the character tag (wmgfl_<doll>):
+// the weapon is weapon.<doll>, its SSR weapon.<doll>_ssr, rank clones <base>_r<N>, its component
+// commodity.wmgfl_component_<doll> and its duplicate recipe blueprint.wmgfl_<doll>_duplicate.
+// There is no per-doll registry anywhere: enrolling a doll is pure KDL.
 public static class Calibration
 {
     public const int MaxRank = 6;
@@ -45,36 +45,59 @@ public static class Calibration
     public static readonly int[] NormalComponentLevels = { 1, 2, 3, 4, 5, 6 };
     public static readonly int[] SsrComponentLevels = { 4, 5, 6, 7, 8, 9 };
 
-    // A character's calibratable weapons. Only the signature gun is authored here: the SSR id is
-    // derived from the character's Weapon unlock in Unlocks (the single map of what each character
-    // gets), so an SSR landing for a doll is one edit there, never a second registry to keep in step.
-    // A doll whose SSR's rank templates have not shipped simply resolves no SSR (no SSR components
-    // at all, and the retroactive grant pass back-fills her reached levels once it lands).
-    public sealed class Entry
+    // The doll name a character tag carries ("wmgfl_makiatto" -> "makiatto"). This is the one
+    // primary key every weapon id, asset path and display name derives from.
+    public static string DollName(string characterTag)
+        => characterTag != null && characterTag.StartsWith(Affinity.Tag + "_", StringComparison.Ordinal)
+            ? characterTag.Substring(Affinity.Tag.Length + 1)
+            : characterTag;
+
+    // A character's signature weapon id ("wmgfl_makiatto" -> "weapon.makiatto") and its SSR variant
+    // ("weapon.makiatto_ssr"). Pure convention: every doll has the former; the latter exists when her
+    // Weapon unlock is authored in Unlocks.
+    public static string WeaponIdFor(string characterTag) => "weapon." + DollName(characterTag);
+    public static string SsrWeaponIdFor(string characterTag) => WeaponIdFor(characterTag) + "_ssr";
+
+    // Whether a doll name belongs to one of our characters: the character tag template exists.
+    private static bool IsDoll(string dollName)
+        => Templates.ById<Il2CppMenace.Tags.TagTemplate>(Affinity.Tag + "_" + dollName) != null;
+
+    // Resolve a weapon template id (any rank) to the calibratable base id it belongs to, or false
+    // when it is not a doll weapon. Accepts weapon.<doll>[_ssr][_r<N>]; membership comes from the
+    // character tag convention, so a new doll's weapons resolve with no code change.
+    public static bool TryResolveWeaponId(string templateId, out string baseId, out int rank)
     {
-        public string CharacterTag;
-        public string NormalWeaponId;
-        public string SsrWeaponId => Unlocks.SsrWeaponFor(CharacterTag);
+        baseId = null;
+        rank = 0;
+        if (templateId == null || !templateId.StartsWith("weapon.", StringComparison.Ordinal))
+            return false;
+
+        // Strip any _r<N> rank suffix, then an optional _ssr, to reach the doll name.
+        var candidate = templateId;
+        var underscore = candidate.LastIndexOf('_');
+        if (underscore > "weapon.".Length)
+        {
+            var suffix = candidate.Substring(underscore + 1);
+            if (suffix.Length > 1 && suffix[0] == 'r'
+                && int.TryParse(suffix.Substring(1), out var parsed) && parsed >= 1 && parsed <= MaxRank)
+            {
+                rank = parsed;
+                candidate = candidate.Substring(0, underscore);
+            }
+        }
+        var name = candidate.Substring("weapon.".Length);
+        if (name.EndsWith("_ssr", StringComparison.Ordinal))
+            name = name.Substring(0, name.Length - "_ssr".Length);
+        if (!IsDoll(name))
+        {
+            rank = 0;
+            return false;
+        }
+        baseId = candidate;
+        return true;
     }
 
-    public static readonly Dictionary<string, Entry> ByCharacter = new(StringComparer.Ordinal)
-    {
-        ["wmgfl_makiatto"] = new Entry { CharacterTag = "wmgfl_makiatto", NormalWeaponId = "weapon.makiatto_wa2000" },
-        ["wmgfl_voymastina"] = new Entry { CharacterTag = "wmgfl_voymastina", NormalWeaponId = "weapon.voymastina_ak15" },
-        ["wmgfl_papasha"] = new Entry { CharacterTag = "wmgfl_papasha", NormalWeaponId = "weapon.papasha_ppsh" },
-        ["wmgfl_cheyanne"] = new Entry { CharacterTag = "wmgfl_cheyanne", NormalWeaponId = "weapon.cheyanne_m200" },
-        ["wmgfl_sextans"] = new Entry { CharacterTag = "wmgfl_sextans", NormalWeaponId = "weapon.sextans_sword" },
-        ["wmgfl_vector"] = new Entry { CharacterTag = "wmgfl_vector", NormalWeaponId = "weapon.vector_kriss" },
-        ["wmgfl_soppo"] = new Entry { CharacterTag = "wmgfl_soppo", NormalWeaponId = "weapon.soppo_m4" },
-        ["wmgfl_lewis"] = new Entry { CharacterTag = "wmgfl_lewis", NormalWeaponId = "weapon.lewis" },
-        ["wmgfl_leva"] = new Entry { CharacterTag = "wmgfl_leva", NormalWeaponId = "weapon.leva_ump45" },
-        ["wmgfl_helen"] = new Entry { CharacterTag = "wmgfl_helen", NormalWeaponId = "weapon.helen_dp12" },
-    };
-
-    public static Entry EntryFor(string characterTag)
-        => characterTag != null && ByCharacter.TryGetValue(characterTag, out var entry) ? entry : null;
-
-    // The id tail after the collection prefix, e.g. "makiatto_wa2000" out of "weapon.makiatto_wa2000".
+    // The id tail after the collection prefix, e.g. "makiatto" out of "weapon.makiatto".
     private static string Tail(string templateId)
     {
         var dot = templateId.IndexOf('.');
@@ -109,11 +132,9 @@ public static class Calibration
     // list. Derived from the tag so it needs no per-doll name table.
     public static string HolderName(string characterTag)
     {
-        if (string.IsNullOrEmpty(characterTag))
+        var name = DollName(characterTag);
+        if (string.IsNullOrEmpty(name))
             return "";
-        var name = characterTag.StartsWith(Affinity.Tag + "_", StringComparison.Ordinal)
-            ? characterTag.Substring(Affinity.Tag.Length + 1)
-            : characterTag;
         var words = name.Split('_');
         for (var i = 0; i < words.Length; i++)
             if (words[i].Length > 0)

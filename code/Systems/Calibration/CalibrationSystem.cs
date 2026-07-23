@@ -67,11 +67,12 @@ public sealed class CalibrationSystem : JiangyuSystem
         if (_ranksDecorated)
             return;
         var allResolved = true;
-        foreach (var entry in Calibration.ByCharacter.Values)
+        foreach (var weapon in Templates.All<WeaponTemplate>())
         {
-            if (!DecorateWeaponRanks(entry.NormalWeaponId))
-                allResolved = false;
-            if (entry.SsrWeaponId != null && !DecorateWeaponRanks(entry.SsrWeaponId))
+            // Base (rank 0) doll weapons only: each DecorateWeaponRanks call covers a weapon's whole
+            // rank line, SSRs included (they resolve as their own base id).
+            if (Calibration.TryResolveWeaponId(weapon.GetID(), out var baseId, out var rank)
+                && rank == 0 && !DecorateWeaponRanks(baseId))
                 allResolved = false;
         }
         _ranksDecorated = allResolved;
@@ -147,19 +148,17 @@ public sealed class CalibrationSystem : JiangyuSystem
     }
 
     // Affinity-popover rewards: the weapon component the doll earns at each of its schedule levels
-    // (normal at 1-6, SSR at 4-9). Absent for dolls with no calibratable weapon. This is what tells
-    // the player where components come from as her affinity climbs.
+    // (normal at 1-6, SSR at 4-9). This is what tells the player where components come from as her
+    // affinity climbs.
     private IEnumerable<AffinityTooltip.Reward> ComponentRewards(AffinityTooltip.Info info)
     {
-        var entry = Calibration.EntryFor(info.CharacterTag);
-        if (entry == null)
-            yield break;
-        var normalName = ComponentName(entry.NormalWeaponId);
+        var normalName = ComponentName(Calibration.WeaponIdFor(info.CharacterTag));
         foreach (var lvl in Calibration.NormalComponentLevels)
             yield return new AffinityTooltip.Reward(lvl, normalName, AffinityTooltip.RewardKind.Component);
-        if (entry.SsrWeaponId != null)
+        var ssrId = Unlocks.SsrWeaponFor(info.CharacterTag);
+        if (ssrId != null)
         {
-            var ssrName = ComponentName(entry.SsrWeaponId);
+            var ssrName = ComponentName(ssrId);
             foreach (var lvl in Calibration.SsrComponentLevels)
                 yield return new AffinityTooltip.Reward(lvl, ssrName, AffinityTooltip.RewardKind.Component);
         }
@@ -216,16 +215,16 @@ public sealed class CalibrationSystem : JiangyuSystem
         try
         {
             var tag = Affinity.CharacterTag(leader);
-            var entry = Calibration.EntryFor(tag);
             var key = Affinity.KeyForTag(tag);
-            if (entry == null || key == 0 || StrategyState.Get() == null)
+            if (key == 0 || StrategyState.Get() == null)
                 return;
 
             var level = Affinity.LevelFor(Context, key);
             var state = Context.State.Get<CalibrationState>().ForCharacter(key);
-            GrantRun(entry.NormalWeaponId, Calibration.NormalComponentLevels, state.NormalComponentLevels, level, tag);
-            if (entry.SsrWeaponId != null)
-                GrantRun(entry.SsrWeaponId, Calibration.SsrComponentLevels, state.SsrComponentLevels, level, tag);
+            GrantRun(Calibration.WeaponIdFor(tag), Calibration.NormalComponentLevels, state.NormalComponentLevels, level, tag);
+            var ssrId = Unlocks.SsrWeaponFor(tag);
+            if (ssrId != null)
+                GrantRun(ssrId, Calibration.SsrComponentLevels, state.SsrComponentLevels, level, tag);
         }
         catch (Exception ex) { Context.Log.Warn($"calibration: grant reconcile failed: {ex.Message}"); }
     }
@@ -289,7 +288,7 @@ public sealed class CalibrationSystem : JiangyuSystem
             for (var j = 0; items != null && j < items.Count; j++)
             {
                 var item = items[j];
-                if (item == null || !TryResolve(item, out var baseId, out var rank))
+                if (item == null || !Calibration.TryResolveWeaponId(item.GetTemplate()?.GetID(), out var baseId, out var rank))
                     continue;
                 equippedPtrs.Add(item.Pointer);
                 result.Add(MakeInstance(item, baseId, rank, leader));
@@ -302,7 +301,7 @@ public sealed class CalibrationSystem : JiangyuSystem
         for (var i = 0; i < all.Count; i++)
         {
             var item = all[i]?.TryCast<Item>();
-            if (item == null || equippedPtrs.Contains(item.Pointer) || !TryResolve(item, out var baseId, out var rank))
+            if (item == null || equippedPtrs.Contains(item.Pointer) || !Calibration.TryResolveWeaponId(item.GetTemplate()?.GetID(), out var baseId, out var rank))
                 continue;
             // A swapped-out form's personal weapon is owned-but-unequipped, not stock: it is
             // re-equipped on the swap back, so it must not be offered for calibration (merging would
@@ -348,23 +347,6 @@ public sealed class CalibrationSystem : JiangyuSystem
             Holder = leader != null ? Calibration.HolderName(Affinity.CharacterTag(leader)) : null,
             Leader = leader,
         };
-
-    // Resolve an item to the registered base weapon id + rank it represents, or false if it is not
-    // one of our calibratable weapons.
-    private static bool TryResolve(Item item, out string baseId, out int rank)
-    {
-        baseId = null;
-        rank = 0;
-        var id = item?.GetTemplate()?.GetID();
-        if (id == null)
-            return false;
-        foreach (var entry in Calibration.ByCharacter.Values)
-        {
-            if (Calibration.TryParseRank(id, entry.NormalWeaponId, out rank)) { baseId = entry.NormalWeaponId; return true; }
-            if (entry.SsrWeaponId != null && Calibration.TryParseRank(id, entry.SsrWeaponId, out rank)) { baseId = entry.SsrWeaponId; return true; }
-        }
-        return false;
-    }
 
     // The R0 stock copies of a weapon available as merge fodder: unequipped base instances other
     // than the one being calibrated.
@@ -580,10 +562,9 @@ public sealed class CalibrationSystem : JiangyuSystem
     // workshop UI. Consumes the component + salvage.
     public object DevCraft(string characterTag)
     {
-        var entry = Calibration.EntryFor(characterTag);
-        if (entry == null)
+        if (Affinity.KeyForTag(characterTag) == 0)
             return new { error = $"no calibratable weapon for '{characterTag}'" };
-        var blueprint = Blueprint(entry.NormalWeaponId);
+        var blueprint = Blueprint(Calibration.WeaponIdFor(characterTag));
         var owned = Inventory.Owned;
         if (blueprint == null || owned == null)
             return new { error = "no blueprint or inventory" };

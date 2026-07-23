@@ -21,8 +21,9 @@ public static class Unlocks
         Skins,
         // A deployable mech form (gated in FormSwapSystem).
         Mech,
-        // An SSR special weapon granted to the shared inventory at this level. Weapons lists the
-        // weapon template ids. Equippable by anyone, but the owner-only bonus lives in SsrImprintSystem.
+        // An SSR special weapon granted to the shared inventory at this level. The weapon id is not
+        // authored: it is weapon.<doll>_ssr by the Calibration convention. Equippable by anyone, but
+        // the owner-only bonus lives in SsrImprintSystem.
         Weapon,
     }
 
@@ -35,7 +36,6 @@ public static class Unlocks
         public int Level;
         public Feature Feature = Feature.None;
         public string[] Armors = Array.Empty<string>();
-        public string[] Weapons = Array.Empty<string>();
         public LocalisedText Title;
     }
 
@@ -55,13 +55,13 @@ public static class Unlocks
         ["wmgfl_makiatto"] = new[]
         {
             new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.makiatto_ballroom" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_makiatto/lv2", "Outfit(s): Ballroom Interlude") },
-            new Entry { Level = 3, Feature = Feature.Weapon, Weapons = new[] { "specialweapon.makiatto_ssr" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_makiatto/lv3", "SSR Weapon: Bittersweet Caramel") },
+            new Entry { Level = 3, Feature = Feature.Weapon, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_makiatto/lv3", "SSR Weapon: Bittersweet Caramel") },
             new Entry { Level = 4, Feature = Feature.Skins, Armors = new[] { "armor.makiatto_steamy_vacance" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_makiatto/lv4", "Outfit(s): Steamy Vacance") },
         },
         ["wmgfl_sextans"] = new[]
         {
             new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.sextans_nocte" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_sextans/lv2", "Outfit(s): Nocte Bewitchment") },
-            new Entry { Level = 3, Feature = Feature.Weapon, Weapons = new[] { "weapon.sextans_ssr" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_sextans/lv3", "SSR Weapon: Twilight Rose") },
+            new Entry { Level = 3, Feature = Feature.Weapon, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_sextans/lv3", "SSR Weapon: Twilight Rose") },
         },
         ["wmgfl_vector"] = new[]
         {
@@ -70,7 +70,7 @@ public static class Unlocks
         ["wmgfl_soppo"] = new[]
         {
             new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.soppo_redline" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_soppo/lv2", "Outfit(s): Redline Racer") },
-            new Entry { Level = 3, Feature = Feature.Weapon, Weapons = new[] { "specialweapon.soppo_ssr" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_soppo/lv3", "SSR Weapon: Skysunderer's Howl") },
+            new Entry { Level = 3, Feature = Feature.Weapon, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_soppo/lv3", "SSR Weapon: Skysunderer's Howl") },
         },
         ["wmgfl_helen"] = new[]
         {
@@ -83,24 +83,23 @@ public static class Unlocks
             ? entries
             : Array.Empty<Entry>();
 
-    // The SSR weapon ids a character has unlocked at this level (every Weapon entry at or below it).
-    // Granted to the shared inventory, equippable by anyone regardless of who unlocked it.
+    // The SSR weapon ids a character has unlocked at this level (one per Weapon entry at or below
+    // it). Granted to the shared inventory, equippable by anyone regardless of who unlocked it.
     public static IEnumerable<string> UnlockedWeapons(string characterTag, int level)
     {
         foreach (var entry in EntriesFor(characterTag))
-            if (entry.Feature == Feature.Weapon && level >= entry.Level && entry.Weapons != null)
-                foreach (var id in entry.Weapons)
-                    yield return id;
+            if (entry.Feature == Feature.Weapon && level >= entry.Level)
+                yield return Calibration.SsrWeaponIdFor(characterTag);
     }
 
-    // The SSR weapon id this character's Weapon unlock grants (the first Weapon entry's weapon), or
-    // null when she has no SSR unlock. Other systems (calibration's SSR component schedule) read this
-    // rather than keeping their own copy of the id, so the unlock and its consumers can never drift.
+    // The SSR weapon id this character's Weapon unlock grants, or null when she has no SSR unlock.
+    // The id itself is the Calibration convention (weapon.<doll>_ssr); only its EXISTENCE is authored
+    // here, so the unlock and its consumers can never drift.
     public static string SsrWeaponFor(string characterTag)
     {
         foreach (var entry in EntriesFor(characterTag))
-            if (entry.Feature == Feature.Weapon && entry.Weapons is { Length: > 0 })
-                return entry.Weapons[0];
+            if (entry.Feature == Feature.Weapon)
+                return Calibration.SsrWeaponIdFor(characterTag);
         return null;
     }
 

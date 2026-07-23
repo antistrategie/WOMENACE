@@ -49,12 +49,12 @@ public static class Weapons
     [MutatingVerb]
     public static object GrantComponents(string characterTag = "wmgfl_makiatto", int count = 1)
     {
-        var entry = Calibration.EntryFor(characterTag);
-        if (entry == null)
-            return new { error = $"no calibratable weapon registered for '{characterTag}'" };
-        var component = Templates.ById<Il2CppMenace.Items.CommodityTemplate>(Calibration.ComponentIdFor(entry.NormalWeaponId));
+        if (Affinity.KeyForTag(characterTag) == 0)
+            return new { error = $"unknown character '{characterTag}'" };
+        var componentId = Calibration.ComponentIdFor(Calibration.WeaponIdFor(characterTag));
+        var component = Templates.ById<Il2CppMenace.Items.CommodityTemplate>(componentId);
         if (component == null)
-            return new { error = $"component template '{Calibration.ComponentIdFor(entry.NormalWeaponId)}' not registered" };
+            return new { error = $"component template '{componentId}' not registered" };
         var granted = 0;
         for (var i = 0; i < count; i++)
             if (Inventory.AddItem(component) != null)

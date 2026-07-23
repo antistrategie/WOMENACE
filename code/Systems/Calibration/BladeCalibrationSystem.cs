@@ -8,7 +8,7 @@ namespace WOMENACE.Code;
 // Blades (Sextans' Night Snake and Twilight Rose) deal their per-hit stats from the skill Attack
 // handlers, not the weapon template, and the weapon tooltip SUMS weapon.Damage with the granted
 // skill's Attack.Damage, so any non-zero weapon field would double the number the player sees. The
-// blade weapon fields therefore stay 0 (see sword.kdl) and calibration is driven entirely here: a
+// blade weapon fields therefore stay 0 (see weapon.kdl) and calibration is driven entirely here: a
 // per-rank multiplier scales the blade skills' Attack handlers (hitpoint damage, armour penetration
 // and armour-durability damage). Because the tooltip reads the (scaled) handler, that same multiplier
 // shows up in the weapon tooltip; the calibration screen reads it through BladeDeltas. One curve, one
@@ -28,7 +28,7 @@ public sealed class BladeCalibrationSystem : JiangyuSystem
     // before their delayed payoff reads them.
     private static readonly (string BaseId, string[] Skills)[] Blades =
     {
-        ("weapon.sextans_sword", new[]
+        ("weapon.sextans", new[]
         {
             "active.sextans_slash", "active.sextans_thrust",
             "active.sextans_ult", "active.sextans_ult_strike", "active.sextans_ult_rend",

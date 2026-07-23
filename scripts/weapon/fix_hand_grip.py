@@ -6,7 +6,7 @@ components of the `weapon_hand_l` empty's rotation quaternion, flipping the
 off-hand 180 degrees about the barrel. The fix is to negate x and w again,
 restoring the intended grip. Position and every other node are left untouched.
 
-    scripts/weapon/fix_hand_grip.py unity/Assets/Authored/weapon/m4_ssr/raw.glb
+    scripts/weapon/fix_hand_grip.py unity/Assets/Authored/weapon/soppo_ssr/raw.glb
 
 Pass --node to target a differently named IK empty, and --dry-run to preview
 the change without writing. After running, re-bake the prefab from the GLB

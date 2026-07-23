@@ -29,10 +29,12 @@ public sealed class SsrImprintSystem : JiangyuSystem
 
     public sealed class Entry
     {
-        public string WeaponId;
         public string OwnerTag;
         public string OwnerName;
         public string BonusText;
+        // The SSR weapon's template id, derived from the owner tag by the Calibration convention
+        // (weapon.<doll>_ssr), so the id is never hand-authored in two places.
+        public string WeaponId => Calibration.SsrWeaponIdFor(OwnerTag);
         public int OwnerDamage;         // owner's boosted per-shot damage (0 = never change Damage). The
                                         // base is read from the weapon template's authored Damage (KDL),
                                         // so only this owner-only override lives in code. Damage is a
@@ -44,7 +46,6 @@ public sealed class SsrImprintSystem : JiangyuSystem
     {
         new Entry
         {
-            WeaponId = "specialweapon.makiatto_ssr",
             OwnerTag = "wmgfl_makiatto",
             OwnerName = "Makiatto",
             BonusText = "Fires twice, hits harder, and builds Freeze faster.",
@@ -56,7 +57,6 @@ public sealed class SsrImprintSystem : JiangyuSystem
         },
         new Entry
         {
-            WeaponId = "specialweapon.soppo_ssr",
             OwnerTag = "wmgfl_soppo",
             OwnerName = "Soppo",
             BonusText = "Hits harder, builds Freeze and Burn faster, and unlocks her stances.",
@@ -71,11 +71,10 @@ public sealed class SsrImprintSystem : JiangyuSystem
         {
             // Sextans' SSR sword. Unlike Makiatto/Soppo it is OnlyEquipableBy its owner, so there is no
             // owner-vs-other split to gate. The extra damage lives on the skills' Attack handler and the
-            // Shock build-up on their ElementalDamage handler, both always on (see sword.kdl). This entry
+            // Shock build-up on their ElementalDamage handler, both always on (see weapon.kdl). This entry
             // carries no owner bonus: the melee hit reads the Attack handler, not the weapon Damage
             // field, so an OwnerDamage boost would never touch it. It exists only for the "Sextans
             // Imprint Boost" tooltip and IsImprintWeapon (SSR-weapon status, out of the proficiency bonus).
-            WeaponId = "weapon.sextans_ssr",
             OwnerTag = "wmgfl_sextans",
             OwnerName = "Sextans",
             BonusText = "Builds Shock on every hit.",

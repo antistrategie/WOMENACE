@@ -238,38 +238,8 @@ public sealed class FormSwapSystem : JiangyuSystem
         return null;
     }
 
-    // The persisted per-form snapshots. Saves recorded when the swap was Voymastina-only store them
-    // under the legacy VoymastinaFormSwapSystem+FormSwapState identity: fold that blob in on first
-    // access, then leave it empty.
-    // TODO: remove this migration (the fold-in below and the VoymastinaFormSwapSystem holder at the
-    // bottom of the file) once released saves have had a release or two to fold in.
-    private FormSwapState SwapState
-    {
-        get
-        {
-            var state = Context.State.Get<FormSwapState>();
-            var legacy = Context.State.Get<VoymastinaFormSwapSystem.FormSwapState>();
-            if (legacy.Forms.Count > 0)
-            {
-                foreach (var kv in legacy.Forms)
-                {
-                    if (kv.Value == null || state.Forms.ContainsKey(kv.Key))
-                        continue;
-                    state.Forms[kv.Key] = new FormSnapshot
-                    {
-                        Attributes = kv.Value.Attributes ?? [],
-                        Perks = kv.Value.Perks ?? [],
-                        SquaddieIds = kv.Value.SquaddieIds ?? [],
-                        EquippedItemTemplateIds = kv.Value.EquippedItemTemplateIds ?? [],
-                        VehicleTemplateId = kv.Value.VehicleTemplateId,
-                    };
-                }
-                legacy.Forms.Clear();
-                Context.Log.Info("form swap: migrated legacy Voymastina snapshots");
-            }
-            return state;
-        }
-    }
+    // The persisted per-form snapshots.
+    private FormSwapState SwapState => Context.State.Get<FormSwapState>();
 
     // A dossier redeems a random not-yet-acquired leader. While a doll is in her alt form, her base
     // form is stashed OUT of the roster (DoSwap replaces her roster slot with the alt), so the game
@@ -1492,26 +1462,6 @@ public sealed class FormSwapSystem : JiangyuSystem
         // the existing owned instances (rather than reverting to the template default).
         public List<string> EquippedItemTemplateIds { get; set; } = [];
         // A pilot form's selected chassis item template id. Null for infantry forms.
-        public string VehicleTemplateId { get; set; }
-    }
-}
-
-// Save-file identity for snapshots recorded when the form swap was Voymastina-only. Persisted state is
-// keyed by type full name, so this holder keeps those blobs readable: FormSwapSystem.SwapState folds
-// them into the multi-character FormSwapState on first access and leaves this one empty.
-public sealed class VoymastinaFormSwapSystem
-{
-    public sealed class FormSwapState
-    {
-        public Dictionary<string, FormSnapshot> Forms { get; set; } = [];
-    }
-
-    public sealed class FormSnapshot
-    {
-        public List<float> Attributes { get; set; } = [];
-        public List<string> Perks { get; set; } = [];
-        public List<int> SquaddieIds { get; set; } = [];
-        public List<string> EquippedItemTemplateIds { get; set; } = [];
         public string VehicleTemplateId { get; set; }
     }
 }
