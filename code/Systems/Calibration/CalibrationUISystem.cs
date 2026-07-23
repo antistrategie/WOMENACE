@@ -170,7 +170,7 @@ public sealed class CalibrationUISystem : JiangyuSystem
         // changed): prefer the pending key set by Act, else re-find the currently selected weapon.
         var key = _pendingSelectKey
             ?? (_selected >= 0 && _selected < _instances.Count ? SelectionKey(_instances[_selected]) : null);
-        _instances = CalibrationSystem.Instance?.Instances() ?? [];
+        _instances = GroupStock(CalibrationSystem.Instance?.Instances() ?? []);
         _selected = key != null ? _instances.FindIndex(i => SelectionKey(i) == key) : -1;
         if (_selected < 0 && _instances.Count > 0)
             _selected = 0;
@@ -180,6 +180,33 @@ public sealed class CalibrationUISystem : JiangyuSystem
     }
 
     private void Hide() => _modal?.SetVisible(false);
+
+    // Collapse stock copies of the same weapon at the same rank into one card (its Count carries
+    // the stack size): five stock R0 Twilight Roses are one row, not five. Equipped weapons are
+    // per-holder and never grouped. The group's first instance is the representative any
+    // merge/revert acts on.
+    private static List<CalibrationInstance> GroupStock(List<CalibrationInstance> instances)
+    {
+        var grouped = new List<CalibrationInstance>();
+        var stockByKey = new Dictionary<string, CalibrationInstance>(StringComparer.Ordinal);
+        foreach (var inst in instances)
+        {
+            if (inst.Leader != null)
+            {
+                grouped.Add(inst);
+                continue;
+            }
+            var key = $"{inst.BaseWeaponId}|{inst.Rank}";
+            if (stockByKey.TryGetValue(key, out var first))
+                first.Count++;
+            else
+            {
+                stockByKey[key] = inst;
+                grouped.Add(inst);
+            }
+        }
+        return grouped;
+    }
 
     private static string SelectionKey(CalibrationInstance i) => $"{i.BaseWeaponId}|{i.Holder ?? "stock"}|{i.Rank}";
 
@@ -244,7 +271,7 @@ public sealed class CalibrationUISystem : JiangyuSystem
         banner.Add(rank);
         row.Add(banner);
 
-        var who = new Label(inst.Holder ?? Locale.Text("WOMENACE::ui/stock", "Stock"));
+        var who = new Label(inst.Holder ?? StockLabel(inst));
         who.AddToClassList("wm-cal-who");
         row.Add(who);
 
@@ -252,6 +279,11 @@ public sealed class CalibrationUISystem : JiangyuSystem
             DelegateSupport.ConvertDelegate<EventCallback<PointerDownEvent>>((Action<PointerDownEvent>)(_ => { Sound.Click(); Select(index); })));
         return row;
     }
+
+    private static string StockLabel(CalibrationInstance inst)
+        => inst.Count > 1
+            ? string.Format(Locale.Text("WOMENACE::ui/stock_count", "Stock x{0}"), inst.Count)
+            : Locale.Text("WOMENACE::ui/stock", "Stock");
 
     private void RebuildDetail()
     {

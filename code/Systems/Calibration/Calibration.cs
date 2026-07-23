@@ -155,6 +155,10 @@ public sealed class CalibrationInstance
     public int Rank;
     public string Holder;         // doll display name, or null when in stock
     public BaseUnitLeader Leader; // the equipping leader, or null when in stock
+    // Stock copies this entry stands for (1 for an equipped weapon or a lone stock copy). The
+    // calibration screen groups same-weapon same-rank stock into ONE card, so this is >1 on the
+    // group's representative; operations still act on the one Item instance.
+    public int Count = 1;
 }
 
 // One stat's current value and its value at the next rank (equal at max rank).
