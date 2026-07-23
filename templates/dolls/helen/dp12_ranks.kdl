@@ -1,0 +1,67 @@
+clone "WeaponTemplate" from="weapon.helen_dp12" id="weapon.helen_dp12_r1" {
+    set "Damage" 10.5
+    set "ArmorPenetration" 11.0
+    set "Suppression" 4.0
+}
+
+clone "WeaponTemplate" from="weapon.helen_dp12" id="weapon.helen_dp12_r2" {
+    set "Damage" 11.0
+    set "ArmorPenetration" 12.0
+    set "Suppression" 4.5
+}
+
+clone "WeaponTemplate" from="weapon.helen_dp12" id="weapon.helen_dp12_r3" {
+    set "Damage" 12.0
+    set "ArmorPenetration" 13.0
+    set "Suppression" 5.0
+}
+
+clone "WeaponTemplate" from="weapon.helen_dp12" id="weapon.helen_dp12_r4" {
+    set "Damage" 13.0
+    set "ArmorPenetration" 15.0
+    set "Suppression" 5.5
+}
+
+clone "WeaponTemplate" from="weapon.helen_dp12" id="weapon.helen_dp12_r5" {
+    set "Damage" 14.5
+    set "ArmorPenetration" 17.0
+    set "Suppression" 6.0
+}
+
+clone "WeaponTemplate" from="weapon.helen_dp12" id="weapon.helen_dp12_r6" {
+    set "Damage" 16.0
+    set "ArmorPenetration" 19.0
+    set "Suppression" 7.0
+}
+
+clone "CommodityTemplate" from="commodity.construct_weapon_parts" id="commodity.wmgfl_component_helen_dp12" {
+    set "Title" {
+        set "m_DefaultTranslation" "Slug Shot Component"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "[PLACEHOLDER] Weapon component for Slug Shot"
+    }
+    append "Tags" "jy_no_sell"
+    set "Icon" asset="weapon/dp12/Icon"
+    set "Rarity" 0
+    set "TradeValue" 0
+    set "BlackMarketMaxQuantity" 0
+    set "MinCampaignProgress" 0
+}
+
+clone "BlueprintTemplate" from="blueprint.squad_weapon_electro_magnetic_enhanced_assault_rifle" id="blueprint.wmgfl_helen_dp12_duplicate" {
+    set "m_CraftingResult" "weapon.helen_dp12"
+    clear "m_CraftingMaterials"
+    append "m_CraftingMaterials" {
+        set "Template" "commodity.wmgfl_component_helen_dp12"
+        set "Count" 1
+    }
+    append "m_CraftingMaterials" {
+        set "Template" "commodity.construct_weapon_parts"
+        set "Count" 4
+    }
+    append "m_CraftingMaterials" {
+        set "Template" "commodity.construct_cybernetic_optics"
+        set "Count" 2
+    }
+}

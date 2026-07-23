@@ -1,4 +1,5 @@
 clone "WeaponTemplate" from="weapon.generic_carbine_tier1_spc" id="weapon.sextans_sword" {
+    append "Tags" "jy_no_sell"
     set "Title" {
         set "m_DefaultTranslation" "Night Snake"
     }
@@ -11,6 +12,7 @@ clone "WeaponTemplate" from="weapon.generic_carbine_tier1_spc" id="weapon.sextan
 
     set "Model" asset="weapon/sextans_sword/main"
 
+    set "Icon" asset="weapon/sextans_sword/Icon"
     set "IconEquipment" asset="weapon/sextans_sword/IconEquipment"
     set "IconEquipmentDisabled" asset="weapon/sextans_sword/IconEquipmentDisabled"
     set "IconSkillBar" asset="weapon/sextans_sword/IconSkillBar"
@@ -314,6 +316,7 @@ clone "SkillTemplate" from="active.wetteroth_thats_a_knife" id="active.sextans_u
 // The ult and its riders are shared with Night Snake (only Sextans wields either
 // sword), so only the two basic attacks are cloned to carry the Shock handler.
 clone "WeaponTemplate" from="weapon.sextans_sword" id="weapon.sextans_ssr" {
+    append "Tags" "jy_no_sell"
     set "Title" {
         set "m_DefaultTranslation" "Twilight Rose"
     }
@@ -327,6 +330,7 @@ clone "WeaponTemplate" from="weapon.sextans_sword" id="weapon.sextans_ssr" {
 
     set "Model" asset="weapon/sextans_ssr/main"
 
+    set "Icon" asset="weapon/sextans_ssr/Icon"
     set "IconEquipment" asset="weapon/sextans_ssr/IconEquipment"
     set "IconEquipmentDisabled" asset="weapon/sextans_ssr/IconEquipmentDisabled"
     set "IconSkillBar" asset="weapon/sextans_ssr/IconSkillBar"

@@ -1,0 +1,20 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="../theme.uss" />
+    <Style src="calibration.uss" />
+    <ui:VisualElement name="wm-cal-screen" class="wm-cal-screen">
+        <ui:VisualElement name="wm-cal-blocker" class="wm-cal-blocker" />
+        <ui:VisualElement class="wm-cal-panel">
+            <ui:VisualElement class="wm-cal-header">
+                <ui:Label name="@WOMENACE::ui/calibration" text="CALIBRATION" class="wm-cal-title" />
+                <ui:Button name="wm-cal-close" text="X" class="wm-cal-close" />
+            </ui:VisualElement>
+            <ui:VisualElement class="wm-cal-body">
+                <ui:VisualElement class="wm-cal-listpane">
+                    <ui:Label name="@WOMENACE::ui/weapons" text="WEAPONS" class="wm-cal-sectionlabel" />
+                    <ui:ScrollView name="wm-cal-list" mode="Vertical" class="wm-cal-list" />
+                </ui:VisualElement>
+                <ui:VisualElement name="wm-cal-detail" class="wm-cal-detail" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

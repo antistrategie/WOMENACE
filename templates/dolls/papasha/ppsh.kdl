@@ -1,4 +1,5 @@
 clone "WeaponTemplate" from="weapon.generic_smg_tier1_ppp" id="weapon.papasha_ppsh" {
+    append "Tags" "jy_no_sell"
     set "Title" {
         set "m_DefaultTranslation" "PPSh-41"
     }
@@ -11,6 +12,7 @@ clone "WeaponTemplate" from="weapon.generic_smg_tier1_ppp" id="weapon.papasha_pp
     set "Model" asset="weapon/ppsh/main"
     set "SkillsGranted" index=0 "active.fire_papasha_ppsh"
     set "SkillsGranted" index=1 "active.fire_papasha_ppsh_tap"
+    set "Icon" asset="weapon/ppsh/Icon"
     set "IconEquipment" asset="weapon/ppsh/IconEquipment"
     set "IconEquipmentDisabled" asset="weapon/ppsh/IconEquipmentDisabled"
     set "IconSkillBar" asset="weapon/ppsh/IconSkillBar"

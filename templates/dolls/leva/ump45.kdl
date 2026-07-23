@@ -1,4 +1,5 @@
 clone "WeaponTemplate" from="weapon.generic_smg_tier1_ppp_sof" id="weapon.leva_ump45" {
+    append "Tags" "jy_no_sell"
     set "Title" {
         set "m_DefaultTranslation" "UMP45"
     }
@@ -11,6 +12,7 @@ clone "WeaponTemplate" from="weapon.generic_smg_tier1_ppp_sof" id="weapon.leva_u
     set "Model" asset="weapon/ump45/main"
     set "SkillsGranted" index=0 "active.fire_leva_ump45"
     set "SkillsGranted" index=1 "active.fire_leva_ump45_tap"
+    set "Icon" asset="weapon/ump45/Icon"
     set "IconEquipment" asset="weapon/ump45/IconEquipment"
     set "IconEquipmentDisabled" asset="weapon/ump45/IconEquipmentDisabled"
     set "IconSkillBar" asset="weapon/ump45/IconSkillBar"

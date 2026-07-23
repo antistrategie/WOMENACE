@@ -1,0 +1,67 @@
+clone "WeaponTemplate" from="weapon.lewis" id="weapon.lewis_r1" {
+    set "Damage" 11.5
+    set "ArmorPenetration" 37.0
+    set "DamageToArmorDurability" 14.5
+}
+
+clone "WeaponTemplate" from="weapon.lewis" id="weapon.lewis_r2" {
+    set "Damage" 12.0
+    set "ArmorPenetration" 39.0
+    set "DamageToArmorDurability" 15.0
+}
+
+clone "WeaponTemplate" from="weapon.lewis" id="weapon.lewis_r3" {
+    set "Damage" 13.0
+    set "ArmorPenetration" 42.0
+    set "DamageToArmorDurability" 16.0
+}
+
+clone "WeaponTemplate" from="weapon.lewis" id="weapon.lewis_r4" {
+    set "Damage" 14.0
+    set "ArmorPenetration" 46.0
+    set "DamageToArmorDurability" 17.0
+}
+
+clone "WeaponTemplate" from="weapon.lewis" id="weapon.lewis_r5" {
+    set "Damage" 15.5
+    set "ArmorPenetration" 50.0
+    set "DamageToArmorDurability" 18.5
+}
+
+clone "WeaponTemplate" from="weapon.lewis" id="weapon.lewis_r6" {
+    set "Damage" 17.0
+    set "ArmorPenetration" 55.0
+    set "DamageToArmorDurability" 20.0
+}
+
+clone "CommodityTemplate" from="commodity.construct_weapon_parts" id="commodity.wmgfl_component_lewis" {
+    set "Title" {
+        set "m_DefaultTranslation" "Lewis Machine Gun Component"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "[PLACEHOLDER] Weapon component for Lewis Machine Gun"
+    }
+    append "Tags" "jy_no_sell"
+    set "Icon" asset="weapon/lewis/Icon"
+    set "Rarity" 0
+    set "TradeValue" 0
+    set "BlackMarketMaxQuantity" 0
+    set "MinCampaignProgress" 0
+}
+
+clone "BlueprintTemplate" from="blueprint.squad_weapon_electro_magnetic_enhanced_assault_rifle" id="blueprint.wmgfl_lewis_duplicate" {
+    set "m_CraftingResult" "weapon.lewis"
+    clear "m_CraftingMaterials"
+    append "m_CraftingMaterials" {
+        set "Template" "commodity.wmgfl_component_lewis"
+        set "Count" 1
+    }
+    append "m_CraftingMaterials" {
+        set "Template" "commodity.construct_weapon_parts"
+        set "Count" 4
+    }
+    append "m_CraftingMaterials" {
+        set "Template" "commodity.construct_cybernetic_optics"
+        set "Count" 2
+    }
+}

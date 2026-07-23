@@ -1,4 +1,5 @@
 clone "WeaponTemplate" from="weapon.generic_battle_rifle_tier1_crowbar_marksman" id="weapon.cheyanne_m200" {
+    append "Tags" "jy_no_sell"
     set "Title" {
         set "m_DefaultTranslation" "M200"
     }
@@ -11,6 +12,7 @@ clone "WeaponTemplate" from="weapon.generic_battle_rifle_tier1_crowbar_marksman"
     set "Model" asset="weapon/m200/main"
     set "SkillsGranted" index=0 "active.fire_cheyanne_m200"
     set "SkillsGranted" index=1 "active.fire_cheyanne_m200_quickshot"
+    set "Icon" asset="weapon/m200/Icon"
     set "IconEquipment" asset="weapon/m200/IconEquipment"
     set "IconEquipmentDisabled" asset="weapon/m200/IconEquipmentDisabled"
     set "IconSkillBar" asset="weapon/m200/IconSkillBar"

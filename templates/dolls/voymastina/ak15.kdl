@@ -1,4 +1,5 @@
 clone "WeaponTemplate" from="weapon.generic_assault_rifle_tier1_ARC_762" id="weapon.voymastina_ak15" {
+    append "Tags" "jy_no_sell"
     set "Title" {
         set "m_DefaultTranslation" "Kalashnikova-15"
     }
@@ -18,7 +19,7 @@ clone "WeaponTemplate" from="weapon.generic_assault_rifle_tier1_ARC_762" id="wea
     set "IconSkillBarDisabled" asset="weapon/ak15/IconSkillBarDisabled"
 
     set "AccuracyBonus" 10.0
-    set "AccuracyDropoff" -6
+    set "AccuracyDropoff" -6.0
     set "ArmorPenetration" 34.0
     set "ArmorPenetrationDropoff" -2.0
 

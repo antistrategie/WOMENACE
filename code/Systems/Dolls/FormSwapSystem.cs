@@ -135,8 +135,11 @@ public sealed class FormSwapSystem : JiangyuSystem
     // changes, every session cache is dropped (see EnsureSession).
     private IntPtr _sessionState = IntPtr.Zero;
 
+    public static FormSwapSystem Instance { get; private set; }
+
     public override void OnInit()
     {
+        Instance = this;
         // The swap button sits after the native unit-window button on the Armory (squad-menu) screen
         // only. It is deliberately kept off the mission-prep screen: swapping a deployed leader's
         // instance there fights the deployment system, so the form is chosen between missions instead.
@@ -170,6 +173,29 @@ public sealed class FormSwapSystem : JiangyuSystem
     public override void OnUnload()
     {
         Affinity.Changed -= OnAffinityChanged;
+        if (Instance == this)
+            Instance = null;
+    }
+
+    // Item template ids a swapped-out form re-equips on swap back: for every pair with one form on
+    // the roster, the other (stashed) form's snapshot loadout. The matching owned-but-unequipped
+    // instances are reserved: anything that consumes unequipped stock (the calibration merge) must
+    // leave one instance per id alone, or ApplyLoadout finds nothing to re-equip on the swap back.
+    public IEnumerable<string> StashedItemTemplateIds()
+    {
+        foreach (var pair in Pairs)
+        {
+            foreach (var (stashedId, activeId) in new[] { (pair.BaseFormId, pair.AltFormId), (pair.AltFormId, pair.BaseFormId) })
+            {
+                if (stashedId == null || activeId == null || !FormActive(activeId) || FormActive(stashedId))
+                    continue;
+                if (!SwapState.Forms.TryGetValue(stashedId, out var snap) || snap?.EquippedItemTemplateIds == null)
+                    continue;
+                foreach (var id in snap.EquippedItemTemplateIds)
+                    if (id != null)
+                        yield return id;
+            }
+        }
     }
 
     private void OnAffinityChanged(VisualElement window) => UpdateSwapButton(window);

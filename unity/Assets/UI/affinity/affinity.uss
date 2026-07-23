@@ -57,7 +57,7 @@
 
 .wm-gift-title {
     font-size: 12px;
-    color: rgb(229, 200, 192);
+    color: rgb(222, 218, 206);
     margin-right: 10px;
     -unity-text-align: middle-left;
 }
@@ -156,3 +156,148 @@
 .wm-locked .text-button-label {
     color: rgb(150, 140, 120);
 }
+
+/* ---- affinity popover (badge hover) ----
+   A filled rank rail on the left (gold up to the reached level, dim below) with each level's rewards
+   to its right and the level number in its own column. Near-opaque: it floats over live UI with no
+   dimming blocker behind it, so it must not read see-through. */
+.wm-aff-pop {
+    width: 330px;
+    background-color: rgba(0, 0, 0, 0.97);
+    border-width: 1px;
+    border-color: rgba(215, 197, 87, 0.24);
+    padding: 7px 9px 8px 7px;
+}
+
+.wm-aff-head {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 5px;
+    margin-bottom: 3px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(0, 0, 0, 0.5);
+}
+
+.wm-aff-title {
+    font-size: 11px;
+    -unity-font-style: bold;
+    letter-spacing: 3px;
+    color: var(--wm-rel);
+}
+
+.wm-aff-level {
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: rgb(140, 133, 116);
+}
+
+.wm-aff-track {
+    flex-direction: column;
+}
+
+/* One level. Rows touch (no margin) so the rail lines join into a continuous bar; the gap between
+   groups is the body's padding-bottom, which the rail passes through. */
+.wm-aff-lvl-row {
+    flex-direction: row;
+    align-items: stretch;
+}
+
+.wm-aff-rail {
+    width: 20px;
+    flex-shrink: 0;
+}
+
+.wm-aff-rail-line {
+    position: absolute;
+    left: 10px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: rgb(52, 49, 42);
+}
+
+/* Gold fill over the dim line: full height on a reached level, only down to the node on the current
+   one (so the reached point sits exactly at the current node). */
+.wm-aff-rail-fill {
+    position: absolute;
+    left: 10px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: var(--wm-rel);
+}
+
+.wm-aff-rail-fill--current {
+    bottom: auto;
+    height: 7px;
+}
+
+/* The last level ends the rail: its line (and fill, if reached) stops at the node, no stub below. */
+.wm-aff-lvl-row--last .wm-aff-rail-line,
+.wm-aff-lvl-row--last .wm-aff-rail-fill {
+    bottom: auto;
+    height: 7px;
+}
+
+.wm-aff-node {
+    position: absolute;
+    left: 11px;
+    top: 3px;
+    translate: -50% 0;
+    width: 8px;
+    height: 8px;
+    border-radius: 4px;
+    background-color: rgb(18, 18, 13);
+    border-width: 2px;
+    border-color: rgb(52, 49, 42);
+}
+
+/* Number and reward text share font-size and zeroed margins so their baselines line up and lines
+   stack tightly (the game's default label carries a margin that otherwise spaces them out). */
+.wm-aff-num {
+    width: 22px;
+    flex-shrink: 0;
+    margin: 0;
+    padding: 0;
+    font-size: 10px;
+    -unity-font-style: bold;
+    letter-spacing: 1px;
+    color: rgb(140, 133, 116);
+}
+
+.wm-aff-body {
+    flex-grow: 1;
+    padding-top: 0;
+    padding-bottom: 4px;
+    padding-left: 2px;
+}
+
+.wm-aff-unlock {
+    font-size: 10px;
+    margin: 0;
+    padding: 0;
+    color: rgb(140, 133, 116);
+    white-space: normal;
+}
+
+/* reached */
+.wm-aff-lvl-row--done .wm-aff-node { background-color: var(--wm-rel); border-color: var(--wm-rel); }
+.wm-aff-lvl-row--done .wm-aff-num { color: var(--wm-rel); }
+.wm-aff-lvl-row--done .wm-aff-unlock { color: rgb(207, 201, 184); }
+.wm-aff-lvl-row--done .wm-aff-unlock--acc { color: var(--wm-rel); }
+
+/* current */
+.wm-aff-lvl-row--current .wm-aff-node {
+    top: 5px;
+    width: 11px;
+    height: 11px;
+    border-radius: 6px;
+    background-color: rgb(239, 224, 160);
+    border-color: rgb(239, 224, 160);
+}
+.wm-aff-lvl-row--current .wm-aff-num { color: rgb(239, 224, 160); }
+.wm-aff-lvl-row--current .wm-aff-unlock { color: rgb(222, 218, 206); }
+.wm-aff-lvl-row--current .wm-aff-unlock--acc { color: rgb(239, 224, 160); }
+
+/* locked levels keep the dim defaults above */

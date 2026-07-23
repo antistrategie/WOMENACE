@@ -1,0 +1,90 @@
+clone "WeaponTemplate" from="weapon.makiatto_wa2000" id="weapon.makiatto_wa2000_r1" {
+    set "Damage" 15.5
+    set "ArmorPenetration" 47.0
+    set "DamageToArmorDurability" 19.0
+}
+
+clone "WeaponTemplate" from="weapon.makiatto_wa2000" id="weapon.makiatto_wa2000_r2" {
+    set "Damage" 16.0
+    set "ArmorPenetration" 49.0
+    set "DamageToArmorDurability" 20.0
+    set "AccuracyDropoff" -8.0
+}
+
+clone "WeaponTemplate" from="weapon.makiatto_wa2000" id="weapon.makiatto_wa2000_r3" {
+    set "Damage" 17.0
+    set "ArmorPenetration" 52.0
+    set "DamageToArmorDurability" 21.0
+    set "AccuracyDropoff" -8.0
+    set "DamageDropoff" -0.5
+    set "MaxRange" 11
+}
+
+clone "WeaponTemplate" from="weapon.makiatto_wa2000" id="weapon.makiatto_wa2000_r4" {
+    set "Damage" 18.0
+    set "ArmorPenetration" 55.0
+    set "ArmorPenetrationDropoff" -0.9
+    set "DamageToArmorDurability" 22.0
+    set "AccuracyDropoff" -7.0
+    set "DamageDropoff" -0.5
+    set "MaxRange" 11
+    set "Suppression" 7.0
+}
+
+clone "WeaponTemplate" from="weapon.makiatto_wa2000" id="weapon.makiatto_wa2000_r5" {
+    set "Damage" 19.5
+    set "ArmorPenetration" 58.0
+    set "ArmorPenetrationDropoff" -0.9
+    set "DamageToArmorDurability" 23.0
+    set "AccuracyBonus" 18.0
+    set "AccuracyDropoff" -7.0
+    set "DamageDropoff" -0.45
+    set "IdealRange" 10
+    set "MaxRange" 11
+    set "Suppression" 7.0
+}
+
+clone "WeaponTemplate" from="weapon.makiatto_wa2000" id="weapon.makiatto_wa2000_r6" {
+    set "Damage" 21.0
+    set "ArmorPenetration" 62.0
+    set "ArmorPenetrationDropoff" -0.8
+    set "DamageToArmorDurability" 24.0
+    set "AccuracyBonus" 22.0
+    set "AccuracyDropoff" -6.0
+    set "DamageDropoff" -0.4
+    set "IdealRange" 10
+    set "MaxRange" 12
+    set "Suppression" 8.0
+}
+
+clone "CommodityTemplate" from="commodity.construct_weapon_parts" id="commodity.wmgfl_component_makiatto_wa2000" {
+    set "Title" {
+        set "m_DefaultTranslation" "WA 2000 Weapon Component"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "[PLACEHOLDER] Weapon component for WA 2000"
+    }
+    append "Tags" "jy_no_sell"
+    set "Icon" asset="weapon/wa2000/Icon"
+    set "Rarity" 0
+    set "TradeValue" 0
+    set "BlackMarketMaxQuantity" 0
+    set "MinCampaignProgress" 0
+}
+
+clone "BlueprintTemplate" from="blueprint.squad_weapon_electro_magnetic_enhanced_assault_rifle" id="blueprint.wmgfl_makiatto_wa2000_duplicate" {
+    set "m_CraftingResult" "weapon.makiatto_wa2000"
+    clear "m_CraftingMaterials"
+    append "m_CraftingMaterials" {
+        set "Template" "commodity.wmgfl_component_makiatto_wa2000"
+        set "Count" 1
+    }
+    append "m_CraftingMaterials" {
+        set "Template" "commodity.construct_weapon_parts"
+        set "Count" 4
+    }
+    append "m_CraftingMaterials" {
+        set "Template" "commodity.construct_cybernetic_optics"
+        set "Count" 2
+    }
+}

@@ -72,9 +72,9 @@ public sealed class SsrImprintSystem : JiangyuSystem
             // Sextans' SSR sword. Unlike Makiatto/Soppo it is OnlyEquipableBy its owner, so there is no
             // owner-vs-other split to gate. The extra damage lives on the skills' Attack handler and the
             // Shock build-up on their ElementalDamage handler, both always on (see sword.kdl). This entry
-            // carries no owner bonus: OwnerDamage would be a no-op because the weapon's own Damage is 0
-            // (the Attack handler carries the damage). It exists only for the "Sextans Imprint Boost"
-            // tooltip and IsImprintWeapon (SSR-weapon status, keeps it out of the proficiency bonus).
+            // carries no owner bonus: the melee hit reads the Attack handler, not the weapon Damage
+            // field, so an OwnerDamage boost would never touch it. It exists only for the "Sextans
+            // Imprint Boost" tooltip and IsImprintWeapon (SSR-weapon status, out of the proficiency bonus).
             WeaponId = "weapon.sextans_ssr",
             OwnerTag = "wmgfl_sextans",
             OwnerName = "Sextans",
@@ -82,21 +82,16 @@ public sealed class SsrImprintSystem : JiangyuSystem
         },
     };
 
-    private static Entry ByWeapon(string id) => id == null ? null : Registry.Find(e => e.WeaponId == id);
+    // Match by base id OR any calibration rank of it (base_rN), so a calibrated SSR is still treated as
+    // its imprint weapon (tooltip section, proficiency exclusion). The fire-time bonuses key off the
+    // skill instead, which every rank inherits, so those need no rank handling.
+    private static Entry ByWeapon(string id)
+        => id == null ? null : Registry.Find(e => Calibration.TryParseRank(id, e.WeaponId, out _));
 
-    // Whether a weapon is one of the SSR imprint weapons. The single source of truth for "is this an
-    // SSR weapon", so other systems (e.g. WeaponProficiencySystem, which excludes SSR from its
-    // weapon-type bonus) never keep a second list that could drift from this registry. Capture-free
-    // (no lambda per call): it is reached per equipped weapon on the proficiency recompute path.
-    public static bool IsImprintWeapon(string weaponId)
-    {
-        if (weaponId == null)
-            return false;
-        foreach (var entry in Registry)
-            if (entry.WeaponId == weaponId)
-                return true;
-        return false;
-    }
+    // Whether a weapon is one of the SSR imprint weapons (any rank). The single source of truth for
+    // "is this an SSR weapon", so other systems (e.g. WeaponProficiencySystem, which excludes SSR from
+    // its weapon-type bonus) never keep a second list that could drift from this registry.
+    public static bool IsImprintWeapon(string weaponId) => ByWeapon(weaponId) != null;
 
     private static (Entry entry, SkillImprint skill) BySkill(string id)
     {
@@ -217,7 +212,8 @@ public sealed class SsrImprintSystem : JiangyuSystem
         try
         {
             var tmpl = (info.Instance as Il2CppSystem.Object)?.TryCast<ItemTemplate>();
-            var entry = ByWeapon(tmpl?.GetID());
+            var hoveredId = tmpl?.GetID();
+            var entry = ByWeapon(hoveredId);
             if (entry == null)
                 return;
 
@@ -225,9 +221,15 @@ public sealed class SsrImprintSystem : JiangyuSystem
 
             if (entry.OwnerDamage > 0)
             {
-                var w = ResolveWeapon(entry.WeaponId);   // resolve (not the raw cast) so the authored base is captured first
+                // The game builds the stat rows from the HOVERED template, which for a calibrated
+                // weapon is the rank clone, not the base, so the substitution must land on the
+                // hovered id. The owner's boost is the flat bonus over the BASE weapon (exactly what
+                // OnFillDamageInfo adds per shot), applied on top of the hovered rank's authored value.
+                var w = ResolveWeapon(hoveredId);   // resolve (not the raw cast) so the authored base is captured first
                 if (w != null)
-                    w.Damage = owned ? entry.OwnerDamage : BaseDamageOf(entry.WeaponId);
+                    w.Damage = owned
+                        ? BaseDamageOf(hoveredId) + (entry.OwnerDamage - BaseDamageOf(entry.WeaponId))
+                        : BaseDamageOf(hoveredId);
             }
             foreach (var s in entry.Skills)
             {
@@ -246,7 +248,8 @@ public sealed class SsrImprintSystem : JiangyuSystem
         try
         {
             var tmpl = (info.Instance as Il2CppSystem.Object)?.TryCast<ItemTemplate>();
-            var entry = ByWeapon(tmpl?.GetID());
+            var hoveredId = tmpl?.GetID();
+            var entry = ByWeapon(hoveredId);
             if (entry == null)
                 return;
 
@@ -274,21 +277,22 @@ public sealed class SsrImprintSystem : JiangyuSystem
 
             // The stat rows have been built (between Pre and here), so return the shared fields to base:
             // the resting template must not carry the viewer's buffed values for another reader to pick up.
-            ResetToBase(entry);
+            ResetToBase(entry, hoveredId);
         }
         catch (Exception ex) { Context.Log.Warn($"ssr: tooltip append failed: {ex.Message}"); }
     }
 
     // Return the shared weapon/skill fields (that Pre set to the viewer's values for the stat rows) to
-    // their authored base. Damage is only ever set transiently for the tooltip now (the fire path boosts
-    // DamageInfo instead), so after this the only field a fire can leave raised is Repetitions.
-    private void ResetToBase(Entry entry)
+    // their authored base: the hovered template (a rank clone when calibrated) back to its own authored
+    // Damage. Damage is only ever set transiently for the tooltip now (the fire path boosts DamageInfo
+    // instead), so after this the only field a fire can leave raised is Repetitions.
+    private void ResetToBase(Entry entry, string hoveredId)
     {
         if (entry.OwnerDamage > 0)
         {
-            var w = ResolveWeapon(entry.WeaponId);
+            var w = ResolveWeapon(hoveredId);
             if (w != null)
-                w.Damage = BaseDamageOf(entry.WeaponId);
+                w.Damage = BaseDamageOf(hoveredId);
         }
         foreach (var s in entry.Skills)
         {

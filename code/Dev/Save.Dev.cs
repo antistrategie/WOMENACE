@@ -20,6 +20,14 @@ public static class Save
         return new { ok = true, loading = state.GetFilePath() };
     }
 
+    // Write a manual save now, for persistence round-trips (write, LoadLatest, compare).
+    [MutatingVerb]
+    public static object Write(string name = "jiangyu_dev")
+    {
+        SaveSystem.Save(SaveStateType.Manual, null, name);
+        return new { ok = true, name };
+    }
+
     // The save states on disk, newest first, for picking a specific one.
     public static object List()
     {

@@ -1,0 +1,67 @@
+clone "WeaponTemplate" from="weapon.vector_kriss" id="weapon.vector_kriss_r1" {
+    set "Damage" 14.5
+    set "ArmorPenetration" 12.0
+    set "DamageToArmorDurability" 10.5
+}
+
+clone "WeaponTemplate" from="weapon.vector_kriss" id="weapon.vector_kriss_r2" {
+    set "Damage" 15.5
+    set "ArmorPenetration" 13.0
+    set "DamageToArmorDurability" 11.0
+}
+
+clone "WeaponTemplate" from="weapon.vector_kriss" id="weapon.vector_kriss_r3" {
+    set "Damage" 17.0
+    set "ArmorPenetration" 14.0
+    set "DamageToArmorDurability" 12.0
+}
+
+clone "WeaponTemplate" from="weapon.vector_kriss" id="weapon.vector_kriss_r4" {
+    set "Damage" 18.5
+    set "ArmorPenetration" 16.0
+    set "DamageToArmorDurability" 13.0
+}
+
+clone "WeaponTemplate" from="weapon.vector_kriss" id="weapon.vector_kriss_r5" {
+    set "Damage" 20.0
+    set "ArmorPenetration" 18.0
+    set "DamageToArmorDurability" 14.0
+}
+
+clone "WeaponTemplate" from="weapon.vector_kriss" id="weapon.vector_kriss_r6" {
+    set "Damage" 22.0
+    set "ArmorPenetration" 20.0
+    set "DamageToArmorDurability" 15.0
+}
+
+clone "CommodityTemplate" from="commodity.construct_weapon_parts" id="commodity.wmgfl_component_vector_kriss" {
+    set "Title" {
+        set "m_DefaultTranslation" "Ksvec .45 ACP Component"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "[PLACEHOLDER] Weapon component for Ksvec .45 ACP"
+    }
+    append "Tags" "jy_no_sell"
+    set "Icon" asset="weapon/kriss/Icon"
+    set "Rarity" 0
+    set "TradeValue" 0
+    set "BlackMarketMaxQuantity" 0
+    set "MinCampaignProgress" 0
+}
+
+clone "BlueprintTemplate" from="blueprint.squad_weapon_electro_magnetic_enhanced_assault_rifle" id="blueprint.wmgfl_vector_kriss_duplicate" {
+    set "m_CraftingResult" "weapon.vector_kriss"
+    clear "m_CraftingMaterials"
+    append "m_CraftingMaterials" {
+        set "Template" "commodity.wmgfl_component_vector_kriss"
+        set "Count" 1
+    }
+    append "m_CraftingMaterials" {
+        set "Template" "commodity.construct_weapon_parts"
+        set "Count" 4
+    }
+    append "m_CraftingMaterials" {
+        set "Template" "commodity.construct_cybernetic_optics"
+        set "Count" 2
+    }
+}

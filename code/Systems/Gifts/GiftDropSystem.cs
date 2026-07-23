@@ -21,9 +21,9 @@ public sealed class GiftDropSystem : JiangyuSystem
     // rarity bands match the game's own common/uncommon/rare brackets.
     private static readonly Tier[] Tiers =
     {
-        new Tier(name: "grunt", maxCost: 120, minRarity: 0, maxRarity: 32, dropChance: 40),
-        new Tier(name: "tough", maxCost: 220, minRarity: 33, maxRarity: 65, dropChance: 30),
-        new Tier(name: "elite", maxCost: int.MaxValue, minRarity: 66, maxRarity: 100, dropChance: 20),
+        new Tier(name: "grunt", maxCost: 120, minRarity: 0, maxRarity: 32, dropChance: 30),
+        new Tier(name: "tough", maxCost: 220, minRarity: 33, maxRarity: 65, dropChance: 20),
+        new Tier(name: "elite", maxCost: int.MaxValue, minRarity: 66, maxRarity: 100, dropChance: 15),
     };
 
     private readonly struct Tier

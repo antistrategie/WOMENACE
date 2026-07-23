@@ -1,0 +1,303 @@
+/* Weapon calibration screen. Frame rides the game's window/border classes; everything else is
+   styled here so the code only sets data (text, weapon banner sprite, and state classes). Colours
+   track theme.uss (--wm-rel is the game's gold). */
+
+.wm-cal-screen {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    align-items: center;
+    justify-content: center;
+}
+
+.wm-cal-blocker {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.72);
+}
+
+/* Self-styled frame (dark fill + one faint edge), rather than the game's unit-window-border which
+   renders a loud border outside its .window context. Matches OCI's restrained dark look. */
+.wm-cal-panel {
+    width: 960px;
+    height: 600px;
+    background-color: rgba(0, 0, 0, 0.94);
+    border-width: 1px;
+    border-color: rgba(215, 197, 87, 0.22);
+}
+
+.wm-cal-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding-left: 16px;
+    padding-right: 10px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(0, 0, 0, 0.5);
+}
+
+.wm-cal-title {
+    font-size: 12px;
+    -unity-font-style: bold;
+    color: rgb(222, 218, 206);
+    letter-spacing: 2px;
+}
+
+.wm-cal-close {
+    width: 26px;
+    height: 26px;
+    font-size: 10px;
+    -unity-font-style: bold;
+    color: rgb(180, 168, 150);
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.5);
+}
+
+.wm-cal-close:hover {
+    color: rgb(238, 227, 190);
+    border-color: rgb(120, 114, 100);
+}
+
+.wm-cal-body {
+    flex-direction: row;
+    flex-grow: 1;
+}
+
+.wm-cal-listpane {
+    width: 420px;
+    padding: 12px;
+    background-color: rgba(0, 0, 0, 0);
+    border-right-width: 1px;
+    border-right-color: rgba(0, 0, 0, 0.5);
+}
+
+/* The weapon list scrolls vertically when it outgrows the pane; transparent so the panel shows
+   through. Rows wrap into two columns, with space-between so each pair fills the row width. The
+   horizontal scroller stays hidden so it never scrolls sideways. */
+.wm-cal-list {
+    flex-grow: 1;
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.wm-cal-list #unity-content-container,
+.wm-cal-list .unity-scroll-view__content-container {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.wm-cal-list .unity-scroll-view__horizontal-scroller {
+    display: none;
+}
+
+.wm-cal-detail {
+    flex-grow: 1;
+    padding: 14px 20px;
+}
+
+.wm-cal-sectionlabel {
+    font-size: 8px;
+    -unity-font-style: bold;
+    color: var(--wm-rel);
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+}
+
+.wm-cal-empty {
+    font-size: 9px;
+    color: rgb(140, 133, 116);
+}
+
+/* ---- weapon list rows ---- */
+.wm-cal-row {
+    width: 49%;
+    margin-bottom: 6px;
+    padding: 4px;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.35);
+}
+
+.wm-cal-row:hover {
+    border-color: rgb(95, 91, 78);
+}
+
+.wm-cal-row--active {
+    border-color: rgba(215, 197, 87, 0.5);
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+.wm-cal-banner {
+    width: 100%;
+    height: 42px;
+    flex-direction: row;
+    align-items: center;
+    padding-left: 10px;
+    padding-right: 6px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0.5);
+    -unity-background-scale-mode: scale-and-crop;
+}
+
+.wm-cal-name {
+    flex-grow: 1;
+    flex-shrink: 1;
+    font-size: 11px;
+    -unity-font-style: bold;
+    color: rgb(207, 201, 184);
+    letter-spacing: 1px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Rank badge: a flex sibling (not absolute) so it sits vertically centred next to the name, with a
+   gap so the name never runs under it. */
+.wm-cal-rank {
+    flex-shrink: 0;
+    margin-left: 8px;
+    font-size: 9px;
+    -unity-font-style: bold;
+    color: var(--wm-rel);
+    background-color: rgba(0, 0, 0, 0.55);
+    padding-left: 4px;
+    padding-right: 4px;
+    padding-top: 1px;
+    padding-bottom: 1px;
+    border-width: 1px;
+    border-color: rgba(233, 203, 79, 0.42);
+}
+
+.wm-cal-rank--base {
+    color: rgb(140, 133, 116);
+    border-color: rgba(0, 0, 0, 0.5);
+}
+
+.wm-cal-who {
+    font-size: 8px;
+    color: rgb(140, 133, 116);
+    padding-left: 2px;
+    margin-top: 2px;
+}
+
+/* ---- detail: header ---- */
+.wm-cal-detailhead {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+
+.wm-cal-detailname {
+    font-size: 16px;
+    -unity-font-style: bold;
+    color: rgb(207, 201, 184);
+    letter-spacing: 1px;
+}
+
+.wm-cal-detailwho {
+    font-size: 9px;
+    color: rgb(140, 133, 116);
+    margin-left: 8px;
+}
+
+.wm-cal-detailrank {
+    font-size: 9px;
+    -unity-font-style: bold;
+    color: rgb(140, 133, 116);
+}
+
+/* ---- detail: rank track ---- */
+.wm-cal-track {
+    flex-direction: row;
+    margin-bottom: 16px;
+}
+
+.wm-cal-node {
+    flex-grow: 1;
+    height: 38px;
+    margin-right: 5px;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 1px;
+    border-color: rgb(95, 91, 78);
+    font-size: 9px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    color: rgb(95, 91, 78);
+}
+
+.wm-cal-node--last {
+    margin-right: 0;
+}
+
+.wm-cal-node--done {
+    color: var(--wm-rel);
+    background-color: rgba(0, 0, 0, 0);
+    border-color: rgba(215, 197, 87, 0.28);
+}
+
+.wm-cal-node--current {
+    color: var(--wm-rel);
+    border-color: rgba(215, 197, 87, 0.65);
+    background-color: rgba(0, 0, 0, 0);
+}
+
+/* ---- detail: stat deltas ---- */
+.wm-cal-statrow {
+    flex-direction: row;
+    justify-content: space-between;
+    padding-top: 3px;
+    padding-bottom: 3px;
+}
+
+.wm-cal-statname {
+    font-size: 9px;
+    color: rgb(140, 133, 116);
+    letter-spacing: 1px;
+}
+
+.wm-cal-statvals {
+    flex-direction: row;
+}
+
+.wm-cal-statnow { font-size: 9px; color: rgb(207, 201, 184); }
+.wm-cal-statarrow { font-size: 9px; color: rgb(95, 91, 78); margin-left: 6px; margin-right: 6px; }
+.wm-cal-statnext { font-size: 9px; color: var(--wm-rel); }
+
+/* ---- detail: actions ---- */
+.wm-cal-foot { margin-top: 8px; }
+
+.wm-cal-actions {
+    flex-direction: row;
+}
+
+.wm-cal-actions .text-button {
+    margin-right: 8px;
+    min-width: 150px;
+    font-size: 10px;
+}
+
+.wm-cal-btn-disabled {
+    opacity: 0.35;
+}
+
+.wm-cal-tally {
+    font-size: 8px;
+    color: rgb(140, 133, 116);
+    margin-top: 8px;
+    letter-spacing: 1px;
+}

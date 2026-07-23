@@ -1,4 +1,5 @@
 clone "WeaponTemplate" from="weapon.generic_combat_shotgun_tier_1_cs185" id="weapon.helen_dp12" {
+    append "Tags" "jy_no_sell"
     set "Title" {
         set "m_DefaultTranslation" "DP-12"
     }
@@ -11,6 +12,7 @@ clone "WeaponTemplate" from="weapon.generic_combat_shotgun_tier_1_cs185" id="wea
     set "Model" asset="weapon/dp12/main"
     set "SkillsGranted" index=0 "active.fire_helen_dp12"
     append "SkillsGranted" "active.fire_helen_dp12_slugshot"
+    set "Icon" asset="weapon/dp12/Icon"
     set "IconEquipment" asset="weapon/dp12/IconEquipment"
     set "IconEquipmentDisabled" asset="weapon/dp12/IconEquipmentDisabled"
     set "IconSkillBar" asset="weapon/dp12/IconSkillBar"

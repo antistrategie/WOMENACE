@@ -1,0 +1,67 @@
+clone "WeaponTemplate" from="weapon.voymastina_ak15" id="weapon.voymastina_ak15_r1" {
+    set "Damage" 12.5
+    set "ArmorPenetration" 35.0
+    set "DamageToArmorDurability" 13.5
+}
+
+clone "WeaponTemplate" from="weapon.voymastina_ak15" id="weapon.voymastina_ak15_r2" {
+    set "Damage" 13.0
+    set "ArmorPenetration" 37.0
+    set "DamageToArmorDurability" 14.0
+}
+
+clone "WeaponTemplate" from="weapon.voymastina_ak15" id="weapon.voymastina_ak15_r3" {
+    set "Damage" 14.0
+    set "ArmorPenetration" 39.0
+    set "DamageToArmorDurability" 15.0
+}
+
+clone "WeaponTemplate" from="weapon.voymastina_ak15" id="weapon.voymastina_ak15_r4" {
+    set "Damage" 15.0
+    set "ArmorPenetration" 42.0
+    set "DamageToArmorDurability" 16.0
+}
+
+clone "WeaponTemplate" from="weapon.voymastina_ak15" id="weapon.voymastina_ak15_r5" {
+    set "Damage" 16.0
+    set "ArmorPenetration" 46.0
+    set "DamageToArmorDurability" 17.0
+}
+
+clone "WeaponTemplate" from="weapon.voymastina_ak15" id="weapon.voymastina_ak15_r6" {
+    set "Damage" 17.5
+    set "ArmorPenetration" 50.0
+    set "DamageToArmorDurability" 18.0
+}
+
+clone "CommodityTemplate" from="commodity.construct_weapon_parts" id="commodity.wmgfl_component_voymastina_ak15" {
+    set "Title" {
+        set "m_DefaultTranslation" "Kalashnikova-15 Component"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "[PLACEHOLDER] Weapon component for Kalashnikova-15"
+    }
+    append "Tags" "jy_no_sell"
+    set "Icon" asset="weapon/ak15/Icon"
+    set "Rarity" 0
+    set "TradeValue" 0
+    set "BlackMarketMaxQuantity" 0
+    set "MinCampaignProgress" 0
+}
+
+clone "BlueprintTemplate" from="blueprint.squad_weapon_electro_magnetic_enhanced_assault_rifle" id="blueprint.wmgfl_voymastina_ak15_duplicate" {
+    set "m_CraftingResult" "weapon.voymastina_ak15"
+    clear "m_CraftingMaterials"
+    append "m_CraftingMaterials" {
+        set "Template" "commodity.wmgfl_component_voymastina_ak15"
+        set "Count" 1
+    }
+    append "m_CraftingMaterials" {
+        set "Template" "commodity.construct_weapon_parts"
+        set "Count" 4
+    }
+    append "m_CraftingMaterials" {
+        set "Template" "commodity.construct_cybernetic_optics"
+        set "Count" 2
+    }
+}

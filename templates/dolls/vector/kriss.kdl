@@ -1,4 +1,5 @@
 clone "WeaponTemplate" from="weapon.generic_smg_tier1_ppp" id="weapon.vector_kriss" {
+    append "Tags" "jy_no_sell"
     set "Title" {
         set "m_DefaultTranslation" "Ksvec .45 ACP"
     }
@@ -11,6 +12,7 @@ clone "WeaponTemplate" from="weapon.generic_smg_tier1_ppp" id="weapon.vector_kri
     set "Model" asset="weapon/kriss/main"
     set "SkillsGranted" index=0 "active.fire_vector_kriss"
     set "SkillsGranted" index=1 "active.fire_vector_kriss_tap"
+    set "Icon" asset="weapon/kriss/Icon"
     set "IconEquipment" asset="weapon/kriss/IconEquipment"
     set "IconEquipmentDisabled" asset="weapon/kriss/IconEquipmentDisabled"
     set "IconSkillBar" asset="weapon/kriss/IconSkillBar"

@@ -1,0 +1,11 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="../theme.uss" />
+    <Style src="affinity.uss" />
+    <ui:VisualElement name="affinity-popover" class="wm-aff-pop">
+        <ui:VisualElement class="wm-aff-head">
+            <ui:Label name="@WOMENACE::ui/affinity" text="AFFINITY" class="wm-aff-title" />
+            <ui:Label name="pop-level" text="LEVEL 01" class="wm-aff-level" />
+        </ui:VisualElement>
+        <ui:VisualElement name="pop-track" class="wm-aff-track" />
+    </ui:VisualElement>
+</ui:UXML>

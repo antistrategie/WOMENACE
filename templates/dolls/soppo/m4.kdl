@@ -1,4 +1,5 @@
 clone "WeaponTemplate" from="weapon.generic_assault_rifle_tier1_ARC_762" id="weapon.soppo_m4" {
+    append "Tags" "jy_no_sell"
     set "Title" {
         set "m_DefaultTranslation" "M4 SOPMOD II"
     }
@@ -18,7 +19,7 @@ clone "WeaponTemplate" from="weapon.generic_assault_rifle_tier1_ARC_762" id="wea
     set "IconSkillBarDisabled" asset="weapon/m4/IconSkillBarDisabled"
 
     set "AccuracyBonus" 10.0
-    set "AccuracyDropoff" -5
+    set "AccuracyDropoff" -5.0
     set "ArmorPenetration" 28.0
     set "ArmorPenetrationDropoff" -1.9
 
@@ -81,6 +82,7 @@ clone "SkillTemplate" from="active.fire_assault_rifle_sustained_fire_tier1_762" 
 
 // SSR weapon
 clone "WeaponTemplate" from="specialweapon.infantry_automatic_rifle_tier2" id="specialweapon.soppo_ssr" {
+    append "Tags" "jy_no_sell"
     set "Title" {
         set "m_DefaultTranslation" "Skysunderer's Howl"
     }

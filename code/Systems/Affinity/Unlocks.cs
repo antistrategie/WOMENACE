@@ -93,6 +93,17 @@ public static class Unlocks
                     yield return id;
     }
 
+    // The SSR weapon id this character's Weapon unlock grants (the first Weapon entry's weapon), or
+    // null when she has no SSR unlock. Other systems (calibration's SSR component schedule) read this
+    // rather than keeping their own copy of the id, so the unlock and its consumers can never drift.
+    public static string SsrWeaponFor(string characterTag)
+    {
+        foreach (var entry in EntriesFor(characterTag))
+            if (entry.Feature == Feature.Weapon && entry.Weapons is { Length: > 0 })
+                return entry.Weapons[0];
+        return null;
+    }
+
     // The level at which this character's mech form unlocks, or 0 if they have no mech.
     public static int MechLevel(string characterTag)
     {
@@ -110,33 +121,12 @@ public static class Unlocks
         return unlockLevel > 0 && level >= unlockLevel;
     }
 
-    // A popover row: the row text at a level. Text is null when nothing is authored for that level
-    // (rendered as a dim placeholder).
-    public readonly struct Row
+    // The unlock entries a character has at or below a level, newest-level first, for the affinity
+    // tooltip's UNLOCKS section. Only entries with authored text (a real reward line) are returned.
+    public static IEnumerable<Entry> RewardEntries(string characterTag)
     {
-        public readonly int Level;
-        public readonly string Text;
-
-        public Row(int level, string text)
-        {
-            Level = level;
-            Text = text;
-        }
-    }
-
-    // The per-level rows for a character's badge popover: levels 1..MaxLevel, each level carrying the
-    // Title of its entry (localised, falling back to the authored text) and the rest left as a null
-    // placeholder.
-    public static List<Row> RowsFor(string characterTag)
-    {
-        var byLevel = new Dictionary<int, string>();
         foreach (var entry in EntriesFor(characterTag))
             if (entry.Title.HasText)
-                byLevel[entry.Level] = entry.Title.Resolve();
-
-        var rows = new List<Row>(Affinity.MaxLevel);
-        for (var level = 1; level <= Affinity.MaxLevel; level++)
-            rows.Add(new Row(level, byLevel.TryGetValue(level, out var text) ? text : null));
-        return rows;
+                yield return entry;
     }
 }

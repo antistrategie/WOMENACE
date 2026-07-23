@@ -10,11 +10,13 @@ Common uses:
 
     scripts/bridge.py gifts            # top up 5 of every gift commodity
     scripts/bridge.py gifts 10         # top up 10 of each instead
+    scripts/bridge.py workshop         # unlock the ship workshop (+ blueprint vouchers)
+    scripts/bridge.py workshop off     # re-lock both gates
     scripts/bridge.py winmission       # kill remaining enemies + complete objectives
     scripts/bridge.py ping             # sanity check the connection
 
-Both gifts and winmission only exist in the dev loader, so the game must be
-running with the dev loader for them to work. Power-user escape hatches:
+These only exist in the dev loader, so the game must be running with the dev
+loader for them to work. Power-user escape hatches:
 
     scripts/bridge.py verb "Save.List"                 # run any dev verb
     scripts/bridge.py verb "Gifts.Give" --args '[10]' --mutate
@@ -112,6 +114,10 @@ def main():
     gifts = sub.add_parser("gifts", help="top up every gift commodity (default 5 of each)")
     gifts.add_argument("count", nargs="?", type=int, default=5, help="how many of each gift (default 5)")
 
+    workshop = sub.add_parser("workshop", help="unlock the ship workshop (+ blueprint vouchers)")
+    workshop.add_argument("state", nargs="?", choices=["on", "off"], default="on",
+                          help="on unlocks (default), off re-locks both gates")
+
     sub.add_parser("winmission", help="kill remaining enemies and complete objectives")
     sub.add_parser("ping", help="check the bridge is reachable")
 
@@ -130,6 +136,8 @@ def main():
         _emit(call("ping"))
     elif options.cmd == "gifts":
         _emit(run_verb("Gifts.Give", [options.count], mutate=True))
+    elif options.cmd == "workshop":
+        _emit(run_verb("Workshop.Unlock", [options.state == "on"], mutate=True))
     elif options.cmd == "winmission":
         _emit(command("winmission"))
     elif options.cmd == "verb":

@@ -1,4 +1,5 @@
 clone "WeaponTemplate" from="weapon.generic_battle_rifle_tier1_crowbar_marksman" id="weapon.makiatto_wa2000" {
+    append "Tags" "jy_no_sell"
     set "Title" {
         set "m_DefaultTranslation" "WA 2000"
     }
@@ -10,6 +11,7 @@ clone "WeaponTemplate" from="weapon.generic_battle_rifle_tier1_crowbar_marksman"
     }
 
     set "Model" asset="weapon/wa2000/main"
+    set "Icon" asset="weapon/wa2000/Icon"
     set "IconEquipment" asset="weapon/wa2000/IconEquipment"
     set "IconEquipmentDisabled" asset="weapon/wa2000/IconEquipmentDisabled"
     set "IconSkillBar" asset="weapon/wa2000/IconSkillBar"
@@ -80,6 +82,7 @@ clone "SkillTemplate" from="active.fire_battle_rifle_tier_1_aimed_fire_marksman"
 
 // SSR weapon
 clone "WeaponTemplate" from="specialweapon.generic_designated_marksman_rifle_tier1" id="specialweapon.makiatto_ssr" {
+    append "Tags" "jy_no_sell"
     set "Title" {
         set "m_DefaultTranslation" "Bittersweet Caramel"
     }
@@ -91,6 +94,7 @@ clone "WeaponTemplate" from="specialweapon.generic_designated_marksman_rifle_tie
     }
 
     set "Model" asset="weapon/wa2000_ssr/main"
+    set "Icon" asset="weapon/wa2000_ssr/Icon"
     set "IconEquipment" asset="weapon/wa2000_ssr/IconEquipment"
     set "IconEquipmentDisabled" asset="weapon/wa2000_ssr/IconEquipmentDisabled"
     set "IconSkillBar" asset="weapon/wa2000_ssr/IconSkillBar"

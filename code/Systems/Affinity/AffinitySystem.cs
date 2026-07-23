@@ -1,3 +1,4 @@
+using Il2CppInterop.Runtime;
 using Il2CppMenace.Items;
 using Il2CppMenace.States;
 using Il2CppMenace.Strategy;
@@ -71,6 +72,10 @@ public sealed class AffinitySystem : JiangyuSystem
 
         Context.Patches.Postfix("Il2CppMenace.UI.Strategy.UnitWindow", "SetLeader", OnWindowChanged);
         Context.Patches.Postfix("Il2CppMenace.UI.Strategy.UnitWindow", "Refresh", OnWindowChanged);
+
+        // The built-in popover reward providers. Other systems (CalibrationSystem) register their own.
+        AffinityTooltip.Register("proficiency", ProficiencyRewards);
+        AffinityTooltip.Register("unlocks", UnlockRewards);
     }
 
     public override void OnUnload()
@@ -106,6 +111,20 @@ public sealed class AffinitySystem : JiangyuSystem
                 .Before(UiSelector.Name("EquipmentAlternatives")),
             "affinity/gift-modal",
             WireModal);
+
+        // The affinity popover, one per window: hidden until the badge is hovered, then positioned
+        // beside the badge. The wrapper (the injection's TemplateContainer) is the positioned anchor.
+        UI.InjectEach(
+            UiTarget.Screen<TScreen>()
+                .Each(UiSelector.TypeName("UnitWindow"))
+                .Before(UiSelector.Name("EquipmentAlternatives")),
+            "affinity/affinity-popover",
+            (wrapper, _) =>
+            {
+                wrapper.style.position = new StyleEnum<Position>(Position.Absolute);
+                wrapper.pickingMode = PickingMode.Ignore;
+                wrapper.SetVisible(false);
+            });
     }
 
     private void OnWindowChanged(PatchInfo info)
@@ -127,54 +146,237 @@ public sealed class AffinitySystem : JiangyuSystem
         }
         catch { }
 
-        // The unlock list rides the game's native tooltip via the SDK Tooltip component, which sticks
-        // to the mouse and matches the game's look. Rebuilt on each hover so it reflects the level.
-        Tooltip.OnHover(badge, () => BuildAffinityTooltip(window));
+        // The unlock roadmap rides a custom popover (a filled rank rail with each level's rewards to
+        // its right), shown while the badge is hovered and hidden on leave. Rebuilt on each hover so
+        // it reflects the live level.
+        WireBadgeHover(badge, window);
 
         UpdateBadge(window);
     }
 
-    // Build the affinity tooltip for the leader on a window: a heading then one row per level, the
-    // milestone levels labelled with what they unlock (from the Unlocks registry) and the rest left
-    // as a dim placeholder. The leader's current level is highlighted, rows above it read as locked.
-    // Returns null when the window is not one of ours (no tooltip shown).
-    private Tooltip BuildAffinityTooltip(VisualElement window)
+    // Weapon proficiency rewards: the accuracy the doll gains at each affinity level (the step, not
+    // the running total). None for non-proficiency dolls (no class tag).
+    private static IEnumerable<AffinityTooltip.Reward> ProficiencyRewards(AffinityTooltip.Info info)
     {
-        // Resolve the leader's speaker Tags once and derive everything from it, rather than
-        // re-fetching the speaker through KeyFor, CharacterTag and HasClass separately.
+        var cls = Proficiency.ClassFromSpeakerTags(info.SpeakerTags);
+        if (cls == Proficiency.WeaponClass.None)
+            yield break;
+        for (var lvl = 1; lvl <= Affinity.MaxLevel; lvl++)
+        {
+            var step = Proficiency.AccuracyBonusForLevel(lvl) - Proficiency.AccuracyBonusForLevel(lvl - 1);
+            if (step <= 0)
+                continue;
+            yield return new AffinityTooltip.Reward(lvl, $"+{step} accuracy (proficiency)", AffinityTooltip.RewardKind.Proficiency);
+        }
+    }
+
+    // Unlock rewards: the doll's outfits, SSR weapon and mech form, each at the level it lands.
+    private static IEnumerable<AffinityTooltip.Reward> UnlockRewards(AffinityTooltip.Info info)
+    {
+        foreach (var entry in Unlocks.RewardEntries(info.CharacterTag))
+            yield return new AffinityTooltip.Reward(entry.Level, entry.Title.Resolve(), KindOf(entry.Feature));
+    }
+
+    private static AffinityTooltip.RewardKind KindOf(Unlocks.Feature feature) => feature switch
+    {
+        Unlocks.Feature.Skins => AffinityTooltip.RewardKind.Outfit,
+        Unlocks.Feature.Weapon => AffinityTooltip.RewardKind.Weapon,
+        Unlocks.Feature.Mech => AffinityTooltip.RewardKind.Mech,
+        _ => AffinityTooltip.RewardKind.Other,
+    };
+
+    // --- affinity popover -----------------------------------------------------------------------
+
+    // Show this window's popover while the badge is hovered, hide it on leave. Guarded so a screen
+    // rebuild re-binding the same badge does not stack handlers.
+    private void WireBadgeHover(VisualElement badge, VisualElement window)
+    {
+        if (badge.ClassListContains("wm-aff-hover-hooked"))
+            return;
+        badge.AddToClassList("wm-aff-hover-hooked");
+        badge.RegisterCallback<PointerEnterEvent>(DelegateSupport.ConvertDelegate<EventCallback<PointerEnterEvent>>(
+            (Action<PointerEnterEvent>)(_ => ShowPopover(badge, window))));
+        badge.RegisterCallback<PointerLeaveEvent>(DelegateSupport.ConvertDelegate<EventCallback<PointerLeaveEvent>>(
+            (Action<PointerLeaveEvent>)(_ => HidePopover(window))));
+    }
+
+    private void ShowPopover(VisualElement badge, VisualElement window)
+    {
+        try
+        {
+            var popover = UI.Find(window, UiSelector.Name("affinity-popover"));
+            var wrapper = popover?.parent;
+            if (popover == null || wrapper == null)
+                return;
+            if (!Populate(popover, window))
+            {
+                wrapper.SetVisible(false);
+                return;
+            }
+            wrapper.style.position = new StyleEnum<Position>(Position.Absolute);
+            wrapper.pickingMode = PickingMode.Ignore;
+
+            // Reposition now (best effort) and again after layout, when the popover's real size is
+            // known, so the left-of-badge and on-screen clamps use the true width and height.
+            if (!popover.ClassListContains("wm-aff-geom-hooked"))
+            {
+                popover.AddToClassList("wm-aff-geom-hooked");
+                popover.RegisterCallback<GeometryChangedEvent>(DelegateSupport.ConvertDelegate<EventCallback<GeometryChangedEvent>>(
+                    (Action<GeometryChangedEvent>)(_ => Reposition(wrapper, popover, badge))));
+            }
+            Reposition(wrapper, popover, badge);
+            wrapper.SetVisible(true);
+            wrapper.BringToFront();
+        }
+        catch (Exception ex) { Context.Log.Warn($"affinity popover: show failed: {ex.Message}"); }
+    }
+
+    private void HidePopover(VisualElement window)
+    {
+        var popover = UI.Find(window, UiSelector.Name("affinity-popover"));
+        popover?.parent?.SetVisible(false);
+    }
+
+    // Place the popover to the LEFT of the badge, clamped so both edges stay on screen. Uses the
+    // popover's laid-out size once known (this fires again on GeometryChanged), with a sane fallback
+    // before the first layout. Positions the wrapper (a 0x0 absolute anchor) in its parent's space.
+    private static void Reposition(VisualElement wrapper, VisualElement popover, VisualElement badge)
+    {
+        try
+        {
+            var parent = wrapper.parent;
+            if (parent == null)
+                return;
+            var screen = wrapper.panel?.visualTree?.worldBound ?? new UnityEngine.Rect(0f, 0f, 1920f, 1080f);
+            var b = badge.worldBound;
+            var size = popover.worldBound;
+            var w = size.width > 1f ? size.width : 340f;
+            var h = size.height > 1f ? size.height : 420f;
+
+            var left = b.xMin - 8f - w;
+            if (left < 8f)
+                left = 8f;
+            var top = b.yMin;
+            if (top + h > screen.height - 8f)
+                top = screen.height - 8f - h;
+            if (top < 8f)
+                top = 8f;
+
+            var local = parent.WorldToLocal(new UnityEngine.Vector2(left, top));
+            wrapper.style.left = new StyleLength(local.x);
+            wrapper.style.top = new StyleLength(local.y);
+        }
+        catch { }
+    }
+
+    // Make the whole popover transparent to pointer picking, so the left-clamped position overlapping
+    // the badge still lets the badge underneath keep its hover (no flicker) and no click is eaten.
+    private static void IgnorePicking(VisualElement element)
+    {
+        if (element == null)
+            return;
+        element.pickingMode = PickingMode.Ignore;
+        for (var i = 0; i < element.childCount; i++)
+            IgnorePicking(element.ElementAt(i));
+    }
+
+    // Fill the popover for the window's leader: the header level, then one row per affinity level
+    // (1..max) carrying that level's rewards. Returns false (no popover) when the window is not one
+    // of ours or the doll earns nothing at any level.
+    private bool Populate(VisualElement popover, VisualElement window)
+    {
         var speakerTags = Affinity.OurSpeakerTags(Affinity.LeaderOf(window));
         var characterTag = Affinity.ParseCharacterTag(speakerTags);
         var key = Affinity.KeyForTag(characterTag);
         if (key == 0)
-            return null;
+            return false;
+        var level = Affinity.LevelFor(Context, key);
 
-        var current = Affinity.LevelFor(Context, key);
-        var showProficiency = Proficiency.ClassFromSpeakerTags(speakerTags) != Proficiency.WeaponClass.None;
+        var levelLabel = UI.Find(popover, UiSelector.Name("pop-level"))?.TryCast<Label>();
+        if (levelLabel != null)
+            levelLabel.text = level >= Affinity.MaxLevel ? $"LEVEL {level:00}  ·  MAX" : $"LEVEL {level:00}";
 
-        var tooltip = new Tooltip("wm-affinity", 280)
-            .Subheading(Locale.Text("WOMENACE::ui/affinity_unlocks", "AFFINITY UNLOCKS"))
-            .Line();
+        var track = UI.Find(popover, UiSelector.Name("pop-track"));
+        if (track == null)
+            return false;
+        track.Clear();
 
-        foreach (var row in Unlocks.RowsFor(characterTag))
+        var byLevel = new Dictionary<int, List<AffinityTooltip.Reward>>();
+        var any = false;
+        foreach (var reward in AffinityTooltip.All(new AffinityTooltip.Info(Context, characterTag, speakerTags, level)))
         {
-            // For a proficiency doll, one compact row per level: the weapon-type accuracy bonus for
-            // that level, then any unlock. The bonus fills every row, so empty levels need no dot
-            // placeholder. No leading whitespace: the game's tooltip tokeniser index-faults on a
-            // paragraph that starts with a space.
-            var reward = string.IsNullOrEmpty(row.Text) ? string.Empty : "   " + row.Text;
-            var text = showProficiency
-                ? $"{row.Level:00}   +{Proficiency.AccuracyBonusForLevel(row.Level)} acc{reward}"
-                : $"{row.Level:00}    {(string.IsNullOrEmpty(row.Text) ? "·" : row.Text)}";
-            // Every reached level (current and below) is highlighted, including ones that grant
-            // nothing. Levels still to come read as locked.
-            var style = row.Level <= current ? Tooltip.Style.Positive : Tooltip.Style.Disabled;
-            tooltip.Paragraph(text, style);
+            if (reward.Level < 1 || reward.Level > Affinity.MaxLevel)
+                continue;
+            if (!byLevel.TryGetValue(reward.Level, out var list))
+                byLevel[reward.Level] = list = [];
+            list.Add(reward);
+            any = true;
         }
-        if (showProficiency)
-            tooltip.Line().Paragraph(
-                Locale.Text("WOMENACE::ui/affinity_wpn_acc_note", "+acc: accuracy while wielding her weapon type."),
-                Tooltip.Style.Hint);
-        return tooltip;
+        if (!any)
+            return false;
+
+        for (var lvl = 1; lvl <= Affinity.MaxLevel; lvl++)
+        {
+            byLevel.TryGetValue(lvl, out var rewards);
+            rewards?.Sort((a, b) => a.Kind.CompareTo(b.Kind));
+            track.Add(BuildLevelRow(lvl, level, rewards));
+        }
+        IgnorePicking(popover);
+        return true;
+    }
+
+    // One level's row: a rail cell (a continuous line, a gold fill up to the reached point, and a
+    // node), the level number in its own fixed column so every reward line shares one indent, then
+    // the level's rewards stacked to the right. The current level's fill stops AT its node, so 0
+    // progress reads as "at this level", not "almost at the next".
+    private static VisualElement BuildLevelRow(int lvl, int current, List<AffinityTooltip.Reward> rewards)
+    {
+        var state = lvl < current ? "done" : lvl == current ? "current" : "locked";
+        var row = new VisualElement();
+        row.AddToClassList("wm-aff-lvl-row");
+        row.AddToClassList("wm-aff-lvl-row--" + state);
+        if (lvl >= Affinity.MaxLevel)
+            row.AddToClassList("wm-aff-lvl-row--last");
+
+        var rail = new VisualElement();
+        rail.AddToClassList("wm-aff-rail");
+        var line = new VisualElement();
+        line.AddToClassList("wm-aff-rail-line");
+        rail.Add(line);
+        if (state != "locked")
+        {
+            var fill = new VisualElement();
+            fill.AddToClassList("wm-aff-rail-fill");
+            if (state == "current")
+                fill.AddToClassList("wm-aff-rail-fill--current");
+            rail.Add(fill);
+        }
+        var node = new VisualElement();
+        node.AddToClassList("wm-aff-node");
+        rail.Add(node);
+        row.Add(rail);
+
+        var numLabel = new Label(lvl.ToString("00"));
+        numLabel.AddToClassList("wm-aff-num");
+        row.Add(numLabel);
+
+        var body = new VisualElement();
+        body.AddToClassList("wm-aff-body");
+        var count = rewards?.Count ?? 0;
+        for (var i = 0; i < count; i++)
+            body.Add(UnlockLabel(rewards[i]));
+        row.Add(body);
+        return row;
+    }
+
+    private static Label UnlockLabel(AffinityTooltip.Reward reward)
+    {
+        var label = new Label(reward.Text);
+        label.enableRichText = true;
+        label.AddToClassList("wm-aff-unlock");
+        if (reward.Kind == AffinityTooltip.RewardKind.Proficiency)
+            label.AddToClassList("wm-aff-unlock--acc");
+        return label;
     }
 
     private void UpdateBadge(VisualElement window)
@@ -224,13 +426,32 @@ public sealed class AffinitySystem : JiangyuSystem
             foreach (var id in Unlocks.UnlockedWeapons(characterTag, level))
             {
                 var template = Templates.Resolve<WeaponTemplate>(id, _weaponCache, msg => Context.Log.Warn($"affinity: {msg}"));
-                if (template == null || owned.GetInstanceCount(template) > 0)
+                // Ownership must count EVERY calibration rank, not just the base R0: once the player
+                // calibrates, they own a ranked clone (r1-r6) and no base R0, so a base-only check
+                // would think the weapon is missing and re-grant a fresh R0 on every window refresh.
+                if (template == null || OwnsWeaponAnyRank(owned, id))
                     continue;
                 owned.AddItem(template, false, false);
                 Context.Log.Info($"affinity: unlocked weapon '{id}' (level {level})");
             }
         }
         catch (Exception ex) { Context.Log.Warn($"affinity: unlock failed: {ex.Message}"); }
+    }
+
+    // Whether the player owns this weapon at ANY calibration rank (base R0 or a ranked clone). Matched
+    // by item template id via Calibration.TryParseRank, so a ranked SSR (whose rank clone is not even
+    // in GetAll<WeaponTemplate>) still counts as owned and the unlock grant does not re-fire.
+    private static bool OwnsWeaponAnyRank(OwnedItems owned, string baseWeaponId)
+    {
+        var all = new Il2CppSystem.Collections.Generic.List<BaseItem>();
+        owned.GetInstances(all);
+        for (var i = 0; i < all.Count; i++)
+        {
+            var itemId = all[i]?.TryCast<Item>()?.GetTemplate()?.GetID();
+            if (itemId != null && Calibration.TryParseRank(itemId, baseWeaponId, out _))
+                return true;
+        }
+        return false;
     }
 
     // Read the rarity brackets and colours from the game's UIConfig once. Falls back to the shipped
