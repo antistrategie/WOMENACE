@@ -45,36 +45,36 @@ public static class Unlocks
     {
         ["wmgfl_voymastina"] = new[]
         {
-            new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.voymastina_erwin" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_voymastina/lv2", "Outfit(s): Erwin") },
+            new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.voymastina_erwin" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_voymastina/lv2", "Outfit: Erwin") },
             new Entry { Level = 4, Feature = Feature.Mech, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_voymastina/lv4", "Alternate form: Sinbreaker") },
         },
         ["wmgfl_leva"] = new[]
         {
-            new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.leva_diamond_flower" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_leva/lv2", "Outfit(s): Diamond Flower") },
+            new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.leva_diamond_flower" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_leva/lv2", "Outfit: Diamond Flower") },
         },
         ["wmgfl_makiatto"] = new[]
         {
-            new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.makiatto_ballroom" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_makiatto/lv2", "Outfit(s): Ballroom Interlude") },
+            new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.makiatto_ballroom" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_makiatto/lv2", "Outfit: Ballroom Interlude") },
             new Entry { Level = 3, Feature = Feature.Weapon, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_makiatto/lv3", "SSR Weapon: Bittersweet Caramel") },
-            new Entry { Level = 4, Feature = Feature.Skins, Armors = new[] { "armor.makiatto_steamy_vacance" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_makiatto/lv4", "Outfit(s): Steamy Vacance") },
+            new Entry { Level = 4, Feature = Feature.Skins, Armors = new[] { "armor.makiatto_steamy_vacance" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_makiatto/lv4", "Outfit: Steamy Vacance") },
         },
         ["wmgfl_sextans"] = new[]
         {
-            new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.sextans_nocte" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_sextans/lv2", "Outfit(s): Nocte Bewitchment") },
+            new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.sextans_nocte" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_sextans/lv2", "Outfit: Nocte Bewitchment") },
             new Entry { Level = 3, Feature = Feature.Weapon, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_sextans/lv3", "SSR Weapon: Twilight Rose") },
         },
         ["wmgfl_vector"] = new[]
         {
-            new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.vector_vivi" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_vector/lv2", "Outfit(s): Vivi Sometimes Hides Her Molotovs") },
+            new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.vector_vivi" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_vector/lv2", "Outfit: Vivi Sometimes Hides Her Molotovs") },
         },
         ["wmgfl_soppo"] = new[]
         {
-            new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.soppo_redline" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_soppo/lv2", "Outfit(s): Redline Racer") },
+            new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.soppo_redline" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_soppo/lv2", "Outfit: Redline Racer") },
             new Entry { Level = 3, Feature = Feature.Weapon, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_soppo/lv3", "SSR Weapon: Skysunderer's Howl") },
         },
         ["wmgfl_helen"] = new[]
         {
-            new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.helen_starlit_waltz" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_helen/lv2", "Outfit(s): Starlit Waltz") },
+            new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.helen_starlit_waltz" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_helen/lv2", "Outfit: Starlit Waltz") },
         },
     };
 
