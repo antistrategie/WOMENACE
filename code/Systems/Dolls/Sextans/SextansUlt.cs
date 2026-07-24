@@ -161,9 +161,7 @@ public sealed class SextansUltSystem : JiangyuSystem
     // The SSR sword's ult chain is a separate clone of the SR one, so the electric charge its lane
     // hits carry cannot live on a KDL ElementalDamage handler (that would electrify the riders too).
     // Instead the ult's lane hits build Shock in code, gated on this weapon having granted the cast.
-    // UltShockPerHit is the per-victim build-up.
     private const string SsrSwordId = "weapon.sextans_ssr";
-    private const float UltShockPerHit = 100f;
 
     private static SextansUltSystem _instance;
 
@@ -550,15 +548,15 @@ public sealed class SextansUltSystem : JiangyuSystem
         }
         Context.Log.Debug($"ult: struck {struck} victim(s), rent {rent} marked");
 
-        // SSR sword: the ult's lane hits carry the same electric charge as its basic attacks, gated
-        // on which weapon granted this cast (any calibration rank): only the SSR sword electrifies.
-        // Applied to the survivors (a corpse has no accuracy left to dampen).
+        // SSR sword: the ult's lane hits Electrify every survivor outright, gated on which weapon
+        // granted this cast (any calibration rank): only the SSR sword electrifies. Feeding each
+        // victim its own full proc threshold keeps the guarantee regardless of unit size.
         if (Calibration.TryParseRank(ult.GetItem()?.GetTemplate()?.GetID(), SsrSwordId, out _))
         {
             var shock = ElementsSystem.ElementIndex("Shock");
             foreach (var enemy in victims)
                 if (enemy != null && enemy.IsAlive())
-                    ElementsSystem.AddBuildUp(enemy, shock, UltShockPerHit);
+                    ElementsSystem.AddBuildUp(enemy, shock, ElementsSystem.ThresholdFor(enemy));
         }
 
         // 2. The feast: ONE combined heal, capped per cast, healing her real

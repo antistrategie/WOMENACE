@@ -4,7 +4,7 @@ using Jiangyu.Sdk;
 
 namespace WOMENACE.Code;
 
-// The KDL-facing elemental damage handler. An SSR weapon skill declares
+// The KDL-facing Phase damage handler. An SSR weapon skill declares
 //
 //     append "EventHandlers" type="WOMENACE:ElementalDamage" {
 //         set "Element" "Freeze"
@@ -12,7 +12,8 @@ namespace WOMENACE.Code;
 //     }
 //
 // and every hit that connects feeds that much build-up of that element into
-// the victim's gauge (ElementsSystem owns the ledger and the 100 threshold).
+// the victim's gauge (ElementsSystem owns the ledger and the max-hp-scaled
+// proc threshold).
 [JiangyuType("ElementalDamage")]
 public sealed partial class ElementalDamage : SkillEventHandlerTemplate
 {

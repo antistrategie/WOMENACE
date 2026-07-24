@@ -1,17 +1,17 @@
-// The elemental status effects. Elemental damage is exclusive to SSR weapons:
+// The Phase damage status effects. Phase damage is exclusive to SSR weapons:
 // their skills carry a WOMENACE:ElementalDamage handler naming an element and
 // a per-hit amount. Hits accumulate build-up on the victim (tracked by the
 // ElementsSystem), shown as a greyscale icon that fills with colour from the
-// bottom. At 100 build-up the victim gains the element's real effect below
-// and the gauge resets. Reapplication is ignored while the effect is live, so
-// nothing stacks.
+// bottom. Once build-up reaches 20% of the unit's max hitpoints the victim
+// gains the element's real effect below and the gauge resets. Reapplication
+// is ignored while the effect is live, so nothing stacks.
 clone "SkillTemplate" from="effect.bleeding" id="effect.wmgfl_burn" {
     set "Icon" asset="elements/burn"
     set "Title" {
         set "m_DefaultTranslation" "Burning"
     }
     set "Description" {
-        set "m_DefaultTranslation" "Set alight by elemental fire. Loses 10% max <link=\"hitpoints\">Hitpoints</link> per turn for 3 turns. Can only kill one element per turn."
+        set "m_DefaultTranslation" "Loses 10% max <link=\"hitpoints\">Hitpoints</link> per turn for 3 turns. Can only kill one element per turn."
     }
     clear "EventHandlers"
     append "EventHandlers" type="LifetimeLimit" {

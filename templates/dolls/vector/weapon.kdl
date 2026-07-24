@@ -81,3 +81,102 @@ clone "SkillTemplate" from="active.fire_smg_tier_1_tap_fire" id="active.fire_vec
     }
     set "MaxRange" 6
 }
+
+// SSR weapon
+clone "WeaponTemplate" from="specialweapon.infantry_automatic_rifle_tier2" id="weapon.vector_ssr" {
+    append "Tags" "jy_no_sell"
+    set "Title" {
+        set "m_DefaultTranslation" "Banshee's Whisper"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "SMG"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "A high-performance submachine gun assigned to Vector. Based on the Ksvec .45 ACP, it has been completely overhauled. Pull the trigger, and let death whisper a song into the ears of enemies."
+    }
+
+    set "Model" asset="weapon/vector_ssr/main"
+    set "Icon" asset="weapon/vector_ssr/Icon"
+    set "IconEquipment" asset="weapon/vector_ssr/IconEquipment"
+    set "IconEquipmentDisabled" asset="weapon/vector_ssr/IconEquipmentDisabled"
+    set "IconSkillBar" asset="weapon/vector_ssr/IconSkillBar"
+    set "IconSkillBarDisabled" asset="weapon/vector_ssr/IconSkillBarDisabled"
+
+    set "AccuracyBonus" 5.0
+    set "AccuracyDropoff" -6.0
+    set "ArmorPenetration" 20.0
+    set "ArmorPenetrationDropoff" -2.0
+
+    set "Damage" 16.0
+    set "DamageDropoff" -1.2
+    set "DamageToArmorDurability" 12.0
+    set "DamageToArmorDurabilityDropoff" -1.2
+
+    set "MaxRange" 5
+    set "IdealRange" 2
+    set "Suppression" 20.0
+    set "DeployCosts" {
+        set "m_Supplies" 30
+    }
+
+    set "BlackMarketMaxQuantity" 0
+
+    clear "SkillsGranted"
+    append "SkillsGranted" "active.vector_ssr_skill"
+}
+
+clone "SkillTemplate" from="active.fire_automatic_rifle" id="active.vector_ssr_skill" {
+    set "Title" {
+        set "m_DefaultTranslation" "Dead End Meltdown"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Sprays incendiary rounds that build <link=\"wmgfl_burn\">Burn</link>. Deals 20% more damage to Burning targets."
+    }
+    set "MaxRange" 5
+    set "Repetitions" 6
+    append "EventHandlers" type="WOMENACE:ElementalDamage" {
+        set "Element" "Burn"
+        set "AmountPerHit" 4.0
+    }
+    // Vector's imprint: her own hits apply Overburn to the victim (owner-gated in code)
+    append "EventHandlers" type="WOMENACE:OverburnOnHit" {}
+
+    clear "SoundsOnAttack"
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_smg_addition_bank"
+        set "itemId" "smg_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "weapons_soundbank"
+        set "itemId" "small_caliber_brass_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_smg_addition_bank"
+        set "itemId" "smg_burst_distant"
+    }
+    clear "SoundsOnAttackFar"
+    append "SoundsOnAttackFar" {
+        set "bankId" "wmgfl_weapons_smg_addition_bank"
+        set "itemId" "smg_burst_distant"
+    }
+}
+
+clone "SkillTemplate" from="effect.bleeding" id="effect.wmgfl_overburn" {
+    set "Icon" asset="vector/ssr/overburn"
+    set "Title" {
+        set "m_DefaultTranslation" "Overburn"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "If the target dies while <link=\"wmgfl_burn\">Burning</link>, the fire and Overburn spread to the healthiest enemy within 2 tiles that is not already Burning. If all of them are, Overburn alone jumps to the healthiest. Lasts as long as the Burn does."
+    }
+    clear "EventHandlers"
+    append "EventHandlers" type="DisplayText" {
+        set "Event" enum="DisplayEvent" "OnAdded"
+        set "LocaKey" "wmgfl_overburn"
+        set "DefaultText" "Overburn!"
+    }
+    // keeps the bearer's death position fresh for the spread (the engine
+    // unlinks a dying actor from its tile before the death event fires) and
+    // removes Overburn the moment the bearer stops Burning
+    append "EventHandlers" type="WOMENACE:OverburnTracker" {}
+}

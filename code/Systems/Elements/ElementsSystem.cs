@@ -5,20 +5,31 @@ using UnityEngine;
 
 namespace WOMENACE.Code;
 
-// The elemental build-up ledger. Elemental damage is exclusive to SSR
+// The Phase damage build-up ledger. Phase damage is exclusive to SSR
 // weapons: their skills carry a WOMENACE:ElementalDamage handler naming an
 // element and a per-hit amount. Every landed hit feeds the victim's gauge
-// for that element, and at 100 the gauge resets and the element's status
-// effect (effect.wmgfl_*) is applied. While the effect is live further
-// build-up is swallowed, so nothing stacks and the gauge only starts
-// refilling once the effect has expired.
+// for that element, and when the gauge reaches the unit's proc threshold
+// (20% of its max hitpoints, summed across its elements) the gauge resets
+// and the element's status effect (effect.wmgfl_*) is applied. While the
+// effect is live further build-up is swallowed, so nothing stacks and the
+// gauge only starts refilling once the effect has expired.
 //
 // Gauges live per actor per element and last the whole mission (no decay).
 // The overhead unit HUD draws them via EffectHudIconSystem as a greyscale
 // icon that fills with the element's colour from the bottom.
 public sealed class ElementsSystem : JiangyuSystem
 {
-    public const float Threshold = 100f;
+    public const float ThresholdPctMaxHp = 0.2f;
+
+    // A big unit needs proportionally more build-up to proc than a small one.
+    // The fallback covers an actor whose element list resolves to no
+    // hitpoints (never seen in practice), where a zero threshold would proc
+    // an effect off any stray hit.
+    public static float ThresholdFor(Actor actor)
+    {
+        var maxHp = RallyBarsSystem.SumHitpointsMax(actor);
+        return maxHp > 0 ? maxHp * ThresholdPctMaxHp : 100f;
+    }
 
     // index order is the Element wire format: KDL authors the element by name
     internal static readonly string[] ElementNames =
@@ -68,7 +79,14 @@ public sealed class ElementsSystem : JiangyuSystem
     private readonly Dictionary<IntPtr, GaugeEntry> _gauges = new();
 
     public override void OnInit()
-        => _instance = this;
+    {
+        _instance = this;
+        // Thresholds move when squad members die (SumHitpointsMax shrinks), and
+        // Accumulate only tests the proc on a fresh hit: a gauge banked below
+        // the old threshold would otherwise sit at 100% forever. Re-test every
+        // banked gauge at each turn boundary.
+        Context.Patches.Postfix("Il2CppMenace.Tactical.TacticalManager", "InvokeOnTurnEnd", _ => ReevaluateProcs());
+    }
 
     public override void OnTemplatesApplied()
     {
@@ -144,14 +162,15 @@ public sealed class ElementsSystem : JiangyuSystem
             _gauges[victim.Pointer] = entry;
         }
         var gauges = entry.Gauges;
-        gauges[element] = Mathf.Min(Threshold, gauges[element] + amount);
-        Debug($"elements: {ElementNames[element]} build-up {gauges[element]:0}/{Threshold:0} on '{victim.GetTemplate()?.GetID()}'");
+        var threshold = ThresholdFor(victim);
+        gauges[element] = Mathf.Min(threshold, gauges[element] + amount);
+        Debug($"elements: {ElementNames[element]} build-up {gauges[element]:0}/{threshold:0} on '{victim.GetTemplate()?.GetID()}'");
         // only a successful application spends the gauge: a failed apply
         // (missing template, rejecting container) leaves it full to retry on
         // the next hit instead of destroying the build-up. A successful add
         // already redraws the row through the SkillContainer.Add postfix, so
         // only the no-proc path needs the explicit resync.
-        if (gauges[element] >= Threshold && ApplyEffect(victim, element))
+        if (gauges[element] >= threshold && ApplyEffect(victim, element))
             gauges[element] = 0f;
         else
             EffectHudIconSystem.Resync(victim);
@@ -164,5 +183,53 @@ public sealed class ElementsSystem : JiangyuSystem
             return false;
         Debug($"elements: '{template.GetID()}' applied to '{victim.GetTemplate()?.GetID()}'");
         return true;
+    }
+
+    // Apply an element's proc effect outside the gauge path (e.g. Vector's
+    // Overburn spread ignites the target directly). Same no-stacking rule as
+    // a gauge proc: a live copy of the effect swallows the application.
+    internal static bool ApplyEffectTo(Actor victim, int element)
+    {
+        if (_instance == null || victim == null || element < 0 || element >= _instance._effects.Length)
+            return false;
+        if (HasLiveEffect(victim, element))
+            return false;
+        return _instance.ApplyEffect(victim, element);
+    }
+
+    // Turn-boundary sweep: casualties can shrink a unit's threshold below its
+    // already-banked build-up between hits. Clamp each gauge to the current
+    // threshold and proc any that now sit at it, exactly as a fresh hit would.
+    private void ReevaluateProcs()
+    {
+        try
+        {
+            foreach (var entry in _gauges.Values)
+            {
+                var victim = entry.Actor;
+                if (victim == null || !victim.IsAlive())
+                    continue;
+                var gauges = entry.Gauges;
+                float threshold = 0f;
+                for (var element = 0; element < gauges.Length; element++)
+                {
+                    if (gauges[element] <= 0f || HasLiveEffect(victim, element))
+                        continue;
+                    if (threshold <= 0f)
+                        threshold = ThresholdFor(victim);
+                    if (gauges[element] < threshold)
+                        continue;
+                    gauges[element] = threshold;
+                    if (ApplyEffect(victim, element))
+                        gauges[element] = 0f;
+                    else
+                        EffectHudIconSystem.Resync(victim);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Warn($"elements: proc sweep failed: {ex.GetType().Name}: {ex.Message}");
+        }
     }
 }

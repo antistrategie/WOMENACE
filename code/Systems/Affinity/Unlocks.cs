@@ -66,6 +66,7 @@ public static class Unlocks
         ["wmgfl_vector"] = new[]
         {
             new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.vector_vivi" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_vector/lv2", "Outfit: Vivi Sometimes Hides Her Molotovs") },
+            new Entry { Level = 3, Feature = Feature.Weapon, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_vector/lv3", "SSR Weapon: Banshee's Whisper") },
         },
         ["wmgfl_soppo"] = new[]
         {

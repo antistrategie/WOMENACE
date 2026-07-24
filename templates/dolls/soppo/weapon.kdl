@@ -122,7 +122,7 @@ clone "SkillTemplate" from="active.fire_automatic_rifle" id="active.soppo_ssr_pu
     }
     append "EventHandlers" type="WOMENACE:ElementalDamage" {
         set "Element" "Freeze"
-        set "AmountPerHit" 25.0
+        set "AmountPerHit" 4.0
     }
     // opens the holder in Hunter Form at every mission start
     append "EventHandlers" type="WOMENACE:HunterOpening" {}
@@ -157,7 +157,7 @@ clone "SkillTemplate" from="active.fire_automatic_rifle" id="active.soppo_ssr_bi
     }
     append "EventHandlers" type="WOMENACE:ElementalDamage" {
         set "Element" "Burn"
-        set "AmountPerHit" 25.0
+        set "AmountPerHit" 4.0
     }
     append "EventHandlers" type="SynchronizeItemUses" {}
 

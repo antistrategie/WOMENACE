@@ -29,11 +29,22 @@ public sealed class EffectHudIconSystem : JiangyuSystem
     private static readonly string[] TrackedEffectIds =
     {
         "effect.sextans_blood_kiss",
+        "effect.wmgfl_overburn",
     };
 
     private static EffectHudIconSystem _instance;
 
     private readonly List<SkillTemplate> _tracked = new();
+
+    // template pointer -> index into _tracked, so any container scan resolves
+    // every tracked effect in a single pass instead of one pass per template.
+    private readonly Dictionary<System.IntPtr, int> _trackedSlots = new();
+
+    // element index (ElementsSystem order) -> index into _tracked for that
+    // element's effect template, -1 when the template failed to resolve. Lets
+    // the gauge pass read "is the effect live" out of the same single-scan
+    // counts instead of re-scanning the container per element.
+    private readonly int[] _elementSlots = new int[ElementsSystem.EffectIds.Length];
 
     // Actors we have drawn an icon row for. Lets an irrelevant container
     // mutation (the common case: every unit's cooldowns and buffs game-wide)
@@ -58,20 +69,35 @@ public sealed class EffectHudIconSystem : JiangyuSystem
     public override void OnTemplatesApplied()
     {
         _tracked.Clear();
+        _trackedSlots.Clear();
+        for (var i = 0; i < _elementSlots.Length; i++)
+            _elementSlots[i] = -1;
         var ids = new List<string>(TrackedEffectIds);
         ids.AddRange(ElementsSystem.EffectIds);
-        foreach (var id in ids)
+        for (var i = 0; i < ids.Count; i++)
         {
-            var template = Templates.ById<SkillTemplate>(id, msg => Context.Log.Warn($"effect icons: {msg}"));
+            var template = Templates.ById<SkillTemplate>(ids[i], msg => Context.Log.Warn($"effect icons: {msg}"));
             if (template == null)
                 continue;
             if (template.Icon == null)
             {
-                Context.Log.Warn($"effect icons: '{id}' has no icon sprite, skipped");
+                Context.Log.Warn($"effect icons: '{ids[i]}' has no icon sprite, skipped");
                 continue;
             }
+            _trackedSlots[template.Pointer] = _tracked.Count;
+            var element = i - TrackedEffectIds.Length;
+            if (element >= 0 && element < _elementSlots.Length)
+                _elementSlots[element] = _tracked.Count;
             _tracked.Add(template);
         }
+    }
+
+    // One container pass for all tracked effects (settled + add queue).
+    private int[] CountsFor(Actor actor)
+    {
+        var counts = new int[_tracked.Count];
+        SkillEffects.CountInstancesInto(actor?.GetSkills(), _trackedSlots, counts);
+        return counts;
     }
 
     internal static void Resync(Actor actor)
@@ -132,7 +158,11 @@ public sealed class EffectHudIconSystem : JiangyuSystem
     {
         if (actor == null || _tracked.Count == 0)
             return;
-        if (CountTracked(actor) == 0 && !HasGauges(actor) && !_iconized.Contains(actor.Pointer))
+        var counts = CountsFor(actor);
+        var total = 0;
+        foreach (var count in counts)
+            total += count;
+        if (total == 0 && !HasGauges(actor) && !_iconized.Contains(actor.Pointer))
             return;
         // no overhead HUD is normal: units off-screen or not yet detected
         // have none, and the icons re-sync when one next appears
@@ -142,22 +172,17 @@ public sealed class EffectHudIconSystem : JiangyuSystem
             _iconized.Remove(actor.Pointer);
             return;
         }
-        DrawRow(hud, actor);
-    }
-
-    private int CountTracked(Actor actor)
-    {
-        var total = 0;
-        foreach (var template in _tracked)
-            total += CountLive(actor, template);
-        return total;
+        DrawRow(hud, actor, counts);
     }
 
     // Rebuilds the icon row on a known HUD for its current occupant (or
     // clears it when the occupant carries none / the HUD was rebound to
     // nobody). The one place icons are drawn, shared by the container-mutation
-    // and HUD-rebind paths.
+    // and HUD-rebind paths. Counts are per _tracked slot, from CountsFor.
     private void DrawRow(Il2CppMenace.UI.Tactical.UnitHUD hud, Actor actor)
+        => DrawRow(hud, actor, actor != null ? CountsFor(actor) : new int[_tracked.Count]);
+
+    private void DrawRow(Il2CppMenace.UI.Tactical.UnitHUD hud, Actor actor, int[] counts)
     {
         var bar = hud.m_HitpointsBar;
         var host = bar?.parent;
@@ -177,20 +202,19 @@ public sealed class EffectHudIconSystem : JiangyuSystem
 
         var total = 0;
         var icons = new List<VisualElement>();
-        foreach (var template in _tracked)
+        for (var slot = 0; slot < _tracked.Count; slot++)
         {
-            var count = actor != null ? CountLive(actor, template) : 0;
-            for (var i = 0; i < count; i++)
+            for (var i = 0; i < counts[slot]; i++)
             {
                 var icon = new VisualElement();
                 icon.style.width = new StyleLength(10f);
                 icon.style.height = new StyleLength(10f);
-                icon.style.backgroundImage = new StyleBackground(Background.FromSprite(template.Icon));
+                icon.style.backgroundImage = new StyleBackground(Background.FromSprite(_tracked[slot].Icon));
                 icons.Add(icon);
             }
-            total += count;
+            total += counts[slot];
         }
-        total += AppendGaugeIcons(actor, icons);
+        total += AppendGaugeIcons(actor, icons, counts);
 
         if (total == 0)
         {
@@ -228,19 +252,23 @@ public sealed class EffectHudIconSystem : JiangyuSystem
         return false;
     }
 
-    // The elemental build-up gauges: a greyscale element icon whose colour
+    // The Phase damage build-up gauges: a greyscale element icon whose colour
     // version rises from the bottom as the gauge fills. Built as a clip
     // reveal, the colour layer bottom-anchored inside a bottom-anchored
-    // clipping band whose height is the fill percentage.
-    private static int AppendGaugeIcons(Actor actor, List<VisualElement> icons)
+    // clipping band whose height is the fill percentage. Liveness of each
+    // element's proc effect reads from the shared single-scan counts.
+    private int AppendGaugeIcons(Actor actor, List<VisualElement> icons, int[] counts)
     {
         var gauges = actor != null ? ElementsSystem.GaugesFor(actor) : null;
         if (gauges == null)
             return 0;
         var added = 0;
+        var threshold = ElementsSystem.ThresholdFor(actor);
         for (var element = 0; element < gauges.Length; element++)
         {
-            if (gauges[element] <= 0f || ElementsSystem.HasLiveEffect(actor, element))
+            var liveEffect = element < _elementSlots.Length && _elementSlots[element] >= 0
+                && counts[_elementSlots[element]] > 0;
+            if (gauges[element] <= 0f || liveEffect)
                 continue;
             var grey = ElementsSystem.GaugeTexture(element);
             var colour = ElementsSystem.EffectSprite(element);
@@ -252,7 +280,7 @@ public sealed class EffectHudIconSystem : JiangyuSystem
             icon.style.height = new StyleLength(10f);
             icon.style.backgroundImage = new StyleBackground(grey);
 
-            var pct = Mathf.Clamp01(gauges[element] / ElementsSystem.Threshold) * 100f;
+            var pct = Mathf.Clamp01(gauges[element] / threshold) * 100f;
             var clip = new VisualElement();
             clip.style.position = new StyleEnum<Position>(Position.Absolute);
             clip.style.left = new StyleLength(0f);
@@ -276,11 +304,6 @@ public sealed class EffectHudIconSystem : JiangyuSystem
         }
         return added;
     }
-
-    // Live instances, including ones still sitting in the container's add
-    // queue: the Add postfix fires before the queue is drained.
-    private static int CountLive(Actor actor, SkillTemplate template)
-        => SkillEffects.CountInstances(actor.GetSkills(), template);
 
     internal static Il2CppMenace.UI.Tactical.UnitHUD FindHud(Actor actor)
     {

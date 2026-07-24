@@ -4,16 +4,16 @@
 // description writes <link="wmgfl_burn">Burn</link> and hovering the word
 // opens the matching entry as a nested tooltip.
 patch "TextTooltipsConfig" "text_tooltips_config" {
-    // The elements. Elemental damage is exclusive to SSR weapons: hits build
-    // the element on the victim and at 100 the effect (templates/elements/)
-    // procs.
+    // The elements. Phase damage is exclusive to SSR weapons: hits build the
+    // element on the victim and at 20% of the unit's max hitpoints the effect
+    // (templates/elements/) procs.
     append "Tooltips" {
         set "LinkId" "wmgfl_burn"
         set "TooltipHeading" {
             set "m_DefaultTranslation" "Burn"
         }
         set "TooltipText" {
-            set "m_DefaultTranslation" "Burn damage builds up on the target. At 100 they are set alight, losing 10% max Hitpoints per turn for 3 turns. Build-up is ignored while the fire lasts."
+            set "m_DefaultTranslation" "Burn Phase damage builds up on the target. Once it reaches 20% of their max Hitpoints they are set alight, losing 10% max Hitpoints per turn for 3 turns. Build-up is ignored while the fire lasts."
         }
     }
     append "Tooltips" {
@@ -22,7 +22,7 @@ patch "TextTooltipsConfig" "text_tooltips_config" {
             set "m_DefaultTranslation" "Electric"
         }
         set "TooltipText" {
-            set "m_DefaultTranslation" "Electric damage builds up on the target. At 100 they are Electrified, reducing Accuracy by 15% for 5 turns. Build-up is ignored while the charge lasts."
+            set "m_DefaultTranslation" "Electric Phase damage builds up on the target. Once it reaches 20% of their max Hitpoints they are Electrified, reducing Accuracy by 15% for 5 turns. Build-up is ignored while the charge lasts."
         }
     }
     append "Tooltips" {
@@ -31,7 +31,7 @@ patch "TextTooltipsConfig" "text_tooltips_config" {
             set "m_DefaultTranslation" "Freeze"
         }
         set "TooltipText" {
-            set "m_DefaultTranslation" "Freeze damage builds up on the target. At 100 they are Frozen, reducing Action Points by 25% for 5 turns. Build-up is ignored while the frost lasts."
+            set "m_DefaultTranslation" "Freeze Phase damage builds up on the target. Once it reaches 20% of their max Hitpoints they are Frozen, reducing Action Points by 25% for 5 turns. Build-up is ignored while the frost lasts."
         }
     }
     append "Tooltips" {
@@ -40,7 +40,7 @@ patch "TextTooltipsConfig" "text_tooltips_config" {
             set "m_DefaultTranslation" "Corrosion"
         }
         set "TooltipText" {
-            set "m_DefaultTranslation" "Corrosion damage builds up on the target. At 100 they are Corroded, losing 20% of current Armour per turn for 3 turns. Build-up is ignored while the acid lasts."
+            set "m_DefaultTranslation" "Corrosion Phase damage builds up on the target. Once it reaches 20% of their max Hitpoints they are Corroded, losing 20% of current Armour per turn for 3 turns. Build-up is ignored while the acid lasts."
         }
     }
     append "Tooltips" {
@@ -49,7 +49,7 @@ patch "TextTooltipsConfig" "text_tooltips_config" {
             set "m_DefaultTranslation" "Hydro"
         }
         set "TooltipText" {
-            set "m_DefaultTranslation" "Hydro damage builds up on the target. At 100 they are Drenched and their cover counts one tier worse for 3 turns. Build-up is ignored while they stay soaked."
+            set "m_DefaultTranslation" "Hydro Phase damage builds up on the target. Once it reaches 20% of their max Hitpoints they are Drenched and their cover counts one tier worse for 3 turns. Build-up is ignored while they stay soaked."
         }
     }
 

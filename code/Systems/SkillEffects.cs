@@ -50,4 +50,29 @@ internal static class SkillEffects
                 count++;
         return count;
     }
+
+    // Queue-aware counts for several templates in ONE container pass: each
+    // skill's template pointer is looked up in `slots` (pointer -> index into
+    // `counts`). For a caller tracking N effects this replaces N full scans
+    // (each re-marshalling every skill's GetTemplate) with one.
+    internal static void CountInstancesInto(SkillContainer skills, Dictionary<IntPtr, int> slots, int[] counts)
+    {
+        Array.Clear(counts, 0, counts.Length);
+        if (skills == null || slots.Count == 0)
+            return;
+        var all = skills.GetAllSkills();
+        for (var i = 0; all != null && i < all.Count; i++)
+        {
+            var pointer = all[i]?.GetTemplate()?.Pointer ?? IntPtr.Zero;
+            if (pointer != IntPtr.Zero && slots.TryGetValue(pointer, out var slot))
+                counts[slot]++;
+        }
+        var queued = skills.GetSkillsInAddQueue();
+        for (var i = 0; queued != null && i < queued.Count; i++)
+        {
+            var pointer = queued[i]?.GetTemplate()?.Pointer ?? IntPtr.Zero;
+            if (pointer != IntPtr.Zero && slots.TryGetValue(pointer, out var slot))
+                counts[slot]++;
+        }
+    }
 }

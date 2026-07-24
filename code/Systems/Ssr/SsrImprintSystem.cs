@@ -69,6 +69,18 @@ public sealed class SsrImprintSystem : JiangyuSystem
         },
         new Entry
         {
+            OwnerTag = "wmgfl_vector",
+            OwnerName = "Vector",
+            BonusText = "Hits on Burning targets apply Overburn: the fire spreads when they die.",
+            Skills = new[]
+            {
+                // No stat bonus: the imprint is the Overburn effect (VectorSsrSystem's on-hit
+                // handler gates on IsOwnerWielding through this entry).
+                new SkillImprint { SkillId = "active.vector_ssr_skill" },
+            },
+        },
+        new Entry
+        {
             // Sextans' SSR sword. Unlike Makiatto/Soppo it is OnlyEquipableBy its owner, so there is no
             // owner-vs-other split to gate. The extra damage lives on the skills' Attack handler and the
             // Shock build-up on their ElementalDamage handler, both always on (see weapon.kdl). This entry
@@ -194,6 +206,14 @@ public sealed class SsrImprintSystem : JiangyuSystem
                 damageInfo.Damage += bonus;
         }
         catch (Exception ex) { Context.Log.Warn($"ssr: damage boost failed: {ex.Message}"); }
+    }
+
+    // Whether the skill is currently in the hands of its SSR weapon's owning doll. On-hit imprint
+    // behaviours with no stat lever (e.g. Vector's Overburn) gate on this at hit time.
+    public static bool IsOwnerWielding(BaseSkill skill)
+    {
+        var (entry, _) = BySkill(skill?.GetID());
+        return entry != null && SkillOwnedBy(skill, entry.OwnerTag);
     }
 
     // The owner's multiplier on a skill's elemental build-up, 1 for everyone else and for skills with
