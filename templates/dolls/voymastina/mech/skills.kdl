@@ -20,6 +20,7 @@ clone "SkillTemplate" from="active.fire_assault_rifle_tier1_762" id="active.voym
         set "Damage" 7.0
         set "ArmorPenetration" 20.0
         set "Suppression" 3.0
+        set "DamageToArmorDurability" 7.0
     }
 
     set "IsSoundOnAttackPerElementPlayingAfterAnimationDelay" #true
@@ -112,4 +113,5 @@ clone "SkillTemplate" from="active.wetteroth_thats_a_knife" id="active.voymastin
 
     append "Tags" "armor_piercing"
     append "Tags" "armor_damaging"
+    append "Tags" "wmgfl_melee"
 }

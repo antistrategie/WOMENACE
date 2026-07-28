@@ -32,6 +32,26 @@ internal static class SkillEffects
         return true;
     }
 
+    // The live instance of the template in the container, or null. Queue-aware for
+    // the same reason CountInstances is: a skill added this frame is still in the
+    // add queue, not the settled list.
+    internal static Skill FindInstance(SkillContainer skills, SkillTemplate template)
+    {
+        if (skills == null || template == null)
+            return null;
+        // Keep scanning past a template match that is not a Skill: the container holds
+        // BaseSkill, so a non-Skill entry sharing the template must not end the search.
+        var all = skills.GetAllSkills();
+        for (var i = 0; all != null && i < all.Count; i++)
+            if (all[i]?.GetTemplate()?.Pointer == template.Pointer && all[i].TryCast<Skill>() is { } match)
+                return match;
+        var queued = skills.GetSkillsInAddQueue();
+        for (var i = 0; queued != null && i < queued.Count; i++)
+            if (queued[i]?.GetTemplate()?.Pointer == template.Pointer && queued[i].TryCast<Skill>() is { } queuedMatch)
+                return queuedMatch;
+        return null;
+    }
+
     // Live instances of the template, including ones still sitting in the
     // container's add queue: the Add postfix fires before the queue drains,
     // so a settled-list-only count misses just-applied skills.

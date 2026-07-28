@@ -13,6 +13,16 @@ clone "TagTemplate" from="unique" id="wmgfl_gift"
 // transmog carriers (model, icons, name) for the transmog picker.
 clone "TagTemplate" from="unique" id="wmgfl_transmog"
 
+// Marks a skill as one of our melee attacks. MeleeCookOffSystem reads it so a target
+// that dies to a blade or a pile bunker passes its death blast over the attacker.
+//
+// Cloned from "unique" like every other marker tag here, which carries TagType UNIQUE.
+// That type is reachable from the engine's own tag queries once the tag sits on a
+// SkillTemplate, but there is no inert TagType to pick instead (the enum has no NONE)
+// and every alternative describes something less true of these skills. jy_no_sell
+// already rides WeaponTemplate.Tags on the same basis.
+clone "TagTemplate" from="unique" id="wmgfl_melee"
+
 // Weapon-type proficiency. A doll's speaker carries one of these to name the weapon
 // class she is trained on. WeaponProficiencySystem reads the tag and grants an
 // affinity-scaled accuracy bonus while she wields a weapon of that class.

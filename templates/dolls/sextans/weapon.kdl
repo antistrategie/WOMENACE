@@ -90,6 +90,7 @@ clone "SkillTemplate" from="active.wetteroth_thats_a_knife" id="active.sextans_s
 
     append "Tags" "armor_piercing"
     append "Tags" "anti_infantry"
+    append "Tags" "wmgfl_melee"
 }
 
 clone "SkillTemplate" from="active.wetteroth_thats_a_knife" id="active.sextans_thrust" {
@@ -142,6 +143,7 @@ clone "SkillTemplate" from="active.wetteroth_thats_a_knife" id="active.sextans_t
     append "Tags" "area_of_effect"
     append "Tags" "armor_piercing"
     append "Tags" "anti_infantry"
+    append "Tags" "wmgfl_melee"
 
     append "EventHandlers" type="WOMENACE:MarkOnHit" {
         set "EffectId" "effect.sextans_blood_kiss"
@@ -236,6 +238,7 @@ clone "SkillTemplate" from="active.wetteroth_thats_a_knife" id="active.sextans_u
 
     append "Tags" "area_of_effect"
     append "Tags" "unique"
+    append "Tags" "wmgfl_melee"
 }
 
 // Hidden rider: the ultimate's lane damage, applied by SextansUltSystem to
@@ -269,6 +272,8 @@ clone "SkillTemplate" from="active.wetteroth_thats_a_knife" id="active.sextans_u
         set "Suppression" 0.0
         set "DamageToArmorDurability" 50.0
     }
+
+    append "Tags" "wmgfl_melee"
 }
 
 // Hidden rider: the bonus damage enemies marked with Blood Kiss take from the
@@ -301,6 +306,8 @@ clone "SkillTemplate" from="active.wetteroth_thats_a_knife" id="active.sextans_u
         set "ArmorPenetration" 100.0
         set "Suppression" 0.0
     }
+
+    append "Tags" "wmgfl_melee"
 }
 
 // Sextans' SSR sword. Same weapon as Night Snake (weapon.sextans) with a
