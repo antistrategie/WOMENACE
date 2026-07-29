@@ -58,6 +58,7 @@ public sealed class WeaponProficiencySystem : JiangyuSystem
         ["Battle Rifle"] = WeaponClass.Rifle,
         ["Sniper Rifle"] = WeaponClass.Rifle,
         ["Sniper"] = WeaponClass.Rifle,
+        ["Bolt-Action Rifle"] = WeaponClass.Rifle,
         ["DMR"] = WeaponClass.Rifle,
         ["AT Rifle"] = WeaponClass.Rifle,
         ["Light Machinegun"] = WeaponClass.MachineGun,

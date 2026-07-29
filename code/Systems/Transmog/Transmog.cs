@@ -23,6 +23,7 @@ public static class Transmog
         ["wmgfl_papasha"] = "armor.papasha_default",
         ["wmgfl_sextans"] = "armor.sextans_default",
         ["wmgfl_soppo"] = "armor.soppo_default",
+        ["wmgfl_springfield"] = "armor.springfield_default",
         ["wmgfl_vector"] = "armor.vector_default",
         ["wmgfl_voymastina"] = "armor.voymastina_default",
     };

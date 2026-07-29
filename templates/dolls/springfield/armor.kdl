@@ -1,0 +1,52 @@
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.springfield_default" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
+    set "Title" {
+        set "m_DefaultTranslation" "Clean Military Uniform"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Field Outfit"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Springfield's usual outfit. The elegant colors bring out the regal qualities of the outfit, subconsciously including those around Springfield to treat ther with respect. Her warm smiloe however, dissipates any sense of awkwardness or need for formality."
+    }
+    set "Icon" asset="springfield/armor/default/Icon"
+    set "IconEquipment" asset="springfield/armor/default/IconEquipment"
+    set "IconSkillBar" asset="springfield/armor/default/IconSkillBar"
+    clear "MaleModels"
+    append "MaleModels" asset="springfield/default/main"
+    clear "FemaleModels"
+    append "FemaleModels" asset="springfield/default/main"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_transmog"
+    append "Tags" "jy_no_sell"
+}
+
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.springfield_fragrance" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
+    set "Title" {
+        set "m_DefaultTranslation" "Enjoy the Fragrance"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Barista Attire"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            "It's been a tiring day, Commander. Would you like some coffee? The sweetness and the temperature are just the way you like them."
+            She's perfectly concocted the flavor you like, just like all the coffees from days gone by.
+            """
+    }
+    set "Icon" asset="springfield/armor/fragrance/Icon"
+    set "IconEquipment" asset="springfield/armor/fragrance/IconEquipment"
+    set "IconSkillBar" asset="springfield/armor/fragrance/IconSkillBar"
+    clear "MaleModels"
+    append "MaleModels" asset="springfield/fragrance/main"
+    clear "FemaleModels"
+    append "FemaleModels" asset="springfield/fragrance/main"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_transmog"
+    append "Tags" "jy_no_sell"
+}
