@@ -137,7 +137,7 @@ The model `asset=` ref points at the per-variant subdir under `unity/Assets/Pref
 
 Code-side registration, both in `code/`:
 
-- `Transmog.DefaultOutfits` (`Systems/Transmog/Transmog.cs`) maps `wmgfl_<character>` → `armor.<character>_default`. Without this entry the character is not a transmog character and renders whatever armour she wears.
+- `Transmog.DefaultFor` (`Systems/Transmog/Transmog.cs`) derives `armor.<character>_default` from the `wmgfl_<character>` tag and probes the template registry for it. A character is a transmog character exactly when that template exists, so the default outfit needs no code-side registration, but its id MUST follow the `armor.<character>_default` convention or the character renders whatever armour she wears.
 - Extra outfits (skins) are `Unlocks` entries (`Feature.Skins`) with the affinity level that unlocks them; the picker lists them greyed until then.
 
 ## perk_tree.kdl
@@ -179,7 +179,7 @@ A `clone` deep-copies the parent's typed state, then applies the patches in your
 
 - **Cloning the wrong parent class** — e.g. cloning from `specialweapon.X` if you don't want the unit to consume the specialweapon slot. For a sniper-style weapon in the normal slot, pick `weapon.generic_battle_rifle_tier1_crowbar_marksman` or similar.
 - **Forgetting `append "Tags" "wmgfl_<character>"`** on the EntityTemplate. The transmog swap never matches (the character renders her equipped vanilla armour as a vanilla soldier body) and weapon `OnlyEquipableBy` gating fails.
-- **Forgetting the `Transmog.DefaultOutfits` entry** — the outfits exist but the picker tile never appears and nothing renders them.
+- **Naming the default outfit off-convention** — `Transmog.DefaultFor` derives `armor.<character>_default` from the character tag, so an id like `armor.<character>_base` means the picker tile never appears and nothing renders the outfits.
 - **Wrong RoleGuid in cloned ConversationTemplates** — must match the role NAME in the actual parent template, which differs per-template (see [voice-pipeline](../voice-pipeline/SKILL.md)).
 - **Two UnitLeaderTemplates sharing an id segment** — the game's `GameConditionVars` static ctor builds a `LEADER_STATUS_<SEGMENT>` conversation var per leader template from the id segment after the dot. `pilot.papasha` plus `squad_leader.papasha` both yield `LEADER_STATUS_PAPASHA`, which throws a duplicate-key `TypeInitializationException` and crashes new-game creation. A character with two forms needs a unique segment per form (`pilot.papasha` + `squad_leader.papasha_foot`, `squad_leader.voymastina` + `pilot.voymastina_mech`).
 

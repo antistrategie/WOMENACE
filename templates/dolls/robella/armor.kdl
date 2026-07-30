@@ -1,0 +1,80 @@
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.robella_default" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
+    set "Title" {
+        set "m_DefaultTranslation" "Mechanical Heart"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Field Outfit"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "This is Robella's everyday outfit. Its bright yellow colors are a stark contrast to her cool expression, but it also reflects her heart--gentle, accepting, and caring for her friends more than anything else."
+    }
+    set "Icon" asset="robella/armor/default/Icon"
+    set "IconEquipment" asset="robella/armor/default/IconEquipment"
+    set "IconSkillBar" asset="robella/armor/default/IconSkillBar"
+    clear "MaleModels"
+    append "MaleModels" asset="robella/default/main"
+    clear "FemaleModels"
+    append "FemaleModels" asset="robella/default/main"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_transmog"
+    append "Tags" "jy_no_sell"
+}
+
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.robella_enforcer" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
+    set "Title" {
+        set "m_DefaultTranslation" "Enforcer of the Law"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Formal Wear"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            "I must not mess up at the party... Aiieeeee. I, I'm sorry, Commander, I didn't mean to do that..."
+            She collapses into your arms, her cheeks a ripe red. Is it because she's embarrassed by her faux pas, or for some other reason?
+            """
+    }
+    set "Icon" asset="robella/armor/enforcer/Icon"
+    set "IconEquipment" asset="robella/armor/enforcer/IconEquipment"
+    set "IconSkillBar" asset="robella/armor/enforcer/IconSkillBar"
+    clear "MaleModels"
+    append "MaleModels" asset="robella/enforcer/main"
+    clear "FemaleModels"
+    append "FemaleModels" asset="robella/enforcer/main"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_transmog"
+    append "Tags" "jy_no_sell"
+}
+
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.robella_future_navigator" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
+    set "Title" {
+        set "m_DefaultTranslation" "Future Navigator"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Racing Suit"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            "A hero is someone who carves a path of light through the darkness of despair."
+            She looks at you in rapt attention, her eyes filled with expectation and trust.
+            """
+    }
+    set "Icon" asset="robella/armor/future_navigator/Icon"
+    set "IconEquipment" asset="robella/armor/future_navigator/IconEquipment"
+    set "IconSkillBar" asset="robella/armor/future_navigator/IconSkillBar"
+    clear "MaleModels"
+    append "MaleModels" asset="robella/future_navigator/main"
+    clear "FemaleModels"
+    append "FemaleModels" asset="robella/future_navigator/main"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_transmog"
+    append "Tags" "jy_no_sell"
+}

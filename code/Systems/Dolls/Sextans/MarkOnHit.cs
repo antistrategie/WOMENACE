@@ -1,6 +1,5 @@
 using Il2CppMenace.Tactical;
 using Il2CppMenace.Tactical.Skills;
-using Il2CppMenace.Tactical.Skills.Effects;
 using Jiangyu.Sdk;
 
 namespace WOMENACE.Code;

@@ -1,7 +1,5 @@
-using Il2CppInterop.Runtime.InteropTypes;
 using Il2CppMenace.Tools;
 using Jiangyu.Game;
-using Jiangyu.Sdk;
 
 namespace WOMENACE.Code;
 

@@ -48,6 +48,7 @@ patch "StrategyConfig" "strategy_config" {
     append "InitialPickableUnitLeaders" "squad_leader.papasha_foot"
     append "InitialPickableUnitLeaders" "squad_leader.helen"
     append "InitialPickableUnitLeaders" "squad_leader.springfield"
+    append "InitialPickableUnitLeaders" "squad_leader.robella"
 }
 
 patch "GlobalDifficultyTemplate" "global_difficulty.normal" {
@@ -77,6 +78,7 @@ patch "DossierItemTemplate" "dossier.squad_leader" {
     append "m_UnlockedLeaders" "squad_leader.papasha_foot"
     append "m_UnlockedLeaders" "squad_leader.helen"
     append "m_UnlockedLeaders" "squad_leader.springfield"
+    append "m_UnlockedLeaders" "squad_leader.robella"
 }
 
 patch "DossierItemTemplate" "dossier.pilot" {

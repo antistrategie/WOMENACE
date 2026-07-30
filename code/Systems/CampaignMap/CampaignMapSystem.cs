@@ -1,5 +1,4 @@
 using System.Collections;
-using Il2CppInterop.Runtime;
 using static Il2CppInterop.Runtime.DelegateSupport;
 using Il2CppInterop.Runtime.InteropTypes;
 using Il2CppMenace.Strategy;

@@ -1,3 +1,4 @@
+using Il2CppMenace.Items;
 using Jiangyu.Sdk;
 
 namespace WOMENACE.Code;
@@ -11,26 +12,13 @@ namespace WOMENACE.Code;
 // character's choice survives Voymastina's form swap.
 public static class Transmog
 {
-    // Default outfit per character, rendered until the player picks another. Explicit per
-    // character (like Unlocks) so a future doll with unconventional ids still routes correctly.
-    private static readonly Dictionary<string, string> DefaultOutfits = new(StringComparer.Ordinal)
-    {
-        ["wmgfl_cheyanne"] = "armor.cheyanne_default",
-        ["wmgfl_helen"] = "armor.helen_default",
-        ["wmgfl_leva"] = "armor.leva_default",
-        ["wmgfl_lewis"] = "armor.lewis_default",
-        ["wmgfl_makiatto"] = "armor.makiatto_default",
-        ["wmgfl_papasha"] = "armor.papasha_default",
-        ["wmgfl_sextans"] = "armor.sextans_default",
-        ["wmgfl_soppo"] = "armor.soppo_default",
-        ["wmgfl_springfield"] = "armor.springfield_default",
-        ["wmgfl_vector"] = "armor.vector_default",
-        ["wmgfl_voymastina"] = "armor.voymastina_default",
-    };
+    // Resolved armor.<name>_default templates, keyed by outfit id. Hits only (Templates.Resolve),
+    // so a probe that runs before the mod's templates register never pins a doll as non-transmog.
+    private static readonly Dictionary<string, ArmorTemplate> DefaultProbeCache = new(StringComparer.Ordinal);
 
-    // Memoised outfit lists per character. DefaultOutfits and Unlocks.ByCharacter are compile-time
-    // static, so a character's options never change within a run: build once, hand back the same
-    // list (callers only read it).
+    // Memoised outfit lists per character. Only built once the character's default outfit template
+    // resolves, and Unlocks.ByCharacter is compile-time static, so a cached list never changes
+    // within a run: build once, hand back the same list (callers only read it).
     private static readonly Dictionary<string, IReadOnlyList<Option>> OptionsCache = new(StringComparer.Ordinal);
 
     // One picker choice: an outfit and the affinity level that unlocks it (0 = always available).
@@ -40,9 +28,17 @@ public static class Transmog
         public int UnlockLevel;
     }
 
-    // The character's default outfit id, or null when the tag is not one of our characters.
+    // The character's default outfit id (armor.<name>_default for a wmgfl_<name> tag), or null
+    // when the tag is not one of our characters. A tag counts as a character exactly when its
+    // derived default outfit template exists, so a new doll needs no registration here and marker
+    // tags (wmgfl_transmog, wmgfl_class_*) never match.
     public static string DefaultFor(string characterTag)
-        => characterTag != null && DefaultOutfits.TryGetValue(characterTag, out var id) ? id : null;
+    {
+        if (characterTag == null || !characterTag.StartsWith("wmgfl_", StringComparison.Ordinal))
+            return null;
+        var id = $"armor.{characterTag["wmgfl_".Length..]}_default";
+        return Templates.Resolve(id, DefaultProbeCache) != null ? id : null;
+    }
 
     // The character's outfit choices in display order: the default first, then each Skins unlock
     // in level order (Unlocks entries are authored ascending). Memoised.
@@ -53,16 +49,16 @@ public static class Transmog
         if (OptionsCache.TryGetValue(characterTag, out var cached))
             return cached;
 
-        var options = new List<Option>();
+        // A null default is not cached: the character's templates may simply not be registered yet.
         var def = DefaultFor(characterTag);
-        if (def != null)
-        {
-            options.Add(new Option { ArmorId = def, UnlockLevel = 0 });
-            foreach (var entry in Unlocks.EntriesFor(characterTag))
-                if (entry.Feature == Unlocks.Feature.Skins && entry.Armors != null)
-                    foreach (var id in entry.Armors)
-                        options.Add(new Option { ArmorId = id, UnlockLevel = entry.Level });
-        }
+        if (def == null)
+            return Array.Empty<Option>();
+
+        var options = new List<Option> { new() { ArmorId = def, UnlockLevel = 0 } };
+        foreach (var entry in Unlocks.EntriesFor(characterTag))
+            if (entry.Feature == Unlocks.Feature.Skins && entry.Armors != null)
+                foreach (var id in entry.Armors)
+                    options.Add(new Option { ArmorId = id, UnlockLevel = entry.Level });
         OptionsCache[characterTag] = options;
         return options;
     }

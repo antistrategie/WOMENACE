@@ -1,0 +1,67 @@
+clone "WeaponTemplate" from="weapon.robella" id="weapon.robella_r1" {
+    set "Damage" 12.5
+    set "ArmorPenetration" 17.0
+    set "DamageToArmorDurability" 10.5
+}
+
+clone "WeaponTemplate" from="weapon.robella" id="weapon.robella_r2" {
+    set "Damage" 13.5
+    set "ArmorPenetration" 18.0
+    set "DamageToArmorDurability" 11.0
+}
+
+clone "WeaponTemplate" from="weapon.robella" id="weapon.robella_r3" {
+    set "Damage" 14.5
+    set "ArmorPenetration" 20.0
+    set "DamageToArmorDurability" 12.0
+}
+
+clone "WeaponTemplate" from="weapon.robella" id="weapon.robella_r4" {
+    set "Damage" 16.0
+    set "ArmorPenetration" 23.0
+    set "DamageToArmorDurability" 13.0
+}
+
+clone "WeaponTemplate" from="weapon.robella" id="weapon.robella_r5" {
+    set "Damage" 17.0
+    set "ArmorPenetration" 26.0
+    set "DamageToArmorDurability" 14.0
+}
+
+clone "WeaponTemplate" from="weapon.robella" id="weapon.robella_r6" {
+    set "Damage" 19.0
+    set "ArmorPenetration" 28.0
+    set "DamageToArmorDurability" 15.0
+}
+
+clone "CommodityTemplate" from="commodity.construct_weapon_parts" id="commodity.wmgfl_component_robella" {
+    set "Title" {
+        set "m_DefaultTranslation" "RO635 Weapon Component"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "[PLACEHOLDER] Weapon component for RO635"
+    }
+    append "Tags" "jy_no_sell"
+    set "Icon" asset="weapon/robella/Icon"
+    set "Rarity" 0
+    set "TradeValue" 0
+    set "BlackMarketMaxQuantity" 0
+    set "MinCampaignProgress" 0
+}
+
+clone "BlueprintTemplate" from="blueprint.squad_weapon_electro_magnetic_enhanced_assault_rifle" id="blueprint.wmgfl_robella_duplicate" {
+    set "m_CraftingResult" "weapon.robella"
+    clear "m_CraftingMaterials"
+    append "m_CraftingMaterials" {
+        set "Template" "commodity.wmgfl_component_robella"
+        set "Count" 1
+    }
+    append "m_CraftingMaterials" {
+        set "Template" "commodity.construct_weapon_parts"
+        set "Count" 4
+    }
+    append "m_CraftingMaterials" {
+        set "Template" "commodity.construct_cybernetic_optics"
+        set "Count" 2
+    }
+}

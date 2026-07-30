@@ -1,0 +1,85 @@
+clone "WeaponTemplate" from="weapon.generic_smg_tier1_ppp" id="weapon.robella" {
+    append "Tags" "jy_no_sell"
+    set "Title" {
+        set "m_DefaultTranslation" "RO635"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "SMG"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "A firearm highly compatible with Robella. Modified based on her combat preferences. Its improved rate of fire gives it an advantage in clsoe quarters and during assaults."
+    }
+
+    set "Model" asset="weapon/robella/main"
+    set "Icon" asset="weapon/robella/Icon"
+    set "IconEquipment" asset="weapon/robella/IconEquipment"
+    set "IconEquipmentDisabled" asset="weapon/robella/IconEquipmentDisabled"
+    set "IconSkillBar" asset="weapon/robella/IconSkillBar"
+    set "IconSkillBarDisabled" asset="weapon/robella/IconSkillBarDisabled"
+
+    set "AccuracyBonus" 0.0
+    set "AccuracyDropoff" -8.0
+    set "ArmorPenetration" 17.0
+    set "ArmorPenetrationDropoff" -2.03
+
+    set "Damage" 12.0
+    set "DamageDropoff" -1.01
+    set "DamageToArmorDurability" 10.0
+    set "DamageToArmorDurabilityDropoff" -1.11
+
+    set "MaxRange" 5
+    set "IdealRange" 2
+    set "Suppression" 3.0
+
+    set "DeployCosts" {
+        set "m_Supplies" 13
+    }
+
+    set "BlackMarketMaxQuantity" 0
+
+    set "SkillsGranted" index=0 "active.fire_robella_ro635"
+    set "SkillsGranted" index=1 "active.fire_robella_ro635_tap"
+}
+
+clone "SkillTemplate" from="active.fire_smg_tier1_burst" id="active.fire_robella_ro635" {
+    set "Repetitions" 6
+    clear "SoundsOnAttack"
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_smg_addition_bank"
+        set "itemId" "smg_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "weapons_soundbank"
+        set "itemId" "small_caliber_brass_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_smg_addition_bank"
+        set "itemId" "smg_burst_distant"
+    }
+    clear "SoundsOnAttackFar"
+    append "SoundsOnAttackFar" {
+        set "bankId" "wmgfl_weapons_smg_addition_bank"
+        set "itemId" "smg_burst_distant"
+    }
+}
+
+clone "SkillTemplate" from="active.fire_smg_tier_1_tap_fire" id="active.fire_robella_ro635_tap" {
+    clear "SoundsOnAttack"
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_smg_addition_bank"
+        set "itemId" "smg_single"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "weapons_soundbank"
+        set "itemId" "small_caliber_brass_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_smg_addition_bank"
+        set "itemId" "smg_single_distant"
+    }
+    clear "SoundsOnAttackFar"
+    append "SoundsOnAttackFar" {
+        set "bankId" "wmgfl_weapons_smg_addition_bank"
+        set "itemId" "smg_single_distant"
+    }
+}
