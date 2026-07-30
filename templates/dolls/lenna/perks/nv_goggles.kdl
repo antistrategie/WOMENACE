@@ -1,0 +1,28 @@
+clone "PerkTemplate" from="perk.steady_gun" id="perk.lenna_nv_goggles" {
+    set "Title" {
+        set "m_DefaultTranslation" "Night Vision Goggles"
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "Lenna learns how to put on her goggles."
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            :3
+
+            – Lenna
+
+
+            <style="Highlight">• Lenna learns how to put on her goggles and can now see in the dark.</style>
+            """
+    }
+
+    set "Icon" asset="lenna/perks/nv_goggles"
+    set "IconDisabled" asset="lenna/perks/nv_goggles_inactive"
+    set "PerkIcon" asset="lenna/perks/nv_goggles"
+
+    clear "EventHandlers"
+    append "EventHandlers" type="AddSkill" {
+        set "Event" enum="AddEvent" "OnMissionStart"
+        set "SkillToAdd" "passive.nightvision"
+    }
+}

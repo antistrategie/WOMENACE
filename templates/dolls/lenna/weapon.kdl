@@ -1,0 +1,85 @@
+clone "WeaponTemplate" from="weapon.generic_smg_tier1_ppp" id="weapon.lenna" {
+    append "Tags" "jy_no_sell"
+    set "Title" {
+        set "m_DefaultTranslation" "UMP9"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "SMG"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "A firearm highly compatible with Lenna. Modified based on her combat preferences. Ensures high shooting accuracy despite the increased rate of fire."
+    }
+
+    set "Model" asset="weapon/lenna/main"
+    set "Icon" asset="weapon/lenna/Icon"
+    set "IconEquipment" asset="weapon/lenna/IconEquipment"
+    set "IconEquipmentDisabled" asset="weapon/lenna/IconEquipmentDisabled"
+    set "IconSkillBar" asset="weapon/lenna/IconSkillBar"
+    set "IconSkillBarDisabled" asset="weapon/lenna/IconSkillBarDisabled"
+
+    set "AccuracyBonus" 0.0
+    set "AccuracyDropoff" -8.0
+    set "ArmorPenetration" 13.0
+    set "ArmorPenetrationDropoff" -2.26
+
+    set "Damage" 12.0
+    set "DamageDropoff" -1.13
+    set "DamageToArmorDurability" 9.0
+    set "DamageToArmorDurabilityDropoff" -1.23
+
+    set "MaxRange" 5
+    set "IdealRange" 2
+    set "Suppression" 3.0
+
+    set "DeployCosts" {
+        set "m_Supplies" 13
+    }
+
+    set "BlackMarketMaxQuantity" 0
+
+    set "SkillsGranted" index=0 "active.fire_lenna_ump9"
+    set "SkillsGranted" index=1 "active.fire_lenna_ump9_tap"
+}
+
+clone "SkillTemplate" from="active.fire_smg_tier1_burst" id="active.fire_lenna_ump9" {
+    set "Repetitions" 4
+    clear "SoundsOnAttack"
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_smg_addition_bank"
+        set "itemId" "smg_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "weapons_soundbank"
+        set "itemId" "small_caliber_brass_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_smg_addition_bank"
+        set "itemId" "smg_burst_distant"
+    }
+    clear "SoundsOnAttackFar"
+    append "SoundsOnAttackFar" {
+        set "bankId" "wmgfl_weapons_smg_addition_bank"
+        set "itemId" "smg_burst_distant"
+    }
+}
+
+clone "SkillTemplate" from="active.fire_smg_tier_1_tap_fire" id="active.fire_lenna_ump9_tap" {
+    clear "SoundsOnAttack"
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_smg_addition_bank"
+        set "itemId" "smg_single"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "weapons_soundbank"
+        set "itemId" "small_caliber_brass_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_smg_addition_bank"
+        set "itemId" "smg_single_distant"
+    }
+    clear "SoundsOnAttackFar"
+    append "SoundsOnAttackFar" {
+        set "bankId" "wmgfl_weapons_smg_addition_bank"
+        set "itemId" "smg_single_distant"
+    }
+}
