@@ -1,0 +1,84 @@
+clone "WeaponTemplate" from="weapon.generic_assault_rifle_tier1_kpac" id="weapon.jiangyu" {
+    append "Tags" "jy_no_sell"
+    set "Title" {
+        set "m_DefaultTranslation" "Type 97"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Assault Rifle"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "A firearm highly compatible with Jiangyu. Modified based on her combat preferences. The reinforced body structure and significant power boost have made it more robust and potent."
+    }
+
+    set "Model" asset="weapon/jiangyu/main"
+    set "Icon" asset="weapon/jiangyu/Icon"
+    set "IconEquipment" asset="weapon/jiangyu/IconEquipment"
+    set "IconEquipmentDisabled" asset="weapon/jiangyu/IconEquipmentDisabled"
+    set "IconSkillBar" asset="weapon/jiangyu/IconSkillBar"
+    set "IconSkillBarDisabled" asset="weapon/jiangyu/IconSkillBarDisabled"
+
+    set "AccuracyBonus" 0.0
+    set "AccuracyDropoff" -6.0
+    set "ArmorPenetration" 29.0
+    set "ArmorPenetrationDropoff" -1.85
+
+    set "Damage" 9.0
+    set "DamageDropoff" -0.82
+    set "DamageToArmorDurability" 9.0
+    set "DamageToArmorDurabilityDropoff" -0.62
+
+    set "MaxRange" 8
+    set "IdealRange" 4
+    set "Suppression" 3.0
+
+    set "DeployCosts" {
+        set "m_Supplies" 10
+    }
+
+    set "BlackMarketMaxQuantity" 0
+
+    set "SkillsGranted" index=0 "active.fire_jiangyu_type97"
+    set "SkillsGranted" index=1 "active.fire_jiangyu_type97_sustained"
+}
+
+clone "SkillTemplate" from="active.fire_assault_rifle_tier1_556" id="active.fire_jiangyu_type97" {
+    clear "SoundsOnAttack"
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "weapons_soundbank"
+        set "itemId" "small_caliber_brass_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_burst_distant"
+    }
+    clear "SoundsOnAttackFar"
+    append "SoundsOnAttackFar" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_burst_distant"
+    }
+}
+
+clone "SkillTemplate" from="active.fire_assault_rifle_sustained_fire_tier1_556" id="active.fire_jiangyu_type97_sustained" {
+    clear "SoundsOnAttack"
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_single"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "weapons_soundbank"
+        set "itemId" "small_caliber_brass_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_single_distant"
+    }
+    clear "SoundsOnAttackFar"
+    append "SoundsOnAttackFar" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_single_distant"
+    }
+}

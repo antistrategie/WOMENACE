@@ -86,6 +86,10 @@ public static class Unlocks
             new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.robella_future_navigator" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_robella/lv2", "Outfit: Future Navigator") },
             new Entry { Level = 4, Feature = Feature.Skins, Armors = new[] { "armor.robella_enforcer" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_robella/lv4", "Outfit: Enforcer of the Law") },
         },
+        ["wmgfl_jiangyu"] = new[]
+        {
+            new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.jiangyu_raindrop" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_jiangyu/lv2", "Outfit: Raindrop-Cleaving Blades") },
+        },
     };
 
     public static IReadOnlyList<Entry> EntriesFor(string characterTag)

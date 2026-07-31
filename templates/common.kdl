@@ -50,6 +50,7 @@ patch "StrategyConfig" "strategy_config" {
     append "InitialPickableUnitLeaders" "squad_leader.springfield"
     append "InitialPickableUnitLeaders" "squad_leader.robella"
     append "InitialPickableUnitLeaders" "squad_leader.lenna"
+    append "InitialPickableUnitLeaders" "squad_leader.jiangyu"
 }
 
 patch "GlobalDifficultyTemplate" "global_difficulty.normal" {
@@ -81,6 +82,7 @@ patch "DossierItemTemplate" "dossier.squad_leader" {
     append "m_UnlockedLeaders" "squad_leader.springfield"
     append "m_UnlockedLeaders" "squad_leader.robella"
     append "m_UnlockedLeaders" "squad_leader.lenna"
+    append "m_UnlockedLeaders" "squad_leader.jiangyu"
 }
 
 patch "DossierItemTemplate" "dossier.pilot" {

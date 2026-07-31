@@ -1,0 +1,52 @@
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.jiangyu_default" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
+    set "Title" {
+        set "m_DefaultTranslation" "Pattering Rain"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Field Outfit"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Jiangyu's outfit, meticulously chosen with colors that complement Daiyan's, creates a perfectly coordinated sisterly look."
+    }
+    set "Icon" asset="jiangyu/armor/default/Icon"
+    set "IconEquipment" asset="jiangyu/armor/default/IconEquipment"
+    set "IconSkillBar" asset="jiangyu/armor/default/IconSkillBar"
+    clear "MaleModels"
+    append "MaleModels" asset="jiangyu/default/main"
+    clear "FemaleModels"
+    append "FemaleModels" asset="jiangyu/default/main"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_transmog"
+    append "Tags" "jy_no_sell"
+}
+
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.jiangyu_raindrop" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
+    set "Title" {
+        set "m_DefaultTranslation" "Raindrop-Cleaving Blades"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Combat Outfit"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            "Commander, Commander, this is my favorite outfit - Whenever I put it on, I feel like I'm overflowing with strength!"
+            Her hands are already balled up into fists. Looks like she's ready to protect you.
+            """
+    }
+    set "Icon" asset="jiangyu/armor/raindrop/Icon"
+    set "IconEquipment" asset="jiangyu/armor/raindrop/IconEquipment"
+    set "IconSkillBar" asset="jiangyu/armor/raindrop/IconSkillBar"
+    clear "MaleModels"
+    append "MaleModels" asset="jiangyu/raindrop/main"
+    clear "FemaleModels"
+    append "FemaleModels" asset="jiangyu/raindrop/main"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_transmog"
+    append "Tags" "jy_no_sell"
+}

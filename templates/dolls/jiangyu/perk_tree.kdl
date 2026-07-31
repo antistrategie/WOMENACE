@@ -1,0 +1,69 @@
+// perk.fragmentation replaces perk.athletic at tier 1 because athletic is the starting perk.
+// perk.thats_a_knife is a placeholder until her own melee kit lands.
+clone "PerkTreeTemplate" from="perk_tree.sy" id="perk_tree.jiangyu" {
+    clear "Perks"
+    append "Perks" {
+        set "Skill" "perk.fragmentation"
+        set "Tier" 1
+    }
+    append "Perks" {
+        set "Skill" "perk.solid_grouping"
+        set "Tier" 1
+    }
+    append "Perks" {
+        set "Skill" "perk.new_tricks"
+        set "Tier" 1
+    }
+    append "Perks" {
+        set "Skill" "perk.scout"
+        set "Tier" 1
+    }
+    append "Perks" {
+        set "Skill" "perk.pathfinder"
+        set "Tier" 1
+    }
+    append "Perks" {
+        set "Skill" "perk.bags_belts"
+        set "Tier" 2
+    }
+    append "Perks" {
+        set "Skill" "perk.thats_a_knife"
+        set "Tier" 2
+    }
+    append "Perks" {
+        set "Skill" "perk.short_squeeze_murdock"
+        set "Tier" 2
+    }
+    append "Perks" {
+        set "Skill" "perk.call_out_target"
+        set "Tier" 2
+    }
+    append "Perks" {
+        set "Skill" "perk.resourceful"
+        set "Tier" 2
+    }
+    append "Perks" {
+        set "Skill" "perk.pirates_luck"
+        set "Tier" 3
+    }
+    append "Perks" {
+        set "Skill" "perk.pointfire"
+        set "Tier" 3
+    }
+    append "Perks" {
+        set "Skill" "perk.zig_zag"
+        set "Tier" 3
+    }
+    append "Perks" {
+        set "Skill" "perk.vanguard"
+        set "Tier" 3
+    }
+    append "Perks" {
+        set "Skill" "perk.run_and_gun"
+        set "Tier" 4
+    }
+    append "Perks" {
+        set "Skill" "perk.unique_greifinger_guerilla"
+        set "Tier" 4
+    }
+}
