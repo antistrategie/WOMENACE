@@ -1,0 +1,74 @@
+clone "ConversationTemplate" from="Carda_Early/morale_recovery" id="Koleda/morale_recovery_koleda" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=1 type="HasOneTag" {
+            set "Tags" "wmgfl_koleda"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_koleda_va"
+                        set "itemId" "Series_Up_002"
+                    }
+                    set "RoleGuid" "Recovered"
+                    set "Text" "Damn, I'm good."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="Carda_Early/morale_wavering" id="Koleda/morale_wavering_koleda" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=1 type="HasOneTag" {
+            set "Tags" "wmgfl_koleda"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_koleda_va"
+                        set "itemId" "Series_Dying_Series_Tone_Negative_002"
+                    }
+                    set "RoleGuid" "Wavering"
+                    set "Text" "Now the real fight begins."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="Carda_Early/squaddie_death_bleed" id="Koleda/squaddie_death_bleed_koleda" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=1 type="HasOneTag" {
+            set "Tags" "wmgfl_koleda"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_koleda_va"
+                        set "itemId" "Series_Die_Series_Tone_Negative_001"
+                    }
+                    set "RoleGuid" "Victim"
+                    set "Text" "It's not over yet!"
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}

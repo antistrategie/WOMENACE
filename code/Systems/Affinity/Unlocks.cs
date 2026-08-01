@@ -25,6 +25,9 @@ public static class Unlocks
         // authored: it is weapon.<doll>_ssr by the Calibration convention. Equippable by anyone, but
         // the owner-only bonus lives in SsrImprintSystem.
         Weapon,
+        // A vehicle item granted to the shared inventory at this level. Items lists the vehicle item
+        // ids. Once granted it is a normal armoury item, equippable by any pilot-capable unit.
+        Vehicle,
     }
 
     // One unlock at a level: its gameplay Feature (if any), the data that feature needs, and the
@@ -36,6 +39,7 @@ public static class Unlocks
         public int Level;
         public Feature Feature = Feature.None;
         public string[] Armors = Array.Empty<string>();
+        public string[] Items = Array.Empty<string>();
         public LocalisedText Title;
     }
 
@@ -90,6 +94,11 @@ public static class Unlocks
         {
             new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.jiangyu_raindrop" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_jiangyu/lv2", "Outfit: Raindrop-Cleaving Blades") },
         },
+        ["wmgfl_koleda"] = new[]
+        {
+            new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.koleda_spooms" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_koleda/lv2", "Outfit: Age of Spooms") },
+            new Entry { Level = 4, Feature = Feature.Vehicle, Items = new[] { "vehicle.koleda_car" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_koleda/lv4", "Vehicle: The Sinner") },
+        },
     };
 
     public static IReadOnlyList<Entry> EntriesFor(string characterTag)
@@ -104,6 +113,16 @@ public static class Unlocks
         foreach (var entry in EntriesFor(characterTag))
             if (entry.Feature == Feature.Weapon && level >= entry.Level)
                 yield return Calibration.SsrWeaponIdFor(characterTag);
+    }
+
+    // The vehicle item ids a character has unlocked at this level (every Vehicle entry at or below
+    // it). Granted to the shared inventory, equippable by any pilot-capable unit.
+    public static IEnumerable<string> UnlockedItems(string characterTag, int level)
+    {
+        foreach (var entry in EntriesFor(characterTag))
+            if (entry.Feature == Feature.Vehicle && level >= entry.Level)
+                foreach (var id in entry.Items)
+                    yield return id;
     }
 
     // The SSR weapon id this character's Weapon unlock grants, or null when she has no SSR unlock.

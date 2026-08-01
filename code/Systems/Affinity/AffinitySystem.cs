@@ -37,6 +37,9 @@ public sealed class AffinitySystem : JiangyuSystem
     // loader on every window refresh.
     private readonly Dictionary<string, WeaponTemplate> _weaponCache = new(StringComparer.Ordinal);
 
+    // Resolved vehicle-item templates for Vehicle unlocks, cached on the same basis.
+    private readonly Dictionary<string, VehicleItemTemplate> _vehicleCache = new(StringComparer.Ordinal);
+
     // The game's rarity palette, read once from UIConfig (with the shipped values as a fallback) so
     // gift tiles in the picker show the same common/uncommon/rare colours the game uses elsewhere.
     private bool _rarityLoaded;
@@ -76,6 +79,23 @@ public sealed class AffinitySystem : JiangyuSystem
         // The built-in popover reward providers. Other systems (CalibrationSystem) register their own.
         AffinityTooltip.Register("proficiency", ProficiencyRewards);
         AffinityTooltip.Register("unlocks", UnlockRewards);
+
+        ValidateUnlockEntries();
+    }
+
+    // One populated-array check per unlock entry at startup: a Skins entry without Armors (or a
+    // Vehicle entry without Items, or data on an entry whose Feature never reads it) compiles fine
+    // and silently unlocks nothing, so say so in the log instead.
+    private void ValidateUnlockEntries()
+    {
+        foreach (var (tag, entries) in Unlocks.ByCharacter)
+            foreach (var entry in entries)
+            {
+                var wantsArmors = entry.Feature == Unlocks.Feature.Skins;
+                var wantsItems = entry.Feature == Unlocks.Feature.Vehicle;
+                if (wantsArmors != entry.Armors.Length > 0 || wantsItems != entry.Items.Length > 0)
+                    Context.Log.Warn($"affinity: unlock entry {tag} lv{entry.Level} ({entry.Feature}) has mismatched data arrays");
+            }
     }
 
     public override void OnUnload()
@@ -182,6 +202,7 @@ public sealed class AffinitySystem : JiangyuSystem
         Unlocks.Feature.Skins => AffinityTooltip.RewardKind.Outfit,
         Unlocks.Feature.Weapon => AffinityTooltip.RewardKind.Weapon,
         Unlocks.Feature.Mech => AffinityTooltip.RewardKind.Mech,
+        Unlocks.Feature.Vehicle => AffinityTooltip.RewardKind.Vehicle,
         _ => AffinityTooltip.RewardKind.Other,
     };
 
@@ -429,26 +450,46 @@ public sealed class AffinitySystem : JiangyuSystem
                 // Ownership must count EVERY calibration rank, not just the base R0: once the player
                 // calibrates, they own a ranked clone (r1-r6) and no base R0, so a base-only check
                 // would think the weapon is missing and re-grant a fresh R0 on every window refresh.
-                if (template == null || OwnsWeaponAnyRank(owned, id))
+                if (template == null || OwnsInstance(owned, itemId => Calibration.TryParseRank(itemId, id, out _)))
                     continue;
                 owned.AddItem(template, false, false);
                 Context.Log.Info($"affinity: unlocked weapon '{id}' (level {level})");
+            }
+
+            // Vehicles are destroyable in combat, so "already owned" can never stand in for
+            // "already granted" (the principle the calibration component ledger records): without
+            // a ledger, a Sinner lost in a mission would be re-minted free on the next window
+            // refresh. The ledger records each granted id once. An id already owned when its
+            // level is first reached (a save predating the unlock) is recorded without minting
+            // a duplicate.
+            var ledger = Context.State.Get<UnlockLedgerState>().ForCharacter(key);
+            foreach (var id in Unlocks.UnlockedItems(characterTag, level))
+            {
+                if (ledger.Contains(id))
+                    continue;
+                var template = Templates.Resolve<VehicleItemTemplate>(id, _vehicleCache, msg => Context.Log.Warn($"affinity: {msg}"));
+                if (template == null)
+                    continue;
+                if (!OwnsInstance(owned, itemId => itemId == id))
+                    owned.AddItem(template, false, false);
+                ledger.Add(id);
+                Context.Log.Info($"affinity: unlocked vehicle '{id}' (level {level})");
             }
         }
         catch (Exception ex) { Context.Log.Warn($"affinity: unlock failed: {ex.Message}"); }
     }
 
-    // Whether the player owns this weapon at ANY calibration rank (base R0 or a ranked clone). Matched
-    // by item template id via Calibration.TryParseRank, so a ranked SSR (whose rank clone is not even
-    // in GetAll<WeaponTemplate>) still counts as owned and the unlock grant does not re-fire.
-    private static bool OwnsWeaponAnyRank(OwnedItems owned, string baseWeaponId)
+    // Whether the player owns any instance whose template id satisfies the match. The weapon path
+    // matches every calibration rank of a base id (a ranked SSR's clone is not even in
+    // GetAll<WeaponTemplate>, so the scan goes by id), the vehicle path matches the exact id.
+    private static bool OwnsInstance(OwnedItems owned, Func<string, bool> matches)
     {
         var all = new Il2CppSystem.Collections.Generic.List<BaseItem>();
         owned.GetInstances(all);
         for (var i = 0; i < all.Count; i++)
         {
             var itemId = all[i]?.TryCast<Item>()?.GetTemplate()?.GetID();
-            if (itemId != null && Calibration.TryParseRank(itemId, baseWeaponId, out _))
+            if (itemId != null && matches(itemId))
                 return true;
         }
         return false;
@@ -803,4 +844,18 @@ public sealed class AffinitySystem : JiangyuSystem
         catch { return null; }
     }
 
+}
+
+// Persisted item-unlock ledger per character key (the same key AffinityState uses). Records each
+// granted item id exactly once, so a grant never re-fires however the inventory changes afterwards.
+public sealed class UnlockLedgerState
+{
+    public Dictionary<int, List<string>> GrantedItems { get; set; } = [];
+
+    public List<string> ForCharacter(int key)
+    {
+        if (!GrantedItems.TryGetValue(key, out var ids))
+            GrantedItems[key] = ids = [];
+        return ids;
+    }
 }

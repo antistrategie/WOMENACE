@@ -1,0 +1,201 @@
+clone "SpeakerTemplate" from="ivey" id="wmgfl_koleda_pilot_speaker" {
+    set "Tags" "wmgfl_koleda pilot tanker pj waybacker female wmgfl_class_ar"
+    set "Nickname" {
+        set "m_DefaultTranslation" "Koleda"
+    }
+    set "Forename" {
+        set "m_DefaultTranslation" "Koleda"
+    }
+    set "Surname" {
+        set "m_DefaultTranslation" ""
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            Name: Koleda (AK-12)
+
+            Proficiency: Frontline Assault
+
+            Birth: Unknown
+
+            Age: Classified
+
+            Affiliation(s): Task Force DEFY
+            """
+    }
+
+    set "BarkImage" asset="koleda/bark"
+    set "StandLookLeftImage" asset="koleda/stand_look_left"
+    set "StandLookRightImage" asset="koleda/stand_look_right"
+    set "StandLookRightInactiveImage" asset="koleda/stand_look_right_inactive"
+}
+
+clone "UnitLeaderTemplate" from="pilot.ivey" id="pilot.koleda" {
+    set "SpeakerTemplate" "wmgfl_koleda_pilot_speaker"
+    set "UnitTitle" {
+        set "m_DefaultTranslation" "Task Force DEFY"
+    }
+    set "UnitDescription" {
+        set "m_DefaultTranslation" "The former alpha wolf of the rebellious squad, after experiencing her worst day, took responsibility and led her comrades to stand guard until the very end. She ultimately handed over the leadership and title to a trustworthy companion, choosing to continue fighting in a different way. To this day, she remains the AK-12 you know, but please be careful, she is now more dangerous than ever."
+    }
+
+    set "InitialAttributes" index=0 88
+    set "InitialAttributes" index=1 80
+    set "InitialAttributes" index=2 90
+    set "InitialAttributes" index=3 50
+    set "InitialAttributes" index=4 50
+    set "InitialAttributes" index=5 20
+    set "InitialAttributes" index=6 50
+
+    set "QualityLevel" 3
+    set "GrowthPotential" 5
+    set "FixedSupplyCost" 60
+    set "SquaddieTax" 5
+    set "Rarity" 5
+
+    set "InitialPerk" "perk.fervor"
+    set "PerkTrees" index=0 "perk_tree.koleda_pilot"
+
+    set "Slot" asset="koleda/slot"
+    set "SlotInactive" asset="koleda/slot_inactive"
+    set "SlotBadge" asset="koleda/slot_badge"
+
+    set "BadgeDragged" asset="koleda/badge_dragged"
+    set "BigBadge" asset="koleda/big_badge"
+    set "BadgeUnitWindow" asset="koleda/badge_unit_window"
+    set "BadgeMini" asset="koleda/badge_mini"
+
+    set "Badge" asset="koleda/badge_mini"
+    set "BadgeWhite" asset="koleda/badge_mini"
+
+    set "HiringSelectBarkSound" {
+        set "bankId" "wmgfl_tactical_barks_koleda_va"
+        set "itemId" "Series_Chosen_Series_Tone_Positive_006"
+    }
+    set "HiredBarkSound" {
+        set "bankId" "wmgfl_tactical_barks_koleda_va"
+        set "itemId" "Series_Chosen_Auto_Series_Tone_Positive_007"
+    }
+
+    set "PromotionBarkSounds" index=0 {
+        set "PerkTier" 1
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_koleda_va"
+            set "itemId" "Series_Up_002"
+        }
+    }
+    set "PromotionBarkSounds" index=1 {
+        set "PerkTier" 2
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_koleda_va"
+            set "itemId" "Series_Up_003"
+        }
+    }
+    set "PromotionBarkSounds" index=2 {
+        set "PerkTier" 3
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_koleda_va"
+            set "itemId" "Series_Up_004"
+        }
+    }
+    set "PromotionBarkSounds" index=3 {
+        set "PerkTier" 4
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_koleda_va"
+            set "itemId" "Series_Up_005"
+        }
+    }
+
+    clear "EmotionalStateResponses"
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Eager"
+        set "Text" {
+            set "m_DefaultTranslation" "About time you woke up. Hey, wanna slack off together? Aww, you're way too serious, Commander."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_koleda_va"
+            set "itemId" "Single_Login_001"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Determined"
+        set "Text" {
+            set "m_DefaultTranslation" "You're not getting away."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_koleda_va"
+            set "itemId" "Single_Passive_SSR_001"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Overconfident"
+        set "Text" {
+            set "m_DefaultTranslation" "Well? Can't take your eyes off me?"
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_koleda_va"
+            set "itemId" "Series_Up_005"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Euphoric"
+        set "Text" {
+            set "m_DefaultTranslation" "Been a while, Commander. If I'm here, that means spring's coming back too. You're happy, right?"
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_koleda_va"
+            set "itemId" "Single_Obtain_SSR_001"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Hesitant"
+        set "Text" {
+            set "m_DefaultTranslation" "You think we got a shot?"
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_koleda_va"
+            set "itemId" "Series_Skill02_Single_Skill_002"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Frustrated"
+        set "Text" {
+            set "m_DefaultTranslation" "Alright, round two. Let's go."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_koleda_va"
+            set "itemId" "Series_Shield_Broken_Series_Tone_Negative_003"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Disheartened"
+        set "Text" {
+            set "m_DefaultTranslation" "Honestly, I don't trust the Security Bureau. I'm only cooperating because they funded Shaw's research. But one day, I'll give them a rude awakening."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_koleda_va"
+            set "itemId" "Single_Friendliness_005"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Miserable"
+        set "Text" {
+            set "m_DefaultTranslation" "If you think it's over, you're dead wrong."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_koleda_va"
+            set "itemId" "Series_Lose_Single_Lose_001"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "GoodwillTowards"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "AnimosityTowards"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+}

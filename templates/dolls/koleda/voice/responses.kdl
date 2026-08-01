@@ -1,0 +1,24 @@
+clone "ConversationTemplate" from="Carda_Early/response_taking_fire_anyone" id="Koleda/response_taking_fire_anyone_koleda" {
+    set "Active" #true
+    set "Roles" index=2 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_koleda"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_koleda_va"
+                        set "itemId" "Series_Hitted"
+                    }
+                    set "RoleGuid" "SL"
+                    set "Text" "Hah!"
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}

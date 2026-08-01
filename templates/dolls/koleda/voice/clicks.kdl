@@ -1,0 +1,101 @@
+clone "ConversationTemplate" from="Carda_Early/click_bark" id="Koleda/click_bark_koleda" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_koleda"
+        }
+    }
+    set "Priority" 100
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="ACTION" {
+            set "m_SerAction" type="SetFlag" {
+                set "FlagName" "click_bark_koleda"
+                set "FlagValue" #true
+            }
+        }
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_koleda_va"
+                        set "itemId" "Series_Set_Click_Series_Tone_Positive_004"
+                    }
+                    set "RoleGuid" "Entity"
+                    set "Text" "I've got this."
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_koleda_va"
+                        set "itemId" "Series_Battle_Start_Series_Tone_Positive_002"
+                    }
+                    set "RoleGuid" "Entity"
+                    set "Text" "Wolves incoming."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="Carda_Early/click_hurt" id="Koleda/click_hurt_koleda" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_koleda"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_koleda_va"
+                        set "itemId" "Single_Passive_SSR_001"
+                    }
+                    set "RoleGuid" "Entity"
+                    set "Text" "You're not getting away."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="Carda_Early/idle_bark_combat" id="Koleda/idle_bark_combat_koleda" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_koleda"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_koleda_va"
+                        set "itemId" "Series_Tone_Positive_001"
+                    }
+                    set "RoleGuid" "SL"
+                    set "Text" "Lookin' good, huh?"
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_koleda_va"
+                        set "itemId" "Series_Set_Fall_Series_Tone_Positive_005"
+                    }
+                    set "RoleGuid" "SL"
+                    set "Text" "I'll make it quick."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}

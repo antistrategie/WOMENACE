@@ -1,0 +1,51 @@
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.koleda_default" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
+    set "Title" {
+        set "m_DefaultTranslation" "Outfit"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Field Outfit"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "[PLACEHOLDER] This is Koleda's everyday outfit."
+    }
+    set "Icon" asset="koleda/armor/default/Icon"
+    set "IconEquipment" asset="koleda/armor/default/IconEquipment"
+    set "IconSkillBar" asset="koleda/armor/default/IconSkillBar"
+    clear "MaleModels"
+    append "MaleModels" asset="koleda/default/main"
+    clear "FemaleModels"
+    append "FemaleModels" asset="koleda/default/main"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_transmog"
+    append "Tags" "jy_no_sell"
+}
+
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.koleda_spooms" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
+    set "Title" {
+        set "m_DefaultTranslation" "Age of Spooms"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Swimsuit"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            [PLACEHOLDER] Splish splash!
+            """
+    }
+    set "Icon" asset="koleda/armor/spooms/Icon"
+    set "IconEquipment" asset="koleda/armor/spooms/IconEquipment"
+    set "IconSkillBar" asset="koleda/armor/spooms/IconSkillBar"
+    clear "MaleModels"
+    append "MaleModels" asset="koleda/spooms/main"
+    clear "FemaleModels"
+    append "FemaleModels" asset="koleda/spooms/main"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_transmog"
+    append "Tags" "jy_no_sell"
+}

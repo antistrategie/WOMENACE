@@ -13,7 +13,7 @@ public static class NewGameSettings
     // across box openings within a session. Box defaults are set here (they are the state a fresh
     // new game commits when the box is left untouched); the NewGameOptions class defaults stay off so
     // a pre-existing save with no sidecar is never changed by a default flipping on.
-    public static NewGameOptions Pending { get; } = new() { LimitDollSquadSize = true };
+    public static NewGameOptions Pending { get; } = new() { DisableVanillaLeaders = true, LimitDollSquadSize = true };
 
     // The committed, per-campaign values, read by mid-campaign effects (survive save/load via the
     // per-save-slot Context.State).
@@ -44,6 +44,13 @@ public static class NewGameSettings
         },
         new Setting
         {
+            LabelKey = "WOMENACE::ui/newgame/show_all_dolls",
+            LabelFallback = "Show all Dolls in new game list",
+            Get = o => o.ShowAllDolls,
+            Set = (o, v) => o.ShowAllDolls = v,
+        },
+        new Setting
+        {
             LabelKey = "WOMENACE::ui/newgame/limit_doll_squad_size",
             LabelFallback = "Limit max number of dummy links to 5",
             Get = o => o.LimitDollSquadSize,
@@ -61,6 +68,10 @@ public sealed class NewGameOptions
     // other mods' custom leaders alike: see VanillaLeadersSystem for how vanilla is recognised.
     public bool DisableVanillaLeaders { get; set; }
 
+    // When true, the new-game pick list offers every WOMENACE doll (the union of the dossier
+    // rosters), not just the leaders strategy_config registers as initially pickable.
+    public bool ShowAllDolls { get; set; }
+
     // When true, a WOMENACE leader's squad is capped at five bodies (the doll plus at most four
     // squaddie copies).
     public bool LimitDollSquadSize { get; set; }
@@ -68,6 +79,7 @@ public sealed class NewGameOptions
     public void CopyFrom(NewGameOptions other)
     {
         DisableVanillaLeaders = other.DisableVanillaLeaders;
+        ShowAllDolls = other.ShowAllDolls;
         LimitDollSquadSize = other.LimitDollSquadSize;
     }
 }

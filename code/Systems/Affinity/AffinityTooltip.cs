@@ -31,7 +31,7 @@ public static class AffinityTooltip
 
     // The kind of reward, used only to order rewards within a level and to tint the row (accuracy
     // reads gold like the game's proficiency line; the rest read as plain reward text).
-    public enum RewardKind { Proficiency, Component, Outfit, Weapon, Mech, Other }
+    public enum RewardKind { Proficiency, Component, Outfit, Weapon, Mech, Vehicle, Other }
 
     // One reward earned at one affinity level: the level it lands at, the line to show, and its kind.
     public sealed class Reward

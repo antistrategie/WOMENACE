@@ -43,6 +43,14 @@ public sealed class VanillaLeadersSystem : JiangyuSystem
     // the next press instead of losing the removed leaders for the session.
     private readonly List<UnitLeaderTemplate> _removedVanilla = new();
 
+    // Every doll the show-all-dolls widening has appended this session, the mirror ledger of
+    // _removedVanilla: the next press removes exactly these before deciding afresh, so unticking the
+    // option restores the authored pick pool without touching entries anyone else put there.
+    private readonly List<UnitLeaderTemplate> _addedDolls = new();
+
+    // The dossiers whose leader rosters union into "all dolls" for the widening.
+    private static readonly string[] DollDossierIds = { "dossier.squad_leader", "dossier.pilot" };
+
     // Redeem transient-filter state (redeems are not re-entrant, so one slot suffices).
     private DossierItemTemplate _swappedDossier;
     private Il2CppReferenceArray<UnitLeaderTemplate> _savedUnlocked;
@@ -80,13 +88,17 @@ public sealed class VanillaLeadersSystem : JiangyuSystem
         try
         {
             var disable = NewGameSettings.Pending.DisableVanillaLeaders;
+            var showAll = NewGameSettings.Pending.ShowAllDolls;
             var sawConfig = false;
             foreach (var config in Configs())
             {
                 sawConfig = true;
                 MergeBackRemoved(config);
+                RemoveAddedDolls(config);
                 if (disable)
                     NarrowPickPool(config);
+                if (showAll)
+                    WidenPickPool(config);
             }
 
             // The filter cannot act without a config, which should never happen: say so rather than
@@ -114,6 +126,63 @@ public sealed class VanillaLeadersSystem : JiangyuSystem
             Context.Log.Info($"vanilla-leaders: merged {missing.Count} removed vanilla leader(s) back into the initial pick pool");
         }
         catch (Exception ex) { Context.Log.Warn($"vanilla-leaders: pick pool merge-back failed: {ex.Message}"); }
+    }
+
+    // Drop the dolls an earlier show-all press appended, so each press decides afresh from the
+    // authored pool. Only entries in the _addedDolls ledger are touched: a doll strategy_config
+    // registers itself is never in the ledger (the widening skips entries already present), so
+    // this cannot remove anything this system did not add.
+    private void RemoveAddedDolls(StrategyConfig config)
+    {
+        try
+        {
+            if (_addedDolls.Count == 0)
+                return;
+            var pool = ToList(config.InitialPickableUnitLeaders);
+            var kept = pool.Where(p => !_addedDolls.Any(a => a.Pointer == p.Pointer)).ToList();
+            if (kept.Count == pool.Count)
+                return;
+            config.InitialPickableUnitLeaders = ToArray(kept);
+            Context.Log.Info($"vanilla-leaders: removed {pool.Count - kept.Count} show-all doll(s) from the initial pick pool");
+        }
+        catch (Exception ex) { Context.Log.Warn($"vanilla-leaders: show-all removal failed: {ex.Message}"); }
+    }
+
+    // Append every WOMENACE doll missing from the pick pool, sourced from the dossier rosters (the
+    // one registry that lists every doll, including those strategy_config leaves out of the initial
+    // pick). Additive only, filtered to our own leaders by speaker tag, so vanilla entries and other
+    // mods' leaders are never dragged in.
+    private void WidenPickPool(StrategyConfig config)
+    {
+        try
+        {
+            var pool = ToList(config.InitialPickableUnitLeaders);
+            var added = new List<UnitLeaderTemplate>();
+            foreach (var dossierId in DollDossierIds)
+            {
+                var dossier = Templates.ById<DossierItemTemplate>(dossierId);
+                var leaders = dossier?.m_UnlockedLeaders;
+                if (leaders == null)
+                    continue;
+                for (var i = 0; i < leaders.Length; i++)
+                {
+                    var leader = leaders[i];
+                    if (leader == null || !IsOurs(leader))
+                        continue;
+                    if (pool.Any(p => p.Pointer == leader.Pointer) || added.Any(a => a.Pointer == leader.Pointer))
+                        continue;
+                    added.Add(leader);
+                }
+            }
+            if (added.Count == 0)
+                return;
+            config.InitialPickableUnitLeaders = ToArray(pool.Concat(added));
+            foreach (var leader in added)
+                if (!_addedDolls.Any(a => a.Pointer == leader.Pointer))
+                    _addedDolls.Add(leader);
+            Context.Log.Info($"vanilla-leaders: widened the initial pick pool with {added.Count} doll(s)");
+        }
+        catch (Exception ex) { Context.Log.Warn($"vanilla-leaders: show-all widening failed: {ex.Message}"); }
     }
 
     private void NarrowPickPool(StrategyConfig config)

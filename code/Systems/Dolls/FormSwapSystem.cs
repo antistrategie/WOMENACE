@@ -99,6 +99,16 @@ public sealed class FormSwapSystem : JiangyuSystem
             BaseTabLabel = () => Locale.Text("WOMENACE::ui/form_tab_sl", "SQUAD LEADER"),
             AltTabLabel = () => Locale.Text("WOMENACE::ui/form_tab_pilot", "PILOT"),
         },
+        new FormPair
+        {
+            Character = "koleda",
+            BaseFormId = "squad_leader.koleda_foot",
+            AltFormId = "pilot.koleda",
+            ToAltLabel = () => Locale.Text("WOMENACE::ui/deploy_pilot", "DEPLOY PILOT"),
+            ToBaseLabel = () => Locale.Text("WOMENACE::ui/deploy_infantry", "DEPLOY INFANTRY"),
+            BaseTabLabel = () => Locale.Text("WOMENACE::ui/form_tab_sl", "SQUAD LEADER"),
+            AltTabLabel = () => Locale.Text("WOMENACE::ui/form_tab_pilot", "PILOT"),
+        },
     ];
 
     // Both forms of a pair are kept alive between swaps so each preserves its own state exactly
@@ -1192,7 +1202,11 @@ public sealed class FormSwapSystem : JiangyuSystem
                 var template = ResolveTemplate<VehicleItemTemplate>(wantedId);
                 if (template != null)
                 {
-                    existing = owned.AddItem(template, false, false)?.TryCast<Vehicle>();
+                    // AddItem returns the BaseItem, which is never a Vehicle (Vehicle sits outside
+                    // BaseItem's hierarchy, so the old TryCast<Vehicle> was always null): resolve
+                    // the live Vehicle the add minted through its item guid instead.
+                    var added = owned.AddItem(template, false, false);
+                    existing = added != null ? owned.GetVehicleByItemGuid(added.GetGuid()) : null;
                     Context.Log.Info($"form swap: granted chassis '{wantedId}' (none owned)");
                 }
             }

@@ -1,0 +1,84 @@
+clone "WeaponTemplate" from="weapon.generic_assault_rifle_tier1_kpac" id="weapon.koleda" {
+    append "Tags" "jy_no_sell"
+    set "Title" {
+        set "m_DefaultTranslation" "Kalashnikova-12"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Assault Rifle"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "[PLACEHOLDER] A firearm highly compatible with Koleda."
+    }
+
+    set "Model" asset="weapon/koleda/main"
+    set "Icon" asset="weapon/koleda/Icon"
+    set "IconEquipment" asset="weapon/koleda/IconEquipment"
+    set "IconEquipmentDisabled" asset="weapon/koleda/IconEquipmentDisabled"
+    set "IconSkillBar" asset="weapon/koleda/IconSkillBar"
+    set "IconSkillBarDisabled" asset="weapon/koleda/IconSkillBarDisabled"
+
+    set "AccuracyBonus" 10.0
+    set "AccuracyDropoff" -6.0
+    set "ArmorPenetration" 28.0
+    set "ArmorPenetrationDropoff" -1.56
+
+    set "Damage" 9.0
+    set "DamageDropoff" -0.69
+    set "DamageToArmorDurability" 8.0
+    set "DamageToArmorDurabilityDropoff" -0.52
+
+    set "MaxRange" 8
+    set "IdealRange" 4
+    set "Suppression" 3.0
+
+    set "DeployCosts" {
+        set "m_Supplies" 13
+    }
+
+    set "BlackMarketMaxQuantity" 0
+
+    set "SkillsGranted" index=0 "active.fire_koleda_ak12"
+    set "SkillsGranted" index=1 "active.fire_koleda_ak12_sustained"
+}
+
+clone "SkillTemplate" from="active.fire_assault_rifle_tier1_556" id="active.fire_koleda_ak12" {
+    clear "SoundsOnAttack"
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "weapons_soundbank"
+        set "itemId" "small_caliber_brass_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_burst_distant"
+    }
+    clear "SoundsOnAttackFar"
+    append "SoundsOnAttackFar" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_burst_distant"
+    }
+}
+
+clone "SkillTemplate" from="active.fire_assault_rifle_sustained_fire_tier1_556" id="active.fire_koleda_ak12_sustained" {
+    clear "SoundsOnAttack"
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_single"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "weapons_soundbank"
+        set "itemId" "small_caliber_brass_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_single_distant"
+    }
+    clear "SoundsOnAttackFar"
+    append "SoundsOnAttackFar" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_single_distant"
+    }
+}

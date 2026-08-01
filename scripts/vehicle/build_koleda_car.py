@@ -24,12 +24,14 @@ Then bake:
     -dropMeshes plane \
     -materialManifest Assets/Authored/koleda_car/materials.json \
     -muzzleAnchors Gun_L:muzzle,Gun_R:muzzle2 \
-    -graftNodes "Assets/Imported/el.carrier_open_transport/GameObject/el.carrier_open_transport.prefab@rotator/mesh/carrier_chassis/Root/Chassis/lights@0;0.55;2.2"
+    -graftNodes "Assets/Imported/el.carrier_open_transport/GameObject/el.carrier_open_transport.prefab@rotator/mesh/carrier_chassis/Root/Chassis/lights/FrontLights@-0.66;0.55;2.2,Assets/Imported/el.carrier_open_transport/GameObject/el.carrier_open_transport.prefab@rotator/mesh/carrier_chassis/Root/Chassis/lights/FrontLights@0.66;0.55;2.2"
 
-The lights graft carries the vanilla night-light rig (headlight beam +
-area light + their script sentinels): the game wraps any child Light
-components in a NightLightsComp at element init, so night missions light
-up with no extra runtime code.
+The graft copies the carrier's FrontLights node twice, once per headlight
+lens (x offsets measured from the CarLight vertex groups). The carrier's
+orange Area Light is deliberately left behind: the car carries no cabin
+or brake glow. The game wraps any child Light components in a
+NightLightsComp at element init, so night missions light up with no extra
+runtime code.
 """
 
 import json
@@ -50,14 +52,15 @@ UNITY_ROOT = "/home/justin/dev/github.com/antistrategie/WOMENACE/unity"
 CLIPS = {"drive_wheelspin", "door_open", "door_close"}
 
 # Material -> Sunborn texture set. sub0..sub4 are the lod0 submesh slots in
-# source order, glass is the remaining pane mesh (headlight covers).
+# source order. The glass mesh (headlight covers, the windshield is cut from
+# the model) has no entry here: the whole sheet binds the koleda_lights
+# material appended below, so a glass texture-set entry would match no slot.
 SETS = {
     "supercar_sub0": "Koleda_Supercar_01",
     "supercar_sub1": "Koleda_Supercar_01menban",
     "supercar_sub2": "Koleda_Supercar_02",
     "supercar_sub3": "Koleda_Supercar_03",
     "supercar_sub4": "Koleda_Supercar_04",
-    "Koleda_Supercar_glass_lod0_mat": "Koleda_Supercar_trans",
 }
 
 
@@ -124,7 +127,7 @@ def export_fbx():
         pb.scale = (1, 1, 1)
     freeze_headlights(arm)
     # Zero LOCATIONS only. The chain's rotations are the source FBX's axis
-    # correction; zeroing them stands the car on its end in Unity.
+    # correction. Zeroing them stands the car on its end in Unity.
     node = arm
     top = arm
     while node:
@@ -132,8 +135,8 @@ def export_fbx():
         top = node
         node = node.parent
     # The source model faces the opposite way to MENACE's +Z-forward
-    # convention (first in-game test drove tail-first): spin the whole export
-    # 180 degrees about world up on top of the kept axis correction.
+    # convention: spin the whole export 180 degrees about world up on top of
+    # the kept axis correction.
     from mathutils import Matrix
     bpy.context.view_layer.update()
     top.matrix_world = Matrix.Rotation(3.14159265, 4, "Z") @ top.matrix_world
@@ -172,12 +175,15 @@ def action_fcurves(act):
 def light_lens_pass():
     """The visible lens strips are the glass mesh's CarLight cover faces.
     Their mesh data measures mirror-identical per side, yet the engine
-    renders one lit and one dead on the original glass material — and every
-    build that overrode the glass rendered them equal. So exactly those
-    faces get a dedicated flat material (the glass sheet's own diffuse with
-    its amber lens texels, no normal or mask map); the body and the rest of
-    the glass stay fully original. WOMENACE_DEBUG_LIGHTS=1 paints the whole
-    units red instead (pipeline channel test)."""
+    renders one lit and one dead on the original glass material, and every
+    build that overrides the glass renders them equal. The CarLight faces
+    are painted onto a dedicated flat material (the glass sheet's own
+    diffuse with its amber lens texels, no normal or mask map). In the
+    baked prefab the WHOLE glass sheet ends up on that material: the glass
+    mesh is only the headlight covers (the windshield is cut from the
+    model), and the manifest carries no texture set for the original glass
+    slot. The body mesh stays fully original. WOMENACE_DEBUG_LIGHTS=1
+    paints the whole units red instead (pipeline channel test)."""
     debug = os.environ.get("WOMENACE_DEBUG_LIGHTS") == "1"
     targets = [("Koleda_Supercar_glass_lod0", True)]
     if debug:
@@ -286,8 +292,8 @@ def freeze_headlights(arm):
         me.normals_split_custom_set([n.normalized() for n in normals])
 
         # vertex colours are packed shader data on ripped meshes and the two
-        # units' channels differ (the lit look rides on them) — mirror the
-        # left unit's loop colours onto the right as well
+        # units' channels differ (the lit look rides on them), so mirror
+        # the left unit's loop colours onto the right as well
         for ca in me.color_attributes:
             if ca.domain != "CORNER":
                 continue
