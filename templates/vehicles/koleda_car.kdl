@@ -1,0 +1,137 @@
+clone "ModularVehicleTemplate" from="modular_vehicle_carrier" id="modular_vehicle.koleda_car" {
+    clear "Slots"
+}
+
+clone "SoundBank" from="weapons_soundbank" id="wmgfl_sinner_sfx" {
+    clear "sounds"
+    clear "busIndices"
+
+    append "sounds" {
+        set "name" "Run_Start"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="sinner/Run_Start"
+        }
+    }
+
+    append "sounds" {
+        set "name" "Run_Loop"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="sinner/Run_Loop"
+        }
+    }
+
+    append "sounds" {
+        set "name" "Run_End"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="sinner/Run_End"
+        }
+    }
+
+    append "sounds" {
+        set "name" "Die"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="sinner/Die"
+        }
+    }
+}
+
+clone "SkillTemplate" from="active.mod.minigun_strafing" id="active.sinner_mg" {
+    set "Title" {
+        set "m_DefaultTranslation" "Let's Go For a Spin!"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "A wide sweep firing a hail of bullets strafing $1 adjacent tiles and dealing <link=\"wmgfl_hydro\">Hydro</link> damage."
+    }
+
+    remove "EventHandlers" index=2
+    remove "EventHandlers" index=1
+
+    set "EventHandlers" index=0 {
+        set "Damage" 15.0
+        set "ArmorPenetration" 40.0
+        set "Suppression" 10.0
+        set "DamageToArmorDurability" 15.0
+    }
+
+    append "EventHandlers" type="WOMENACE:ElementalDamage" {
+        set "Element" "Hydro"
+        set "AmountPerHit" 5.0
+    }
+
+    set "IsUsedInBackground" #false
+
+    set "MuzzleType" enum="MuzzleType" "PerRepetition"
+    append "MuzzleSelection" enum="MuzzleType" "Muzzle"
+    append "MuzzleSelection" enum="MuzzleType" "Muzzle2"
+
+    set "ActionPointCost" 45
+    set "Uses" 10
+}
+
+clone "EntityTemplate" from="player_vehicle.modular_light_troop_carrier" id="player_vehicle.koleda_car" {
+    set "Title" {
+        set "m_DefaultTranslation" "The Sinner"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            This car has GUNS. It can also carry another squad to drive around... even though it's only a two seater. Don't ask.
+            """
+    }
+
+    set "Prefabs" index=0 asset="koleda_car/default/main"
+    set "ModularVehicle" "modular_vehicle.koleda_car"
+
+    clear "AttachedPrefabs"
+
+    set "AimWithVisualSlot" enum="VisualAlterationSlot" "EntireModel"
+
+    set "Properties" {
+        set "SoundOnMovementStart" {
+            set "bankId" "wmgfl_sinner_sfx"
+            set "itemId" "Run_Start"
+        }
+        set "SoundOnMovementStop" {
+            set "bankId" "wmgfl_sinner_sfx"
+            set "itemId" "Run_End"
+        }
+        set "SoundOnMovementStep" {
+            set "bankId" "wmgfl_sinner_sfx"
+            set "itemId" "Run_Loop"
+        }
+        set "SoundOnDeath" {
+            set "bankId" "wmgfl_sinner_sfx"
+            set "itemId" "Die"
+        }
+    }
+
+    append "Skills" "active.sinner_mg"
+}
+
+clone "VehicleItemTemplate" from="vehicle.chassis_carrier" id="vehicle.koleda_car" {
+    set "EntityTemplate" "player_vehicle.koleda_car"
+
+    append "Tags" "jy_no_sell"
+
+    set "Title" {
+        set "m_DefaultTranslation" "The Sinner"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Supercar"
+    }
+
+    set "Icon" asset="sinner/Icon"
+    set "IconEquipment" asset="sinner/IconEquipment"
+    set "IconSkillBar" asset="sinner/IconSkillBar"
+
+    set "AccessorySlots" 4
+
+    set "DeployCosts" {
+        set "m_Supplies" 400
+    }
+
+    set "BlackMarketMaxQuantity" 0
+}

@@ -56,16 +56,19 @@ patch "StrategyConfig" "strategy_config" {
 patch "GlobalDifficultyTemplate" "global_difficulty.normal" {
     append "InitialAdditionalUnlockedItems" "vehicle.voymastina_mech"
     append "InitialAdditionalUnlockedItems" "vehicle.voymastina_mech_erwin"
+    append "InitialAdditionalUnlockedItems" "vehicle.koleda_car"
 }
 
 patch "GlobalDifficultyTemplate" "global_difficulty.challenging" {
     append "InitialAdditionalUnlockedItems" "vehicle.voymastina_mech"
     append "InitialAdditionalUnlockedItems" "vehicle.voymastina_mech_erwin"
+    append "InitialAdditionalUnlockedItems" "vehicle.koleda_car"
 }
 
 patch "GlobalDifficultyTemplate" "global_difficulty.expert" {
     append "InitialAdditionalUnlockedItems" "vehicle.voymastina_mech"
     append "InitialAdditionalUnlockedItems" "vehicle.voymastina_mech_erwin"
+    append "InitialAdditionalUnlockedItems" "vehicle.koleda_car"
 }
 
 patch "DossierItemTemplate" "dossier.squad_leader" {
