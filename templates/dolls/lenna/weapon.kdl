@@ -64,6 +64,8 @@ clone "SkillTemplate" from="active.fire_smg_tier_1_SOF_suppressed" id="active.fi
 }
 
 clone "SkillTemplate" from="active.fire_smg_tap_fire_suppressed" id="active.fire_lenna_ump9_tap" {
+    set "IsSilent" #true
+
     clear "SoundsOnAttack"
     append "SoundsOnAttack" {
         set "bankId" "wmgfl_weapons_smg_addition_bank"

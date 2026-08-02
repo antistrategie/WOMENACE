@@ -75,8 +75,10 @@ public sealed class SsrImprintSystem : JiangyuSystem
             Skills = new[]
             {
                 // No stat bonus: the imprint is the Overburn effect (VectorSsrSystem's on-hit
-                // handler gates on IsOwnerWielding through this entry).
-                new SkillImprint { SkillId = "active.vector_ssr_skill" },
+                // handler gates on IsOwnerWielding through this entry). Both of the
+                // weapon's firing modes carry it.
+                new SkillImprint { SkillId = "active.vector_ssr_meltdown" },
+                new SkillImprint { SkillId = "active.vector_ssr_searing" },
             },
         },
         new Entry

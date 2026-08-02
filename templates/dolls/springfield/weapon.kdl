@@ -8,10 +8,10 @@ clone "WeaponTemplate" from="weapon.generic_battle_rifle_tier1_crowbar_marksman"
     }
     set "Description" {
         set "m_DefaultTranslation" """
-        A firearm highly compatible with Springfield. Modified based on her combat preferences, it provides increased bullet velocity, hence improving firepower.
+            A firearm highly compatible with Springfield. Modified based on her combat preferences, it provides increased bullet velocity, hence improving firepower.
 
-        The owner of Zucchero leverage her finance power to obtain special grade ammo for her gun, bringing it to modern battlefield standard.
-        """
+            The owner of Zucchero leverages her financial power to obtain special grade ammo for her gun, bringing it to modern battlefield standard.
+            """
     }
 
     set "Model" asset="weapon/springfield/main"
@@ -46,12 +46,11 @@ clone "WeaponTemplate" from="weapon.generic_battle_rifle_tier1_crowbar_marksman"
 }
 
 clone "SkillTemplate" from="active.fire_battle_rifle_tier_1" id="active.fire_springfield_m1903" {
-
     set "Title" {
         set "m_DefaultTranslation" "Aimed Volley"
     }
     set "Description" {
-        set "m_DefaultTranslation" "Deliver a highly accuracy volley at designated target."
+        set "m_DefaultTranslation" "Deliver a highly accurate volley at a designated target."
     }
 
     clear "SoundsOnAttack"
@@ -71,7 +70,7 @@ clone "SkillTemplate" from="active.fire_battle_rifle_tier_1" id="active.fire_spr
     set "ActionPointCost" 30
     set "Uses" 24
     set "Repetitions" 1
-    set "ElementDelayBetween" 0
+    set "ElementDelayBetween" 0.0
     set "MaxElementDelay" 0.5
 }
 

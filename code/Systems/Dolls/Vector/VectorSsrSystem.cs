@@ -8,8 +8,9 @@ namespace WOMENACE.Code;
 
 // Vector's SSR kit (Banshee's Whisper). Two behaviours live here:
 //
-// 1. Dead End Meltdown's burning-target bonus: any wielder's hits deal 20%
-//    more damage to a target that is already Burning. Applied in an
+// 1. The burning-target bonus: any wielder's hits with either of the weapon's
+//    firing modes deal 20% more damage to a target that is already Burning.
+//    Applied in an
 //    Actor.OnDamageReceived prefix (the same seam MeleeVsFliersSystem uses),
 //    before the receive path applies the DamageInfo, and mirrored into the
 //    hover preview through the handler's IExpectedDamageContributor.
@@ -23,7 +24,14 @@ namespace WOMENACE.Code;
 //    that is not already Burning, so a chain of deaths keeps the fire moving.
 public sealed class VectorSsrSystem : JiangyuSystem
 {
-    public const string SkillId = "active.vector_ssr_skill";
+    // Every skill Banshee's Whisper grants. Both carry the kit: the weapon is
+    // one weapon whichever of its firing modes is selected.
+    public static readonly string[] SkillIds =
+    [
+        "active.vector_ssr_meltdown",
+        "active.vector_ssr_searing",
+    ];
+
     public const float BonusVsBurningMult = 1.2f;
     public const int SpreadRangeTiles = 2;
 
@@ -31,7 +39,7 @@ public sealed class VectorSsrSystem : JiangyuSystem
 
     private static VectorSsrSystem _instance;
 
-    private SkillTemplate _skill;
+    private readonly HashSet<IntPtr> _skillTemplates = [];
     private SkillTemplate _overburn;
     private int _burnElement = -2;
 
@@ -72,7 +80,13 @@ public sealed class VectorSsrSystem : JiangyuSystem
 
     public override void OnTemplatesApplied()
     {
-        _skill = Templates.ById<SkillTemplate>(SkillId, msg => Context.Log.Warn($"vector ssr: {msg}"));
+        _skillTemplates.Clear();
+        foreach (var id in SkillIds)
+        {
+            var template = Templates.ById<SkillTemplate>(id, msg => Context.Log.Warn($"vector ssr: {msg}"));
+            if (template != null)
+                _skillTemplates.Add(template.Pointer);
+        }
         _overburn = Templates.ById<SkillTemplate>(OverburnId, msg => Context.Log.Warn($"vector ssr: {msg}"));
         _burnElement = ElementsSystem.ElementIndex("Burn");
     }
@@ -136,7 +150,7 @@ public sealed class VectorSsrSystem : JiangyuSystem
         }
     }
 
-    // Dead End Meltdown hits a Burning target 20% harder, whoever wields it.
+    // Banshee's Whisper hits a Burning target 20% harder, whoever wields it.
     // Doubles as an Overburn-ledger tile refresh for direct damage.
     private void OnDamageReceived(PatchInfo info)
     {
@@ -147,7 +161,8 @@ public sealed class VectorSsrSystem : JiangyuSystem
             if (_overburned.TryGetValue(victim.Pointer, out var entry))
                 entry.LastTile = victim.GetTile() ?? entry.LastTile;
             var skill = (info.Args is { Count: > 1 } ? info.Args[1] : null) as Skill;
-            if (_skill == null || skill?.GetTemplate()?.Pointer != _skill.Pointer)
+            var skillTemplate = skill?.GetTemplate();
+            if (skillTemplate == null || !_skillTemplates.Contains(skillTemplate.Pointer))
                 return;
             var damageInfo = (info.Args is { Count: > 2 } ? info.Args[2] : null) as DamageInfo;
             if (damageInfo == null || damageInfo.Damage <= 0 || !IsBurning(victim))

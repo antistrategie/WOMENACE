@@ -64,6 +64,14 @@ clone "SkillTemplate" from="active.mod.minigun_strafing" id="active.sinner_mg" {
 
     set "IsUsedInBackground" #false
 
+    // holds the shots AND the fire sound for the 1.53s door-open clip, so the
+    // doors are clear before the guns speak. The per-element attack sound waits
+    // on this same delay because the template sets
+    // IsSoundOnAttackPerElementPlayingAfterAnimationDelay. Use this rather than
+    // MinElementDelay, which holds only the shots, or MinDelayBeforeSkillUse,
+    // which moves the shots earlier on a vehicle.
+    set "DelayAfterAnimationTrigger" 1.6
+
     set "MuzzleType" enum="MuzzleType" "PerRepetition"
     append "MuzzleSelection" enum="MuzzleType" "Muzzle"
     append "MuzzleSelection" enum="MuzzleType" "Muzzle2"
@@ -77,9 +85,7 @@ clone "EntityTemplate" from="player_vehicle.modular_light_troop_carrier" id="pla
         set "m_DefaultTranslation" "The Sinner"
     }
     set "Description" {
-        set "m_DefaultTranslation" """
-            This car has GUNS. It can also carry another squad to drive around... even though it's only a two seater. Don't ask.
-            """
+        set "m_DefaultTranslation" "This car has GUNS. It can also carry another squad to drive around... even though it's only a two seater. Don't ask."
     }
 
     set "Prefabs" index=0 asset="koleda_car/default/main"
