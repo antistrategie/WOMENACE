@@ -41,7 +41,7 @@ clone "WeaponTemplate" from="weapon.generic_smg_tier1_ppp" id="weapon.lenna" {
     set "SkillsGranted" index=1 "active.fire_lenna_ump9_tap"
 }
 
-clone "SkillTemplate" from="active.fire_smg_tier1_burst" id="active.fire_lenna_ump9" {
+clone "SkillTemplate" from="active.fire_smg_tier_1_SOF_suppressed" id="active.fire_lenna_ump9" {
     set "Repetitions" 4
     clear "SoundsOnAttack"
     append "SoundsOnAttack" {
@@ -63,7 +63,7 @@ clone "SkillTemplate" from="active.fire_smg_tier1_burst" id="active.fire_lenna_u
     }
 }
 
-clone "SkillTemplate" from="active.fire_smg_tier_1_tap_fire" id="active.fire_lenna_ump9_tap" {
+clone "SkillTemplate" from="active.fire_smg_tap_fire_suppressed" id="active.fire_lenna_ump9_tap" {
     clear "SoundsOnAttack"
     append "SoundsOnAttack" {
         set "bankId" "wmgfl_weapons_smg_addition_bank"
