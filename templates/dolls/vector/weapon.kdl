@@ -58,6 +58,7 @@ clone "SkillTemplate" from="active.fire_smg_tier1_burst" id="active.fire_vector_
         set "itemId" "smg_burst_distant"
     }
     set "Repetitions" 7
+    set "RepetitionDelay" 0.15
 }
 
 clone "SkillTemplate" from="active.fire_smg_tier_1_tap_fire" id="active.fire_vector_kriss_tap" {
@@ -122,10 +123,11 @@ clone "WeaponTemplate" from="specialweapon.infantry_automatic_rifle_tier2" id="w
     set "BlackMarketMaxQuantity" 0
 
     clear "SkillsGranted"
-    append "SkillsGranted" "active.vector_ssr_skill"
+    append "SkillsGranted" "active.vector_ssr_meltdown"
+    append "SkillsGranted" "active.vector_ssr_searing"
 }
 
-clone "SkillTemplate" from="active.fire_automatic_rifle" id="active.vector_ssr_skill" {
+clone "SkillTemplate" from="active.fire_automatic_rifle" id="active.vector_ssr_meltdown" {
     set "Title" {
         set "m_DefaultTranslation" "Dead End Meltdown"
     }
@@ -133,11 +135,80 @@ clone "SkillTemplate" from="active.fire_automatic_rifle" id="active.vector_ssr_s
         set "m_DefaultTranslation" "Sprays incendiary rounds that build <link=\"wmgfl_burn\">Burn</link>. Deals 20% more damage to Burning targets."
     }
     set "MaxRange" 5
-    set "Repetitions" 6
+    set "Repetitions" 7
+    set "RepetitionDelay" 0.15
+    set "Uses" 16
+
+    append "EventHandlers" type="SynchronizeItemUses" {}
+
     append "EventHandlers" type="WOMENACE:ElementalDamage" {
         set "Element" "Burn"
         set "AmountPerHit" 4.0
     }
+    // Vector's imprint: her own hits apply Overburn to the victim (owner-gated in code)
+    append "EventHandlers" type="WOMENACE:OverburnOnHit" {}
+
+    clear "SoundsOnAttack"
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_smg_addition_bank"
+        set "itemId" "smg_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "weapons_soundbank"
+        set "itemId" "small_caliber_brass_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_smg_addition_bank"
+        set "itemId" "smg_burst_distant"
+    }
+    clear "SoundsOnAttackFar"
+    append "SoundsOnAttackFar" {
+        set "bankId" "wmgfl_weapons_smg_addition_bank"
+        set "itemId" "smg_burst_distant"
+    }
+}
+
+clone "SkillTemplate" from="active.light_mg_suppressive_fire" id="active.vector_ssr_searing" {
+    set "Title" {
+        set "m_DefaultTranslation" "Searing Finale"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Sprays incendiary rounds to 5 continuous title that set them on fire and build <link=\"wmgfl_burn\">Burn</link>. Deals high suppression and 20% more damage to Burning targets."
+    }
+
+    set "AoEType" enum="SkillAoEType" "SelectTilesOnUse"
+    set "IsSoundOnAttackPerElementPlayingAfterAnimationDelay" #true
+    set "ScatterMode" enum="ScatterMode" "Strafing"
+
+    set "ActionPointCost" 80
+    set "MaxRange" 5
+    set "IdealRange" 2
+    set "Repetitions" 20
+    set "RepetitionDelay" 0.15
+
+    set "SelectableTiles" 5
+    set "Uses" 16
+
+    set "EventHandlers" index=0 {
+        set "AccuracyMult" 0.75
+        set "SuppressionDealtMult" 1.5
+    }
+
+    insert "EventHandlers" index=0 type="SpawnTileEffect" {
+        set "EffectToSpawn" "tile_effect.fire"
+    }
+
+    // Mimic incendiary grenade event order: spawn title -> attack -> clear title
+    insert "EventHandlers" index=2 type="ClearTileEffectGroup" {
+        set "EffectsToClear" "tile_effect_mines"
+    }
+
+    append "EventHandlers" type="SynchronizeItemUses" {}
+
+    append "EventHandlers" type="AttackProc" {
+        set "SkillToAdd" "effect.wmgfl_burn"
+    }
+
     // Vector's imprint: her own hits apply Overburn to the victim (owner-gated in code)
     append "EventHandlers" type="WOMENACE:OverburnOnHit" {}
 
