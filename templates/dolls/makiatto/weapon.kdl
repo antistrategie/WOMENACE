@@ -75,9 +75,10 @@ clone "SkillTemplate" from="active.fire_battle_rifle_tier_1_aimed_fire_marksman"
         set "bankId" "wmgfl_weapons_rf_addition_bank"
         set "itemId" "rf_shot_distant"
     }
-    set "ActionPointCost" 50
+    set "ActionPointCost" 30
     set "Uses" 10
     set "ExecutingElement" enum="ExecutingElementType" "OneAtRandomExceptSpecial"
+    set "IsDeploymentRequired" #false
 }
 
 // SSR weapon
