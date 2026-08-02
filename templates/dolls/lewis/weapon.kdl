@@ -63,6 +63,7 @@ clone "SkillTemplate" from="active.light_mg_suppressive_fire" id="active.fire_le
         set "itemId" "mg_burst_distant"
     }
     set "Uses" 12
+    set "Repetitions" 10
     set "ExecutingElement" enum="ExecutingElementType" "OneAtRandomExceptSpecial"
     append "EventHandlers" type="SynchronizeItemUses" {}
 }
