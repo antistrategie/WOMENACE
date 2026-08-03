@@ -50,6 +50,12 @@ public sealed class KoledaCarSystem : JiangyuSystem
     // matched by pointer afterwards. Il2cpp's GC does not move objects, so a
     // template's pointer is a stable key for as long as the templates live,
     // and OnTemplatesApplied drops the cache whenever they are rebuilt.
+    //
+    // A HIT is what latches the flag, never a miss. These patches are installed
+    // in OnInit, which runs before OnTemplatesApplied, so an early filter check
+    // can look the id up before the template exists. Latching that miss would
+    // pin the id unresolvable for the session and the car and its salvo would
+    // never match again. This is the same rule Templates.Resolve enforces.
     private static System.IntPtr _carTemplate;
     private static System.IntPtr _salvoTemplate;
     private static bool _carResolved;
@@ -132,10 +138,13 @@ public sealed class KoledaCarSystem : JiangyuSystem
             return false;
         if (!_carResolved)
         {
-            _carTemplate = Templates.ById<EntityTemplate>(CarId)?.Pointer ?? System.IntPtr.Zero;
+            var car = Templates.ById<EntityTemplate>(CarId);
+            if (car == null)
+                return false;
+            _carTemplate = car.Pointer;
             _carResolved = true;
         }
-        return _carTemplate != System.IntPtr.Zero && template.Pointer == _carTemplate;
+        return template.Pointer == _carTemplate;
     }
 
     private static bool IsTheSalvo(PatchInfo info, out Skill skill)
@@ -151,10 +160,13 @@ public sealed class KoledaCarSystem : JiangyuSystem
             return false;
         if (!_salvoResolved)
         {
-            _salvoTemplate = Templates.ById<SkillTemplate>(SalvoId)?.Pointer ?? System.IntPtr.Zero;
+            var salvo = Templates.ById<SkillTemplate>(SalvoId);
+            if (salvo == null)
+                return false;
+            _salvoTemplate = salvo.Pointer;
             _salvoResolved = true;
         }
-        return _salvoTemplate != System.IntPtr.Zero && template.Pointer == _salvoTemplate;
+        return template.Pointer == _salvoTemplate;
     }
 
     private static ElementAnimator CarAnimator(Actor actor)

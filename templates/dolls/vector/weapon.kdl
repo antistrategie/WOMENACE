@@ -194,23 +194,22 @@ clone "SkillTemplate" from="active.light_mg_suppressive_fire" id="active.vector_
         set "SuppressionDealtMult" 1.5
     }
 
-    // 100 at the centre with no falloff is what every vanilla fire spawner
-    // uses, and a fresh handler defaults both to 0, which spawns nothing.
     insert "EventHandlers" index=0 type="SpawnTileEffect" {
         set "EffectToSpawn" "tile_effect.fire"
         set "ChanceAtCenter" 100
         set "ChancePerTileFromCenter" 0
     }
 
-    // Mimic incendiary grenade event order: spawn tiles -> attack -> clear tiles
     insert "EventHandlers" index=2 type="ClearTileEffectGroup" {
         set "EffectsToClear" "tile_effects_mines"
+        set "TriggerEffect" #true
     }
 
     append "EventHandlers" type="SynchronizeItemUses" {}
 
     append "EventHandlers" type="AttackProc" {
         set "SkillToAdd" "effect.wmgfl_burn"
+        set "Chance" 100
     }
 
     // Vector's imprint: her own hits apply Overburn to the victim (owner-gated in code)

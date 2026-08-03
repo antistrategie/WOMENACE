@@ -158,10 +158,15 @@ public sealed class SelectedTilesGuardSystem : JiangyuSystem
             var live = skill.SelectedTiles;
             if (live == null || live.Count == 0)
                 return;
+            // Index the Il2Cpp list, never foreach it: its boxed struct
+            // enumerator does not advance (see the note on Templates.All).
             var snapshot = new List<Tile>(live.Count);
-            foreach (var tile in live)
+            for (var i = 0; i < live.Count; i++)
+            {
+                var tile = live[i];
                 if (tile != null)
                     snapshot.Add(tile);
+            }
             if (snapshot.Count == 0)
                 return;
 
