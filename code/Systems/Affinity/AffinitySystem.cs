@@ -688,12 +688,18 @@ public sealed class AffinitySystem : JiangyuSystem
             _boxes.Add(box);
 
             // Left-click adds one (left-click sound), right-click removes one (right-click sound).
-            slot.OnAdjust(delta =>
+            // Holding either button repeats the step, accelerating, for picking a big stack apart
+            // without clicking once per gift. The click sound stays on the press: at the speed the
+            // repeat reaches, one sound per step is a machine gun.
+            slot.OnAdjust((delta, repeat) =>
             {
-                if (delta < 0)
-                    Sound.RightClick();
-                else
-                    Sound.Click();
+                if (!repeat)
+                {
+                    if (delta < 0)
+                        Sound.RightClick();
+                    else
+                        Sound.Click();
+                }
                 AdjustBox(box, delta);
             });
             UpdateBox(box);
