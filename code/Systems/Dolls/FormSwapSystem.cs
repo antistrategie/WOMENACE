@@ -501,8 +501,8 @@ public sealed class FormSwapSystem : JiangyuSystem
                 return;
             }
 
-            // No known host: refresh the info panel alone.
-            panel.Init(target, status);
+            // No known host: refresh the info panel alone. It derives the status itself.
+            panel.Init(target);
         }
         catch (Exception ex)
         {

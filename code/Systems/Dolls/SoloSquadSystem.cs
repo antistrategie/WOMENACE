@@ -74,7 +74,7 @@ public sealed class SoloSquadSystem : JiangyuSystem
         Context.Patches.Prefix("Il2CppMenace.UI.Strategy.BaseUnitSelectSlot", "Init", OnSelectSlotInit);
         // The hiring dialog's detail panel is fed a minted preview leader
         // through these, not through the slots: repair before they draw.
-        Context.Patches.Prefix("Il2CppMenace.UI.Strategy.UnitStatsAndAttributesPanel", "Update", OnSelectSlotInit);
+        Context.Patches.Prefix("Il2CppMenace.UI.Strategy.UnitStatsAndAttributesPanel", "ShowPanel", OnSelectSlotInit);
         Context.Patches.Prefix("Il2CppMenace.UI.Strategy.HiringUnitInfo", "Init", OnSelectSlotInit);
     }
 
@@ -176,7 +176,7 @@ public sealed class SoloSquadSystem : JiangyuSystem
             var needsRebuild = repaired > 0;
             if (!needsRebuild && count > VitalityIndex)
             {
-                var expectedHp = UnitLeaderAttributes.GetHitpointsPerElement((int)values[VitalityIndex]);
+                var expectedHp = UnitLeaderAttributes.GetHitpointsPerElement(values[VitalityIndex]);
                 var cachedHp = (int)leader.GetEntityProperty(Il2CppMenace.Tactical.EntityPropertyType.HitpointsPerElement);
                 needsRebuild = cachedHp != expectedHp;
             }

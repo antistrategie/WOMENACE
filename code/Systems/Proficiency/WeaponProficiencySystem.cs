@@ -142,11 +142,11 @@ public sealed class WeaponProficiencySystem : JiangyuSystem
         // the unit-window Accuracy stat (which otherwise shows only base accuracy).
         Context.Patches.Postfix("Il2CppMenace.Items.ItemTemplate", "AppendTooltipData", OnWeaponTooltip);
         // The armoury stats panel reads base accuracy, and its rows carry no locale-independent id.
-        // Rather than match the Accuracy row by its (localised) label, bracket the panel's Update with
-        // a bonus flag and add the bonus inside GetAccuracy, which Update calls exactly once (for that
-        // row). Works in every language.
-        Context.Patches.Prefix("Il2CppMenace.UI.Strategy.UnitStatsAndAttributesPanel", "Update", OnArmouryStatsPre);
-        Context.Patches.Postfix("Il2CppMenace.UI.Strategy.UnitStatsAndAttributesPanel", "Update", OnArmouryStatsPost);
+        // Rather than match the Accuracy row by its (localised) label, bracket the panel's ShowPanel
+        // with a bonus flag and add the bonus inside GetAccuracy, which the panel calls once for that
+        // row. Works in every language.
+        Context.Patches.Prefix("Il2CppMenace.UI.Strategy.UnitStatsAndAttributesPanel", "ShowPanel", OnArmouryStatsPre);
+        Context.Patches.Postfix("Il2CppMenace.UI.Strategy.UnitStatsAndAttributesPanel", "ShowPanel", OnArmouryStatsPost);
         Context.Patches.Postfix("Il2CppMenace.Tactical.EntityProperties", "GetAccuracy", OnGetAccuracy);
         // The in-mission selected-unit panel is a separate class whose rows carry the property config,
         // so its Accuracy row is matched by that directly.
@@ -193,7 +193,7 @@ public sealed class WeaponProficiencySystem : JiangyuSystem
 
     // The unit-window stats panel reads the leader's BASE properties for the Accuracy row, so the
     // combat bonus (which lives on current properties) is invisible there. Arm the bonus for the span
-    // of the panel's Update; OnGetAccuracy adds it to the one accuracy read Update makes, so the shown
+    // of the panel's ShowPanel; OnGetAccuracy adds it to the one accuracy read it makes, so the shown
     // number matches the accuracy she fights with. No label match, so it holds in every language.
     private void OnArmouryStatsPre(PatchInfo info)
     {
