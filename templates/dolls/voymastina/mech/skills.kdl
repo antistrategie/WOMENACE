@@ -6,6 +6,10 @@ clone "SkillTemplate" from="active.fire_assault_rifle_tier1_762" id="active.voym
     set "ActionPointCost" 22
     set "Uses" 24
 
+    // The mech grants this skill itself, so no weapon item backs it: the tag is what
+    // lets ammo cases and the supply drop recognise it as a vehicle gun with ammo.
+    append "Tags" "wmgfl_entity_weapon"
+
     set "MuzzleType" enum="MuzzleType" "Muzzle"
     set "IsWeaponSetupRequired" #false
     set "AnimationType" enum="AnimationType" "ShootSingle"
@@ -52,6 +56,8 @@ clone "SkillTemplate" from="active.launch_construct_rocket" id="active.voymastin
 
     set "ActionPointCost" 50
     set "Uses" 11
+
+    append "Tags" "wmgfl_entity_weapon"
 
     set "MuzzleType" enum="MuzzleType" "Muzzle2"
     set "AnimationType" enum="AnimationType" "SpecialAttack1"

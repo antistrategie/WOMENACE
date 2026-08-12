@@ -1,9 +1,6 @@
-using Il2CppMenace.Items;
 using Il2CppMenace.Tactical;
 using Il2CppMenace.Tactical.Doors;
 using Il2CppMenace.Tactical.Skills;
-using Il2CppMenace.Tactical.Skills.Effects;
-using Il2CppMenace.Tactical.Skills.SkillFilters;
 using Jiangyu.Sdk;
 using UnityEngine;
 
@@ -27,21 +24,12 @@ namespace WOMENACE.Code;
 // DoorsOut bool instead: set when the salvo starts, cleared when its use
 // completes (the controller's linger state delays the actual close).
 //
-// Weapon parity: the salvo is entity-granted, so no item backs it, and
-// every vanilla mechanic that identifies vehicle weapon skills through
-// their granting item rejects it. Drive By's AP discount and effect
-// consumption gate on an ItemSlotFilter of the vehicle weapon slots, the
-// dropship supply drop refills through an IsItemSkillFilter, and Vehicle
-// Ammo Cases' AmmoPouch requires the granting item's type to be Weapon.
-// (The scavenger drop works untouched: its filter matches tags, and the
-// salvo inherits VEHICLE_WEAPON from the minigun it was cloned from.)
-// The filter patches make the salvo count as a ModularVehicleLight weapon
-// skill, and the pouch patch mirrors the bonus its gate cannot reach.
+// Making the salvo count as a weapon skill for the vanilla ammo mechanics
+// is [[EntityWeaponParitySystem]], shared with the mech's guns.
 public sealed class KoledaCarSystem : JiangyuSystem
 {
     private const string CarId = "player_vehicle.koleda_car";
     private const string SalvoId = "active.sinner_mg";
-    private const string AmmoCasesPassiveId = "passive.ammo_case";
     private const string DoorsParam = "DoorsOut";
 
     // Template identity caches. These hooks run for every skill filter check
@@ -67,31 +55,15 @@ public sealed class KoledaCarSystem : JiangyuSystem
     private readonly Dictionary<System.IntPtr, object> _watchers = new();
     private readonly Dictionary<System.IntPtr, object> _settles = new();
 
-    // Salvo skill instances already granted the Ammo Cases bonus, so the
-    // mission-start sweep and the skill-added hook never stack it. Pointer
-    // keys share the coroutine dictionaries' scene-bounded lifetime.
-    private readonly HashSet<System.IntPtr> _boostedSalvos = new();
-
     // The salvo's multi-tile crash protection lives in
     // [[SelectedTilesGuardSystem]], which covers every skill that picks its
     // own tiles rather than this one alone.
-    //
-    // The dropship supply drop's refill is the only vanilla consumer of
-    // IsItemSkillFilter, so its override is scoped to the refill call itself
-    // rather than answering for every consumer of a general predicate.
-    private bool _inRefill;
 
     public override void OnInit()
     {
         Context.Patches.Postfix("Il2CppMenace.Tactical.Element", "RecalculateEntranceTiles", 0, OnEntrancesRecalculated);
         Context.Patches.Postfix("Il2CppMenace.Tactical.Skills.Skill", "OnUse", 3, OnSalvoUse);
         Context.Patches.Postfix("Il2CppMenace.Tactical.Skills.Skill", "OnAfterUse", 1, OnSalvoAfterUse);
-        Context.Patches.Postfix("Il2CppMenace.Tactical.Skills.SkillFilters.ItemSlotFilter", "Matches", OnItemSlotFilterMatches);
-        Context.Patches.Postfix("Il2CppMenace.Tactical.Skills.SkillFilters.IsItemSkillFilter", "Matches", OnItemSkillFilterMatches);
-        Context.Patches.Prefix("Il2CppMenace.Tactical.Actor", "RefillAmmo", 3, OnRefillStart);
-        Context.Patches.Postfix("Il2CppMenace.Tactical.Actor", "RefillAmmo", 3, OnRefillEnd);
-        Context.Patches.Postfix("Il2CppMenace.Tactical.Skills.Effects.AmmoPouchHandler", "OnMissionStarted", OnAmmoPouchMissionStarted);
-        Context.Patches.Postfix("Il2CppMenace.Tactical.Skills.Effects.AmmoPouchHandler", "OnAnySkillAdded", OnAmmoPouchSkillAdded);
     }
 
     // A template rebuild invalidates every cached pointer, so they are
@@ -127,8 +99,6 @@ public sealed class KoledaCarSystem : JiangyuSystem
         foreach (var handle in _settles.Values)
             Context.Coroutines.Stop(handle);
         _settles.Clear();
-        _boostedSalvos.Clear();
-        _inRefill = false;
     }
 
     private static bool IsTheCar(Entity entity)
@@ -369,141 +339,5 @@ public sealed class KoledaCarSystem : JiangyuSystem
         if (element != null && element.transform != null
             && actor.GetTile()?.Pointer == tile.Pointer && actor.GetDirection() == direction)
             element.transform.rotation = target;
-    }
-
-    // The salvo passes an ItemSlotFilter whenever the filter targets the
-    // ModularVehicleLight slot, exactly as if the minigun it was cloned
-    // from still backed it. Filters aimed at other slots (infantry ammo
-    // bags, heavy turret perks) stay rejected.
-    private void OnItemSlotFilterMatches(PatchInfo info)
-    {
-        try
-        {
-            if (info.Result is true)
-                return;
-            var skill = (info.Args is { Count: > 0 } ? info.Args[0] : null) as Skill;
-            if (!IsSalvoSkill(skill))
-                return;
-            var slots = (info.Instance as Il2CppInterop.Runtime.InteropTypes.Il2CppObjectBase)
-                ?.TryCast<ItemSlotFilter>()?.ItemSlots;
-            if (slots == null)
-                return;
-            foreach (var slot in slots)
-            {
-                if (slot != ItemSlot.ModularVehicleLight)
-                    continue;
-                info.Result = true;
-                return;
-            }
-        }
-        catch (System.Exception ex)
-        {
-            Context.Log.Warn($"koleda car: item-slot filter postfix failed: {ex.Message}");
-        }
-    }
-
-    private void OnRefillStart(PatchInfo info) => _inRefill = true;
-
-    private void OnRefillEnd(PatchInfo info) => _inRefill = false;
-
-    // IsItemSkillFilter is a general "is an item behind this skill" predicate,
-    // so answering yes everywhere would reach consumers that have nothing to
-    // do with resupply. The dropship supply drop is its only vanilla user and
-    // it asks from inside Actor.RefillAmmo, so the override is confined to
-    // that call.
-    private void OnItemSkillFilterMatches(PatchInfo info)
-    {
-        try
-        {
-            if (!_inRefill || info.Result is true)
-                return;
-            var skill = (info.Args is { Count: > 0 } ? info.Args[0] : null) as Skill;
-            if (IsSalvoSkill(skill))
-                info.Result = true;
-        }
-        catch (System.Exception ex)
-        {
-            Context.Log.Warn($"koleda car: item-skill filter postfix failed: {ex.Message}");
-        }
-    }
-
-    private static bool IsAmmoCases(AmmoPouchHandler handler)
-        => handler?.ParentSkill?.GetTemplate()?.GetID() == AmmoCasesPassiveId;
-
-    private void OnAmmoPouchMissionStarted(PatchInfo info)
-    {
-        try
-        {
-            var handler = (info.Instance as Il2CppInterop.Runtime.InteropTypes.Il2CppObjectBase)?.TryCast<AmmoPouchHandler>();
-            if (!IsAmmoCases(handler))
-                return;
-            var entity = handler.GetEntity();
-            if (!IsTheCar(entity))
-                return;
-            var skills = entity.GetSkills()?.GetAllSkills();
-            if (skills == null)
-                return;
-            foreach (var candidate in skills)
-            {
-                var skill = candidate?.TryCast<Skill>();
-                if (!IsSalvoSkill(skill))
-                    continue;
-                BoostSalvoUses(skill, handler);
-                return;
-            }
-        }
-        catch (System.Exception ex)
-        {
-            Context.Log.Warn($"koleda car: ammo pouch mission-start postfix failed: {ex.Message}");
-        }
-    }
-
-    private void OnAmmoPouchSkillAdded(PatchInfo info)
-    {
-        try
-        {
-            var skill = (info.Args is { Count: > 0 } ? info.Args[0] : null) as Skill;
-            if (!IsSalvoSkill(skill))
-                return;
-            var handler = (info.Instance as Il2CppInterop.Runtime.InteropTypes.Il2CppObjectBase)?.TryCast<AmmoPouchHandler>();
-            if (IsAmmoCases(handler) && IsTheCar(handler.GetEntity()))
-                BoostSalvoUses(skill, handler);
-        }
-        catch (System.Exception ex)
-        {
-            Context.Log.Warn($"koleda car: ammo pouch skill-added postfix failed: {ex.Message}");
-        }
-    }
-
-    // Defers the arithmetic to the pouch's own GetNewSkillUses rather than
-    // restating it: that method truncates where a re-derivation is tempted to
-    // round, and it applies the pouch's SkillFilter, so any balance or filter
-    // change flows through untouched. The item type it is handed is Weapon,
-    // matching how the game would present an item-backed vehicle gun.
-    //
-    // Only an untouched salvo is raised: a max that already differs from the
-    // template's base means a loaded save or another modifier owns it. The
-    // ledger is claimed only once the boost actually lands, so a sweep that
-    // arrives too early leaves the later skill-added hook free to retry.
-    private void BoostSalvoUses(Skill skill, AmmoPouchHandler handler)
-    {
-        if (_boostedSalvos.Contains(skill.Pointer))
-            return;
-        var template = skill.GetTemplate();
-        if (handler.m_Template == null || template == null)
-            return;
-        var max = skill.GetMaxUses();
-        var baseUses = template.Uses;
-        if (baseUses <= 0 || max != baseUses)
-            return;
-
-        var raised = handler.GetNewSkillUses(max, template, new Il2CppSystem.Nullable<ItemType>(ItemType.Weapon));
-        var bonus = raised - max;
-        if (bonus <= 0)
-            return;
-        _boostedSalvos.Add(skill.Pointer);
-        skill.SetMaxUses(raised);
-        skill.SetUses(skill.GetUses() + bonus);
-        Context.Log.Debug($"koleda car: ammo cases raised salvo uses by {bonus}");
     }
 }

@@ -184,6 +184,10 @@ public sealed class SextansUltSystem : JiangyuSystem
     // MarkOnHit resolves its effect templates by id through here
     private readonly Dictionary<string, SkillTemplate> _effectsById = new();
 
+    // Victims that have already banked a Coagulation charge during the skill use in
+    // progress. Cleared on every use, so it never outlives the swing that filled it.
+    private readonly HashSet<IntPtr> _chargedThisUse = new();
+
     public override void OnInit()
     {
         _instance = this;
@@ -230,10 +234,21 @@ public sealed class SextansUltSystem : JiangyuSystem
     internal static void SetCoagulationStage(Actor user, int count)
         => _instance?.SetStage(user, count);
 
-    // MarkOnHit's charge entry point: one charge per enemy actually hit by
-    // a charge-granting skill.
-    internal static void AddChargeFor(Actor user)
-        => _instance?.FindUltHandler(user)?.AddCharge();
+    // MarkOnHit's charge entry point: one charge per enemy a charge-granting skill hits,
+    // whether that hit marks a survivor or kills outright.
+    //
+    // Deduped per victim because the two paths overlap: a swing that kills reports through
+    // the kill event AND (while the corpse still holds the tile) through the application.
+    // The ledger spans one use, cleared by OnSkillUse below, so a victim struck again next
+    // turn pays out again.
+    internal static void AddChargeFor(Actor user, Actor victim)
+    {
+        if (_instance == null || user == null || victim == null)
+            return;
+        if (!_instance._chargedThisUse.Add(victim.Pointer))
+            return;
+        _instance.FindUltHandler(user)?.AddCharge();
+    }
 
     // Reported by Blood Rally's OnTargetHit for each of the ult's hits while
     // it resolves. Buckets by the victim's Blood Kiss so the heal can weigh
@@ -307,6 +322,10 @@ public sealed class SextansUltSystem : JiangyuSystem
             var skill = info.Args[1] as Skill;
             if (actor == null || skill == null)
                 return;
+
+            // Every use opens a fresh charge ledger, whoever the user is: the charges a
+            // swing banks are deduped against that swing's own victims and nothing else.
+            _chargedThisUse.Clear();
 
             var id = skill.GetTemplate()?.GetID();
             if (!IsUltId(id))

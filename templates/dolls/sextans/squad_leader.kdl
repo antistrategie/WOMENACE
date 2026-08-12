@@ -64,6 +64,12 @@ clone "EntityTemplate" from="player_squad.carda" id="player_squad.sextans" {
     clear "Items"
     append "Items" "armor.player_fatigues"
     append "Items" "weapon.sextans"
+
+    set "Scale" {
+        set "x" 1.0
+        set "y" 1.0
+    }
+    set "OverrideScaleForSquadLeader" #false
 }
 
 clone "UnitLeaderTemplate" from="squad_leader.carda" id="squad_leader.sextans" {

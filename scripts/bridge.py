@@ -13,6 +13,9 @@ Common uses:
     scripts/bridge.py workshop         # unlock the ship workshop (+ blueprint vouchers)
     scripts/bridge.py workshop off     # re-lock both gates
     scripts/bridge.py winmission       # kill remaining enemies + complete objectives
+    scripts/bridge.py hud off          # take the mission UI down for a clean shot
+    scripts/bridge.py hud on           # put it back
+    scripts/bridge.py hud toggle       # flip it, for framing a shot in one repeated call
     scripts/bridge.py ping             # sanity check the connection
 
 These only exist in the dev loader, so the game must be running with the dev
@@ -119,6 +122,14 @@ def main():
                           help="on unlocks (default), off re-locks both gates")
 
     sub.add_parser("winmission", help="kill remaining enemies and complete objectives")
+
+    hud = sub.add_parser("hud", help="take the mission UI down (needs a running mission)")
+    hud.add_argument("state", nargs="?", choices=["off", "on", "toggle", "state"], default="off",
+                     help="off hides the UI (default), on restores it, toggle flips it, "
+                          "state reports without changing anything")
+    hud.add_argument("--keep-markers", action="store_true",
+                     help="leave the world-space unit and objective markers on screen")
+
     sub.add_parser("ping", help="check the bridge is reachable")
 
     verb = sub.add_parser("verb", help="run any dev verb by Class.Method name")
@@ -140,6 +151,15 @@ def main():
         _emit(run_verb("Workshop.Unlock", [options.state == "on"], mutate=True))
     elif options.cmd == "winmission":
         _emit(command("winmission"))
+    elif options.cmd == "hud":
+        # Only Hud.Hide takes the marker flag; the other three are argument-free, and passing a
+        # spare positional would resolve to no overload at all.
+        if options.state == "off":
+            _emit(run_verb("Hud.Hide", [not options.keep_markers], mutate=True))
+        elif options.state == "state":
+            _emit(run_verb("Hud.State"))
+        else:
+            _emit(run_verb("Hud.Show" if options.state == "on" else "Hud.Toggle", mutate=True))
     elif options.cmd == "verb":
         args = json.loads(options.args) if options.args else None
         _emit(run_verb(options.name, args, mutate=options.mutate))

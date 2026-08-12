@@ -45,6 +45,12 @@ clone "EntityTemplate" from="player_squad.sy" id="player_squad.vector" {
     clear "Items"
     append "Items" "armor.player_fatigues"
     append "Items" "weapon.vector"
+
+    set "Scale" {
+        set "x" 1.0
+        set "y" 1.0
+    }
+    set "OverrideScaleForSquadLeader" #false
 }
 
 clone "UnitLeaderTemplate" from="squad_leader.sy" id="squad_leader.vector" {

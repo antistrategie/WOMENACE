@@ -4,8 +4,9 @@ Produces a single GLB carrying the weapon's mesh, a Principled BSDF material
 wired up with the source textures (for Blender visual preview only), and two
 empty objects (`muzzle`, `weapon_hand_l`) seeded from a reference vanilla
 MENACE weapon's attach-point transforms. The downstream Unity-side
-`Jiangyu.Mod.BakeWeapon` Editor utility consumes this GLB and bakes a prefab
-with the Menace/* shader cloned from the reference weapon's material.
+`Jiangyu.Mod.BakeWeapon` Editor utility consumes this GLB and bakes a prefab,
+putting it on the shader its material manifest names. scripts/weapon/
+shade_weapons.py writes those manifests and runs that bake.
 
 The intermediate GLB is intended to be opened in Blender so the modder can
 nudge the `muzzle` and `weapon_hand_l` empties to match their weapon's actual
@@ -20,11 +21,12 @@ Pipeline:
      in the hand.
   4. Build a Principled BSDF material with the three textures wired into
      BaseColor / Normal / Roughness+Metallic. This is for Blender preview
-     only; the Unity bake replaces the material with a Menace-shader clone.
+     only; the Unity bake replaces it with the manifest's material.
   5. Read the reference weapon glTF, extract `muzzle` and `weapon_hand_l`
      node translations + rotations.
   6. Create two Empty objects at those positions, parented to the mesh root.
-  7. Export as GLB with textures embedded.
+  7. Export as GLB with textures embedded, and copy the source textures
+     beside it for the Unity bake to pick up.
 
 Run as:
     blender --background --python bake_weapon.py -- --config <config.json>
@@ -42,12 +44,6 @@ try:
     import mathutils  # type: ignore
 except ImportError as exc:  # pragma: no cover - Blender-only entry point
     raise SystemExit("This script must be run inside Blender.") from exc
-
-try:
-    import numpy as np  # type: ignore
-except ImportError as exc:  # pragma: no cover - Blender bundles numpy
-    raise SystemExit("numpy is required (Blender bundles numpy by default).") from exc
-
 
 # -----------------------------------------------------------------------------
 # Config
@@ -253,9 +249,8 @@ def build_preview_material(cfg: WeaponConfig, mesh_obj: bpy.types.Object) -> Non
     links.new(normal_tex.outputs["Color"], normal_map.inputs["Color"])
     links.new(normal_map.outputs["Normal"], bsdf.inputs["Normal"])
 
-    # Mask map (non-colour). Assume R=Roughness, G=Metallic, B=AO for preview
-    # only — Unity-side bake passes the texture through to whatever channel
-    # mapping the Menace/* shader expects.
+    # Mask map (non-colour): the Sunborn _rmo, R=Roughness, G=Metallic, B=AO,
+    # which is the packing DollToon reads natively.
     mask_tex = nodes.new("ShaderNodeTexImage")
     mask_tex.image = _load_image(cfg.texture_mask_map, non_colour=True)
     mask_tex.location = (-300, -400)
@@ -370,49 +365,6 @@ def export_glb(output_path: Path) -> None:
     )
 
 
-def repack_rmo_to_mask_map(rmo_path: Path, out_path: Path) -> None:
-    """Convert Sunborn-rip `_rmo` (R=Roughness, G=Metallic, B=AO) to HDRP
-    `_MaskMap` convention (R=Metallic, G=AO, B=Detail=0, A=Smoothness=1-R).
-    Dodges the chrome-blue rendering bug from slotting the raw `_rmo` into
-    Menace's MaskMap slot, where the shader reads channel R as Metallic."""
-    if not rmo_path.exists():
-        raise SystemExit(f"RMO texture not found: {rmo_path}")
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-
-    img = bpy.data.images.load(str(rmo_path), check_existing=False)
-    try:
-        img.colorspace_settings.name = "Non-Color"
-        w, h = img.size
-        if w == 0 or h == 0:
-            raise SystemExit(f"RMO texture has zero dimensions: {rmo_path}")
-
-        # Read pixels into numpy for vectorised channel swap. Blender's
-        # img.pixels is a flat RGBA float32 array in row-major bottom-up
-        # order — we don't care about row order since we don't transpose.
-        pixels = np.empty(w * h * 4, dtype=np.float32)
-        img.pixels.foreach_get(pixels)
-        pixels = pixels.reshape(-1, 4)
-
-        repacked = np.zeros_like(pixels)
-        repacked[:, 0] = pixels[:, 1]            # R = Metallic (from rmo.G)
-        repacked[:, 1] = pixels[:, 2]            # G = AO       (from rmo.B)
-        repacked[:, 2] = 0.0                     # B = Detail   (no detail mask)
-        repacked[:, 3] = 1.0 - pixels[:, 0]      # A = Smoothness (1 - rmo.R)
-
-        new_img = bpy.data.images.new(
-            name=out_path.stem, width=w, height=h, alpha=True, float_buffer=True)
-        try:
-            new_img.colorspace_settings.name = "Non-Color"
-            new_img.pixels.foreach_set(repacked.flatten())
-            new_img.filepath_raw = str(out_path)
-            new_img.file_format = "PNG"
-            new_img.save()
-        finally:
-            bpy.data.images.remove(new_img)
-    finally:
-        bpy.data.images.remove(img)
-
-
 def copy_textures_to_output(cfg: WeaponConfig) -> dict[str, Path]:
     """Copy the three source textures into the GLB's output directory so the
     Unity-side BakeWeapon utility can pick them up as standalone Texture2D
@@ -446,36 +398,12 @@ def parse_args() -> argparse.Namespace:
         argv = []
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", required=True, type=Path)
-    parser.add_argument(
-        "--mode",
-        choices=["full", "repack-mask"],
-        default="full",
-        help="full: GLB + textures + repacked mask (default). "
-        "repack-mask: regenerate just the HDRP MaskMap PNG from _rmo (preserves a hand-edited GLB).",
-    )
     return parser.parse_args(argv)
-
-
-def _mask_output_path(cfg: WeaponConfig) -> Path:
-    """Filename for the HDRP-repacked mask: `<rmo-stem-with-_rmo-stripped>_mask.png`
-    next to the copied textures."""
-    src = cfg.texture_mask_map
-    stem = src.stem
-    if stem.endswith("_rmo"):
-        stem = stem[: -len("_rmo")]
-    return cfg.output_path.parent / "textures" / f"{stem}_mask.png"
 
 
 def main() -> None:
     args = parse_args()
     cfg = WeaponConfig.load(args.config)
-
-    if args.mode == "repack-mask":
-        reset_scene()
-        out_path = _mask_output_path(cfg)
-        repack_rmo_to_mask_map(cfg.texture_mask_map, out_path)
-        print(f"[done] HDRP mask map written to: {out_path}")
-        return
 
     reset_scene()
     mesh_obj = import_obj(cfg.obj_path, cfg.obj_forward_axis, cfg.obj_up_axis)
@@ -505,12 +433,9 @@ def main() -> None:
     create_attach_point_empties(root, points)
 
     export_glb(cfg.output_path)
-    tex_paths = copy_textures_to_output(cfg)
-    mask_path = _mask_output_path(cfg)
-    repack_rmo_to_mask_map(cfg.texture_mask_map, mask_path)
+    copy_textures_to_output(cfg)
     print(f"\n[done] weapon GLB written to: {cfg.output_path}")
     print(f"       copied textures to:    {cfg.output_path.parent / 'textures'}")
-    print(f"       repacked HDRP mask:    {mask_path}")
     print(f"       open the GLB in Blender to nudge the 'muzzle' and 'weapon_hand_l'")
     print(f"       empties (and the mesh, to set the right-hand grip), then re-export")
     print(f"       over the same path before passing to Unity BakeWeapon.")

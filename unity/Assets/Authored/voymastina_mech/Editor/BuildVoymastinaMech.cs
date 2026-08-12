@@ -27,6 +27,13 @@ namespace WOMENACE.Editor
         private const float ModelScale = 125f;
         private const float FbxFileScale = 0.01f;
 
+        // The doll shading. Ramps are per character with a global set in shared;
+        // see the doll-shading skill for the split and why it follows the game's.
+        private const string VoyRamps = "Assets/Authored/voymastina/ramps";
+        private const string SharedRamps = "Assets/Authored/shared/ramps";
+        private const string SharedFaceSdf = "Assets/Authored/shared/face_sdf.png";
+        private const string FaceSdfSidecars = SrcDir + "/face_sdf";
+
         private const string ThrusterVfxDir = "Assets/Imported/vfx_jetpack_walker_thruster_animated";
         private const string ThrusterVfxPrefab = ThrusterVfxDir + "/GameObject/vfx_jetpack_walker_thruster_animated.prefab";
         private const string ThrusterLoopClip = ThrusterVfxDir + "/AnimationClip/ac_vfx_jetpack_thruster_loop.anim";
@@ -79,7 +86,23 @@ namespace WOMENACE.Editor
             var meshes = AssetDatabase.LoadAllAssetsAtPath(ErwinFbx).OfType<Mesh>().ToList();
             Debug.Log($"FBX meshes ({meshes.Count}):");
             foreach (var m in meshes)
-                Debug.Log($"  mesh {m.name} verts={m.vertexCount} bindposes={m.bindposes.Length} weights={m.boneWeights.Length}");
+            {
+                // UV channel census: Unity's uv2 is the TEXCOORD1 semantic, uv3 is
+                // TEXCOORD2. A ripped game mesh may carry the real TEXCOORD1 the
+                // hair specular needs, which a PMX source never can.
+                var u1 = m.uv2; var u2 = m.uv3;
+                string uvInfo = $"uv1={(u1 != null ? u1.Length : 0)} uv2={(u2 != null ? u2.Length : 0)}";
+                if (u1 != null && u1.Length > 0)
+                {
+                    Vector2 lo = u1[0], hi = u1[0];
+                    foreach (var v in u1) { lo = Vector2.Min(lo, v); hi = Vector2.Max(hi, v); }
+                    uvInfo += $" uv1Range=({lo.x:F3},{lo.y:F3})..({hi.x:F3},{hi.y:F3})";
+                }
+                Debug.Log($"  mesh {m.name} verts={m.vertexCount} sub={m.subMeshCount} "
+                    + $"bindposes={m.bindposes.Length} {uvInfo}");
+                for (int s = 0; s < m.subMeshCount; s++)
+                    Debug.Log($"    submesh {s}: {m.GetSubMesh(s).indexCount} indices");
+            }
             var go = AssetDatabase.LoadAssetAtPath<GameObject>(ErwinFbx);
             var inst = (GameObject)PrefabUtility.InstantiatePrefab(go);
             // weight content: is the skin real (blended, varied bone indices) or degenerate
@@ -391,6 +414,12 @@ namespace WOMENACE.Editor
                         Debug.Log("dropping duplicate LOD mesh " + rmesh.name);
                         continue;
                     }
+                    // The face's SDF lookup coordinates, from the committed sidecars.
+                    if (r is SkinnedMeshRenderer sdfSmr && rmesh != null)
+                    {
+                        var withUv = FaceSdfUv.WithBakedUv(rmesh, FaceSdfSidecars, AnimDir);
+                        if (withUv != rmesh) { sdfSmr.sharedMesh = withUv; rmesh = withUv; }
+                    }
                     int n = rmesh != null ? Mathf.Max(1, rmesh.subMeshCount) : 1;
                     var sets = TextureSetsFor(rmesh != null ? rmesh.name : r.name);
                     var arr = new Material[n];
@@ -408,6 +437,9 @@ namespace WOMENACE.Editor
                 }
                 foreach (var go in lodDrop) UnityEngine.Object.DestroyImmediate(go);
                 Debug.Log($"textured {smrCount} renderers, {texCount} submesh materials (shader {lit.name}); dropped {lodDrop.Count} duplicate LODs");
+
+                AttachEyes(inst, matCache);
+                AddOutlines(inst, matCache);
 
                 // DIAGNOSTIC: scale + bounds (why is she invisible in-game?)
                 var imp2 = (ModelImporter)AssetImporter.GetAtPath(ErwinFbx);
@@ -816,6 +848,12 @@ namespace WOMENACE.Editor
                 {
                     var rmesh = (r as SkinnedMeshRenderer)?.sharedMesh ?? (r.GetComponent<MeshFilter>()?.sharedMesh);
                     if (rmesh != null && IsDropLod(rmesh.name)) { drop.Add(r.gameObject); continue; }
+                    // The face's SDF lookup coordinates, from the committed sidecars.
+                    if (r is SkinnedMeshRenderer sdfSmr && rmesh != null)
+                    {
+                        var withUv = FaceSdfUv.WithBakedUv(rmesh, FaceSdfSidecars, AnimDir);
+                        if (withUv != rmesh) { sdfSmr.sharedMesh = withUv; rmesh = withUv; }
+                    }
                     if (rmesh != null && rmesh.boneWeights != null && rmesh.boneWeights.Length > 0)
                     {
                         var di = new HashSet<int>(); int bl = 0;
@@ -837,6 +875,9 @@ namespace WOMENACE.Editor
                 }
                 foreach (var go in drop) UnityEngine.Object.DestroyImmediate(go);
                 Debug.Log($"default: textured {sc} renderers, {tc} mats, dropped {drop.Count} LODs");
+
+                AttachEyes(inst, matCache);
+                AddOutlines(inst, matCache);
 
                 // Size baked into the mesh/skeleton at import; root stays at scale 1.
 
@@ -922,7 +963,11 @@ namespace WOMENACE.Editor
             if (m.Contains("SSR01_slg_cloth2")) return new[] { "c_VoymastinaSSR01_slg_cloth2" };
             if (m.Contains("SSR01_slg_hair")) return new[] { "c_Voymastina_slg_hair" };
             if (m.Contains("slg_face")) return new[] { "c_Voymastina_slg_face" };
-            if (m.Contains("slg_body")) return new[] { "c_Voymastina_slg_face" }; // skin approximation
+            // Body skin approximated with the face texture, but as its own material:
+            // the face's material carries the SDF sweep, whose lookup coordinates
+            // only exist on the face mesh. The |body marker splits the material
+            // while the texture prefix stays shared.
+            if (m.Contains("slg_body")) return new[] { "c_Voymastina_slg_face|body" };
             return null;
         }
 
@@ -954,11 +999,263 @@ namespace WOMENACE.Editor
             return null;
         }
 
-        // Build (and cache) a Menace/character material for a texture-set base name. Sets every
-        // candidate property name so the runtime shader rebind picks up whichever it uses.
+        // The pilot's eye stack, transplanted from her infantry doll by
+        // scripts/doll/transplant_eyes.py: the battle rip ships no eye geometry
+        // (the game attaches its own at runtime), so the doll's four layers are
+        // aligned onto the FBX face and attached here as skinned renderers
+        // sharing the face's bones, every vertex on the face's dominant bone.
+        // Draw order and blending live in the layer shaders themselves, exactly
+        // as they do on the dolls.
+        private const string EyesDir = SrcDir + "/eyes";
+
+        private static readonly (string layer, string obj)[] EyeLayers =
+        {
+            ("EyeWhite", "eye_EyeWhite.obj"),
+            ("Eyes", "eye_Eyes.obj"),
+            ("EyeShadow", "eye_EyeShadow.obj"),
+            ("Eyes+", "eye_Eyes_hl.obj"),
+        };
+
+        private static void AttachEyes(GameObject inst, Dictionary<string, Material> matCache)
+        {
+            SkinnedMeshRenderer face = null;
+            foreach (var smr in inst.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+                if (smr.sharedMesh != null && smr.sharedMesh.name.Contains("slg_face")
+                    && !IsDropLod(smr.sharedMesh.name)) { face = smr; break; }
+            if (face == null) { Debug.LogError("AttachEyes: no face renderer"); return; }
+
+            // The face's dominant bone, which is the head: the eyes ride it rigidly.
+            var faceWeights = face.sharedMesh.boneWeights;
+            var totals = new float[face.bones.Length];
+            foreach (var w in faceWeights)
+            {
+                totals[w.boneIndex0] += w.weight0;
+                totals[w.boneIndex1] += w.weight1;
+                totals[w.boneIndex2] += w.weight2;
+                totals[w.boneIndex3] += w.weight3;
+            }
+            int head = 0;
+            for (int i = 1; i < totals.Length; i++) if (totals[i] > totals[head]) head = i;
+
+            foreach (var (layer, objName) in EyeLayers)
+            {
+                var source = AssetDatabase.LoadAllAssetsAtPath(EyesDir + "/" + objName)
+                    .OfType<Mesh>().FirstOrDefault();
+                if (source == null) { Debug.LogError($"AttachEyes: missing {objName}"); continue; }
+                var mesh = UnityEngine.Object.Instantiate(source);
+                mesh.name = "voy_" + layer.Replace("+", "_hl");
+                var weights = new BoneWeight[mesh.vertexCount];
+                for (int i = 0; i < weights.Length; i++)
+                    weights[i] = new BoneWeight { boneIndex0 = head, weight0 = 1f };
+                mesh.boneWeights = weights;
+                mesh.bindposes = face.sharedMesh.bindposes;
+                AssetDatabase.CreateAsset(mesh, AnimDir + "/" + mesh.name + ".asset");
+
+                var go = new GameObject(mesh.name);
+                go.transform.SetParent(face.transform.parent, false);
+                var smr = go.AddComponent<SkinnedMeshRenderer>();
+                smr.sharedMesh = mesh;
+                smr.bones = face.bones;
+                smr.rootBone = face.rootBone;
+                smr.updateWhenOffscreen = true;
+                smr.sharedMaterials = new[] { EyeLayerMaterial(layer, matCache) };
+            }
+            Debug.Log("AttachEyes: four layers on bone " + face.bones[head].name);
+        }
+
+        private static Material EyeLayerMaterial(string layer, Dictionary<string, Material> cache)
+        {
+            string key = "eye|" + layer;
+            if (cache.TryGetValue(key, out var cached)) return cached;
+            Material mat;
+            switch (layer)
+            {
+                // The backing takes the face's own material sans SDF: same skin,
+                // same ramp, and the sweep's coordinates exist only on the face.
+                case "EyeWhite":
+                    return GetOrBuildMaterial("c_Voymastina_slg_face|body",
+                        Shader.Find("Menace/character"), cache);
+                case "Eyes":
+                    mat = new Material(Shader.Find("Womenace/DollEye")) { name = "vmat_eye" };
+                    mat.SetTexture("_BaseMap",
+                        LoadTex("c_Voymastina_slg_eye", new[] { "_d" }, sRGB: true, isNormal: false));
+                    break;
+                case "EyeShadow":
+                    mat = new Material(Shader.Find("Womenace/DollEyeShadow")) { name = "vmat_eyemul" };
+                    mat.SetTexture("_BaseMap",
+                        LoadTex("c_Voymastina_slg_eyeblend", new[] { "" }, sRGB: true, isNormal: false));
+                    break;
+                default:
+                    mat = new Material(Shader.Find("Womenace/DollEyeHighlight")) { name = "vmat_eyeadd" };
+                    mat.SetTexture("_BaseMap",
+                        LoadTex("c_Voymastina_slg_eyeblend", new[] { "" }, sRGB: true, isNormal: false));
+                    break;
+            }
+            AssetDatabase.CreateAsset(mat, AnimDir + "/" + mat.name + ".mat");
+            cache[key] = mat;
+            return mat;
+        }
+
+        // The inverted-hull outline, as the dolls have it: the same geometry drawn
+        // again under DollOutline. On the glTF dolls that is a duplicated submesh;
+        // here it is a duplicated renderer, which is the same draw. The face is
+        // excluded (its open boundary edges draw rims without a per-vertex width),
+        // and so are the weapons and the logo, which the game leaves outline-free.
+        private static bool OutlinedMesh(string meshName)
+        {
+            if (meshName == null) return false;
+            if (meshName.Contains("logo") || meshName.StartsWith("cw_")) return false;
+            return meshName.Contains("slg_hair") || meshName.Contains("slg_cloth")
+                || meshName.Contains("slg_body") || meshName.Contains("Mech_slg");
+        }
+
+        private static void AddOutlines(GameObject inst, Dictionary<string, Material> matCache)
+        {
+            var outlined = new List<(Renderer r, Mesh mesh)>();
+            foreach (var r in inst.GetComponentsInChildren<Renderer>(true))
+            {
+                var mesh = (r as SkinnedMeshRenderer)?.sharedMesh
+                    ?? r.GetComponent<MeshFilter>()?.sharedMesh;
+                if (mesh != null && OutlinedMesh(mesh.name) && !r.name.EndsWith("_outline"))
+                    outlined.Add((r, mesh));
+            }
+            foreach (var (r, mesh) in outlined)
+            {
+                var copy = UnityEngine.Object.Instantiate(r.gameObject, r.transform.parent);
+                copy.name = r.gameObject.name + "_outline";
+                // The copy keeps only its renderer; children would double whatever
+                // hangs below the original.
+                for (int i = copy.transform.childCount - 1; i >= 0; i--)
+                    UnityEngine.Object.DestroyImmediate(copy.transform.GetChild(i).gameObject);
+                var cr = copy.GetComponent<Renderer>();
+                var sets = TextureSetsFor(mesh.name);
+                int n = Mathf.Max(1, mesh.subMeshCount);
+                var mats = new Material[n];
+                for (int i = 0; i < n; i++)
+                {
+                    var baseName = (sets != null && sets.Length > 0)
+                        ? sets[Mathf.Min(i, sets.Length - 1)] : null;
+                    mats[i] = OutlineMaterial(baseName, matCache);
+                }
+                cr.sharedMaterials = mats;
+                if (cr is SkinnedMeshRenderer smr) smr.updateWhenOffscreen = true;
+            }
+            Debug.Log($"AddOutlines: {outlined.Count} renderer(s) duplicated under DollOutline");
+        }
+
+        private static Material OutlineMaterial(string baseName, Dictionary<string, Material> cache)
+        {
+            string key = "outline|" + (baseName ?? "plain");
+            if (cache.TryGetValue(key, out var cached)) return cached;
+            var mat = new Material(Shader.Find("Womenace/DollOutline"))
+            { name = "vmat_outline_" + (baseName ?? "plain") };
+            if (baseName != null)
+            {
+                var alb = LoadTex(baseName, new[] { "_d", "_da" }, sRGB: true, isNormal: false);
+                if (alb != null) mat.SetTexture("_BaseMap", alb);
+            }
+            AssetDatabase.CreateAsset(mat, AnimDir + "/" + mat.name.Replace('|', '_') + ".mat");
+            cache[key] = mat;
+            return mat;
+        }
+
+        // GFL2 texture-set base name -> doll shader + ramp. A null shader keeps the
+        // Menace/character fallback. Everything mech and weapon takes the shared
+        // weapon ramp, which is what the capture's binding map shows on the weapon
+        // and the large draws; the doll parts take her own extracted ramps.
+        //
+        // cloth1 is the cool suit and pairs with the xizhuang (suit) ramp, cloth2
+        // the warm underlayer with the cloth ramp. If a garment's shadow hue reads
+        // wrong in game, these two are the pair to swap.
+        private static (string shader, string ramp) DollRouteFor(string baseName)
+        {
+            if (baseName.Contains("Mech_slg_logo")) return ("Womenace/DollToonTrans", SharedRamps + "/ramp_weapon.png");
+            if (baseName.Contains("_Mech_") || baseName.StartsWith("cw_")) return ("Womenace/DollToon", SharedRamps + "/ramp_weapon.png");
+            if (baseName.Contains("SSR0101_slg_cloth1")) return ("Womenace/DollToon", VoyRamps + "/ramp_suit.png");
+            if (baseName.Contains("SSR0101_slg_cloth2")) return ("Womenace/DollToon", VoyRamps + "/ramp_cloth_formal.png");
+            if (baseName.Contains("SSR01_slg_cloth")) return ("Womenace/DollToon", VoyRamps + "/ramp_cloth_main.png");
+            if (baseName.Contains("SSR0101_slg_hair")) return ("Womenace/DollToon", VoyRamps + "/ramp_hair_formal.png");
+            if (baseName.Contains("_slg_hair")) return ("Womenace/DollToon", VoyRamps + "/ramp_hair.png");
+            if (baseName.Contains("_slg_face")) return ("Womenace/DollToon", SharedRamps + "/ramp_skin.png");
+            return (null, null);
+        }
+
+        // Build (and cache) the material for a texture-set base name: the doll
+        // shaders where the route above names one, the Menace/character fallback
+        // otherwise. A "|marker" suffix on the base name splits the material
+        // without splitting the texture set, e.g. body skin sharing the face's
+        // texture but not its SDF sweep.
         private static Material GetOrBuildMaterial(string baseName, Shader shader, Dictionary<string, Material> cache)
         {
             if (cache.TryGetValue(baseName, out var cached)) return cached;
+            int marker = baseName.IndexOf('|');
+            string texBase = marker < 0 ? baseName : baseName.Substring(0, marker);
+            var route = DollRouteFor(texBase);
+            var mat = route.shader != null
+                ? BuildDollMaterial(baseName, texBase, route.shader, route.ramp)
+                : BuildMenaceMaterial(texBase, shader);
+            AssetDatabase.CreateAsset(mat, AnimDir + "/vmat_" + baseName.Replace('|', '_') + ".mat");
+            cache[baseName] = mat;
+            return mat;
+        }
+
+        // A material on the doll shaders, textured with the GFL2 set as shipped:
+        // albedo, tangent normal, RMO in the game's own packing (the shader reads
+        // R rough, G metal, B occlusion directly, so the HDRP repack and the matte
+        // placeholder both stay out of this path), and the ramp. The doll shaders
+        // sample no decal buffer, so they need no decal opt-out to keep road
+        // decals off the mech.
+        private static Material BuildDollMaterial(string baseName, string texBase, string shaderName, string rampPath)
+        {
+            var shader = Shader.Find(shaderName);
+            if (shader == null)
+            {
+                Debug.LogError("missing shader " + shaderName + ", falling back to Standard");
+                shader = Shader.Find("Standard");
+            }
+            var mat = new Material(shader) { name = "vmat_" + baseName.Replace('|', '_') };
+            var alb = LoadTex(texBase, new[] { "_d", "_da" }, sRGB: true, isNormal: false);
+            if (alb != null) mat.SetTexture("_BaseMap", alb);
+            var nrm = LoadTex(texBase, new[] { "_n" }, sRGB: false, isNormal: true);
+            if (nrm != null) mat.SetTexture("_NormalMap", nrm);
+            // The GFL2 _rmo is data, not colour: linear, and bound to the slot the
+            // shader reads in the game's packing.
+            var rmo = LoadTex(texBase, new[] { "_rmo" }, sRGB: false, isNormal: false);
+            if (rmo != null) mat.SetTexture("_MaskMap", rmo);
+            var spc = LoadTex(texBase, new[] { "_spc" }, sRGB: true, isNormal: false);
+            if (spc != null)
+            {
+                mat.SetTexture("_SpecularMap", spc);
+                // The hair path, on. The doll bakes keep this at 0 because a PMX
+                // source has no real TEXCOORD1 to sample the streak with, but the
+                // ripped game meshes here carry the game's own strip UV (verified:
+                // the hair's TEXCOORD1 spans strip coordinates well outside 0..1).
+                // A non-zero intensity is also what routes the material off GGX
+                // and onto the anisotropic hair term.
+                mat.SetFloat("_MatCapIntensity", 1f);
+            }
+            var ramp = AssetDatabase.LoadAssetAtPath<Texture2D>(rampPath);
+            if (ramp == null) Debug.LogError("missing ramp " + rampPath);
+            else mat.SetTexture("_RampMap", ramp);
+            // The SDF sweep belongs to the face mesh alone: its lookup coordinates
+            // exist only there, which is what the |body split guards.
+            if (baseName.Contains("_slg_face") && !baseName.Contains("|"))
+            {
+                mat.SetFloat("_UseBlendTex", 1f);
+                var sdf = AssetDatabase.LoadAssetAtPath<Texture2D>(SharedFaceSdf);
+                if (sdf == null) Debug.LogError("missing face SDF map " + SharedFaceSdf);
+                else mat.SetTexture("_SdfMap", sdf);
+            }
+            Debug.Log($"doll material {baseName}: shader={shaderName} ramp={System.IO.Path.GetFileName(rampPath)} "
+                + $"albedo={(alb ? alb.name : "-")} normal={(nrm ? nrm.name : "-")} rmo={(rmo ? rmo.name : "-")}");
+            return mat;
+        }
+
+        // The Menace/character fallback for anything the doll route does not
+        // claim. Sets every candidate property name so the runtime shader rebind
+        // picks up whichever it uses.
+        private static Material BuildMenaceMaterial(string baseName, Shader shader)
+        {
             var alb = LoadTex(baseName, new[] { "_d", "_da", "_spc" }, sRGB: true, isNormal: false);
             var nrm = LoadTex(baseName, new[] { "_n" }, sRGB: false, isNormal: true);
             var mat = new Material(shader) { name = "vmat_" + baseName };
@@ -978,8 +1275,6 @@ namespace WOMENACE.Editor
             // _DISABLE_DECALS shader keyword, so set both for the serialised material to match.
             if (mat.HasProperty("_SupportDecals")) mat.SetFloat("_SupportDecals", 0f);
             mat.EnableKeyword("_DISABLE_DECALS");
-            AssetDatabase.CreateAsset(mat, AnimDir + "/vmat_" + baseName + ".mat");
-            cache[baseName] = mat;
             Debug.Log($"material {baseName}: albedo={(alb ? alb.name : "-")} normal={(nrm ? nrm.name : "-")}");
             return mat;
         }

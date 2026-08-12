@@ -7,6 +7,8 @@ description: Convert an MMD PMX character into an addition-prefab glTF for MENAC
 
 ## What this pipeline does
 
+Shading the converted model is [`doll-shading`](../doll-shading/SKILL.md). Run this conversion **before** that: it regenerates the glTF and discards anything added afterwards, including hand-painted weights if they were painted on the glTF rather than kept in the `.blend`.
+
 `scripts/pmx_to_menace.py` takes a PMX model (MMD format) plus a reference MENACE soldier glTF and avatar, and emits a single glTF carrying the PMX character's mesh and skeleton renamed to MENACE's humanoid bone convention, T-pose-calibrated against the reference, with attachment bones grafted in. Runs headless in Blender via `mmd_tools` for the PMX import.
 
 The output glTF is the input to Jiangyu's Unity-side `BakeHumanoid` Editor utility, which bakes it into an addition soldier prefab (avatar + per-source-texture materials + LODGroup + animator). Jiangyu then compiles the prefab into an AssetBundle that MENACE loads at runtime.

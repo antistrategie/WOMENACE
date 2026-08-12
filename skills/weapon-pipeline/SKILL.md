@@ -39,10 +39,9 @@ What it does:
 - Imports the source OBJ.
 - Applies axis fixup so the gun's length lies along Blender −Y (forward) after the glTF Y-up→Z-up convention. For Sunborn-rip OBJs, use `obj_forward_axis: "X"` + `obj_up_axis: "Y"`. Counter-intuitive: `"X"` (not `"-X"`) lands the muzzle at glTF +Z post-export.
 - Centres the mesh on X+Y (left/right symmetry + bbox-vertical centring). Z preserves grip-at-origin.
-- Builds a Principled BSDF material with BaseColor/Normal/Roughness+Metallic wired up (Blender preview only — Unity replaces it with a Menace-shader clone).
+- Builds a Principled BSDF material with BaseColor/Normal/Roughness+Metallic wired up (Blender preview only, since Unity replaces it with the material the manifest names).
 - Reads the **reference vanilla weapon's glTF**, extracts the `muzzle` and `weapon_hand_l` empty positions + rotations, and seeds two empties at those positions in the authored armature.
-- Repacks the RMO texture's channel order from source convention (Roughness/Metallic/AO) to HDRP MaskMap convention (R=Metallic, G=AO, B=Detail, A=Smoothness).
-- Exports `raw.glb` + a `textures/` subdir.
+- Exports `raw.glb` + a `textures/` subdir, the RMO copied across untouched because `DollToon` reads its Roughness/Metallic/AO packing natively.
 
 Config file shape (one JSON per weapon under `scripts/.config/`):
 
@@ -91,19 +90,12 @@ The `--path-id` comes from a search; `import-prefab` is what makes the reference
 ## 3. Unity bake
 
 ```bash
-/path/to/Unity -batchmode -nographics -quit -buildTarget StandaloneWindows64 \
-  -projectPath unity \
-  -executeMethod Jiangyu.Mod.BakeWeapon.BakeBatch \
-  -gltfPath Assets/Authored/weapon/<name>/raw.glb \
-  -referencePrefab Assets/Imported/<vanilla_weapon>/GameObject/<vanilla_weapon>.prefab \
-  -outputDir Assets/Prefabs \
-  -outputName weapon/<name> \
-  -textureBase Assets/Authored/weapon/<name>/textures/<name>_d.tga \
-  -textureNormal Assets/Authored/weapon/<name>/textures/<name>_n.tga \
-  -textureMask Assets/Authored/weapon/<name>/textures/<name>_mask.png
+python3 scripts/weapon/shade_weapons.py --bake <name>
 ```
 
-`BakeWeapon.cs` (in `unity/Assets/Jiangyu/Editor/`) clones the reference vanilla weapon's `Menace/lit_highlight` shader material and binds the modder's textures to `_BaseColorMap` / `_NormalMap` / `_MaskMap`. Unset texture slots fall back to neutral 1×1 defaults — important for `_MaskMap` because Unity's default white would read as Metallic=1 and turn the gun chrome-blue.
+That writes the weapon's `materials.json` and runs `Jiangyu.Mod.BakeWeapon.BakeBatch` over it, putting the weapon on `Womenace/DollToon` with the shared weapon ramp so the gun a doll carries is shaded like the doll. The mask it binds is the Sunborn `_rmo`, which is the packing `DollToon` reads natively.
+
+`BakeWeapon.cs` (in `unity/Assets/Jiangyu/Editor/`) clones a material from the reference vanilla weapon and applies the manifest over it, so a manifest naming a shader and all four maps leaves nothing of the reference behind and one reference serves every weapon. Unset texture slots fall back to neutral 1×1 defaults, which matters for `_MaskMap` because Unity's default white would read as Metallic=1 and turn the gun chrome-blue.
 
 Output:
 

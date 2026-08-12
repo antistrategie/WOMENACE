@@ -31,12 +31,26 @@ WOMENACE/
 │   ├── Systems/Ssr/        SSR "Imprint Boost" weapons (owner-only combat bonuses + tooltip section)
 │   ├── Systems/Dolls/      per-doll systems (e.g. Voymastina mech form swap)
 │   ├── Systems/Gifts/      affinity-gift drops + catalogue
+│   ├── Systems/PlayerSettingsSystem.cs  UserData/womenace-settings, one key=value per line
+│   │                       (`outlines`), read at load and written with its defaults on first run
 │   ├── Perks/              custom perk behaviours
 │   └── Dev/                dev-only verbs (*.Dev.cs, excluded from release builds)
 ├── scripts/                Authoring + asset pipelines (Python)
-│   ├── pmx_to_menace.py    PMX → glTF (humanoid characters)
+│   ├── pmx_to_menace.py    PMX → glTF (humanoid characters). Regenerates the mesh, so
+│   │                       it discards anything added after it: run it before doll/, never after
+│   ├── doll/
+│   │   ├── prepare_doll.py   one command: SDF UV + hair UV + outline submesh + material routing + bake
+│   │   ├── doll_shading.py   material name → shader / ramp / texture / flag (read-only)
+│   │   ├── bake_face_sdf_uv.py  reconstructs the face SDF lookup set into TEXCOORD_2
+│   │   ├── transfer_face_sdf_uv.py  the same, for FBX sources, via FaceSdfUv.cs sidecars
+│   │   ├── transfer_hair_uv.py  transfers the game's hair strip UV into TEXCOORD_1
+│   │   ├── add_outline_submesh.py  appends the inverted-hull outline's own submesh
+│   │   ├── extract_character_refs.py  pulls a character's ramps + hair UV out of the GFL2 client
+│   │   ├── bake_ramp_png.py  RampAtlasRGBA gradient dump → 256x16 ramp atlas (per character)
+│   │   └── transplant_eyes.py  fits a doll's four-layer eye stack onto a face without one
 │   ├── weapon/
 │   │   ├── bake_weapon.py    OBJ → glTF (weapons + attach-point empties)
+│   │   ├── shade_weapons.py  writes every weapon's material manifest and bakes it
 │   │   └── render_weapon.py  glTF → transparent PNG (icon prep)
 │   ├── voice/
 │   │   ├── transcribe.py   OpenAI ASR + MT → per-character .trans.csv
@@ -45,14 +59,18 @@ WOMENACE/
 │   └── .config/            per-character/weapon pipeline configs (gitignored)
 ├── skills/                 Per-pipeline SKILL.md docs
 │   ├── character-authoring/
+│   ├── doll-shading/
 │   ├── pmx-to-menace/
 │   ├── voice-pipeline/
 │   └── weapon-pipeline/
-├── unity/                  Unity 6000.0.72f1 Editor project (URP)
+├── unity/                  Unity 6000.0.72f1 Editor project (HDRP, matching the game)
 │   ├── Assets/
 │   │   ├── Authored/       PMX/OBJ-derived character + weapon assets (committed, one subdir per character or weapon)
+│   │   ├── Editor/         this mod's own Editor passes (face SDF UV, outline hulls, mesh and shader checks).
+│   │   │                   Anything model-flavoured belongs here, never in a Jiangyu bake tool
 │   │   ├── Imported/       vanilla MENACE prefab rips (gitignored, repopulated by `jiangyu compile` from `importedPrefabs` in jiangyu.json)
 │   │   ├── Jiangyu/Editor/ Jiangyu-managed Editor scripts (BuildBundles, BakeHumanoid, etc.)
+│   │   ├── Shaders/        the `Womenace/` shader set (DollToon, DollToonTrans, DollEye*, DollOutline)
 │   │   └── Prefabs/        modder-authored prefab outputs (one subdir per character or weapon)
 │   └── Packages/manifest.json
 ├── compiled/               build output, gitignored (jiangyu.json + bundles)
@@ -69,7 +87,7 @@ A full character ships four kinds of content end-to-end via `mise compile && mis
 3. **Voice** — rip dir → normalised + transcribed WAVs at `assets/additions/audio/<character>/` → SoundBank + ConversationTemplate clones. See [`skills/voice-pipeline/SKILL.md`](skills/voice-pipeline/SKILL.md).
 4. **Weapon (optional)** — OBJ source → glTF (Blender) → addition prefab (Unity) + WeaponTemplate clone + custom gunshot SoundBank + Skill clones. See [`skills/weapon-pipeline/SKILL.md`](skills/weapon-pipeline/SKILL.md).
 
-`mise compile` parses `templates/`, builds each `Assets/Prefabs/<...>/main.prefab` into the mod bundle, writes `compiled/`. `mise deploy` copies into `~/.steam/.../Menace/Mods/WOMENACE/`. At MENACE startup, Jiangyu's loader rebinds bundled materials' shader names to MENACE's loaded shader catalogue via `Shader.Find`.
+`mise compile` parses `templates/`, builds each `Assets/Prefabs/<...>/main.prefab` into the mod bundle, writes `compiled/`. `mise deploy` copies into `~/.steam/.../Menace/Mods/WOMENACE/`. At MENACE startup, Jiangyu's loader resolves each bundled material's shader name against MENACE's loaded shader catalogue via `Shader.Find`. A name the runtime provides is rebound to the game's shader, which is how the extraction stubs become real shaders. A name it does not provide, outside the engine namespaces (`Menace/`, `HDRP/`, `Hidden/`, `Shader Graphs/`, `Universal Render Pipeline/`), belongs to a shader this mod ships, and the material stays on it.
 
 Voymastina is the reference end-to-end example covering all four. Cheyanne is a second reference with a different parent character (carda vs sy), which exposes more of the parent-namespace + role-mapping decisions.
 
@@ -105,6 +123,14 @@ Several badge/portrait fields exist on both `UnitLeaderTemplate` and `EntityTemp
 - `UnitLeaderTemplate.BadgeUnitWindow` drives the unit info window header. Read in `UnitLeaderUIExtensions.InitUnitWindowHeader`, an extension method on `BaseUnitLeader` that's easy to miss when sweeping UI class methods.
 - `UnitLeaderTemplate.BigBadge` drives the hiring info panel banner.
 - `UnitLeaderTemplate.SlotBadge` / `BadgeDragged` drive the hire-slot and drag visuals (BadgeDragged also serves as the mission-prep drag preview).
+
+## Element scale
+
+Every body in a squad is scaled at spawn by a random draw from a range, so the same model renders at slightly different heights per element:
+
+- `Entity.GetScaleRange()` (RVA 0x63DA50) returns `EntityTemplate.Scale` (a Vector2 min/max), unless the equipped armour sets `ArmorTemplate.OverrideScale`, in which case `ArmorTemplate.Scale` wins. Only two vanilla armours override: `armor.player_class_6_t1_rmc_bash` (1.15, 1.15) and `armor.rogue_army_medium_tier1_SIPV_officer` (1, 1).
+- The element-creation helper at 0x63BCC0 (shared by `Entity.Create` and `Entity.CreateElementFromSquaddie`) then adds `EntityTemplate.ScaleOffsetSquadLeader` to both ends of the range when `OverrideScaleForSquadLeader` is set and the element index is 0, so the squad leader draws from a shifted range.
+- Vanilla `player_squad.sy` and `player_squad.carda` use `Scale` (1, 1.05) with a leader offset of -0.03 and -0.05, which reads as ordinary squad variety on generic soldiers. Doll squads render the same model on all five elements (the transmog postfix swaps the body prefab on every element), so each `player_squad.<doll>` pins `Scale` to (1, 1) and clears `OverrideScaleForSquadLeader`. Every body then renders at the height `scripts/.config/<doll>-<variant>.json` bakes it to.
 
 ## Affinity and unlocks
 
@@ -164,6 +190,9 @@ Run `jiangyu unity sync` from the repo root to refresh the managed scripts. The 
 - No em dashes. No semicolons in prose, comments, or string literals. Use periods, commas, colons.
 - Docs describe the current working state only. No past-tense framing ("used to", "previously", "earlier attempts"). No future-tense framing ("not yet", "TODO", "in progress"). If something doesn't work, fix it or leave it out.
 - Run `mise format` (or `jiangyu templates format`) before committing template edits. It rewrites every `templates/*.kdl` through the same parse → validate → normalise → serialise pipeline Studio uses on save, so diffs only show real authoring changes — not the kind of churn that creeps in from hand-edits (redundant `composite=` attributes, stale shorthand forms, blank-line drift). `mise format --check` is the CI-equivalent: exits non-zero if anything would change.
-- Bundle build target is `StandaloneWindows64` so the bundle ships D3D11 shader variants matching MENACE's Proton/DXVK runtime.
+- Bundle build target is `StandaloneWindows64` so the bundle ships D3D11 shader variants matching MENACE's Proton/DXVK runtime. This requires the Windows build-support module in the editor: without it Unity refuses the target, stays on the editor's own platform, and compiles OpenGLCore and Vulkan variants instead, which the game cannot load. `BuildBundles` switches the target itself and fails the build when the module is absent or when the target excludes D3D11. Bundles cached from a build on the wrong target stay wrong because the incremental cache keys on content, so run `jiangyu compile --clean` once after installing the module.
 - gltfast is pinned in `unity/Packages/manifest.json` to a version known to import multi-primitive skinned meshes without the bone-weights Jobs race.
+- `BakeVehicle -targetLength` solves scale against the **measured** bounds, so one stray renderer resizes the whole vehicle and nothing reports it. The bake logs `measured <n> at scale 1`: read that number, not the `post-scale length` beside it, which reports the target back and always matches. A part added to the source in world space rather than in mesh space is the way this happens, since re-parenting then applies the object matrix a second time and parks a shrunken copy of it outside the model.
 - The dumped `Menace_character.shader` stub in `unity/Assets/Imported/<reference soldier>/Shader/` is essential. The Editor renders it magenta, but bundled materials carry its shader name and `Jiangyu.Loader.dll` rebinds the name to MENACE's vanilla shader at load time.
+- Shaders this mod ships live in `unity/Assets/Shaders/` and carry the `Womenace/` namespace. That folder sits outside `Assets/Prefabs/` and `Assets/UI/`, so the bundle build assigns it no bundle name and the shader rides into the prefab's bundle as a dependency of the material referencing it. The three bake tools take an override so a baked material lands on one: `BakeHumanoid` per source material (a window row or `-overrideShaderFor Face=Womenace/DollFace`), `BakeVehicle` per material-manifest entry (`"shader"`), `BakeWeapon` across the weapon or per manifest entry. With no override set, each tool clones the reference `Menace/*` material. A keyword toggled from C# at runtime must be `multi_compile`: a `shader_feature` variant only survives the build when a material in the bundle already sets that combination.
+- `mise` tasks run the Jiangyu CLI from `${JIANGYU_BUILD:-Debug}`, so the Debug build is the one that matters. The compile-time drift check compares `unity/Assets/Jiangyu/Editor/*.cs` against the templates embedded in that binary, not against the files in the jiangyu tree, and rewrites any file that differs. A jiangyu build in Release alone leaves the Debug binary holding older templates, and the next `mise compile` reverts freshly synced editor scripts with no error. Build both configurations after editing a template under `Templates/UnityProject/`, or set `JIANGYU_BUILD=Release`.

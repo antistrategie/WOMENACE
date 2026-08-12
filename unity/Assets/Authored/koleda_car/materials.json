@@ -2,37 +2,109 @@
   "materials": [
     {
       "name": "supercar_sub0",
+      "shader": "Womenace/DollToon",
+      "extras": [
+        {
+          "property": "_RampMap",
+          "path": "Assets/Authored/shared/ramps/ramp_weapon.png"
+        }
+      ],
       "base": "Assets/Authored/koleda_car/textures/Koleda_Supercar_01_d.png",
       "normal": "Assets/Authored/koleda_car/textures/Koleda_Supercar_01_n.png",
-      "mask": "Assets/Authored/koleda_car/textures/Koleda_Supercar_01_mask.png"
+      "mask": "Assets/Authored/koleda_car/textures/Koleda_Supercar_01_rmo.png"
     },
     {
       "name": "supercar_sub1",
+      "shader": "Womenace/DollToon",
+      "extras": [
+        {
+          "property": "_RampMap",
+          "path": "Assets/Authored/shared/ramps/ramp_weapon.png"
+        }
+      ],
       "base": "Assets/Authored/koleda_car/textures/Koleda_Supercar_01menban_d.png",
       "normal": "Assets/Authored/koleda_car/textures/Koleda_Supercar_01menban_n.png",
-      "mask": "Assets/Authored/koleda_car/textures/Koleda_Supercar_01menban_mask.png"
+      "mask": "Assets/Authored/koleda_car/textures/Koleda_Supercar_01menban_rmo.png"
     },
     {
       "name": "supercar_sub2",
+      "shader": "Womenace/DollToon",
+      "extras": [
+        {
+          "property": "_RampMap",
+          "path": "Assets/Authored/shared/ramps/ramp_weapon.png"
+        }
+      ],
       "base": "Assets/Authored/koleda_car/textures/Koleda_Supercar_02_d.png",
       "normal": "Assets/Authored/koleda_car/textures/Koleda_Supercar_02_n.png",
-      "mask": "Assets/Authored/koleda_car/textures/Koleda_Supercar_02_mask.png"
+      "mask": "Assets/Authored/koleda_car/textures/Koleda_Supercar_02_rmo.png"
     },
     {
       "name": "supercar_sub3",
+      "shader": "Womenace/DollToon",
+      "extras": [
+        {
+          "property": "_RampMap",
+          "path": "Assets/Authored/shared/ramps/ramp_weapon.png"
+        }
+      ],
       "base": "Assets/Authored/koleda_car/textures/Koleda_Supercar_03_d.png",
       "normal": "Assets/Authored/koleda_car/textures/Koleda_Supercar_03_n.png",
-      "mask": "Assets/Authored/koleda_car/textures/Koleda_Supercar_03_mask.png"
+      "mask": "Assets/Authored/koleda_car/textures/Koleda_Supercar_03_rmo.png"
     },
     {
       "name": "supercar_sub4",
+      "shader": "Womenace/DollToon",
+      "extras": [
+        {
+          "property": "_RampMap",
+          "path": "Assets/Authored/shared/ramps/ramp_weapon.png"
+        }
+      ],
       "base": "Assets/Authored/koleda_car/textures/Koleda_Supercar_04_da.png",
       "normal": "Assets/Authored/koleda_car/textures/Koleda_Supercar_04_n.png",
-      "mask": "Assets/Authored/koleda_car/textures/Koleda_Supercar_04_mask.png"
+      "mask": "Assets/Authored/koleda_car/textures/Koleda_Supercar_04_rmo.png"
     },
     {
       "name": "koleda_lights",
       "base": "Assets/Authored/koleda_car/textures/Koleda_Supercar_trans_da.png"
+    },
+    {
+      "base": "Assets/Authored/koleda_car/textures/Koleda_Supercar_trans_da.png",
+      "normal": "Assets/Authored/koleda_car/textures/Koleda_Supercar_trans_n.png",
+      "mask": "Assets/Authored/koleda_car/textures/Koleda_Supercar_trans_rmo.png",
+      "shader": "Womenace/DollToonTrans",
+      "extras": [
+        {
+          "property": "_RampMap",
+          "path": "Assets/Authored/shared/ramps/ramp_weapon.png"
+        }
+      ],
+      "name": "supercar_livery"
+    },
+    {
+      "base": "Assets/Authored/koleda_car/textures/Koleda_Supercar_trans_da.png",
+      "normal": "Assets/Authored/koleda_car/textures/Koleda_Supercar_trans_n.png",
+      "mask": "Assets/Authored/koleda_car/textures/Koleda_Supercar_trans_rmo.png",
+      "shader": "Womenace/DollToonTrans",
+      "extras": [
+        {
+          "property": "_RampMap",
+          "path": "Assets/Authored/shared/ramps/ramp_weapon.png"
+        }
+      ],
+      "name": "supercar_decals"
+    },
+    {
+      "name": "supercar_glass",
+      "shader": "Womenace/DollToonTrans",
+      "base": "Assets/Authored/koleda_car/textures/glass_tint.png",
+      "extras": [
+        {
+          "property": "_RampMap",
+          "path": "Assets/Authored/shared/ramps/ramp_weapon.png"
+        }
+      ]
     }
   ]
 }

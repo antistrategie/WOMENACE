@@ -64,6 +64,17 @@ clone "SkillTemplate" from="active.mod.minigun_strafing" id="active.sinner_mg" {
 
     set "IsUsedInBackground" #false
 
+    // The car grants this skill itself, so no weapon item backs it: the tag is what
+    // lets ammo cases, the supply drop and Drive By recognise it as a vehicle gun.
+    append "Tags" "wmgfl_entity_weapon"
+
+    // The minigun this clones kicks the camera on every shot fired and every impact,
+    // which reads as weight on a tank turret. Here 40 repetitions land 0.05s apart,
+    // so the kicks overlap into two solid seconds of screen shake. The burst keeps
+    // its recoil and muzzle flashes, the camera just holds still through it.
+    set "CameraEffectOnFire" enum="CameraEffectType" "None"
+    set "CameraEffectOnImpact" enum="CameraEffectType" "None"
+
     // holds the shots AND the fire sound for the 1.53s door-open clip, so the
     // doors are clear before the guns speak. The per-element attack sound waits
     // on this same delay because the template sets

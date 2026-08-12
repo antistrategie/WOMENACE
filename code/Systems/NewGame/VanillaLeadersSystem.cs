@@ -14,14 +14,19 @@ namespace WOMENACE.Code;
 // recognised by asset provenance (see IsVanilla), so no leader roster is maintained here and the
 // filter tracks whatever leaders a game patch or another mod introduces.
 //
-// Three entry points are filtered:
+// Four entry points are filtered:
 //   - the new-game initial-leader pick, by narrowing StrategyConfig.InitialPickableUnitLeaders when
 //     START GAME is pressed, before the pick dialog reads it,
 //   - the dossier hiring pools, by narrowing DossierItemTemplate.m_UnlockedLeaders for the duration
 //     of each Redeem,
 //   - the black market stock, by removing any dossier whose effective pool is exhausted (a pilot
 //     dossier with no modded pilot to grant, a squad-leader dossier once every modded leader is
-//     acquired) so a dead, un-redeemable dossier never sits on the shelf.
+//     acquired) so a dead, un-redeemable dossier never sits on the shelf,
+//   - the hirable roster, by narrowing the story effect that fills it and repairing any vanilla entry
+//     an older save already banked. Story events make leaders hirable through
+//     AddHirableUnitLeadersEffect, which touches neither a dossier nor the market: the Honor Guard
+//     chain offers Weiwu, Harlan Corlain and Roisin Murdock this way, so without this filter its
+//     rewards walk straight past the other three.
 // The pick filter reads the live box choice (the option is not committed to the campaign until the
 // campaign scene loads, which is after the pick), the dossier and market filters read the committed
 // per-campaign option so they keep working after a save reload.
@@ -59,6 +64,12 @@ public sealed class VanillaLeadersSystem : JiangyuSystem
     // Guards the market scrub against re-entering itself via the window rebuild it can trigger.
     private bool _scrubbing;
 
+    // Story-reward transient-filter state, the mirror of the Redeem slots above (an effect's OnAdd is
+    // not re-entrant either, so one slot suffices).
+    private AddHirableUnitLeadersEffect _swappedEffect;
+    private Il2CppReferenceArray<UnitLeaderTemplate> _savedEffectLeaders;
+    private Il2CppReferenceArray<UnitLeaderTemplate> _writtenEffectLeaders;
+
     public override void OnInit()
     {
         // START GAME: merge back any previous narrowing, then narrow the live pool if the option is on.
@@ -78,6 +89,95 @@ public sealed class VanillaLeadersSystem : JiangyuSystem
         // Also scrub just before the market window builds its item list, so a save loaded
         // mid-session (or any refresh that did not route through Restock) never shows a dead dossier.
         Context.Patches.Prefix("Il2CppMenace.UI.Strategy.BlackMarketUIScreen", "UpdateWindow", OnMarketWindowUpdating);
+
+        // Story rewards: narrow the effect that grants them. Roster.AddHirableLeader is the tighter
+        // funnel, but it and GetHirableLeaders are both leaf accessors, and detouring one of those
+        // hard-crashes the game during boot (a trampoline does not fit in the function, so the
+        // adjacent one in GameAssembly is clobbered and dies far from here, natively, with no
+        // managed trace). Never patch a bare getter or one-line setter: go for the method with a
+        // real body. AddHirableUnitLeadersEffect.OnAdd is a concrete override that loops the
+        // effect's leaders and grants each, so it is both safe to detour and the only vanilla route
+        // into the hirable roster (the Honor Guard chain's three rewards).
+        Context.Patches.Prefix("Il2CppMenace.Strategy.AddHirableUnitLeadersEffect", "OnAdd", OnHirableEffectAdding);
+        Context.Patches.Postfix("Il2CppMenace.Strategy.AddHirableUnitLeadersEffect", "OnAdd", OnHirableEffectAdded);
+    }
+
+    // Narrow the effect's leader array to the entries that may still be granted, restoring it after.
+    // Same swap-and-restore shape as the dossier filter, and likewise healed on the next call if the
+    // original threw before the postfix ran. An effect whose whole roster is vanilla is skipped
+    // outright rather than handed an empty array.
+    private void OnHirableEffectAdding(PatchInfo info)
+    {
+        RestoreSwappedEffect();
+        try
+        {
+            if (!NewGameSettings.DisableVanillaLeaders(Context))
+                return;
+            var effect = (info.Instance as Il2CppObjectBase)?.TryCast<AddHirableUnitLeadersEffect>();
+            var original = effect?.Leaders;
+            if (original == null || !TryFilterVanilla(original, out var kept, out var removed))
+                return;   // no vanilla leaders in this effect, nothing to filter
+
+            if (kept.Count == 0)
+            {
+                info.Skip = true;
+                Context.Log.Info($"vanilla-leaders: story reward of {removed.Count} vanilla leader(s) refused");
+                return;
+            }
+
+            var written = ToArray(kept);
+            _swappedEffect = effect;
+            _savedEffectLeaders = original;
+            _writtenEffectLeaders = written;
+            effect.Leaders = written;
+            Context.Log.Info($"vanilla-leaders: story reward narrowed to {kept.Count} modded leader(s) (dropped {removed.Count} vanilla)");
+        }
+        catch (Exception ex) { Context.Log.Warn($"vanilla-leaders: hirable effect filter (pre) failed: {ex.Message}"); }
+    }
+
+    private void OnHirableEffectAdded(PatchInfo info) => RestoreSwappedEffect();
+
+    // Put a narrowed effect's original roster back. Restores only while the effect still holds the
+    // exact array this system wrote, so another mod's replacement is left alone.
+    private void RestoreSwappedEffect()
+    {
+        try
+        {
+            if (_swappedEffect != null && _savedEffectLeaders != null && _writtenEffectLeaders != null
+                && _swappedEffect.Leaders?.Pointer == _writtenEffectLeaders.Pointer)
+                _swappedEffect.Leaders = _savedEffectLeaders;
+        }
+        catch (Exception ex) { Context.Log.Warn($"vanilla-leaders: hirable effect restore failed: {ex.Message}"); }
+        finally
+        {
+            _swappedEffect = null;
+            _savedEffectLeaders = null;
+            _writtenEffectLeaders = null;
+        }
+    }
+
+    // Repair a campaign that banked a vanilla leader before the filter above existed: drop those
+    // entries from the roster. Done by mutating the list rather than filtering a reader, because the
+    // reader is a leaf accessor that must not be detoured (see OnInit). This is a repair, not a
+    // view: the leader should never have been granted, so removing it is the honest fix, and once
+    // clean it finds nothing on later passes.
+    private void ScrubHirableRoster(Roster roster)
+    {
+        try
+        {
+            var hirable = roster?.m_HirableLeaders;
+            if (hirable == null || hirable.Count == 0)
+                return;
+            var dead = new List<UnitLeaderTemplate>();
+            for (var i = 0; i < hirable.Count; i++)
+                if (hirable[i] != null && IsVanilla(hirable[i]))
+                    dead.Add(hirable[i]);
+            foreach (var leader in dead)
+                hirable.Remove(leader);
+            if (dead.Count > 0)
+                Context.Log.Info($"vanilla-leaders: removed {dead.Count} vanilla leader(s) from the hirable roster");
+        }
+        catch (Exception ex) { Context.Log.Warn($"vanilla-leaders: hirable roster scrub failed: {ex.Message}"); }
     }
 
     // Heal, then narrow. Both steps read the pool live at press time (not from a snapshot), so
@@ -293,6 +393,9 @@ public sealed class VanillaLeadersSystem : JiangyuSystem
                 return;
 
             _scrubbing = true;
+            // Same strategy-layer moments serve the hirable-roster repair, so it needs no hooks of
+            // its own: both market entry points run whenever the shop settles or redraws.
+            ScrubHirableRoster(roster);
             var dead = new List<BaseItem>();
             CollectDeadDossiers(market, false, roster, dead);
             CollectDeadDossiers(market, true, roster, dead);

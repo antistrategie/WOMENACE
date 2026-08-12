@@ -23,6 +23,13 @@ clone "TagTemplate" from="unique" id="wmgfl_transmog"
 // already rides WeaponTemplate.Tags on the same basis.
 clone "TagTemplate" from="unique" id="wmgfl_melee"
 
+// Marks a skill as a vehicle gun granted by its entity rather than by an equipped
+// weapon item. No item backs such a skill, so every vanilla mechanic that identifies
+// vehicle weapon skills through their granting item rejects it: ammo cases, the
+// dropship supply drop and Drive By all pass it over. EntityWeaponParitySystem reads
+// this tag and answers those checks on the skill's behalf.
+clone "TagTemplate" from="unique" id="wmgfl_entity_weapon"
+
 // Weapon-type proficiency. A doll's speaker carries one of these to name the weapon
 // class she is trained on. WeaponProficiencySystem reads the tag and grants an
 // affinity-scaled accuracy bonus while she wields a weapon of that class.
