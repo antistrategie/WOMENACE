@@ -30,6 +30,34 @@ the face SDF coordinates, append the outline submesh, resolve every material, in
 resolving materials first bakes a doll with no outline and no SDF coordinates. Both
 mutating steps are idempotent, so re-running is safe.
 
+## A bake drops every post-pass on that prefab
+
+`BakeHumanoid` rewrites `main.prefab` whole. Anything an Editor pass attached to it
+afterwards is gone, and nothing warns: re-baking Sextans for the shading rollout
+reverted both her outfits to the vanilla soldier animator, which surfaced only because
+someone watched her move.
+
+So `prepare_doll.py` carries a `POST_PASSES` table, re-runs the passes that own the
+prefab it just baked, and then checks that they took, by looking for the guid of an
+asset each pass must leave referenced. Adding a doll that needs one means adding an
+entry:
+
+```python
+{
+    "outfits": ("sextans/default", "sextans/nocte"),
+    "method": "Womenace.EditorTools.BuildSextansController.Build",
+    "describes": "Sextans' animator controller and its GFL2 clip swaps",
+    "expects": "Assets/Prefabs/sextans/_bake/sextans.controller",
+}
+```
+
+The `expects` check is the point. A pass that silently no-ops leaves exactly the
+failure it exists to prevent, so running it is not evidence that it worked.
+
+This covers passes over prefabs `prepare_doll.py` bakes. Two others sit outside it and
+are re-run by hand: `VehicleOutlineHulls` after `BakeVehicle`, and
+`BuildVoymastinaMech`, which owns the mech's prefabs end to end.
+
 ## Never convert after preparing
 
 `pmx_to_menace.py` rebuilds the glTF from the PMX and discards anything added

@@ -26,6 +26,7 @@ to catch exactly that mistake.
 """
 
 import argparse
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -39,6 +40,66 @@ import transfer_hair_uv                                              # noqa: E40
 REFERENCE_PREFAB = ("Assets/Imported/rmc_default_female_soldier_2/GameObject/"
                     "rmc_default_female_soldier_2.prefab")
 OUTPUT_DIR = "Assets/Prefabs"
+
+# Editor passes that patch a baked prefab after BakeHumanoid has written it.
+#
+# BakeHumanoid rewrites main.prefab whole, so a re-bake drops whatever they
+# attached and nothing says so. That is not hypothetical: the shading rollout
+# re-baked Sextans and reverted both her outfits to the vanilla soldier
+# animator, which surfaced only because someone watched her move. So the bake
+# re-runs the passes that own what it just wrote, and then proves they landed.
+#
+# outfits   the <doll>/<outfit> names the pass owns. A pass usually patches
+#           every outfit at once, so baking one re-runs it for all of them.
+# expects   an asset whose guid every owned prefab must reference once the pass
+#           has run. Checked afterwards, because a pass that quietly no-ops
+#           leaves exactly the failure it exists to prevent.
+POST_PASSES = [
+    {
+        "outfits": ("sextans/default", "sextans/nocte"),
+        "method": "Womenace.EditorTools.BuildSextansController.Build",
+        "describes": "Sextans' animator controller and its GFL2 clip swaps",
+        "expects": "Assets/Prefabs/sextans/_bake/sextans.controller",
+    },
+]
+
+
+def asset_guid(project_root, asset_path):
+    """The guid Unity assigned an asset, out of its .meta."""
+    meta = project_root / (asset_path + ".meta")
+    if not meta.is_file():
+        raise SystemExit(f"no .meta for {asset_path}, so its guid cannot be checked")
+    match = re.search(r"^guid: ([0-9a-f]{32})", meta.read_text(), re.MULTILINE)
+    if match is None:
+        raise SystemExit(f"no guid in {meta}")
+    return match.group(1)
+
+
+def run_post_passes(project_root, editor, output_name):
+    """Re-apply and verify every pass that owns the prefab just baked."""
+    for entry in POST_PASSES:
+        if output_name not in entry["outfits"]:
+            continue
+        print(f"  post-pass: restoring {entry['describes']}", file=sys.stderr)
+        result = subprocess.run(
+            [str(editor), "-batchmode", "-nographics", "-quit",
+             "-buildTarget", "StandaloneWindows64",
+             "-projectPath", str(project_root),
+             "-executeMethod", entry["method"]],
+            capture_output=True, text=True)
+        if result.returncode != 0:
+            raise SystemExit(f"post-pass {entry['method']} failed ({result.returncode}). "
+                             f"Unity's own log is the place to look, not this output.")
+        guid = asset_guid(project_root, entry["expects"])
+        for outfit in entry["outfits"]:
+            prefab = project_root / OUTPUT_DIR / outfit / "main.prefab"
+            if not prefab.is_file() or guid not in prefab.read_text():
+                raise SystemExit(
+                    f"{outfit} does not reference {entry['expects']} after "
+                    f"{entry['method']} ran. The bake has dropped "
+                    f"{entry['describes']} and putting it back did not take.")
+        print(f"  post-pass: {', '.join(entry['outfits'])} verified against "
+              f"{Path(entry['expects']).name}", file=sys.stderr)
 
 
 def unity_editor(project_root):
@@ -133,6 +194,7 @@ def main():
     if result.returncode != 0:
         raise SystemExit(f"bake failed ({result.returncode}). "
                          f"Unity's own log is the place to look, not this output.")
+    run_post_passes(project_root, editor, output_name)
     print("  baked. run `mise run compile && mise run deploy` next.", file=sys.stderr)
 
 
