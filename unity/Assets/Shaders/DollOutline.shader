@@ -37,13 +37,19 @@ Shader "Womenace/DollOutline"
         _OutlineShadowColour ("Outline Shadow Colour", Color) = (0.011, 0.009, 0.007, 1)
         _OutlineIntensity ("Outline Intensity", Range(0, 4)) = 1
 
-        // Pushes the hull away from the camera in clip space. On a closed shell this
-        // can sit at the game's zero, because back faces are already behind the front
-        // faces and lose the depth test wherever the surface covers them. Open
-        // geometry has no such luck: a hair card's back face is the same surface at
-        // the same depth, so without a nudge the hull ties the depth test and can
-        // paint over the card it belongs to.
-        _OutlineZBias ("Outline Z Bias", Range(0, 8)) = 1
+        // Pushes the hull away from the camera, in centimetres of world depth.
+        // The push is measured in the world rather than in clip units because a
+        // clip-space bias is worth a different distance at every zoom level: the
+        // tactical camera spans tens of metres, and a bias that is a harmless
+        // sliver up close becomes deep enough at range for the terrain behind
+        // the silhouette to win the depth test and erase the contour. On a
+        // closed shell the bias could sit at zero, because back faces are
+        // already behind the front faces and lose the depth test wherever the
+        // surface covers them. Open geometry has no such luck: a hair card's
+        // back face is the same surface at the same depth, so without a nudge
+        // the hull ties the depth test and can paint over the card it belongs
+        // to.
+        _OutlineZBias ("Outline Z Bias (cm)", Range(0, 8)) = 1
     }
 
     SubShader
@@ -111,8 +117,20 @@ Shader "Womenace/DollOutline"
             return min(abs(hi), max(abs(lo), abs(delta))) * sign(nCS.xy);
         }
 
-        // Reverse-Z, so subtracting pushes the hull further away.
-        void OutlinePushBack(inout float4 clip) { clip.z -= _OutlineZBias * 0.001; }
+        // The pushed depth is found by moving the view-space position away from
+        // the camera by the bias distance and projecting that, then writing its
+        // normalised depth back through the original position's own w. Only
+        // clip.z changes: xy and w stay, so the on-screen expansion is
+        // untouched and the vertex merely tests deeper. Going through the
+        // projection keeps the bias exact under any projection the camera
+        // uses, perspective or otherwise.
+        void OutlinePushBack(inout float4 clip, float3 positionRWS)
+        {
+            float3 positionVS = TransformWorldToView(positionRWS);
+            positionVS.z -= _OutlineZBias * 0.01;
+            float4 pushed = mul(UNITY_MATRIX_P, float4(positionVS, 1.0));
+            clip.z = pushed.z / max(1e-6, pushed.w) * clip.w;
+        }
         ENDHLSL
 
         // Object motion vectors for the contour. Without this the rim keeps
@@ -156,7 +174,7 @@ Shader "Womenace/DollOutline"
                 // the depth prepass and this is the depth it tests against.
                 float4 clip = TransformWorldToHClip(positionRWS);
                 clip.xy += offsetNDC * clip.w;
-                OutlinePushBack(clip);
+                OutlinePushBack(clip, positionRWS);
                 output.positionCS = CollapseIfDisabled(clip);
 
                 output.currentCS = mul(UNITY_MATRIX_UNJITTERED_VP, float4(positionRWS, 1.0));
@@ -223,7 +241,7 @@ Shader "Womenace/DollOutline"
 
                 float4 clip = TransformWorldToHClip(positionRWS);
                 clip.xy += OutlineOffsetNDC(positionRWS, normalWS) * clip.w;
-                OutlinePushBack(clip);
+                OutlinePushBack(clip, positionRWS);
 
                 output.positionCS = CollapseIfDisabled(clip);
                 output.uv = input.uv * _BaseMap_ST.xy + _BaseMap_ST.zw;

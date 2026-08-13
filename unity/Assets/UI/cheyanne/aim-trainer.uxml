@@ -1,0 +1,38 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="../theme.uss" />
+    <Style src="aim-trainer.uss" />
+    <ui:VisualElement name="wm-aim-screen" class="wm-aim-screen">
+        <ui:VisualElement name="wm-aim-world" class="wm-aim-world" picking-mode="Ignore" />
+        <ui:VisualElement class="wm-aim-vignette" picking-mode="Ignore" />
+
+        <ui:VisualElement class="wm-aim-topbar" picking-mode="Ignore">
+            <ui:VisualElement name="wm-aim-timer" class="wm-aim-timer" picking-mode="Ignore">
+                <ui:VisualElement name="wm-aim-timer-fill" class="wm-aim-timer-fill" picking-mode="Ignore" />
+            </ui:VisualElement>
+            <ui:Label name="wm-aim-points" text="0 PTS" class="wm-aim-points" picking-mode="Ignore" />
+        </ui:VisualElement>
+
+        <ui:VisualElement name="wm-aim-reticle" class="wm-aim-reticle" picking-mode="Ignore" />
+
+        <ui:VisualElement name="wm-aim-countstack" class="wm-aim-countstack" picking-mode="Ignore">
+            <ui:Label text="SHOOT THE ORANGE TARGETS" class="wm-aim-instruction" picking-mode="Ignore" />
+            <ui:VisualElement class="wm-aim-lights" picking-mode="Ignore">
+                <ui:VisualElement name="wm-aim-light-0" class="wm-aim-light" picking-mode="Ignore" />
+                <ui:VisualElement name="wm-aim-light-1" class="wm-aim-light" picking-mode="Ignore" />
+                <ui:VisualElement name="wm-aim-light-2" class="wm-aim-light" picking-mode="Ignore" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <ui:Label name="wm-aim-hint" text="every hit sharpens the shot   •   ESC to hold fire (cancel)" class="wm-aim-hint" picking-mode="Ignore" />
+
+        <ui:VisualElement name="wm-aim-results" class="window wm-aim-results">
+            <ui:VisualElement class="unit-window-background" picking-mode="Ignore" />
+            <ui:VisualElement class="unit-window-border" picking-mode="Ignore" />
+            <ui:VisualElement class="wm-aim-results-body">
+                <ui:Label name="wm-aim-results-points" text="0 PTS" class="wm-aim-results-points" />
+                <ui:VisualElement name="wm-aim-results-rows" class="wm-aim-results-rows" />
+                <ui:Button name="wm-aim-continue" text="FIRE" class="text-button wm-aim-continue" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

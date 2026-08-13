@@ -71,7 +71,7 @@ public sealed class SsrImprintSystem : JiangyuSystem
         {
             OwnerTag = "wmgfl_vector",
             OwnerName = "Vector",
-            BonusText = "Hits on Burning targets apply Overburn: the fire spreads when they die.",
+            BonusText = "Hits on Burning targets apply Overburn causing Burn to spread to nearby enemies when they die.",
             Skills = new[]
             {
                 // No stat bonus: the imprint is the Overburn effect (VectorSsrSystem's on-hit
@@ -92,6 +92,23 @@ public sealed class SsrImprintSystem : JiangyuSystem
             OwnerTag = "wmgfl_sextans",
             OwnerName = "Sextans",
             BonusText = "Builds Shock on every hit.",
+        },
+        new Entry
+        {
+            // Cheyanne's SSR rifle. Like Vector's this entry carries no stat bonus: the imprint is
+            // the aim trainer, and it REPLACES the weapon's ricochet rather than adding to it.
+            // Anyone else gets the rifle's own fixed chain; in her hands the chain is her banked
+            // score alone, from zero bounces up, which CheyanneAimSystem feeds to the AoE shape.
+            // The skill is IsAlwaysHitting, so there is no accuracy to boost, and no field here to
+            // override: the shot count is one round and the damage is the weapon's. The entry
+            // exists for the "Cheyanne Imprint Boost" tooltip and IsImprintWeapon.
+            OwnerTag = "wmgfl_cheyanne",
+            OwnerName = "Cheyanne",
+            BonusText = "Aimlabs is free lil bro, but this is probably an okay alternative.",
+            Skills = new[]
+            {
+                new SkillImprint { SkillId = "active.cheyanne_ssr_ricochet" },
+            },
         },
     };
 

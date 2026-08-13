@@ -8,8 +8,8 @@ namespace WOMENACE.Code;
 //
 // Each Entry has a level, an optional gameplay Feature (Skins/Mech, or None for a flavour-only row),
 // and its own Title. The Title is per character and per level: give every level whatever text you
-// like, whether or not it unlocks anything mechanically. A character absent from the map (Cheyanne,
-// Lewis) has no entries: default outfit only, no mech, an all-placeholder popover.
+// like, whether or not it unlocks anything mechanically. A character absent from the map (Lewis)
+// has no entries: default outfit only, no mech, an all-placeholder popover.
 public static class Unlocks
 {
     public enum Feature
@@ -76,6 +76,10 @@ public static class Unlocks
         {
             new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.soppo_redline" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_soppo/lv2", "Outfit: Redline Racer") },
             new Entry { Level = 3, Feature = Feature.Weapon, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_soppo/lv3", "SSR Weapon: Skysunderer's Howl") },
+        },
+        ["wmgfl_cheyanne"] = new[]
+        {
+            new Entry { Level = 3, Feature = Feature.Weapon, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_cheyanne/lv3", "SSR Weapon: Nightwalker Cardamom") },
         },
         ["wmgfl_helen"] = new[]
         {

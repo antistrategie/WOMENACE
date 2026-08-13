@@ -1,13 +1,13 @@
 clone "WeaponTemplate" from="weapon.generic_battle_rifle_tier1_crowbar_marksman" id="weapon.cheyanne" {
     append "Tags" "jy_no_sell"
     set "Title" {
-        set "m_DefaultTranslation" "M200"
+        set "m_DefaultTranslation" ".408 Sniper Rifle"
     }
     set "ShortName" {
         set "m_DefaultTranslation" "Sniper Rifle"
     }
     set "Description" {
-        set "m_DefaultTranslation" "[PLACEHOLDER] A firearm highly compatible with Cheyanne."
+        set "m_DefaultTranslation" "A firearm highly compatible with Cheyanne. Modified based on her combat preferences. Its suppressor improves its heat dissipation efficiency and precision when firing consecutive shots."
     }
     set "Model" asset="weapon/cheyanne/main"
     set "SkillsGranted" index=0 "active.fire_cheyanne_m200"
@@ -97,4 +97,94 @@ clone "SkillTemplate" from="active.fire_battle_rifle_tier_1_aimed_fire_marksman"
     set "ExecutingElement" enum="ExecutingElementType" "OneAtRandomExceptSpecial"
     set "IsOverridingRanges" #false
     set "IsDeploymentRequired" #false
+}
+
+// SSR weapon
+clone "WeaponTemplate" from="specialweapon.anti_materiel_rifle_tier1" id="weapon.cheyanne_ssr" {
+    append "Tags" "jy_no_sell"
+    set "Title" {
+        set "m_DefaultTranslation" "Nightwalker Cardamom"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Sniper Rifle"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "A high-performance rifle assigned to Cheyanne. Based on the .408 Sniper Rifle, its range and firepower have been boosted over the original allowing it to deliver death from a distant hiding place straight to the enemies' vitals."
+    }
+
+    set "Model" asset="weapon/cheyanne_ssr/main"
+    set "Icon" asset="weapon/cheyanne_ssr/Icon"
+    set "IconEquipment" asset="weapon/cheyanne_ssr/IconEquipment"
+    set "IconEquipmentDisabled" asset="weapon/cheyanne_ssr/IconEquipmentDisabled"
+    set "IconSkillBar" asset="weapon/cheyanne_ssr/IconSkillBar"
+    set "IconSkillBarDisabled" asset="weapon/cheyanne_ssr/IconSkillBarDisabled"
+
+    set "ArmorPenetration" 100.0
+    set "ArmorPenetrationDropoff" 0
+
+    set "Damage" 40.0
+    set "DamageDropoff" 0
+    set "DamageToArmorDurability" 45.0
+    set "DamageToArmorDurabilityDropoff" 0
+
+    set "MaxRange" 20
+    set "IdealRange" 12
+    set "Suppression" 10.0
+
+    set "DeployCosts" {
+        set "m_Supplies" 50
+    }
+
+    set "BlackMarketMaxQuantity" 0
+
+    clear "SkillsGranted"
+    append "SkillsGranted" "active.cheyanne_ssr_ricochet"
+}
+
+// One round that ricochets between enemies. The chain itself is a native AoE
+// shape assigned in code (CheyanneSsrShapeSystem): the tile list cannot be
+// authored here because CustomAoEShape is an Odin-serialised interface field.
+//
+// The base is the anti-materiel rifle's OWN fire skill, matching the weapon's
+// clone base. That is what makes the shot a single shot: the marksman volley
+// this first cloned from carries ExecutingElement=AllButSpecial, so every
+// non-special squaddie fired their own ricochet. Repetitions was already 1 on
+// both, so the extra shots were squadmates, not repetitions. SpecialOnly is set
+// explicitly below rather than left to the base, because it is the whole point.
+clone "SkillTemplate" from="active.shoot_anti_materiel_rifle" id="active.cheyanne_ssr_ricochet" {
+    set "Title" {
+        set "m_DefaultTranslation" "Heavenpierce"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Fire a single completely accurate and devastating round that ricochets to nearby enemies."
+    }
+
+    clear "SoundsOnAttack"
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_rf_addition_bank"
+        set "itemId" "rf_shot"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_rf_addition_bank"
+        set "itemId" "rf_shot_distant"
+    }
+    clear "SoundsOnAttackFar"
+    append "SoundsOnAttackFar" {
+        set "bankId" "wmgfl_weapons_rf_addition_bank"
+        set "itemId" "rf_shot_distant"
+    }
+
+    set "ActionPointCost" 70
+    set "Uses" 3
+    set "ExecutingElement" enum="ExecutingElementType" "SpecialOnly"
+    set "IsOverridingRanges" #false
+    set "IsDeploymentRequired" #false
+
+    set "Repetitions" 1
+
+    set "IsAlwaysHitting" #true
+
+    set "EventHandlers" index=0 {
+        set "ElementsHit" 3
+    }
 }

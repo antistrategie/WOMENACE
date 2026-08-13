@@ -1,0 +1,228 @@
+/* Cheyanne's aim trainer. A faked first-person range: the gridded plane and the
+   targets pan under a fixed reticle while the cursor is locked, so mouse motion
+   reads as looking, not pointing. Results card rides the game's own window /
+   text-button classes; gold tracks theme.uss --wm-rel. */
+
+.wm-aim-screen {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background-color: rgba(6, 9, 12, 0.45);
+    overflow: hidden;
+}
+
+/* The range wall. Sized larger than any screen; code pans it by left/top so the
+   grid itself is the motion cue. The grid is drawn as 1px child elements
+   rather than a tiled texture: background-repeat stretched the tile across
+   the whole plane instead of tiling it, which read as a huge blurry grid. */
+.wm-aim-world {
+    position: absolute;
+    width: 4096px;
+    height: 4096px;
+}
+
+/* Sits between the blurred frame and the grid: the blur keeps the mission
+   legible as a backdrop while this pulls it down far enough that the range
+   reads on top of it. */
+.wm-aim-dim {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background-color: rgba(5, 8, 11, 0.55);
+}
+
+.wm-aim-gridline {
+    position: absolute;
+    background-color: rgba(120, 145, 165, 0.14);
+}
+
+.wm-aim-gridline--major {
+    background-color: rgba(140, 170, 190, 0.26);
+}
+
+.wm-aim-ball {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background-image: url("ball.png");
+}
+
+.wm-aim-vignette {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background-image: url("vignette.png");
+    -unity-background-scale-mode: stretch-to-fill;
+}
+
+.wm-aim-reticle {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 4px;
+    height: 4px;
+    margin-left: -2px;
+    margin-top: -2px;
+    border-radius: 2px;
+    background-color: rgb(255, 255, 255);
+}
+
+/* ---- top chrome ---- */
+.wm-aim-topbar {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 26px;
+    align-items: center;
+}
+
+.wm-aim-timer {
+    width: 280px;
+    height: 6px;
+    margin-top: 10px;
+    background-color: var(--wm-bar-track);
+    border-width: 1px;
+    border-color: var(--wm-bar-border);
+}
+
+.wm-aim-timer-fill {
+    height: 100%;
+    width: 100%;
+    background-color: var(--wm-rel);
+}
+
+.wm-aim-points {
+    margin-top: 8px;
+    color: var(--wm-rel);
+    font-size: 24px;
+    -unity-font-style: bold;
+}
+
+/* ---- countdown ---- */
+.wm-aim-countstack {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 26%;
+    align-items: center;
+}
+
+.wm-aim-instruction {
+    color: rgb(222, 227, 233);
+    font-size: 18px;
+    letter-spacing: 3px;
+}
+
+.wm-aim-lights {
+    margin-top: 18px;
+    flex-direction: row;
+}
+
+.wm-aim-light {
+    width: 30px;
+    height: 30px;
+    border-radius: 15px;
+    margin: 0 10px;
+    background-color: rgba(70, 14, 12, 0.55);
+    border-width: 1px;
+    border-color: rgba(140, 40, 34, 0.6);
+}
+
+.wm-aim-light--on {
+    background-color: rgb(232, 38, 28);
+    border-color: rgb(255, 120, 100);
+}
+
+.wm-aim-hint {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 34px;
+    -unity-text-align: middle-center;
+    color: rgb(120, 128, 138);
+    font-size: 12px;
+    letter-spacing: 1px;
+}
+
+/* ---- results ---- */
+.wm-aim-results {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 420px;
+    margin-left: -210px;
+    margin-top: -160px;
+    display: none;
+}
+
+.wm-aim-results-body {
+    padding: 26px 40px 30px 40px;
+    align-items: center;
+}
+
+.wm-aim-results-points {
+    color: var(--wm-rel);
+    font-size: 44px;
+    -unity-font-style: bold;
+}
+
+/* Stat sheet: labels down the left column, values down the right, each row
+   stretched to the card so the two columns stay aligned. */
+.wm-aim-results-rows {
+    margin-top: 12px;
+    align-self: stretch;
+}
+
+.wm-aim-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 3px;
+}
+
+.wm-aim-row-value {
+    -unity-text-align: middle-right;
+    color: rgb(242, 110, 34);
+    font-size: 22px;
+    -unity-font-style: bold;
+}
+
+.wm-aim-row-label {
+    color: rgb(214, 220, 228);
+    font-size: 13px;
+}
+
+.wm-aim-row-note {
+    margin-top: 10px;
+    align-self: center;
+    color: rgb(182, 190, 200);
+    font-size: 11px;
+}
+
+.wm-aim-continue {
+    margin-top: 20px;
+    min-width: 170px;
+    padding: 8px 20px;
+    color: var(--wm-rel);
+    -unity-font-style: bold;
+    font-size: 14px;
+    letter-spacing: 2px;
+    background-color: rgba(0, 0, 0, 0.45);
+    border-width: 1px;
+    border-color: var(--wm-rel);
+}
+
+.wm-aim-continue:hover {
+    background-color: rgba(233, 203, 79, 0.22);
+    color: rgb(255, 240, 180);
+}
+
+.wm-aim-continue:active {
+    background-color: rgba(233, 203, 79, 0.38);
+}

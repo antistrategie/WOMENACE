@@ -13,6 +13,27 @@
       <HintPath>$(GameAssembliesDir)/UnityEngine.TextRenderingModule.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <!-- AudioClip/AudioSource, for the mod's own UI sounds. -->
+    <Reference Include="UnityEngine.AudioModule">
+      <HintPath>$(GameAssembliesDir)/UnityEngine.AudioModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- Raw mouse deltas for the aim trainer's locked-cursor look. Both
+         backends referenced because the game ships both; AimInput picks
+         whichever answers at runtime. -->
+    <Reference Include="Unity.InputSystem">
+      <HintPath>$(GameAssembliesDir)/Unity.InputSystem.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>$(GameAssembliesDir)/UnityEngine.InputLegacyModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- Frame capture for the aim trainer's blurred backdrop. -->
+    <Reference Include="UnityEngine.ScreenCaptureModule">
+      <HintPath>$(GameAssembliesDir)/UnityEngine.ScreenCaptureModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
   </ItemGroup>
 
 </Project>
