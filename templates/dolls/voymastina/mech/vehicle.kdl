@@ -8,8 +8,11 @@ clone "EntityTemplate" from="player_vehicle.generic_heavy_attack_walker" id="pla
     set "Title" {
         set "m_DefaultTranslation" "Sinbreaker (White Mastiff's Fang)"
     }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Exoskeleton"
+    }
     set "Description" {
-        set "m_DefaultTranslation" "Voymastina's usual outfit. Its simple desgin has nothing in the way of personalization or decoration. It shows its true worth in battle, where it is like a sharp fang."
+        set "m_DefaultTranslation" "An exoskeleton custom made by Nele for Voymastina to enhance her combat abilities even further."
     }
 
     set "Prefabs" index=0 asset="voymastina_mech/default/main"
@@ -52,19 +55,19 @@ clone "EntityTemplate" from="player_vehicle.generic_heavy_attack_walker" id="pla
     append "Skills" "active.voymastina_mech_rocket"
     append "Skills" "active.voymastina_mech_drill"
 
-    set "Badge" asset="voymastina/badge_mini"
-    set "BadgeWhite" asset="voymastina/badge_mini"
+    set "Badge" asset="voymastina/mech/badge_mini"
+    set "BadgeWhite" asset="voymastina/mech/badge_mini"
 }
 
 clone "EntityTemplate" from="player_vehicle.generic_heavy_attack_walker" id="player_vehicle.voymastina_mech_erwin" {
     set "Title" {
         set "m_DefaultTranslation" "Sinbreaker (Erwin)"
     }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Exoskeleton"
+    }
     set "Description" {
-        set "m_DefaultTranslation" """
-            "I'm sorry I can't blend in like a normal agent... But I can ensure your safety."
-            She stands by your side, her keen gaze sweeping over everyone who could possibly be suspicious.
-            """
+        set "m_DefaultTranslation" "An exoskeleton custom made by Nele for Voymastina to enhance her combat abilities even further."
     }
 
     set "Prefabs" index=0 asset="voymastina_mech/erwin/main"
@@ -106,8 +109,8 @@ clone "EntityTemplate" from="player_vehicle.generic_heavy_attack_walker" id="pla
     append "Skills" "active.voymastina_mech_rocket"
     append "Skills" "active.voymastina_mech_drill"
 
-    set "Badge" asset="voymastina/badge_mini"
-    set "BadgeWhite" asset="voymastina/badge_mini"
+    set "Badge" asset="voymastina/mech/badge_mini"
+    set "BadgeWhite" asset="voymastina/mech/badge_mini"
 }
 
 clone "VehicleItemTemplate" from="vehicle.chassis_walker_medium" id="vehicle.voymastina_mech" {
@@ -117,9 +120,9 @@ clone "VehicleItemTemplate" from="vehicle.chassis_walker_medium" id="vehicle.voy
         set "m_Supplies" 400
     }
 
-    set "Icon" asset="voymastina/armor/default/Icon"
-    set "IconEquipment" asset="voymastina/armor/default/IconEquipment"
-    set "IconSkillBar" asset="voymastina/armor/default/IconSkillBar"
+    set "Icon" asset="voymastina/mech/Icon"
+    set "IconEquipment" asset="voymastina/mech/IconEquipment"
+    set "IconSkillBar" asset="voymastina/mech/IconSkillBar"
 
     append "Tags" "jy_vehicle_restricted"
 
@@ -134,9 +137,9 @@ clone "VehicleItemTemplate" from="vehicle.chassis_walker_medium" id="vehicle.voy
         set "m_Supplies" 400
     }
 
-    set "Icon" asset="voymastina/armor/erwin/Icon"
-    set "IconEquipment" asset="voymastina/armor/erwin/IconEquipment"
-    set "IconSkillBar" asset="voymastina/armor/erwin/IconSkillBar"
+    set "Icon" asset="voymastina/mech/Icon"
+    set "IconEquipment" asset="voymastina/mech/IconEquipment"
+    set "IconSkillBar" asset="voymastina/mech/IconSkillBar"
 
     append "Tags" "jy_vehicle_restricted"
 
