@@ -65,12 +65,35 @@ CLIPS = {"drive_wheelspin", "door_open", "door_close"}
 # source order. The glass and livery meshes have no entry here: their sets are
 # appended below by hand, because neither takes a Sunborn <prefix>_d/_n/_rmo
 # trio the way a body slot does.
+#
+# The pairing is not positional. AssetStudio exports the car with no materials
+# at all (its Materials folder comes out empty, and the FBX carries no material
+# names), and the asset map holds exactly one Material for the whole car, so
+# there is nothing to read the binding off. It is recovered from the UV layouts
+# instead, which is decisive because a Sunborn sheet is painted island by island:
+#
+# - sub0 and sub2 share Koleda_Supercar_01. Their islands have precisely zero
+#   overlap, interlocking across the sheet, while every other pair of submeshes
+#   collides over 68% of the smaller mask. sub0 lands on the white bodywork
+#   artwork, sub2 on the dark trim between it.
+# - sub1 is Koleda_Supercar_01menban. Thirty-four quads whose outlines trace the
+#   door panel silhouettes on that sheet, orange strips and locating dots
+#   included. menban is 门板, door panel.
+# - sub3 is Koleda_Supercar_03, the cockpit sheet.
+# - sub4 is Koleda_Supercar_02. This is the wheels: every wheel bone
+#   (front/back Wheel and WheelBase, left and right) weights into this slot and
+#   no other, and its spoke islands sit exactly on the sheet's gold five-spoke
+#   artwork, the rim arcs on the rim rings.
+#
+# Koleda_Supercar_04 is not a body set. It is a flat 512 gradient, 219 unique
+# colours in a 32..95 band with a featureless normal and a uniform RMO, and lod0
+# does not sample it. Binding it to sub4 is what renders the wheels untextured.
 SETS = {
     "supercar_sub0": "Koleda_Supercar_01",
     "supercar_sub1": "Koleda_Supercar_01menban",
-    "supercar_sub2": "Koleda_Supercar_02",
+    "supercar_sub2": "Koleda_Supercar_01",
     "supercar_sub3": "Koleda_Supercar_03",
-    "supercar_sub4": "Koleda_Supercar_04",
+    "supercar_sub4": "Koleda_Supercar_02",
 }
 
 
@@ -94,9 +117,10 @@ TOON = "Womenace/DollToon"
 TRANS = "Womenace/DollToonTrans"
 
 # Every body slot is opaque, as the game's own recovered material is
-# (Koleda_Supercar_01_uber_VFX: _Surface 0, _UseRampMap 1). The _da alphas on
-# the body sets carry data, not coverage: routing sub4 by its alpha histogram
-# once turned the wheels and diffuser see-through.
+# (Koleda_Supercar_01_uber_VFX: _Surface 0, _UseRampMap 1). Where a Sunborn set
+# names its albedo _da the alpha carries data, not coverage, so a slot must
+# never be routed to the transparent shader off an alpha histogram: doing that
+# renders the wheels and the diffuser see-through.
 TRANS_SLOTS = set()
 
 
