@@ -8,9 +8,6 @@ clone "EntityTemplate" from="player_vehicle.generic_heavy_attack_walker" id="pla
     set "Title" {
         set "m_DefaultTranslation" "Sinbreaker (White Mastiff's Fang)"
     }
-    set "ShortName" {
-        set "m_DefaultTranslation" "Exoskeleton"
-    }
     set "Description" {
         set "m_DefaultTranslation" "An exoskeleton custom made by Nele for Voymastina to enhance her combat abilities even further."
     }
@@ -63,9 +60,6 @@ clone "EntityTemplate" from="player_vehicle.generic_heavy_attack_walker" id="pla
     set "Title" {
         set "m_DefaultTranslation" "Sinbreaker (Erwin)"
     }
-    set "ShortName" {
-        set "m_DefaultTranslation" "Exoskeleton"
-    }
     set "Description" {
         set "m_DefaultTranslation" "An exoskeleton custom made by Nele for Voymastina to enhance her combat abilities even further."
     }
@@ -116,6 +110,10 @@ clone "EntityTemplate" from="player_vehicle.generic_heavy_attack_walker" id="pla
 clone "VehicleItemTemplate" from="vehicle.chassis_walker_medium" id="vehicle.voymastina_mech" {
     set "EntityTemplate" "player_vehicle.voymastina_mech"
 
+    set "ShortName" {
+        set "m_DefaultTranslation" "Exoskeleton"
+    }
+
     set "DeployCosts" {
         set "m_Supplies" 400
     }
@@ -132,6 +130,10 @@ clone "VehicleItemTemplate" from="vehicle.chassis_walker_medium" id="vehicle.voy
 
 clone "VehicleItemTemplate" from="vehicle.chassis_walker_medium" id="vehicle.voymastina_mech_erwin" {
     set "EntityTemplate" "player_vehicle.voymastina_mech_erwin"
+
+    set "ShortName" {
+        set "m_DefaultTranslation" "Exoskeleton"
+    }
 
     set "DeployCosts" {
         set "m_Supplies" 400
