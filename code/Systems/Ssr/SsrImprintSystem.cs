@@ -104,7 +104,7 @@ public sealed class SsrImprintSystem : JiangyuSystem
             // exists for the "Cheyanne Imprint Boost" tooltip and IsImprintWeapon.
             OwnerTag = "wmgfl_cheyanne",
             OwnerName = "Cheyanne",
-            BonusText = "Aimlabs is free lil bro, but this is probably an okay alternative.",
+            BonusText = "Aimlabs is free lil pup, but this is probably an okay alternative.",
             Skills = new[]
             {
                 new SkillImprint { SkillId = "active.cheyanne_ssr_ricochet" },
