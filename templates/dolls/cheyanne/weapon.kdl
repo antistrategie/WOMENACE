@@ -120,12 +120,12 @@ clone "WeaponTemplate" from="specialweapon.anti_materiel_rifle_tier1" id="weapon
     set "IconSkillBarDisabled" asset="weapon/cheyanne_ssr/IconSkillBarDisabled"
 
     set "ArmorPenetration" 100.0
-    set "ArmorPenetrationDropoff" 0
+    set "ArmorPenetrationDropoff" 0.0
 
-    set "Damage" 40.0
-    set "DamageDropoff" 0
+    set "Damage" 83.0
+    set "DamageDropoff" 0.0
     set "DamageToArmorDurability" 45.0
-    set "DamageToArmorDurabilityDropoff" 0
+    set "DamageToArmorDurabilityDropoff" 0.0
 
     set "MaxRange" 20
     set "IdealRange" 12
@@ -175,7 +175,7 @@ clone "SkillTemplate" from="active.shoot_anti_materiel_rifle" id="active.cheyann
     }
 
     set "ActionPointCost" 70
-    set "Uses" 3
+    set "Uses" 1
     set "ExecutingElement" enum="ExecutingElementType" "SpecialOnly"
     set "IsOverridingRanges" #false
     set "IsDeploymentRequired" #false
