@@ -1,0 +1,117 @@
+clone "ShipUpgradeTemplate" from="oci.wmgfl_fairy_lodge" id="oci.wmgfl_peace_fairy" {
+    set "Icon" asset="fairies/peace_fairy"
+    set "Name" {
+        set "m_DefaultTranslation" "Peace Fairy"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Peace Fairy"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "This Fairy has the power to end strife. It can otherwise be used to mediate disputes."
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "<style=\"Highlight\">• Gain the Offmap Ability \"Peace Fairy\" which makes every unit on the map immune to damage for the whole of the next round.</style>"
+    }
+    set "UnlockType" enum="ShipUpgradeUnlockType" "EventOnly"
+    set "UnlockSelectWeight" 0
+    set "OciPointsCosts" 60
+    clear "Effects"
+    clear "ChildUpgrades"
+    append "Effects" type="GrantOffmapAbilityEffect" {
+        set "OffmapAbility" ref="OffmapAbilityTemplate" "offmap_ability.wmgfl_peace_fairy"
+        set "RevertOnEffectRemove" #true
+    }
+    append "ChildUpgrades" "oci.wmgfl_enhanced_peace_fairy"
+    append "AdditionalShipUpgradeEffectGivers" "oci.wmgfl_fairy_lodge"
+}
+
+clone "OffmapAbilityTemplate" from="offmap_ability.wmgfl_reinforcement_fairy" id="offmap_ability.wmgfl_peace_fairy" {
+    set "SkillTemplate" ref="SkillTemplate" "offmap.wmgfl_peace_fairy"
+    set "DelayInRounds" 0
+}
+
+clone "SkillTemplate" from="offmap.shield_projector" id="offmap.wmgfl_peace_fairy" {
+    set "Icon" asset="fairies/peace_fairy"
+    set "Title" {
+        set "m_DefaultTranslation" "Peace Fairy"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "A fairy calls a ceasefire. Every unit on the map is immune to damage for the whole of the next round."
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "Every unit on the map becomes immune to damage for the whole of the next round."
+    }
+    set "TargetsAllowed" enum="SkillTarget" "EmptyTile"
+    set "IsTargeted" #false
+    set "AimingType" enum="AimingType" "None"
+    set "Uses" 1
+    clear "EventHandlers"
+    append "EventHandlers" type="WOMENACE:BlanketEffect" {
+        set "EffectId" "effect.wmgfl_peace"
+    }
+}
+
+clone "SkillTemplate" from="effect.bleeding" id="effect.wmgfl_peace" {
+    set "Icon" asset="fairies/peace_buff"
+    set "Title" {
+        set "m_DefaultTranslation" "Ceasefire"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "A peace fairy watches over the field. Immune to damage until this round ends."
+    }
+    clear "EventHandlers"
+    append "EventHandlers" type="LifetimeLimit" {
+        set "Event" enum="LifetimeType" "OnRoundStart"
+        set "Lifetime" 3
+        set "ResetLifetimeOnRefresh" #true
+    }
+    append "EventHandlers" type="SetEntityFlag" {
+        set "Flag" enum="EntityFlags" "ImmuneToDamage"
+    }
+    append "EventHandlers" type="DisplayText" {
+        set "Event" enum="DisplayEvent" "OnAdded"
+        set "LocaKey" "wmgfl_peace"
+        set "DefaultText" "Ceasefire!"
+    }
+    append "EventHandlers" type="DisplayText" {
+        set "Event" enum="DisplayEvent" "Triggered"
+        set "LocaKey" "wmgfl_peace_end"
+        set "DefaultText" "Ceasefire ended"
+    }
+    append "EventHandlers" type="WOMENACE:TriggerTextOnRemoved" {}
+}
+
+clone "ShipUpgradeTemplate" from="oci.wmgfl_peace_fairy" id="oci.wmgfl_enhanced_peace_fairy" {
+    set "Icon" asset="fairies/enhanced_peace_fairy"
+    set "Name" {
+        set "m_DefaultTranslation" "Enhanced Peace Fairy"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Enhanced Peace Fairy"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "This Fairy has the power to end strife twice over. It can otherwise be used to mediate even the bitterest disputes."
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "<style=\"Highlight\">• Gain the Offmap Ability \"Enhanced Peace Fairy\" which makes every unit on the map immune to damage for the whole of the next round. Usable twice per mission.</style>"
+    }
+    set "OciPointsCosts" 90
+    clear "Effects"
+    clear "ChildUpgrades"
+    append "Effects" type="GrantOffmapAbilityEffect" {
+        set "OffmapAbility" ref="OffmapAbilityTemplate" "offmap_ability.wmgfl_enhanced_peace_fairy"
+        set "RevertOnEffectRemove" #true
+    }
+}
+
+clone "OffmapAbilityTemplate" from="offmap_ability.wmgfl_peace_fairy" id="offmap_ability.wmgfl_enhanced_peace_fairy" {
+    set "SkillTemplate" ref="SkillTemplate" "offmap.wmgfl_enhanced_peace_fairy"
+}
+
+clone "SkillTemplate" from="offmap.wmgfl_peace_fairy" id="offmap.wmgfl_enhanced_peace_fairy" {
+    set "Icon" asset="fairies/enhanced_peace_fairy"
+    set "Title" {
+        set "m_DefaultTranslation" "Enhanced Peace Fairy"
+    }
+    set "Uses" 2
+}

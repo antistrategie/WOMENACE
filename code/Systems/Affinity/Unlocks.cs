@@ -19,7 +19,8 @@ public static class Unlocks
         // Alternate outfits. Armors lists the transmog outfit ids unlocked at this level. The
         // transmog picker greys them out until the level is reached.
         Skins,
-        // A deployable mech form (gated in FormSwapSystem).
+        // A deployable mech form (gated in FormSwapSystem). Items lists the chassis vehicle ids
+        // the form can wear, granted to the shared inventory the same way a Vehicle entry's are.
         Mech,
         // An SSR special weapon granted to the shared inventory at this level. The weapon id is not
         // authored: it is weapon.<doll>_ssr by the Calibration convention. Equippable by anyone, but
@@ -50,7 +51,7 @@ public static class Unlocks
         ["wmgfl_voymastina"] = new[]
         {
             new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.voymastina_erwin" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_voymastina/lv2", "Outfit: Erwin") },
-            new Entry { Level = 4, Feature = Feature.Mech, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_voymastina/lv4", "Alternate form: Sinbreaker") },
+            new Entry { Level = 4, Feature = Feature.Mech, Items = new[] { "vehicle.voymastina_mech", "vehicle.voymastina_mech_erwin" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_voymastina/lv4", "Alternate form: Sinbreaker") },
         },
         ["wmgfl_leva"] = new[]
         {
@@ -119,12 +120,13 @@ public static class Unlocks
                 yield return Calibration.SsrWeaponIdFor(characterTag);
     }
 
-    // The vehicle item ids a character has unlocked at this level (every Vehicle entry at or below
-    // it). Granted to the shared inventory, equippable by any pilot-capable unit.
+    // The vehicle item ids a character has unlocked at this level (every Vehicle and Mech entry at
+    // or below it). Granted to the shared inventory, and re-granted whenever one is missing, so a
+    // chassis destroyed in combat comes back.
     public static IEnumerable<string> UnlockedItems(string characterTag, int level)
     {
         foreach (var entry in EntriesFor(characterTag))
-            if (entry.Feature == Feature.Vehicle && level >= entry.Level)
+            if (entry.Feature is Feature.Vehicle or Feature.Mech && level >= entry.Level)
                 foreach (var id in entry.Items)
                     yield return id;
     }

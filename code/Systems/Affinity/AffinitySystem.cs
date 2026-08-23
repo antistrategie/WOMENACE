@@ -92,7 +92,7 @@ public sealed class AffinitySystem : JiangyuSystem
             foreach (var entry in entries)
             {
                 var wantsArmors = entry.Feature == Unlocks.Feature.Skins;
-                var wantsItems = entry.Feature == Unlocks.Feature.Vehicle;
+                var wantsItems = entry.Feature is Unlocks.Feature.Vehicle or Unlocks.Feature.Mech;
                 if (wantsArmors != entry.Armors.Length > 0 || wantsItems != entry.Items.Length > 0)
                     Context.Log.Warn($"affinity: unlock entry {tag} lv{entry.Level} ({entry.Feature}) has mismatched data arrays");
             }
@@ -456,24 +456,17 @@ public sealed class AffinitySystem : JiangyuSystem
                 Context.Log.Info($"affinity: unlocked weapon '{id}' (level {level})");
             }
 
-            // Vehicles are destroyable in combat, so "already owned" can never stand in for
-            // "already granted" (the principle the calibration component ledger records): without
-            // a ledger, a Sinner lost in a mission would be re-minted free on the next window
-            // refresh. The ledger records each granted id once. An id already owned when its
-            // level is first reached (a save predating the unlock) is recorded without minting
-            // a duplicate.
-            var ledger = Context.State.Get<UnlockLedgerState>().ForCharacter(key);
+            // A character's signature vehicle is theirs for as long as they have the level: a
+            // Sinner or a Sinbreaker chassis lost in combat is replaced free, so losing a mission
+            // never costs a doll her defining kit. The ownership check is the whole gate, so the
+            // replacement lands only once the wreck is actually gone from the inventory.
             foreach (var id in Unlocks.UnlockedItems(characterTag, level))
             {
-                if (ledger.Contains(id))
-                    continue;
                 var template = Templates.Resolve<VehicleItemTemplate>(id, _vehicleCache, msg => Context.Log.Warn($"affinity: {msg}"));
-                if (template == null)
+                if (template == null || OwnsInstance(owned, itemId => itemId == id))
                     continue;
-                if (!OwnsInstance(owned, itemId => itemId == id))
-                    owned.AddItem(template, false, false);
-                ledger.Add(id);
-                Context.Log.Info($"affinity: unlocked vehicle '{id}' (level {level})");
+                owned.AddItem(template, false, false);
+                Context.Log.Info($"affinity: granted vehicle '{id}' (level {level})");
             }
         }
         catch (Exception ex) { Context.Log.Warn($"affinity: unlock failed: {ex.Message}"); }
@@ -850,18 +843,4 @@ public sealed class AffinitySystem : JiangyuSystem
         catch { return null; }
     }
 
-}
-
-// Persisted item-unlock ledger per character key (the same key AffinityState uses). Records each
-// granted item id exactly once, so a grant never re-fires however the inventory changes afterwards.
-public sealed class UnlockLedgerState
-{
-    public Dictionary<int, List<string>> GrantedItems { get; set; } = [];
-
-    public List<string> ForCharacter(int key)
-    {
-        if (!GrantedItems.TryGetValue(key, out var ids))
-            GrantedItems[key] = ids = [];
-        return ids;
-    }
 }

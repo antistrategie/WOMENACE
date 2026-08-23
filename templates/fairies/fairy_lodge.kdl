@@ -16,12 +16,9 @@ clone "ShipUpgradeTemplate" from="oci.unbent_medevac" id="oci.wmgfl_fairy_lodge"
     set "OciPointsCosts" 40
 
     clear "Effects"
-    append "Effects" type="ChangeShipUpgradeLockEffect" {
-        set "ShipUpgrade" ref="ShipUpgradeTemplate" "oci.wmgfl_reinforcement_fairy"
-        set "Change" enum="ShipUpgradeUnlockChange" "Unlock"
-        set "RevertOnEffectRemove" #true
-    }
     append "ChildUpgrades" "oci.wmgfl_reinforcement_fairy"
+    append "ChildUpgrades" "oci.wmgfl_peace_fairy"
+    append "ChildUpgrades" "oci.wmgfl_parachute_fairy"
 }
 
 patch "ShipUpgradeSlotTemplate" "ship_upgrade_slot.hull" {

@@ -7,7 +7,7 @@ clone "ShipUpgradeTemplate" from="oci.wmgfl_fairy_lodge" id="oci.wmgfl_reinforce
         set "m_DefaultTranslation" "Reinforcement Fairy"
     }
     set "Description" {
-        set "m_DefaultTranslation" "A maintenance cradle for a support fairy that delivers replacement dummies to Doll squads in the field."
+        set "m_DefaultTranslation" "Calls for reinforcement T-Dolls. Can be used for communication and sending emergency distress signals on regular days."
     }
     set "ShortDescription" {
         set "m_DefaultTranslation" "<style=\"Highlight\">• Gain the Offmap Ability \"Reinforcement Fairy\" which reinforces a Doll squad with one dummy and raises its defence by 10% for 3 turns.</style>"
@@ -19,11 +19,6 @@ clone "ShipUpgradeTemplate" from="oci.wmgfl_fairy_lodge" id="oci.wmgfl_reinforce
     clear "ChildUpgrades"
     append "Effects" type="GrantOffmapAbilityEffect" {
         set "OffmapAbility" ref="OffmapAbilityTemplate" "offmap_ability.wmgfl_reinforcement_fairy"
-        set "RevertOnEffectRemove" #true
-    }
-    append "Effects" type="ChangeShipUpgradeLockEffect" {
-        set "ShipUpgrade" ref="ShipUpgradeTemplate" "oci.wmgfl_enhanced_reinforcement_fairy"
-        set "Change" enum="ShipUpgradeUnlockChange" "Unlock"
         set "RevertOnEffectRemove" #true
     }
     append "ChildUpgrades" "oci.wmgfl_enhanced_reinforcement_fairy"
@@ -48,7 +43,7 @@ clone "SkillTemplate" from="offmap.shield_projector" id="offmap.wmgfl_reinforcem
         set "m_DefaultTranslation" "Reinforces a Doll squad with one dummy and raises its <link=\"defense\">Defence</link> by 10% for 3 turns."
     }
     set "TargetsAllowed" enum="SkillTarget" "AlliedActor"
-    set "Uses" 4
+    set "Uses" 3
     clear "EventHandlers"
     append "EventHandlers" type="WOMENACE:ReinforceSquaddie" {}
     append "EventHandlers" type="AddSkill" {
@@ -94,7 +89,7 @@ clone "ShipUpgradeTemplate" from="oci.wmgfl_reinforcement_fairy" id="oci.wmgfl_e
         set "m_DefaultTranslation" "Enhanced Reinforcement Fairy"
     }
     set "Description" {
-        set "m_DefaultTranslation" "The fairy cradle has been upgraded with improved support protocols that double the strength of the fairy's blessing."
+        set "m_DefaultTranslation" "Calls for reinforcement T-Dolls and shields them with a stronger blessing. Can be used to boost the ship's radio reception on regular days."
     }
     set "ShortDescription" {
         set "m_DefaultTranslation" "<style=\"Highlight\">• Gain the Offmap Ability \"Enhanced Reinforcement Fairy\" which reinforces a Doll squad with one dummy and raises its defence by 20% for 3 turns.</style>"
@@ -104,11 +99,6 @@ clone "ShipUpgradeTemplate" from="oci.wmgfl_reinforcement_fairy" id="oci.wmgfl_e
     clear "ChildUpgrades"
     append "Effects" type="GrantOffmapAbilityEffect" {
         set "OffmapAbility" ref="OffmapAbilityTemplate" "offmap_ability.wmgfl_enhanced_reinforcement_fairy"
-        set "RevertOnEffectRemove" #true
-    }
-    append "Effects" type="ChangeShipUpgradeLockEffect" {
-        set "ShipUpgrade" ref="ShipUpgradeTemplate" "oci.wmgfl_enhanced_reinforcement_fairy"
-        set "Change" enum="ShipUpgradeUnlockChange" "Unlock"
         set "RevertOnEffectRemove" #true
     }
 }

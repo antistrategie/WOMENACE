@@ -24,12 +24,13 @@ namespace WOMENACE.Code;
 public sealed class EffectHudIconSystem : JiangyuSystem
 {
     // effect template ids whose presence shows as overhead icons, on top of
-    // the five element effects (ElementsSystem.EffectIds). Enemy marks only:
-    // friendly units have the unit window for their effects.
+    // the five element effects (ElementsSystem.EffectIds). Enemy marks plus the
+    // effects a player needs to read at a glance on the map itself.
     private static readonly string[] TrackedEffectIds =
     {
         "effect.sextans_blood_kiss",
         "effect.wmgfl_overburn",
+        "effect.wmgfl_peace",
     };
 
     private static EffectHudIconSystem _instance;

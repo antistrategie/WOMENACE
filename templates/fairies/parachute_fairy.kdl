@@ -1,0 +1,147 @@
+clone "ShipUpgradeTemplate" from="oci.wmgfl_fairy_lodge" id="oci.wmgfl_parachute_fairy" {
+    set "Icon" asset="fairies/parachute_fairy"
+    set "Name" {
+        set "m_DefaultTranslation" "Parachute Fairy"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Parachute Fairy"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Controls Heliports. Can be used in decorating event venues on regular days."
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "<style=\"Highlight\">• Gain the Offmap Ability \"Parachute Fairy\" which drops a Doll squad on any tile on the map, reducing its Accuracy, Damage and Defence by 75% for 2 turns.</style>"
+    }
+    set "UnlockType" enum="ShipUpgradeUnlockType" "EventOnly"
+    set "UnlockSelectWeight" 0
+    set "OciPointsCosts" 60
+    clear "Effects"
+    clear "ChildUpgrades"
+    append "Effects" type="GrantOffmapAbilityEffect" {
+        set "OffmapAbility" ref="OffmapAbilityTemplate" "offmap_ability.wmgfl_parachute_fairy"
+        set "RevertOnEffectRemove" #true
+    }
+    append "ChildUpgrades" "oci.wmgfl_enhanced_parachute_fairy"
+    append "AdditionalShipUpgradeEffectGivers" "oci.wmgfl_fairy_lodge"
+}
+
+clone "OffmapAbilityTemplate" from="offmap_ability.wmgfl_reinforcement_fairy" id="offmap_ability.wmgfl_parachute_fairy" {
+    set "SkillTemplate" ref="SkillTemplate" "offmap.wmgfl_parachute_fairy"
+}
+
+clone "SkillTemplate" from="offmap.shield_projector" id="offmap.wmgfl_parachute_fairy" {
+    set "Icon" asset="fairies/parachute_fairy"
+    set "Title" {
+        set "m_DefaultTranslation" "Parachute Fairy"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "A fairy drops the selected Doll squad anywhere on the map, even into unscouted ground. The landing reduces its Accuracy, Damage and Defence by 75% for 2 turns."
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "Teleports the selected Doll squad to any tile. Accuracy, Damage and Defence reduced by 75% for 2 turns."
+    }
+    set "TargetsAllowed" enum="SkillTarget" "EmptyTile"
+    set "Uses" 1
+    clear "EventHandlers"
+    append "EventHandlers" type="WOMENACE:ParachuteJump" {
+        set "EffectId" "effect.wmgfl_drop_shock"
+    }
+}
+
+clone "SkillTemplate" from="effect.bleeding" id="effect.wmgfl_drop_shock" {
+    set "Icon" asset="fairies/parachute_buff"
+    set "Title" {
+        set "m_DefaultTranslation" "Drop Shock"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Accuracy, Damage and Defence reduced by 75% for 2 turns."
+    }
+    clear "EventHandlers"
+    append "EventHandlers" type="LifetimeLimit" {
+        set "Event" enum="LifetimeType" "OnTurnEnd"
+        set "Lifetime" 2
+        set "ResetLifetimeOnRefresh" #true
+    }
+    append "EventHandlers" type="ChangeProperty" {
+        set "Trigger" enum="UpdateEvent" "OnUpdate"
+        set "PropertyType" enum="EntityPropertyType" "AccuracyMult"
+        set "Amount" 0
+        set "AmountMult" 0.25
+    }
+    append "EventHandlers" type="ChangeProperty" {
+        set "Trigger" enum="UpdateEvent" "OnUpdate"
+        set "PropertyType" enum="EntityPropertyType" "DamageMult"
+        set "Amount" 0
+        set "AmountMult" 0.25
+    }
+    append "EventHandlers" type="ChangeProperty" {
+        set "Trigger" enum="UpdateEvent" "OnUpdate"
+        set "PropertyType" enum="EntityPropertyType" "DefenseMult"
+        set "Amount" 0
+        set "AmountMult" 0.25
+    }
+    append "EventHandlers" type="DisplayText" {
+        set "Event" enum="DisplayEvent" "OnAdded"
+        set "LocaKey" "wmgfl_drop_shock"
+        set "DefaultText" "Drop shock!"
+    }
+}
+
+clone "ShipUpgradeTemplate" from="oci.wmgfl_parachute_fairy" id="oci.wmgfl_enhanced_parachute_fairy" {
+    set "Icon" asset="fairies/enhanced_parachute_fairy"
+    set "Name" {
+        set "m_DefaultTranslation" "Enhanced Parachute Fairy"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Enhanced Parachute Fairy"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Controls Heliports in any weather. Can be used in decorating even the tallest event venues on regular days."
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "<style=\"Highlight\">• Gain the Offmap Ability \"Enhanced Parachute Fairy\" which drops a Doll squad on any tile on the map, reducing its Accuracy, Damage and Defence by 40% for 2 turns.</style>"
+    }
+    set "OciPointsCosts" 90
+    clear "Effects"
+    clear "ChildUpgrades"
+    append "Effects" type="GrantOffmapAbilityEffect" {
+        set "OffmapAbility" ref="OffmapAbilityTemplate" "offmap_ability.wmgfl_enhanced_parachute_fairy"
+        set "RevertOnEffectRemove" #true
+    }
+}
+
+clone "OffmapAbilityTemplate" from="offmap_ability.wmgfl_parachute_fairy" id="offmap_ability.wmgfl_enhanced_parachute_fairy" {
+    set "SkillTemplate" ref="SkillTemplate" "offmap.wmgfl_enhanced_parachute_fairy"
+}
+
+clone "SkillTemplate" from="offmap.wmgfl_parachute_fairy" id="offmap.wmgfl_enhanced_parachute_fairy" {
+    set "Icon" asset="fairies/enhanced_parachute_fairy"
+    set "Title" {
+        set "m_DefaultTranslation" "Enhanced Parachute Fairy"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "A fairy drops the selected Doll squad anywhere on the map, even into unscouted ground. The landing reduces its Accuracy, Damage and Defence by 40% for 2 turns."
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "Teleports the selected Doll squad to any tile. Accuracy, Damage and Defence reduced by 40% for 2 turns."
+    }
+    clear "EventHandlers"
+    append "EventHandlers" type="WOMENACE:ParachuteJump" {
+        set "EffectId" "effect.wmgfl_enhanced_drop_shock"
+    }
+}
+
+clone "SkillTemplate" from="effect.wmgfl_drop_shock" id="effect.wmgfl_enhanced_drop_shock" {
+    set "Description" {
+        set "m_DefaultTranslation" "Rattled by the drop. Accuracy, Damage and Defence reduced by 40% for 2 turns."
+    }
+    set "EventHandlers" index=1 {
+        set "AmountMult" 0.6
+    }
+    set "EventHandlers" index=2 {
+        set "AmountMult" 0.6
+    }
+    set "EventHandlers" index=3 {
+        set "AmountMult" 0.6
+    }
+}
