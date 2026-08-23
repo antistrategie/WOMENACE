@@ -1,0 +1,146 @@
+clone "ShipUpgradeTemplate" from="oci.wmgfl_fairy_lodge" id="oci.wmgfl_reinforcement_fairy" {
+    set "Icon" asset="fairies/reinforcement_fairy"
+    set "Name" {
+        set "m_DefaultTranslation" "Reinforcement Fairy"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Reinforcement Fairy"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "A maintenance cradle for a support fairy that delivers replacement dummies to Doll squads in the field."
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "<style=\"Highlight\">• Gain the Offmap Ability \"Reinforcement Fairy\" which reinforces a Doll squad with one dummy and raises its defence by 10% for 3 turns.</style>"
+    }
+    set "UnlockType" enum="ShipUpgradeUnlockType" "EventOnly"
+    set "UnlockSelectWeight" 0
+    set "OciPointsCosts" 60
+    clear "Effects"
+    clear "ChildUpgrades"
+    append "Effects" type="GrantOffmapAbilityEffect" {
+        set "OffmapAbility" ref="OffmapAbilityTemplate" "offmap_ability.wmgfl_reinforcement_fairy"
+        set "RevertOnEffectRemove" #true
+    }
+    append "Effects" type="ChangeShipUpgradeLockEffect" {
+        set "ShipUpgrade" ref="ShipUpgradeTemplate" "oci.wmgfl_enhanced_reinforcement_fairy"
+        set "Change" enum="ShipUpgradeUnlockChange" "Unlock"
+        set "RevertOnEffectRemove" #true
+    }
+    append "ChildUpgrades" "oci.wmgfl_enhanced_reinforcement_fairy"
+    append "AdditionalShipUpgradeEffectGivers" "oci.wmgfl_fairy_lodge"
+}
+
+clone "OffmapAbilityTemplate" from="offmap_ability.medevac" id="offmap_ability.wmgfl_reinforcement_fairy" {
+    set "SkillTemplate" ref="SkillTemplate" "offmap.wmgfl_reinforcement_fairy"
+    set "OffmapAbilityType" enum="OffmapAbilityType" "Orbital"
+    set "DelayInRounds" 0
+}
+
+clone "SkillTemplate" from="offmap.shield_projector" id="offmap.wmgfl_reinforcement_fairy" {
+    set "Icon" asset="fairies/reinforcement_fairy"
+    set "Title" {
+        set "m_DefaultTranslation" "Reinforcement Fairy"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "A fairy delivers one dummy to a chosen Doll squad and raises its <link=\"defense\">Defence</link> by 10% for 3 turns."
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "Reinforces a Doll squad with one dummy and raises its <link=\"defense\">Defence</link> by 10% for 3 turns."
+    }
+    set "TargetsAllowed" enum="SkillTarget" "AlliedActor"
+    set "Uses" 4
+    clear "EventHandlers"
+    append "EventHandlers" type="WOMENACE:ReinforceSquaddie" {}
+    append "EventHandlers" type="AddSkill" {
+        set "Event" enum="AddEvent" "OnUse"
+        set "SkillToAdd" ref="SkillTemplate" "effect.wmgfl_fairy_reinforcement"
+        set "ShowHUDText" #true
+    }
+}
+
+clone "SkillTemplate" from="effect.bleeding" id="effect.wmgfl_fairy_reinforcement" {
+    set "Icon" asset="fairies/reinforcement_buff"
+    set "Title" {
+        set "m_DefaultTranslation" "Fairy Blessing"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "A reinforcement fairy hovers over the squad. <link=\"defense\">Defence</link> increased by 10% for 3 turns."
+    }
+    clear "EventHandlers"
+    append "EventHandlers" type="LifetimeLimit" {
+        set "Event" enum="LifetimeType" "OnTurnEnd"
+        set "Lifetime" 3
+        set "ResetLifetimeOnRefresh" #true
+    }
+    append "EventHandlers" type="ChangeProperty" {
+        set "Trigger" enum="UpdateEvent" "OnUpdate"
+        set "PropertyType" enum="EntityPropertyType" "DefenseMult"
+        set "Amount" 0
+        set "AmountMult" 1.1
+    }
+    append "EventHandlers" type="DisplayText" {
+        set "Event" enum="DisplayEvent" "OnAdded"
+        set "LocaKey" "wmgfl_fairy_reinforcement"
+        set "DefaultText" "Reinforced!"
+    }
+}
+
+clone "ShipUpgradeTemplate" from="oci.wmgfl_reinforcement_fairy" id="oci.wmgfl_enhanced_reinforcement_fairy" {
+    set "Icon" asset="fairies/enhanced_reinforcement_fairy"
+    set "Name" {
+        set "m_DefaultTranslation" "Enhanced Reinforcement Fairy"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Enhanced Reinforcement Fairy"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "The fairy cradle has been upgraded with improved support protocols that double the strength of the fairy's blessing."
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "<style=\"Highlight\">• Gain the Offmap Ability \"Enhanced Reinforcement Fairy\" which reinforces a Doll squad with one dummy and raises its defence by 20% for 3 turns.</style>"
+    }
+    set "OciPointsCosts" 90
+    clear "Effects"
+    clear "ChildUpgrades"
+    append "Effects" type="GrantOffmapAbilityEffect" {
+        set "OffmapAbility" ref="OffmapAbilityTemplate" "offmap_ability.wmgfl_enhanced_reinforcement_fairy"
+        set "RevertOnEffectRemove" #true
+    }
+    append "Effects" type="ChangeShipUpgradeLockEffect" {
+        set "ShipUpgrade" ref="ShipUpgradeTemplate" "oci.wmgfl_enhanced_reinforcement_fairy"
+        set "Change" enum="ShipUpgradeUnlockChange" "Unlock"
+        set "RevertOnEffectRemove" #true
+    }
+}
+
+clone "OffmapAbilityTemplate" from="offmap_ability.wmgfl_reinforcement_fairy" id="offmap_ability.wmgfl_enhanced_reinforcement_fairy" {
+    set "SkillTemplate" ref="SkillTemplate" "offmap.wmgfl_enhanced_reinforcement_fairy"
+}
+
+clone "SkillTemplate" from="offmap.wmgfl_reinforcement_fairy" id="offmap.wmgfl_enhanced_reinforcement_fairy" {
+    set "Icon" asset="fairies/enhanced_reinforcement_fairy"
+    set "Title" {
+        set "m_DefaultTranslation" "Enhanced Reinforcement Fairy"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "A fairy delivers one dummy to a chosen Doll squad and raises its <link=\"defense\">Defence</link> by 20% for 3 turns."
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "Reinforces a Doll squad with one dummy and raises its <link=\"defense\">Defence</link> by 20% for 3 turns."
+    }
+    set "EventHandlers" index=1 {
+        set "SkillToAdd" ref="SkillTemplate" "effect.wmgfl_enhanced_fairy_reinforcement"
+    }
+}
+
+clone "SkillTemplate" from="effect.wmgfl_fairy_reinforcement" id="effect.wmgfl_enhanced_fairy_reinforcement" {
+    set "Title" {
+        set "m_DefaultTranslation" "Enhanced Fairy Blessing"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "An enhanced reinforcement fairy hovers over the squad. <link=\"defense\">Defence</link> increased by 20% for 3 turns."
+    }
+    set "EventHandlers" index=1 {
+        set "AmountMult" 1.2
+    }
+}

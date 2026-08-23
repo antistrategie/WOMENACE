@@ -1,0 +1,29 @@
+clone "ShipUpgradeTemplate" from="oci.unbent_medevac" id="oci.wmgfl_fairy_lodge" {
+    set "Icon" asset="fairies/fairy_lodge"
+    set "Name" {
+        set "m_DefaultTranslation" "Fairy Lodge"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Fairy Lodge"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "A converted storage bay that houses and maintains support fairies."
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "<style=\"Highlight\">• Deployed Dolls gain +20 Affinity after each mission.</style>"
+    }
+    set "UnlockType" enum="ShipUpgradeUnlockType" "Always"
+    set "OciPointsCosts" 40
+
+    clear "Effects"
+    append "Effects" type="ChangeShipUpgradeLockEffect" {
+        set "ShipUpgrade" ref="ShipUpgradeTemplate" "oci.wmgfl_reinforcement_fairy"
+        set "Change" enum="ShipUpgradeUnlockChange" "Unlock"
+        set "RevertOnEffectRemove" #true
+    }
+    append "ChildUpgrades" "oci.wmgfl_reinforcement_fairy"
+}
+
+patch "ShipUpgradeSlotTemplate" "ship_upgrade_slot.hull" {
+    append "BasicUpgrades" "oci.wmgfl_fairy_lodge"
+}

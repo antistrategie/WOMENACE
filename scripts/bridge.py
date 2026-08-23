@@ -12,6 +12,8 @@ Common uses:
     scripts/bridge.py gifts 10         # top up 10 of each instead
     scripts/bridge.py workshop         # unlock the ship workshop (+ blueprint vouchers)
     scripts/bridge.py workshop off     # re-lock both gates
+    scripts/bridge.py oci              # grant 500 O.C.I. components
+    scripts/bridge.py oci 1000         # grant a different amount (negative takes away)
     scripts/bridge.py winmission       # kill remaining enemies + complete objectives
     scripts/bridge.py hud off          # take the mission UI down for a clean shot
     scripts/bridge.py hud on           # put it back
@@ -121,6 +123,10 @@ def main():
     workshop.add_argument("state", nargs="?", choices=["on", "off"], default="on",
                           help="on unlocks (default), off re-locks both gates")
 
+    oci = sub.add_parser("oci", help="grant O.C.I. components (default 500)")
+    oci.add_argument("amount", nargs="?", type=int, default=500,
+                     help="how many components to add, negative takes away (default 500)")
+
     sub.add_parser("winmission", help="kill remaining enemies and complete objectives")
 
     hud = sub.add_parser("hud", help="take the mission UI down (needs a running mission)")
@@ -149,6 +155,8 @@ def main():
         _emit(run_verb("Gifts.Give", [options.count], mutate=True))
     elif options.cmd == "workshop":
         _emit(run_verb("Workshop.Unlock", [options.state == "on"], mutate=True))
+    elif options.cmd == "oci":
+        _emit(run_verb("Oci.Grant", [options.amount], mutate=True))
     elif options.cmd == "winmission":
         _emit(command("winmission"))
     elif options.cmd == "hud":
