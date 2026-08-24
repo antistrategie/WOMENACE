@@ -29,25 +29,47 @@ namespace Womenace.EditorTools
             "LowCoverIdle_L", "LowCoverIdle_R",
         };
 
-        // Rotate the upper arm so shoulder->wrist runs horizontal, keeping its
-        // horizontal heading. The minimal lift: no assumptions about which
-        // world axis is "out" for this rig, just remove the vertical droop.
-        private static void LiftArmToHorizontal(Transform root, string upperArmName, string wristName)
+
+
+        // Rebuild the instance's pose from the skin bindposes: the inverse bind
+        // matrices are the bones' world transforms at skinning time, i.e. the
+        // modeller's true binding pose (a clean symmetric A-pose for GFL2 rigs),
+        // with the authored bone rolls. The prefab's node defaults are whatever
+        // pose the rig was exported in (a battle stance for this donor) and
+        // calibrating muscles against that biases every channel.
+        private static int ApplyBindPose(GameObject pose)
         {
-            var upper = FindDeep(root, upperArmName);
-            var wrist = FindDeep(root, wristName);
-            if (upper == null || wrist == null)
+            SkinnedMeshRenderer skin = null;
+            foreach (var r in pose.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+                if (skin == null || r.bones.Length > skin.bones.Length)
+                    skin = r;
+            if (skin == null || skin.sharedMesh == null)
+                return 0;
+            var binds = skin.sharedMesh.bindposes;
+            var bones = skin.bones;
+            var meshMatrix = skin.transform.localToWorldMatrix;
+            var world = new Dictionary<Transform, Matrix4x4>();
+            for (var i = 0; i < bones.Length && i < binds.Length; i++)
+                if (bones[i] != null && !world.ContainsKey(bones[i]))
+                    world[bones[i]] = meshMatrix * binds[i].inverse;
+            // parent-first application so each local is computed against the
+            // parent's already-applied bind transform
+            var applied = 0;
+            void Walk(Transform t)
             {
-                Debug.LogWarning($"ExtractHumanoidClips: T-pose lift skipped, missing {upperArmName}/{wristName}.");
-                return;
+                if (world.TryGetValue(t, out var w))
+                {
+                    var parentWorld = t.parent != null ? t.parent.localToWorldMatrix : Matrix4x4.identity;
+                    var local = parentWorld.inverse * w;
+                    t.localPosition = local.GetColumn(3);
+                    t.localRotation = local.rotation;
+                    applied++;
+                }
+                foreach (Transform child in t)
+                    Walk(child);
             }
-            var dir = wrist.position - upper.position;
-            var flat = new Vector3(dir.x, 0f, dir.z);
-            if (flat.sqrMagnitude < 1e-10f || dir.sqrMagnitude < 1e-10f)
-                return;
-            var lift = Quaternion.FromToRotation(dir.normalized, flat.normalized);
-            upper.rotation = lift * upper.rotation;
-            Debug.Log($"ExtractHumanoidClips: lifted {upperArmName} by {Quaternion.Angle(Quaternion.identity, lift):0.0} degrees to horizontal.");
+            Walk(pose.transform);
+            return applied;
         }
 
         private static Transform FindDeep(Transform root, string name)
@@ -122,20 +144,37 @@ namespace Womenace.EditorTools
                 // A custom humanDescription is only honoured when it carries a
                 // full skeleton array. With skeleton empty the importer runs
                 // its auto-mapper and quietly discards the custom human list.
-                // The skeleton is walked from the already-imported hierarchy's
-                // default pose, with one adjustment: the upper arms are lifted
-                // to horizontal (a synthetic T-pose). GFL2 binds in an A-pose,
-                // and muscle calibration against an A-pose skeleton offsets
-                // the arms in every converted clip.
+                // The skeleton is walked from an instance posed to the skin
+                // bind (see ApplyBindPose) with the upper arms lifted to
+                // horizontal, the calibration pose the muscle conversion is
+                // trusted against.
                 var modelRoot = AssetDatabase.LoadAssetAtPath<GameObject>(fbxPath);
                 var pose = Object.Instantiate(modelRoot);
                 SkeletonBone[] skeleton;
                 try
                 {
                     pose.name = modelRoot.name;
-                    LiftArmToHorizontal(pose.transform, "Shoulder_L", "Wrist_L");
-                    LiftArmToHorizontal(pose.transform, "Shoulder_R", "Wrist_R");
-                    var bones = new List<SkeletonBone>();
+                    // true calibration pose: the skin bind (a symmetric A-pose
+                    // with authored rolls), then the standard synthetic lift of
+                    // the upper arms to horizontal. A swing-only lift preserves
+                    // the bind's roll relationships.
+                    var appliedBind = ApplyBindPose(pose);
+                    Debug.Log($"ExtractHumanoidClips: bind pose applied to {appliedBind} bone(s).");
+                    foreach (var sd in new[] { "L", "R" })
+                    {
+                        var upper = FindDeep(pose.transform, "Shoulder_" + sd);
+                        var wrist = FindDeep(pose.transform, "Wrist_" + sd);
+                        if (upper == null || wrist == null)
+                            continue;
+                        var dir = wrist.position - upper.position;
+                        var flat = new Vector3(dir.x, 0f, dir.z);
+                        if (flat.sqrMagnitude < 1e-10f)
+                            continue;
+                        var lift = Quaternion.FromToRotation(dir.normalized, flat.normalized);
+                        upper.rotation = lift * upper.rotation;
+                        Debug.Log($"ExtractHumanoidClips: lifted arm {sd} by {Quaternion.Angle(Quaternion.identity, lift):0.0} degrees.");
+                    }
+                                        var bones = new List<SkeletonBone>();
                     void Walk(Transform t)
                     {
                         bones.Add(new SkeletonBone

@@ -1,0 +1,108 @@
+{
+  "parameters": [
+    {
+      "name": "Stance",
+      "type": "Int"
+    },
+    {
+      "name": "CustomSkillEffect",
+      "type": "Trigger"
+    }
+  ],
+  "states": [
+    {
+      "name": "Stowed",
+      "clip": "stow",
+      "loop": true,
+      "default": true
+    },
+    {
+      "name": "Deploying",
+      "clip": "deploy"
+    },
+    {
+      "name": "Deployed",
+      "clip": "deployed",
+      "loop": true
+    },
+    {
+      "name": "Fire",
+      "clip": "fire"
+    },
+    {
+      "name": "Stowing",
+      "clip": "stowing"
+    }
+  ],
+  "transitions": [
+    {
+      "from": "Stowed",
+      "to": "Deploying",
+      "conditions": [
+        [
+          "Stance",
+          "Equals",
+          1
+        ]
+      ]
+    },
+    {
+      "from": "Deploying",
+      "to": "Deployed",
+      "exitTime": 1.0
+    },
+    {
+      "from": "Deploying",
+      "to": "Stowing",
+      "conditions": [
+        [
+          "Stance",
+          "NotEqual",
+          1
+        ]
+      ]
+    },
+    {
+      "from": "Deployed",
+      "to": "Fire",
+      "conditions": [
+        [
+          "CustomSkillEffect",
+          "Trigger"
+        ]
+      ]
+    },
+    {
+      "from": "Fire",
+      "to": "Deployed",
+      "exitTime": 1.0
+    },
+    {
+      "from": "Deployed",
+      "to": "Stowing",
+      "conditions": [
+        [
+          "Stance",
+          "NotEqual",
+          1
+        ]
+      ]
+    },
+    {
+      "from": "Stowing",
+      "to": "Stowed",
+      "exitTime": 1.0
+    },
+    {
+      "from": "Stowing",
+      "to": "Deploying",
+      "conditions": [
+        [
+          "Stance",
+          "Equals",
+          1
+        ]
+      ]
+    }
+  ]
+}

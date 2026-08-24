@@ -1,0 +1,132 @@
+clone "WeaponTemplate" from="specialweapon.rocket_launcher_tier1_pal" id="specialweapon.asteria_railgun" {
+    append "Tags" "jy_no_sell"
+    set "Title" {
+        set "m_DefaultTranslation" "Particle Cannon"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Railgun"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "A departing gift that had witnessed many unsung wars and heroes without tombstones from an old veteran. The accelerator rails unfold once the weapon is deployed and launch a hypervelocity slug that burns through the heaviest armour."
+    }
+    set "Model" asset="weapon/asteria_railgun_bracket/main"
+    set "ModelSecondary" asset="weapon/asteria_railgun/main"
+    set "SkillsGranted" index=0 "active.asteria_railgun_shot"
+    set "Icon" asset="weapon/asteria_railgun/Icon"
+    set "IconEquipment" asset="weapon/asteria_railgun/IconEquipment"
+    set "IconEquipmentDisabled" asset="weapon/asteria_railgun/IconEquipmentDisabled"
+    set "IconSkillBar" asset="weapon/asteria_railgun/IconSkillBar"
+    set "IconSkillBarDisabled" asset="weapon/asteria_railgun/IconSkillBarDisabled"
+
+    set "MinRange" 3
+    set "IdealRange" 10
+    set "MaxRange" 16
+    set "AccuracyBonus" 15.0
+    set "AccuracyDropoff" -2.0
+    set "Damage" 260.0
+    set "ArmorPenetration" 240.0
+    set "DamageToArmorDurability" 400.0
+    set "Suppression" 60.0
+
+    set "DeployCosts" {
+        set "m_Supplies" 60
+    }
+
+    set "BlackMarketMaxQuantity" 0
+}
+
+clone "SkillTemplate" from="active.launch_rocket" id="active.asteria_railgun_shot" {
+    set "Icon" asset="weapon/asteria_railgun/SkillIcon"
+    set "IconDisabled" asset="weapon/asteria_railgun/SkillIconDisabled"
+    set "Title" {
+        set "m_DefaultTranslation" "Railgun Judgement"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Fire a hypervelocity slug at the target."
+    }
+    clear "Tags"
+    append "Tags" "anti_vehicle"
+    append "Tags" "anti_structure"
+    append "Tags" "armor_piercing"
+    append "Tags" "deploy"
+    append "Tags" "minimum_range"
+    append "Tags" "projectile"
+    append "Tags" "special_weapon"
+    append "Tags" "energy"
+    append "Tags" "accurate"
+    set "Uses" 5
+
+    set "ProjectileData" type="LaserProjectileData" {
+        set "Prefab" asset="weapon/asteria_railgun_beam/main"
+        set "TimeScale" 1.0
+        set "MaxTravelHeightMult" 1.0
+    }
+    set "SecondaryProjectileData" type="StandardProjectileData" {
+        set "Prefab" asset="laser_sparks"
+        set "TimeScale" 3.0
+        set "KeepAliveDuration" 10.0
+        set "MaxTravelHeightMult" 1.0
+    }
+    set "MuzzleEffect" asset="laser_muzzle_flash_large_01"
+    set "MuzzleEffectOverrides2" #null
+    set "RecoilStrength" 0.4
+    set "HitStrength" 0.5
+
+    set "ImpactOnSurface" index=0 {
+        set "ImpactEffect" asset="impact_laser_large_stone_01"
+    }
+    set "ImpactOnSurface" index=1 {
+        set "ImpactEffect" asset="impact_laser_large_metal_01"
+    }
+    set "ImpactOnSurface" index=2 {
+        set "ImpactEffect" asset="impact_laser_large_sand_01"
+    }
+    set "ImpactOnSurface" index=3 {
+        set "ImpactEffect" asset="impact_laser_large_earth_01"
+    }
+    set "ImpactOnSurface" index=4 {
+        set "ImpactEffect" asset="impact_laser_large_snow_01"
+    }
+    set "ImpactOnSurface" index=5 {
+        set "ImpactEffect" asset="impact_laser_large_snow_01"
+    }
+    set "ImpactOnSurface" index=6 {
+        set "ImpactEffect" asset="impact_laser_large_stone_01"
+    }
+    set "ImpactOnSurface" index=7 {
+        set "ImpactEffect" asset="impact_laser_large_sand_01"
+    }
+    set "ImpactOnSurface" index=8 {
+        set "ImpactEffect" asset="impact_laser_large_earth_01"
+    }
+    set "ImpactOnSurface" index=9 {
+        set "ImpactEffect" asset="impact_laser_large_grass_01"
+    }
+    set "ImpactOnSurface" index=11 {
+        set "ImpactEffect" asset="impact_laser_large_vegetation_01"
+    }
+    set "ImpactOnSurface" index=12 {
+        set "ImpactEffect" asset="impact_laser_large_stone_01"
+    }
+    set "ImpactOnSurface" index=13 {
+        set "ImpactEffect" asset="impact_laser_large_earth_01"
+    }
+
+    append "EventHandlers" type="Il2CppMenace.Tactical.Skills.Effects.SetAnimatorTrigger" {
+        set "Parameter" "TriggerCustomSkillEffect"
+        set "Delay" 0.0
+    }
+
+    set "SoundsOnAttackPerElement" index=0 {
+        set "bankId" "wmgfl_weapons_railgun_addition_bank"
+        set "itemId" "railgun_shot"
+    }
+    append "SoundsOnAttackPerElementFar" {
+        set "bankId" "wmgfl_weapons_railgun_addition_bank"
+        set "itemId" "railgun_shot_distant"
+    }
+    set "SoundsOnHit" index=0 {
+        set "bankId" "wmgfl_weapons_railgun_addition_bank"
+        set "itemId" "railgun_hit"
+    }
+}

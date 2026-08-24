@@ -95,6 +95,8 @@ python3 scripts/weapon/shade_weapons.py --bake <name>
 
 That writes the weapon's `materials.json` and runs `Jiangyu.Mod.BakeWeapon.BakeBatch` over it, putting the weapon on `Womenace/DollToon` with the shared weapon ramp so the gun a doll carries is shaded like the doll. The mask it binds is the Sunborn `_rmo`, which is the packing `DollToon` reads natively.
 
+A single-material weapon keeps its d / n / rmo trio flat in `textures/`. A weapon whose GLB carries several materials keeps one trio per material in `textures/<material name>/`, and the manifest gets one entry per material.
+
 `BakeWeapon.cs` (in `unity/Assets/Jiangyu/Editor/`) clones a material from the reference vanilla weapon and applies the manifest over it, so a manifest naming a shader and all four maps leaves nothing of the reference behind and one reference serves every weapon. Unset texture slots fall back to neutral 1×1 defaults, which matters for `_MaskMap` because Unity's default white would read as Metallic=1 and turn the gun chrome-blue.
 
 Output:
@@ -217,6 +219,27 @@ Optionally keep a vanilla brass layer (`bankId "weapons_soundbank"; itemId "smal
 
 Update the WeaponTemplate's `SkillsGranted` index to reference your new skill clone IDs.
 
+## Animated weapons (moving parts)
+
+A weapon whose parts move (rails that unfold, a rocket that shows and hides) ships a skinned mesh with its own Animator. No runtime code: MENACE's `ElementAnimator` collects every Animator under the element at creation, the mounted weapon prefab included, and forwards each parameter it sets on the soldier to every attachment Animator declaring the same name. The vanilla `rpg_t1` prefab hides its rocket on `Shoot_Single` this way, and every tripod weapon is a skinned rig on the same contract. Parameters worth declaring:
+
+- `Shoot_Single` / `Shoot_Burst` (Trigger): the skill's `AnimationType` (ShootSingle, ShootBurst, ThrowGrenade, SpecialAttack1..4 map to `Throw_Grenade`, `Special_Attack_1`, ...).
+- `Stance` (Int): `ActorStance` Default 0, Deployed 1, PinnedDown 2. A skill with `IsDeploymentRequired` fires from stance 1, so an unfold driven by `Stance == 1` opens the weapon as the soldier deploys.
+- `AmmoCount` (Int): from a `ReportAmmoToAnimator` handler on the skill. `CustomSkillEffect` (Trigger): from a `SetAnimatorTrigger { Parameter = TriggerCustomSkillEffect }` handler, for a clip one particular skill should play.
+
+Authoring, worked in `scripts/weapon/build_asteria_railgun.py`:
+
+1. Build the rig in Blender with the same object layout as a rigid weapon: `<name>_root` empty holding the armature, the skinned mesh (armature modifier) and the `muzzle` / `weapon_hand_l` empties as siblings. One action per clip, each on its own muted NLA track named after the clip (the exporter writes one glTF animation per track). Every clip keys the full pose.
+2. Export with `export_animation_mode="NLA_TRACKS"`, `export_skins=True`, `export_force_sampling=True`. The exporter can flip the sign of x and w on an empty's rotation, so pin `weapon_hand_l` to its intended glTF quaternion after export (`pin_node_rotation` there does this with `fix_hand_grip.py`'s GLB reader).
+3. Write `controller.json` beside `raw.glb`: parameters, states (each naming a clip, `loop`, one `default`) and transitions (`conditions` as `[parameter, mode, value]` with Equals / NotEqual / Greater / Less / If / IfNot / Trigger, or an `exitTime` in normalised clip time, optional `duration`).
+4. `python3 scripts/weapon/shade_weapons.py --bake <name>` picks the controller up and passes `-controller` to `BakeWeapon`, which copies the clips into a `weapon.controller` beside the prefab, builds the state machine and puts the Animator on the prefab root. glTFast wraps an animated scene in one extra root node, and the bake lifts the authored root back out (clip paths lose that segment) so `muzzle` and `weapon_hand_l` sit directly under the prefab root like every rigid weapon.
+
+The bake tool is generic: the parameter names, the state graph and the clips all come from the weapon's own `controller.json`.
+
+## Laser and beam visuals
+
+A skill's visuals are plain prefab references on the SkillTemplate, so a beam weapon is data: `ProjectileData` set with `type="LaserProjectileData"` (a `Prefab` the engine stretches from muzzle to impact with `LaserProjectile`, fading over 0.5 s), `SecondaryProjectileData` for sparks, `MuzzleEffect`, and the surface-indexed `ImpactOnSurface` table. `asset="<vanilla prefab name>"` resolves a vanilla prefab by name. `active.tripod.fire_laser_lance` is the red large-beam reference set (`LaserTracerCapsule`, `laser_sparks`, `laser_muzzle_flash_large_01`, `impact_laser_large_*`); `templates/dolls/asteria/railgun.kdl` carries it onto a rocket-launcher skill. `DecalCollection` references have no `asset=` route, so a clone keeps its parent's decals.
+
 ## File layout
 
 ```
@@ -226,8 +249,8 @@ scripts/
 └── .config/<weapon>.json             Per-weapon config (gitignored)
 
 unity/Assets/
-├── Authored/weapon/<name>/           Blender output: raw.glb + textures/
-└── Prefabs/weapon/<name>/            BakeWeapon output: main.prefab + baked.mat
+├── Authored/weapon/<name>/           Blender output: raw.glb + textures/ (+ controller.json for an animated weapon)
+└── Prefabs/weapon/<name>/            BakeWeapon output: main.prefab + baked.mat (+ weapon.controller)
 
 assets/additions/
 ├── audio/weapons/<class>/            Custom gunshot WAVs (96 kHz, close + distant)

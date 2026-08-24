@@ -24,6 +24,10 @@ The reference prefab donates a material for BakeWeapon to clone, and nothing
 else. A manifest that names a shader and all four maps leaves none of it, so one
 reference serves every weapon.
 
+A weapon with moving parts keeps a controller.json beside its raw.glb (the
+Animator spec BakeWeapon -controller reads); its presence is what makes the
+bake build the Animator.
+
     python3 scripts/weapon/shade_weapons.py
     python3 scripts/weapon/shade_weapons.py --bake
     python3 scripts/weapon/shade_weapons.py --bake makiatto vector_ssr
@@ -52,8 +56,8 @@ MAP_SUFFIXES = {
 }
 
 
-def material_name(glb_path):
-    """The glTF material name the manifest keys on, read from the GLB's JSON chunk."""
+def material_names(glb_path):
+    """The glTF material names the manifest keys on, read from the GLB's JSON chunk."""
     data = glb_path.read_bytes()
     if data[:4] != b"glTF":
         raise SystemExit(f"{glb_path} is not a GLB")
@@ -67,14 +71,18 @@ def material_name(glb_path):
     else:
         raise SystemExit(f"{glb_path} has no JSON chunk")
     names = [m.get("name") for m in doc.get("materials", []) if m.get("name")]
-    if len(names) != 1:
-        raise SystemExit(f"{glb_path} has {len(names)} materials, expected one: {names}")
-    return names[0]
+    if not names:
+        raise SystemExit(f"{glb_path} has no named materials")
+    return names
 
 
-def textures(weapon_dir):
-    """base, normal and mask paths, project-relative, by suffix."""
+def textures(weapon_dir, material=None):
+    """base, normal and mask paths, project-relative, by suffix. A weapon with
+    several materials keeps one trio per material in textures/<material>/; a
+    single-material weapon keeps its trio flat in textures/."""
     folder = weapon_dir / "textures"
+    if material is not None and (folder / material).is_dir():
+        folder = folder / material
     files = sorted(p for p in folder.iterdir() if p.suffix in (".png", ".tga"))
     found = {}
     for key, suffixes in MAP_SUFFIXES.items():
@@ -91,17 +99,19 @@ def textures(weapon_dir):
 
 def manifest(weapon_dir):
     """Write the weapon's materials.json. Returns its path."""
-    maps = textures(weapon_dir)
-    document = {
-        "materials": [{
-            "name": material_name(weapon_dir / "raw.glb"),
+    names = material_names(weapon_dir / "raw.glb")
+    entries = []
+    for name in names:
+        maps = textures(weapon_dir, material=name if len(names) > 1 else None)
+        entries.append({
+            "name": name,
             "shader": SHADER,
             "base": maps["base"],
             "normal": maps["normal"],
             "mask": maps["mask"],
             "extras": [{"property": "_RampMap", "path": RAMP}],
-        }],
-    }
+        })
+    document = {"materials": entries}
     path = weapon_dir / "materials.json"
     path.write_text(json.dumps(document, indent=2) + "\n")
     return path
@@ -135,6 +145,9 @@ def bake(weapon_dir, manifest_path, editor):
         "-outputName", f"weapon/{name}",
         "-materialManifest", str(manifest_path).split("unity/", 1)[-1],
     ]
+    controller = weapon_dir / "controller.json"
+    if controller.is_file():
+        command += ["-controller", str(controller).split("unity/", 1)[-1]]
     result = subprocess.run(command, capture_output=True, text=True)
     if result.returncode != 0:
         raise SystemExit(f"bake failed for {name} ({result.returncode}). "
