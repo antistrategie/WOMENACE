@@ -1,0 +1,91 @@
+clone "ConversationTemplate" from="JeanSy/click_bark" id="Klukai/click_bark" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_klukai"
+        }
+    }
+    set "Priority" 100
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="ACTION" {
+            set "m_SerAction" type="SetFlag" {
+                set "FlagName" "click_bark_klukai"
+                set "FlagValue" #true
+            }
+        }
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_klukai_va"
+                        set "itemId" "Series_Chosen_Auto_Series_Up_007"
+                    }
+                    set "RoleGuid" "Entity"
+                    set "Text" "No big deal."
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_klukai_va"
+                        set "itemId" "Series_Chosen_Series_Up_003"
+                    }
+                    set "RoleGuid" "Entity"
+                    set "Text" "Training’s paying off."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/click_enemy_threatening_obj_zone" id="Klukai/click_enemy_threatening_obj_zone" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_klukai"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_klukai_va"
+                        set "itemId" "Series_Up_005"
+                    }
+                    set "RoleGuid" "Entity"
+                    set "Text" "We need more training."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/idle_bark_combat" id="Klukai/idle_bark_combat" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_klukai"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_klukai_va"
+                        set "itemId" "Series_Tone_Positive_004"
+                    }
+                    set "RoleGuid" "JeanSy"
+                    set "Text" "Not bad."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}

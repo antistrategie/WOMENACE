@@ -1,0 +1,220 @@
+clone "TagTemplate" from="unique" id="wmgfl_klukai"
+
+clone "SpeakerTemplate" from="sy" id="wmgfl_klukai_speaker" {
+    set "Tags" "wmgfl_klukai pirate_sl female infantry waybacker wmgfl_class_ar"
+    set "Nickname" {
+        set "m_DefaultTranslation" "Klukai"
+    }
+    set "Forename" {
+        set "m_DefaultTranslation" "Klukai"
+    }
+    set "Surname" {
+        set "m_DefaultTranslation" ""
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            Name: Klukai (HK416)
+
+            Proficiency: Wide Area & Stack
+
+            Birth: Unknown
+
+            Age: Classified
+
+            Affiliation(s): H.I.D.E. 404
+            """
+    }
+
+    set "BarkImage" asset="klukai/bark"
+    set "StandLookLeftImage" asset="klukai/stand_look_left"
+    set "StandLookRightImage" asset="klukai/stand_look_right"
+    set "StandLookRightInactiveImage" asset="klukai/stand_look_right_inactive"
+}
+
+clone "EntityTemplate" from="player_squad.sy" id="player_squad.klukai" {
+    append "Tags" "wmgfl_klukai"
+    set "Title" {
+        set "m_DefaultTranslation" "H.I.D.E. 404 Team A"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Elegant and composed; a Doll brimming with confidence. She aspires to make every member of H.I.D.E. 404 into an elite. Only those who are familiar with her know the tenderness that lies behind her cold, strong-willed demeanor."
+    }
+
+    set "Badge" asset="klukai/badge_mini"
+    set "BadgeWhite" asset="klukai/badge_mini"
+    clear "Items"
+    append "Items" "armor.player_fatigues"
+    append "Items" "weapon.klukai"
+
+    set "Scale" {
+        set "x" 1.0
+        set "y" 1.0
+    }
+    set "OverrideScaleForSquadLeader" #false
+}
+
+clone "UnitLeaderTemplate" from="squad_leader.sy" id="squad_leader.klukai_foot" {
+    set "InfantryUnitTemplate" "player_squad.klukai"
+    set "SpeakerTemplate" "wmgfl_klukai_speaker"
+    set "CustomHead" #null
+    set "UnitTitle" {
+        set "m_DefaultTranslation" "Tactical Doll"
+    }
+    set "UnitDescription" {
+        set "m_DefaultTranslation" "Elegant and composed; a Doll brimming with confidence. She aspires to make every member of H.I.D.E. 404 into an elite. Only those who are familiar with her know the tenderness that lies behind her cold, strong-willed demeanor."
+    }
+
+    set "InitialAttributes" index=0 88
+    set "InitialAttributes" index=1 90
+    set "InitialAttributes" index=2 80
+    set "InitialAttributes" index=3 100
+    set "InitialAttributes" index=4 100
+    set "InitialAttributes" index=5 20
+    set "InitialAttributes" index=6 80
+
+    set "QualityLevel" 3
+    set "GrowthPotential" 5
+    set "FixedSupplyCost" 100
+    set "SquaddieTax" 25
+    set "Rarity" 5
+
+    set "InitialPerk" "perk.unique_greifinger_guerilla"
+    set "PerkTrees" index=0 "perk_tree.klukai"
+
+    set "Slot" asset="klukai/slot"
+    set "SlotInactive" asset="klukai/slot_inactive"
+    set "SlotBadge" asset="klukai/slot_badge"
+
+    set "BadgeDragged" asset="klukai/badge_dragged"
+    set "BigBadge" asset="klukai/big_badge"
+    set "BadgeUnitWindow" asset="klukai/badge_unit_window"
+    set "BadgeMini" asset="klukai/badge_mini"
+
+    set "HiringSelectBarkSound" {
+        set "bankId" "wmgfl_tactical_barks_klukai_va"
+        set "itemId" "Series_Chosen_Series_Up_003"
+    }
+    set "HiredBarkSound" {
+        set "bankId" "wmgfl_tactical_barks_klukai_va"
+        set "itemId" "Series_Chosen_Auto_Series_Up_007"
+    }
+
+    set "PromotionBarkSounds" index=0 {
+        set "PerkTier" 1
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_klukai_va"
+            set "itemId" "Series_Up_002"
+        }
+    }
+    set "PromotionBarkSounds" index=1 {
+        set "PerkTier" 2
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_klukai_va"
+            set "itemId" "Series_Up_004"
+        }
+    }
+    set "PromotionBarkSounds" index=2 {
+        set "PerkTier" 3
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_klukai_va"
+            set "itemId" "Series_Up_005"
+        }
+    }
+    set "PromotionBarkSounds" index=3 {
+        set "PerkTier" 4
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_klukai_va"
+            set "itemId" "Series_Up_006"
+        }
+    }
+
+    clear "EmotionalStateResponses"
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Eager"
+        set "Text" {
+            set "m_DefaultTranslation" "404 has no use for the weak. Whether they like it or not, I’ll make them into the strongest Tactical Dolls."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_klukai_va"
+            set "itemId" "Series_Daily_007"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Determined"
+        set "Text" {
+            set "m_DefaultTranslation" "We need more training."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_klukai_va"
+            set "itemId" "Series_Up_005"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Overconfident"
+        set "Text" {
+            set "m_DefaultTranslation" "Looking at other dolls again. Do you like them that much? Well, you’ll figure out who your favorite really is soon enough."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_klukai_va"
+            set "itemId" "Single_Friendliness_013"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Euphoric"
+        set "Text" {
+            set "m_DefaultTranslation" "Training’s paying off."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_klukai_va"
+            set "itemId" "Series_Chosen_Series_Up_003"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Hesitant"
+        set "Text" {
+            set "m_DefaultTranslation" "That was unnecessary."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_klukai_va"
+            set "itemId" "Series_Tone_Positive_009"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Frustrated"
+        set "Text" {
+            set "m_DefaultTranslation" "Still not enough."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_klukai_va"
+            set "itemId" "Series_Up_004"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Disheartened"
+        set "Text" {
+            set "m_DefaultTranslation" "How the hell am I supposed to turn those dumbasses into elite soldiers?"
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_klukai_va"
+            set "itemId" "Series_Daily_008"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Miserable"
+        set "Text" {
+            set "m_DefaultTranslation" "..."
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "GoodwillTowards"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "AnimosityTowards"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+}

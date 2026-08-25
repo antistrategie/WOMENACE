@@ -104,6 +104,11 @@ public static class Unlocks
             new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.koleda_spooms" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_koleda/lv2", "Outfit: Age of Spooms") },
             new Entry { Level = 4, Feature = Feature.Vehicle, Items = new[] { "vehicle.koleda_car" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_koleda/lv4", "Vehicle: The Sinner") },
         },
+        ["wmgfl_klukai"] = new[]
+        {
+            new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.klukai_speedstar" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_klukai/lv2", "Outfit: Speed Star") },
+            new Entry { Level = 4, Feature = Feature.Skins, Armors = new[] { "armor.klukai_indigo_oath" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_klukai/lv4", "Outfit: Indigo Oath") },
+        },
     };
 
     public static IReadOnlyList<Entry> EntriesFor(string characterTag)

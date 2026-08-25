@@ -1,0 +1,84 @@
+clone "WeaponTemplate" from="weapon.generic_assault_rifle_tier1_kpac" id="weapon.klukai" {
+    append "Tags" "jy_no_sell"
+    set "Title" {
+        set "m_DefaultTranslation" "416"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Assault Rifle"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "A firearm highly compatible with Klukai. It has been modified to suit Klukai's fighting style, granting it a significant increase in reliability and accuracy."
+    }
+
+    set "Model" asset="weapon/klukai/main"
+    set "Icon" asset="weapon/klukai/Icon"
+    set "IconEquipment" asset="weapon/klukai/IconEquipment"
+    set "IconEquipmentDisabled" asset="weapon/klukai/IconEquipmentDisabled"
+    set "IconSkillBar" asset="weapon/klukai/IconSkillBar"
+    set "IconSkillBarDisabled" asset="weapon/klukai/IconSkillBarDisabled"
+
+    set "AccuracyBonus" 10.0
+    set "AccuracyDropoff" -6.0
+    set "ArmorPenetration" 28.0
+    set "ArmorPenetrationDropoff" -1.86
+
+    set "Damage" 10.0
+    set "DamageDropoff" -0.82
+    set "DamageToArmorDurability" 9.0
+    set "DamageToArmorDurabilityDropoff" -0.62
+
+    set "MaxRange" 8
+    set "IdealRange" 4
+    set "Suppression" 3.0
+
+    set "DeployCosts" {
+        set "m_Supplies" 20
+    }
+
+    set "BlackMarketMaxQuantity" 0
+
+    set "SkillsGranted" index=0 "active.fire_klukai_hk416"
+    set "SkillsGranted" index=1 "active.fire_klukai_hk416_sustained"
+}
+
+clone "SkillTemplate" from="active.fire_assault_rifle_tier1_556" id="active.fire_klukai_hk416" {
+    clear "SoundsOnAttack"
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "weapons_soundbank"
+        set "itemId" "small_caliber_brass_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_burst_distant"
+    }
+    clear "SoundsOnAttackFar"
+    append "SoundsOnAttackFar" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_burst_distant"
+    }
+}
+
+clone "SkillTemplate" from="active.fire_assault_rifle_sustained_fire_tier1_556" id="active.fire_klukai_hk416_sustained" {
+    clear "SoundsOnAttack"
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_single"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "weapons_soundbank"
+        set "itemId" "small_caliber_brass_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_single_distant"
+    }
+    clear "SoundsOnAttackFar"
+    append "SoundsOnAttackFar" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_single_distant"
+    }
+}

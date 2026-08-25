@@ -43,6 +43,18 @@ SHADER = "Womenace/DollToon"
 TRANSPARENT_SHADER = "Womenace/DollToonTrans"
 TRANSPARENT_MARKER = "ubertrans"
 
+# The marker test reads the game's own texture naming, and a PMX repack can
+# lose it. These outfits' repacks did: the cn client draws the listed
+# materials' meshes under _trans_ mesh names (c_ClukaySSR0104_slg_cloth1_dt_
+# trans_lod0 and friends, checked against the client asset map), but the
+# repacked sheets dropped the ubertrans marker from the texture names. Keyed
+# by the Authored/<doll>/<outfit> directory pair, unioned with the marker
+# test. The names are the game's verdict carried over by hand, not an alpha
+# measurement.
+TRANSLUCENT_OVERRIDES = {
+    "klukai/indigo_oath": {"Veil", "SuitLace", "SuitBra", "SkirtC", "SkirtD"},
+}
+
 # First match wins, so the specific parts come before the general ones. Matching
 # is case-insensitive and ignores a trailing duplicate suffix, because Hair.001
 # and Teeth.001 are exporter artefacts for a repeated name rather than distinct
@@ -181,8 +193,11 @@ def base_texture_by_material(gltf_path):
 
 def translucent_materials(gltf_path):
     """Material names the game draws blended, by their base map's name."""
-    return {name for name, texture in base_texture_by_material(gltf_path).items()
-            if TRANSPARENT_MARKER in Path(texture).stem.lower()}
+    gltf_path = Path(gltf_path)
+    outfit_key = f"{gltf_path.parent.parent.name}/{gltf_path.parent.name}"
+    marked = {name for name, texture in base_texture_by_material(gltf_path).items()
+              if TRANSPARENT_MARKER in Path(texture).stem.lower()}
+    return marked | TRANSLUCENT_OVERRIDES.get(outfit_key, set())
 
 
 # Suffix on the base map, and the sibling suffixes to look for. A material

@@ -18,7 +18,7 @@ clone "ShipUpgradeTemplate" from="oci.wmgfl_fairy_lodge" id="oci.wmgfl_peace_fai
     clear "Effects"
     clear "ChildUpgrades"
     append "Effects" type="GrantOffmapAbilityEffect" {
-        set "OffmapAbility" ref="OffmapAbilityTemplate" "offmap_ability.wmgfl_peace_fairy"
+        set "OffmapAbility" "offmap_ability.wmgfl_peace_fairy"
         set "RevertOnEffectRemove" #true
     }
     append "ChildUpgrades" "oci.wmgfl_enhanced_peace_fairy"
@@ -26,7 +26,7 @@ clone "ShipUpgradeTemplate" from="oci.wmgfl_fairy_lodge" id="oci.wmgfl_peace_fai
 }
 
 clone "OffmapAbilityTemplate" from="offmap_ability.wmgfl_reinforcement_fairy" id="offmap_ability.wmgfl_peace_fairy" {
-    set "SkillTemplate" ref="SkillTemplate" "offmap.wmgfl_peace_fairy"
+    set "SkillTemplate" "offmap.wmgfl_peace_fairy"
     set "DelayInRounds" 0
 }
 
@@ -99,13 +99,13 @@ clone "ShipUpgradeTemplate" from="oci.wmgfl_peace_fairy" id="oci.wmgfl_enhanced_
     clear "Effects"
     clear "ChildUpgrades"
     append "Effects" type="GrantOffmapAbilityEffect" {
-        set "OffmapAbility" ref="OffmapAbilityTemplate" "offmap_ability.wmgfl_enhanced_peace_fairy"
+        set "OffmapAbility" "offmap_ability.wmgfl_enhanced_peace_fairy"
         set "RevertOnEffectRemove" #true
     }
 }
 
 clone "OffmapAbilityTemplate" from="offmap_ability.wmgfl_peace_fairy" id="offmap_ability.wmgfl_enhanced_peace_fairy" {
-    set "SkillTemplate" ref="SkillTemplate" "offmap.wmgfl_enhanced_peace_fairy"
+    set "SkillTemplate" "offmap.wmgfl_enhanced_peace_fairy"
 }
 
 clone "SkillTemplate" from="offmap.wmgfl_peace_fairy" id="offmap.wmgfl_enhanced_peace_fairy" {

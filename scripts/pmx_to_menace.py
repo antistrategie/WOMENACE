@@ -73,6 +73,11 @@ class TransferConfig:
     fist_rotations: dict[str, float]
     hang_down_chain_prefixes: list[str]
     dress_leg_prefixes: list[str]
+    # Skip the right-palm calibration for rigs whose animations are their own
+    # captured clips rather than retargeted vanilla holds (Sextans): the clips
+    # are self-consistent with the rig's existing mesh-vs-bone relationship,
+    # so recalibrating the palm would break the grips they were captured with.
+    skip_palm_calibration: bool
 
     @staticmethod
     def load(path: Path) -> "TransferConfig":
@@ -99,6 +104,7 @@ class TransferConfig:
             fist_rotations={k: float(v) for k, v in data.get("fist_rotations", {}).items()},
             hang_down_chain_prefixes=list(data.get("hang_down_chain_prefixes", [])),
             dress_leg_prefixes=list(data.get("dress_leg_prefixes", [])),
+            skip_palm_calibration=bool(data.get("skip_palm_calibration", False)),
         )
 
 
@@ -638,11 +644,71 @@ def _resolve_bone_basis(
     return target_x, target_y, target_z
 
 
+def measure_palm_normals(armature_obj: "bpy.types.Object") -> dict[str, list[float]]:
+    """Measure each hand's palm normal in the wrist bone's local frame.
+
+    MENACE's humanoid retarget drives the doll's hand BONE to the same
+    global orientation as the vanilla soldier's, so the palm the player
+    sees is decided by where the palm GEOMETRY sits relative to that bone.
+    MMD wrist bones carry their roll ~70-80 degrees away from the vanilla
+    rig's palm-along-bone-X convention, which is what makes a doll hold a
+    rifle palm-up. Aligning bone axes alone cannot see this: the palm has
+    to be measured anatomically, from the finger-base bones, BEFORE
+    rename_pmx_bones_to_menace collapses them.
+
+    Palm normal = the normal of the knuckle plane (wrist, index base,
+    pinky base), signed so it points toward the curled middle fingertip.
+    This runs AFTER apply_fist_pose, so the middle finger's distal joint
+    sits well off the knuckle plane on the palm side, a much stronger
+    sign signal than the thumb (whose base is nearly in-plane) and immune
+    to the mirrored bone-frame handedness of the .L side. Expressed in
+    the wrist pose-bone's local axes, which survives every later rigid
+    re-pose of the hand (the mesh rides the bone, so the palm's
+    bone-local coordinates are invariant).
+
+    Returns {"R": [x, y, z], "L": [x, y, z]} for the sides that have the
+    MMD wrist + finger bones, empty entries omitted.
+    """
+    result: dict[str, list[float]] = {}
+    for side, sfx in (("R", ".R"), ("L", ".L")):
+        wrist = armature_obj.pose.bones.get("手首" + sfx)
+        index = armature_obj.pose.bones.get("人指１" + sfx)
+        pinky = armature_obj.pose.bones.get("小指１" + sfx)
+        middle_tip = (armature_obj.pose.bones.get("中指３" + sfx)
+                      or armature_obj.pose.bones.get("中指２" + sfx))
+        if wrist is None or index is None or pinky is None or middle_tip is None:
+            print(f"[warn] palm probe: MMD wrist/finger bones missing for side {side}. "
+                  "Hand roll will not be palm-calibrated.")
+            continue
+        to_local = wrist.matrix.to_3x3().inverted()
+        v_index = to_local @ (index.head - wrist.head)
+        v_pinky = to_local @ (pinky.head - wrist.head)
+        normal = v_index.cross(v_pinky)
+        if normal.length < 1e-9:
+            print(f"[warn] palm probe: degenerate finger layout for side {side}. Skipping.")
+            continue
+        normal.normalize()
+        # Curl side: the fisted middle fingertip, minus its in-plane part.
+        v_tip = to_local @ (middle_tip.tail - wrist.head)
+        knuckle_mid = (v_index + v_pinky) / 2
+        curl = v_tip - knuckle_mid
+        if abs(normal.dot(curl)) < 1e-4:
+            print(f"[warn] palm probe: middle fingertip is in the knuckle plane for side {side} "
+                  "(fist pose missing?). Sign may be unreliable.")
+        if normal.dot(curl) < 0:
+            normal.negate()
+        result[side] = list(normal)
+        print(f"[info] palm probe {side}: normal in wrist-local = "
+              f"({normal.x:.3f}, {normal.y:.3f}, {normal.z:.3f})")
+    return result
+
+
 def pose_arm_chains_and_bake(
     armature_obj: "bpy.types.Object",
     mesh_objects: list["bpy.types.Object"],
     reference_tpose: ReferenceTPose,
     frame: MirrorFrame,
+    palm_locals: dict[str, list[float]] | None = None,
 ) -> int:
     """Pose both arm chains to the reference Avatar's T-pose, bake mesh
     deformation, and apply the pose as the new rest.
@@ -712,6 +778,7 @@ def pose_arm_chains_and_bake(
     bpy.ops.object.mode_set(mode="POSE")
 
     rotated = 0
+    hand_reference_frames: dict[str, tuple["mathutils.Vector", "mathutils.Vector"]] = {}
     for chain in chain_bones:
         for bone_name in chain:
             basis = _resolve_bone_basis(bone_name, reference_tpose, frame, apply_y=False)
@@ -730,6 +797,32 @@ def pose_arm_chains_and_bake(
                 (target_x.y, target_y.y, target_z.y),
                 (target_x.z, target_y.z, target_z.z),
             ))
+            # The RIGHT hand gets a palm-down roll on top of the axis alignment
+            # for the MESH BAKE ONLY. MMD wrist axes sit rolled relative to
+            # the palm compared to the vanilla rig, so without this the palm
+            # GEOMETRY bakes in rolled and every retargeted animation shows it
+            # (rifle held palm-up). The bone's REST frame is restored to the
+            # reference basis in edit mode after the bake (mesh stays put):
+            # the humanoid retarget, the grafted Hand_*_Socket the weapon
+            # rides, and the left-hand IK contract all read that frame.
+            # RIGHT hand only. The left hand is deliberately NOT palm-calibrated:
+            # it is IK-slaved to each weapon's weapon_hand_l empty, and the raw
+            # MMD wrist roll under the reference-basis alignment is what those
+            # empties were authored and verified against. Calibrating the left to
+            # world-down showed thumb-under grips in game, world-up showed the
+            # palm facing away, and the uncalibrated original was correct.
+            side = "L" if bone_name.endswith("_L") else "R"
+            if bone_name == "Hand_R" and palm_locals and side in palm_locals:
+                palm_world = m @ mathutils.Vector(palm_locals[side])
+                axis = target_y.normalized()
+                down = mathutils.Vector((0.0, 0.0, -1.0))
+                pw = palm_world - palm_world.dot(axis) * axis
+                dw = down - down.dot(axis) * axis
+                if pw.length > 1e-6 and dw.length > 1e-6:
+                    angle = math.atan2(axis.dot(pw.cross(dw)), pw.dot(dw))
+                    hand_reference_frames[bone_name] = (target_y.copy(), target_z.copy())
+                    m = mathutils.Matrix.Rotation(angle, 3, axis) @ m
+                    print(f"[info] palm-down roll on {bone_name} (mesh bake): {math.degrees(angle):+.1f} deg")
             pmx_pb.matrix = mathutils.Matrix.Translation(head) @ m.to_4x4()
             bpy.context.view_layer.update()
             rotated += 1
@@ -756,6 +849,27 @@ def pose_arm_chains_and_bake(
     bpy.ops.object.mode_set(mode="POSE")
     bpy.ops.pose.armature_apply()
     bpy.ops.object.mode_set(mode="OBJECT")
+
+    # Restore each palm-rolled hand bone's REST frame to the reference
+    # basis. The palm roll above exists only so the bake carries the palm
+    # geometry to world-down. The bone itself must keep the reference frame:
+    # the avatar the humanoid retarget uses, the Hand_*_Socket the weapon
+    # parents under, and the weapon_hand_l IK orientations are all defined
+    # against it. Edit-mode roll changes move no geometry.
+    if hand_reference_frames:
+        bpy.ops.object.mode_set(mode="EDIT")
+        for bone_name, (ref_y, ref_z) in hand_reference_frames.items():
+            eb = armature_obj.data.edit_bones.get(bone_name)
+            if eb is None:
+                continue
+            bone_y = (eb.tail - eb.head).normalized()
+            if bone_y.angle(ref_y) > math.radians(2.0):
+                print(f"[warn] {bone_name} rest direction drifted from the reference "
+                      f"({math.degrees(bone_y.angle(ref_y)):.1f} deg), roll restore may be off")
+            eb.align_roll(ref_z)
+        bpy.ops.object.mode_set(mode="OBJECT")
+        print(f"[info] restored {len(hand_reference_frames)} hand bone REST frame(s) "
+              "to the reference basis (mesh unchanged)")
 
     for mesh in mesh_objects:
         ensure_armature_modifier(mesh, armature_obj)
@@ -815,6 +929,7 @@ def apply_reference_tpose_calibration(
     armature_obj: "bpy.types.Object",
     mesh_objects: list["bpy.types.Object"],
     reference_tpose: ReferenceTPose,
+    palm_locals: dict[str, list[float]] | None = None,
 ) -> int:
     """Calibrate the PMX rig to the reference Avatar's T-pose.
 
@@ -843,7 +958,7 @@ def apply_reference_tpose_calibration(
         raise RuntimeError("apply_reference_tpose_calibration target must be an armature.")
 
     frame = detect_pmx_mirror_frame(armature_obj, mesh_objects, reference_tpose)
-    rotated = pose_arm_chains_and_bake(armature_obj, mesh_objects, reference_tpose, frame)
+    rotated = pose_arm_chains_and_bake(armature_obj, mesh_objects, reference_tpose, frame, palm_locals)
     retarget_foot_bones_rest(armature_obj, reference_tpose, frame)
     return rotated
 
@@ -2346,6 +2461,12 @@ def prep_pmx(config: "TransferConfig") -> tuple:
     straighten_hang_chains(pmx_meshes, config.hang_down_chain_prefixes)
     redistribute_dress_to_legs(pmx_meshes, pmx_armature, config)
 
+    if config.skip_palm_calibration:
+        print("[info] palm calibration disabled by config")
+        palm_locals = {}
+    else:
+        palm_locals = measure_palm_normals(pmx_armature)
+
     print("[info] renaming PMX bones to MENACE humanoid names")
     park_map = rename_pmx_bones_to_menace(pmx_armature, config.bone_map, config.ignore_bones)
 
@@ -2377,7 +2498,7 @@ def prep_pmx(config: "TransferConfig") -> tuple:
     # orientations on the L side.
     reference_tpose = parse_avatar_humanoid_tpose(config.reference_avatar_path)
     print("[info] posing humanoid chain to reference T-pose and baking mesh")
-    apply_reference_tpose_calibration(pmx_armature, pmx_meshes, reference_tpose)
+    apply_reference_tpose_calibration(pmx_armature, pmx_meshes, reference_tpose, palm_locals)
 
     print("[info] grafting reference attachment bones onto the PMX character's armature")
     graft_attachment_bones(pmx_armature, reference)

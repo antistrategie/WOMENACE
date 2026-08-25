@@ -46,8 +46,9 @@ One JSON per character in `scripts/.config/`. Fields:
 - `source_mesh_names`. Names of the PMX mesh objects to transfer.
 - `bone_map`. PMX bone to MENACE humanoid bone mapping. Drives both the bone rename and vertex-group remap.
 - `ignore_bones`. PMX bones to drop entirely (typically MMD IK control bones).
-- `target_height_metres`. Absolute character height in metres (e.g. `1.8` for a 180cm character). Optional. Defaults to matching the reference soldier's height.
+- `target_height_metres`. Absolute character height in metres (Foot to Head bone span). Optional. Defaults to matching the reference soldier's height. Policy: GFL2 canon span x1.2, where canon span is the raw PMX's own Foot to Head distance at the standard 0.08 import scale. `scripts/doll/measure_pmx_height.py` prints the config-ready number for a PMX.
 - `height_scale_override`. Explicit multiplicative scale, overrides `target_height_metres` if set.
+- `skip_palm_calibration`. Disables the right-hand palm-down mesh roll. Only for rigs whose combat animations are their own captured clips rather than retargeted vanilla holds (Sextans): the clips are self-consistent with the rig, so recalibrating the palm would break the grips they were captured with. The LEFT hand is never palm-calibrated for anyone, it is IK-slaved to each weapon's `weapon_hand_l` empty.
 - `hip_leg_weight_blend`. Fraction of crotch-vert weight moved from Hips onto UpperLeg_L/R. `0.3` is a good default for MMD rigs that weight the whole pelvis pure-Hips.
 - `lod_decimate_ratios`. Polygon ratio per LOD. Default `[1.0, 0.5, 0.25, 0.1]`.
 - `lod_mesh_basename`. Prefix for output LOD mesh names. `BakeHumanoid` auto-detects this from mesh naming, so the value only matters for glTF inspection.

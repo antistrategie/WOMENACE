@@ -1,0 +1,77 @@
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.klukai_default" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
+    set "Title" {
+        set "m_DefaultTranslation" "Blazing Star"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Combat Gear"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Klukai's usual outfit. Her ultramarine jacket is the most eye-catching sight on the battlefield, but Klukai has never been afraid of being the center of her enemies' attention - or rather, that was the aim of choosing her outfit in the first place."
+    }
+    set "Icon" asset="klukai/armor/default/Icon"
+    set "IconEquipment" asset="klukai/armor/default/IconEquipment"
+    set "IconSkillBar" asset="klukai/armor/default/IconSkillBar"
+    clear "MaleModels"
+    append "MaleModels" asset="klukai/default/main"
+    clear "FemaleModels"
+    append "FemaleModels" asset="klukai/default/main"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_transmog"
+    append "Tags" "jy_no_sell"
+}
+
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.klukai_speedstar" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
+    set "Title" {
+        set "m_DefaultTranslation" "Speed Star"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Riding Suit"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "This is Klukai's riding outfit. Her pure white bodysuit hugs her lovely curves. Like a zephyr or a tempest, this shining knight extends an invitation to you. Mount up, ride out!"
+    }
+    set "Icon" asset="klukai/armor/speedstar/Icon"
+    set "IconEquipment" asset="klukai/armor/speedstar/IconEquipment"
+    set "IconSkillBar" asset="klukai/armor/speedstar/IconSkillBar"
+    clear "MaleModels"
+    append "MaleModels" asset="klukai/speedstar/main"
+    clear "FemaleModels"
+    append "FemaleModels" asset="klukai/speedstar/main"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_transmog"
+    append "Tags" "jy_no_sell"
+}
+
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.klukai_indigo_oath" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
+    set "Title" {
+        set "m_DefaultTranslation" "Indigo Oath"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Wedding Dress"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            "Like I said, I am all you need. Now then, are you ready to prove the truth of those words with the rest of your life?"
+            Under the indigo firmament, her snow-white dress shines for you alone. She firmly clutches your hands, gazing hotly at you-your perfect future is now in your hands.
+            """
+    }
+    set "Icon" asset="klukai/armor/indigo_oath/Icon"
+    set "IconEquipment" asset="klukai/armor/indigo_oath/IconEquipment"
+    set "IconSkillBar" asset="klukai/armor/indigo_oath/IconSkillBar"
+    clear "MaleModels"
+    append "MaleModels" asset="klukai/indigo_oath/main"
+    clear "FemaleModels"
+    append "FemaleModels" asset="klukai/indigo_oath/main"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_transmog"
+    append "Tags" "jy_no_sell"
+}

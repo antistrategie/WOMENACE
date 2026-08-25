@@ -109,6 +109,16 @@ public sealed class FormSwapSystem : JiangyuSystem
             BaseTabLabel = () => Locale.Text("WOMENACE::ui/form_tab_sl", "SQUAD LEADER"),
             AltTabLabel = () => Locale.Text("WOMENACE::ui/form_tab_pilot", "PILOT"),
         },
+        new FormPair
+        {
+            Character = "klukai",
+            BaseFormId = "squad_leader.klukai_foot",
+            AltFormId = "pilot.klukai",
+            ToAltLabel = () => Locale.Text("WOMENACE::ui/deploy_pilot", "DEPLOY PILOT"),
+            ToBaseLabel = () => Locale.Text("WOMENACE::ui/deploy_infantry", "DEPLOY INFANTRY"),
+            BaseTabLabel = () => Locale.Text("WOMENACE::ui/form_tab_sl", "SQUAD LEADER"),
+            AltTabLabel = () => Locale.Text("WOMENACE::ui/form_tab_pilot", "PILOT"),
+        },
     ];
 
     // Both forms of a pair are kept alive between swaps so each preserves its own state exactly

@@ -14,6 +14,7 @@ Common uses:
     scripts/bridge.py workshop off     # re-lock both gates
     scripts/bridge.py oci              # grant 500 O.C.I. components
     scripts/bridge.py oci 1000         # grant a different amount (negative takes away)
+    scripts/bridge.py blackmarket      # restock the black market, report the stock count
     scripts/bridge.py winmission       # kill remaining enemies + complete objectives
     scripts/bridge.py hud off          # take the mission UI down for a clean shot
     scripts/bridge.py hud on           # put it back
@@ -127,6 +128,8 @@ def main():
     oci.add_argument("amount", nargs="?", type=int, default=500,
                      help="how many components to add, negative takes away (default 500)")
 
+    sub.add_parser("blackmarket", help="restock the black market and report the stock count")
+
     sub.add_parser("winmission", help="kill remaining enemies and complete objectives")
 
     hud = sub.add_parser("hud", help="take the mission UI down (needs a running mission)")
@@ -157,6 +160,8 @@ def main():
         _emit(run_verb("Workshop.Unlock", [options.state == "on"], mutate=True))
     elif options.cmd == "oci":
         _emit(run_verb("Oci.Grant", [options.amount], mutate=True))
+    elif options.cmd == "blackmarket":
+        _emit(run_verb("Market.Refresh", mutate=True))
     elif options.cmd == "winmission":
         _emit(command("winmission"))
     elif options.cmd == "hud":

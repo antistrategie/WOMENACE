@@ -18,7 +18,7 @@ clone "ShipUpgradeTemplate" from="oci.wmgfl_fairy_lodge" id="oci.wmgfl_parachute
     clear "Effects"
     clear "ChildUpgrades"
     append "Effects" type="GrantOffmapAbilityEffect" {
-        set "OffmapAbility" ref="OffmapAbilityTemplate" "offmap_ability.wmgfl_parachute_fairy"
+        set "OffmapAbility" "offmap_ability.wmgfl_parachute_fairy"
         set "RevertOnEffectRemove" #true
     }
     append "ChildUpgrades" "oci.wmgfl_enhanced_parachute_fairy"
@@ -26,7 +26,7 @@ clone "ShipUpgradeTemplate" from="oci.wmgfl_fairy_lodge" id="oci.wmgfl_parachute
 }
 
 clone "OffmapAbilityTemplate" from="offmap_ability.wmgfl_reinforcement_fairy" id="offmap_ability.wmgfl_parachute_fairy" {
-    set "SkillTemplate" ref="SkillTemplate" "offmap.wmgfl_parachute_fairy"
+    set "SkillTemplate" "offmap.wmgfl_parachute_fairy"
 }
 
 clone "SkillTemplate" from="offmap.shield_projector" id="offmap.wmgfl_parachute_fairy" {
@@ -105,13 +105,13 @@ clone "ShipUpgradeTemplate" from="oci.wmgfl_parachute_fairy" id="oci.wmgfl_enhan
     clear "Effects"
     clear "ChildUpgrades"
     append "Effects" type="GrantOffmapAbilityEffect" {
-        set "OffmapAbility" ref="OffmapAbilityTemplate" "offmap_ability.wmgfl_enhanced_parachute_fairy"
+        set "OffmapAbility" "offmap_ability.wmgfl_enhanced_parachute_fairy"
         set "RevertOnEffectRemove" #true
     }
 }
 
 clone "OffmapAbilityTemplate" from="offmap_ability.wmgfl_parachute_fairy" id="offmap_ability.wmgfl_enhanced_parachute_fairy" {
-    set "SkillTemplate" ref="SkillTemplate" "offmap.wmgfl_enhanced_parachute_fairy"
+    set "SkillTemplate" "offmap.wmgfl_enhanced_parachute_fairy"
 }
 
 clone "SkillTemplate" from="offmap.wmgfl_parachute_fairy" id="offmap.wmgfl_enhanced_parachute_fairy" {

@@ -18,7 +18,7 @@ clone "ShipUpgradeTemplate" from="oci.wmgfl_fairy_lodge" id="oci.wmgfl_reinforce
     clear "Effects"
     clear "ChildUpgrades"
     append "Effects" type="GrantOffmapAbilityEffect" {
-        set "OffmapAbility" ref="OffmapAbilityTemplate" "offmap_ability.wmgfl_reinforcement_fairy"
+        set "OffmapAbility" "offmap_ability.wmgfl_reinforcement_fairy"
         set "RevertOnEffectRemove" #true
     }
     append "ChildUpgrades" "oci.wmgfl_enhanced_reinforcement_fairy"
@@ -26,7 +26,7 @@ clone "ShipUpgradeTemplate" from="oci.wmgfl_fairy_lodge" id="oci.wmgfl_reinforce
 }
 
 clone "OffmapAbilityTemplate" from="offmap_ability.medevac" id="offmap_ability.wmgfl_reinforcement_fairy" {
-    set "SkillTemplate" ref="SkillTemplate" "offmap.wmgfl_reinforcement_fairy"
+    set "SkillTemplate" "offmap.wmgfl_reinforcement_fairy"
     set "OffmapAbilityType" enum="OffmapAbilityType" "Orbital"
     set "DelayInRounds" 0
 }
@@ -48,7 +48,7 @@ clone "SkillTemplate" from="offmap.shield_projector" id="offmap.wmgfl_reinforcem
     append "EventHandlers" type="WOMENACE:ReinforceSquaddie" {}
     append "EventHandlers" type="AddSkill" {
         set "Event" enum="AddEvent" "OnUse"
-        set "SkillToAdd" ref="SkillTemplate" "effect.wmgfl_fairy_reinforcement"
+        set "SkillToAdd" "effect.wmgfl_fairy_reinforcement"
         set "ShowHUDText" #true
     }
 }
@@ -98,13 +98,13 @@ clone "ShipUpgradeTemplate" from="oci.wmgfl_reinforcement_fairy" id="oci.wmgfl_e
     clear "Effects"
     clear "ChildUpgrades"
     append "Effects" type="GrantOffmapAbilityEffect" {
-        set "OffmapAbility" ref="OffmapAbilityTemplate" "offmap_ability.wmgfl_enhanced_reinforcement_fairy"
+        set "OffmapAbility" "offmap_ability.wmgfl_enhanced_reinforcement_fairy"
         set "RevertOnEffectRemove" #true
     }
 }
 
 clone "OffmapAbilityTemplate" from="offmap_ability.wmgfl_reinforcement_fairy" id="offmap_ability.wmgfl_enhanced_reinforcement_fairy" {
-    set "SkillTemplate" ref="SkillTemplate" "offmap.wmgfl_enhanced_reinforcement_fairy"
+    set "SkillTemplate" "offmap.wmgfl_enhanced_reinforcement_fairy"
 }
 
 clone "SkillTemplate" from="offmap.wmgfl_reinforcement_fairy" id="offmap.wmgfl_enhanced_reinforcement_fairy" {
@@ -119,7 +119,7 @@ clone "SkillTemplate" from="offmap.wmgfl_reinforcement_fairy" id="offmap.wmgfl_e
         set "m_DefaultTranslation" "Reinforces a Doll squad with one dummy and raises its <link=\"defense\">Defence</link> by 20% for 3 turns."
     }
     set "EventHandlers" index=1 {
-        set "SkillToAdd" ref="SkillTemplate" "effect.wmgfl_enhanced_fairy_reinforcement"
+        set "SkillToAdd" "effect.wmgfl_enhanced_fairy_reinforcement"
     }
 }
 
