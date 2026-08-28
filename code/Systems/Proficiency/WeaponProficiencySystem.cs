@@ -318,6 +318,23 @@ public sealed class WeaponProficiencySystem : JiangyuSystem
                 return;
             if (SsrImprintSystem.IsImprintWeapon(weapon.GetID()))
                 return;
+            // A bay-slotted weapon (or a linked group's synthetic) is not the
+            // squad weapon this section talks about: the bay takes ANY
+            // special weapon, and with no combat wielder on its items the
+            // viewer fell back to whichever unit window was open last, which
+            // put a Sextans heading on a mortar's tooltip.
+            var hovered = info.Args != null && info.Args.Count > 1
+                ? (info.Args[1] as Il2CppSystem.Object)?.TryCast<BaseItem>()
+                : null;
+            var hoveredGuid = hovered?.GetGuid();
+            if (!string.IsNullOrEmpty(hoveredGuid))
+            {
+                if (hoveredGuid.StartsWith(BayLink.LinkedGuidPrefix, StringComparison.Ordinal))
+                    return;
+                var baySlots = Bay.LoadoutOrNull(Context);
+                if (baySlots != null && Array.IndexOf(baySlots, hoveredGuid) >= 0)
+                    return;
+            }
 
             var (viewerTag, viewerClass) = TooltipViewer(info);
             if (viewerTag == null || viewerClass == WeaponClass.None)

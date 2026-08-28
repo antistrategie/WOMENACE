@@ -142,3 +142,12 @@ clone "SkillTemplate" from="effect.bleeding" id="effect.wmgfl_hydro" {
         set "DefaultText" "Drenched!"
     }
 }
+
+// Drive By's post-movement discount, cloned so the widening below is ours
+// alone. Vanilla effect.drive_by's two filters are ItemSlotFilters listing only
+// vehicle weapon slots, which rejects every infantry weapon and every skill
+// granted straight off an entity, so the perk does nothing for the four units
+// whose trees offer it. DriveBySystem swaps this clone's filters for
+// IsAttackFilter. The vanilla effect is never touched, so vanilla units keep
+// vanilla behaviour.
+clone "SkillTemplate" from="effect.drive_by" id="effect.wmgfl_drive_by"

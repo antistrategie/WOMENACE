@@ -1,0 +1,81 @@
+clone "ConversationTemplate" from="JeanSy/click_bark" id="Ots14/click_bark" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_ots14"
+        }
+    }
+    set "Priority" 100
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="ACTION" {
+            set "m_SerAction" type="SetFlag" {
+                set "FlagName" "click_bark_ots14"
+                set "FlagValue" #true
+            }
+        }
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_ots14_va"
+                        set "itemId" "Series_Chosen_Series_Tone_Positive_006"
+                    }
+                    set "RoleGuid" "Entity"
+                    set "Text" "Roger."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/click_enemy_threatening_obj_zone" id="Ots14/click_enemy_threatening_obj_zone" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_ots14"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_ots14_va"
+                        set "itemId" "Series_Chosen_Auto_Series_Tone_Positive_007"
+                    }
+                    set "RoleGuid" "Entity"
+                    set "Text" "Gladly."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/idle_bark_combat" id="Ots14/idle_bark_combat" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_ots14"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_ots14_va"
+                        set "itemId" "Series_Attack_Series_Tone_Positive_003"
+                    }
+                    set "RoleGuid" "JeanSy"
+                    set "Text" "Stay out of my way."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}

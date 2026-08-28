@@ -111,13 +111,13 @@ public sealed class RailgunCarrySystem : JiangyuSystem
             var element = (info.Instance as Il2CppObjectBase)?.TryCast<Il2CppUI.PrefabControllers.ArmoryElement>();
             if (element == null)
                 return;
-            var rig = FindNamed(element.gameObject, "asteria_railgun_rig");
+            var rig = SceneQuery.FindNamed(element.gameObject, "asteria_railgun_rig");
             if (rig == null)
                 return; // not a railgun carrier preview
             var handGun = rig.parent;
             if (handGun != null)
                 handGun.localScale = Vector3.zero;
-            if (FindNamed(element.gameObject, RifleNodeName) != null)
+            if (SceneQuery.FindNamed(element.gameObject, RifleNodeName) != null)
                 return; // refresh call, already dressed
 
             var leader = info.Args != null && info.Args.Count > 0
@@ -170,8 +170,8 @@ public sealed class RailgunCarrySystem : JiangyuSystem
                 Element = element,
                 HandGun = handGun,
                 Stowed = back?.transform.Find(StowedNodeName)?.gameObject,
-                RailgunMuzzle = FindNamed(handGun, MuzzleName),
-                RailgunHandL = FindNamed(handGun, HandLName),
+                RailgunMuzzle = SceneQuery.FindNamed(handGun, MuzzleName),
+                RailgunHandL = SceneQuery.FindNamed(handGun, HandLName),
             };
             AttachRifle(element, items, carrier);
             _carriers[element.Pointer] = carrier;
@@ -198,7 +198,7 @@ public sealed class RailgunCarrySystem : JiangyuSystem
             return;
 
         element.AttachPrefab(model, VisualAlterationSlot.Hand_R.GetAttachmentPointName());
-        var rifle = FindNamed(element.m_Mesh?.gameObject, model.name + "(Clone)")?.gameObject;
+        var rifle = SceneQuery.FindNamed(element.m_Mesh?.gameObject, model.name + "(Clone)")?.gameObject;
         if (rifle == null && carrier.HandGun != null && carrier.HandGun.transform.parent != null)
         {
             rifle = UnityEngine.Object.Instantiate(model, carrier.HandGun.transform.parent, false);
@@ -212,8 +212,8 @@ public sealed class RailgunCarrySystem : JiangyuSystem
         }
         rifle.name = RifleNodeName;
         carrier.Rifle = rifle;
-        carrier.RifleMuzzle = FindNamed(rifle, MuzzleName);
-        carrier.RifleHandL = FindNamed(rifle, HandLName);
+        carrier.RifleMuzzle = SceneQuery.FindNamed(rifle, MuzzleName);
+        carrier.RifleHandL = SceneQuery.FindNamed(rifle, HandLName);
         if (carrier.RifleHandL != null)
         {
             carrier.HandLLocalPosition = carrier.RifleHandL.localPosition;
@@ -383,15 +383,6 @@ public sealed class RailgunCarrySystem : JiangyuSystem
         }
     }
 
-    private static Transform FindNamed(GameObject root, string name)
-    {
-        if (root == null)
-            return null;
-        foreach (var t in root.GetComponentsInChildren<Transform>(includeInactive: true))
-            if (t.name == name)
-                return t;
-        return null;
-    }
 
     // Wrappers outlive their mission; entries whose element died with its scene are
     // dropped whenever a new carrier registers.

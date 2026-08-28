@@ -1,0 +1,69 @@
+clone "PerkTemplate" from="perk.steady_gun" id="perk.wmgfl_os_tuning" {
+    set "Title" {
+        set "m_DefaultTranslation" "OS Tuning"
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "OTs-14's combat OS runs her weapons bay and field kits."
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            “Got a job for you, 621.”
+
+              – Handler Walter
+
+
+            <style="Highlight">• Weapons Bay: OTs-14 carries up to four special weapons on her arms.</style>
+            <style="Highlight">  • Arms holding the same weapon can fire together as one action, as a pair or as all four at once.</style>
+            <style="Highlight">  • OTs-14 can impersonate any owner imprint from a Doll SSR weapon.</style>
+            <style="Highlight">• Field Kit: grants the skills 'Repair Kit' and 'Ammo Refill'. The kit holds a single charge per mission and using either skill expends it for both.</style>
+            """
+    }
+
+    set "Icon" asset="ots14/perks/os_tuning"
+    set "IconDisabled" asset="ots14/perks/os_tuning_inactive"
+    set "PerkIcon" asset="ots14/perks/os_tuning"
+
+    clear "EventHandlers"
+    append "EventHandlers" type="AddSkill" {
+        set "Event" enum="AddEvent" "OnMissionStart"
+        set "SkillToAdd" "active.wmgfl_bay_repair"
+    }
+    append "EventHandlers" type="AddSkill" {
+        set "Event" enum="AddEvent" "OnMissionStart"
+        set "SkillToAdd" "active.wmgfl_bay_reload"
+    }
+}
+
+clone "SkillTemplate" from="active.treat_wounds" id="active.wmgfl_bay_repair" {
+    set "Title" {
+        set "m_DefaultTranslation" "Repair Kit"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Patch up OTs-14's chassis, restoring all HP."
+    }
+    set "Icon" asset="ots14/skills/repair"
+    set "IconDisabled" asset="ots14/skills/repair_disabled"
+    set "ActionPointCost" 20
+    set "Uses" 1
+    set "IsRemovedAfterCombat" #true
+    clear "EventHandlers"
+}
+
+clone "SkillTemplate" from="active.rogue_ammo_runner_refill_ammo" id="active.wmgfl_bay_reload" {
+    set "Title" {
+        set "m_DefaultTranslation" "Ammo Refill"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Refill the ammunition of every weapon OTs-14 carries."
+    }
+    set "Icon" asset="ots14/skills/reload"
+    set "IconDisabled" asset="ots14/skills/reload_disabled"
+    set "IsTargeted" #false
+    set "TargetsAllowed" enum="SkillTarget" "EmptyTile"
+    set "MinRange" 0
+    set "MaxRange" 0
+    set "ActionPointCost" 20
+    set "Uses" 1
+    set "IsLimitedUses" #true
+    set "IsRemovedAfterCombat" #true
+}

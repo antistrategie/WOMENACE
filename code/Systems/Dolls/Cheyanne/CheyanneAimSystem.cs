@@ -84,8 +84,12 @@ public sealed class CheyanneAimSystem : JiangyuSystem
         aim.Points = Math.Max(0, points);
     }
 
+    // Cheyanne herself, or the weapons-bay carrier with this SSR slotted:
+    // the imprint follows the weapon into the bay, trainer and all, so a
+    // bay shot aims exactly the way Cheyanne's does (zero points, zero
+    // bounces, the trainer in front of every trigger pull).
     internal static bool IsOwner(Actor actor)
-        => actor != null && Affinity.CharacterTag(actor) == OwnerTag;
+        => SsrImprintSystem.IsOwningActor(actor, OwnerTag, CheyanneSsrShapeSystem.SkillId);
 
     // Who is firing. A skill exposes several handles onto its wielder and a
     // combat one does not always answer on the first, so they are tried in

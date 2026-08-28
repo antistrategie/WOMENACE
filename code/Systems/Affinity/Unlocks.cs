@@ -109,6 +109,10 @@ public static class Unlocks
             new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.klukai_speedstar" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_klukai/lv2", "Outfit: Speed Star") },
             new Entry { Level = 4, Feature = Feature.Skins, Armors = new[] { "armor.klukai_indigo_oath" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_klukai/lv4", "Outfit: Indigo Oath") },
         },
+        ["wmgfl_ots14"] = new[]
+        {
+            new Entry { Level = 4, Feature = Feature.Skins, Armors = new[] { "armor.ots14_destined_love" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_ots14/lv4", "Outfit: Destined Love") },
+        },
     };
 
     public static IReadOnlyList<Entry> EntriesFor(string characterTag)

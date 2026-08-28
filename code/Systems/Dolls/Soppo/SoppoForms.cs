@@ -81,10 +81,12 @@ public sealed class SoppoFormsSystem : JiangyuSystem
     }
 
     // The forms are Soppo's imprint, not the weapon's: another doll wielding
-    // the SSR fires the same dual-element skills but takes no stance.
+    // the SSR fires the same dual-element skills but takes no stance. The
+    // weapons-bay carrier inherits the imprint, forms included (the SSR
+    // grants pursuit and bite as a pair, so gating on pursuit covers both).
     private void EnterForm(Actor actor, string formId)
     {
-        if (Affinity.CharacterTag(actor) != OwnerTag)
+        if (!SsrImprintSystem.IsOwningActor(actor, OwnerTag, "active.soppo_ssr_pursuit"))
             return;
         var form = formId == HunterId ? _hunter : _feral;
         // queue-aware presence check, or a form applied moments ago (still in

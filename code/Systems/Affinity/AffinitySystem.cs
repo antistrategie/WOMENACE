@@ -215,10 +215,19 @@ public sealed class AffinitySystem : JiangyuSystem
         if (badge.ClassListContains("wm-aff-hover-hooked"))
             return;
         badge.AddToClassList("wm-aff-hover-hooked");
+        var pendingPopover = new IVisualElementScheduledItem[1];
         badge.RegisterCallback<PointerEnterEvent>(DelegateSupport.ConvertDelegate<EventCallback<PointerEnterEvent>>(
-            (Action<PointerEnterEvent>)(_ => ShowPopover(badge, window))));
+            (Action<PointerEnterEvent>)(_ =>
+            {
+                HoverDelay.Cancel(ref pendingPopover[0]);
+                pendingPopover[0] = HoverDelay.Schedule(badge, () => ShowPopover(badge, window));
+            })));
         badge.RegisterCallback<PointerLeaveEvent>(DelegateSupport.ConvertDelegate<EventCallback<PointerLeaveEvent>>(
-            (Action<PointerLeaveEvent>)(_ => HidePopover(window))));
+            (Action<PointerLeaveEvent>)(_ =>
+            {
+                HoverDelay.Cancel(ref pendingPopover[0]);
+                HidePopover(window);
+            })));
     }
 
     private void ShowPopover(VisualElement badge, VisualElement window)

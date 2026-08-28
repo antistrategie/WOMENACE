@@ -21,7 +21,7 @@ clone "EntityTemplate" from="player_vehicle.generic_heavy_attack_walker" id="pla
 
     set "Properties" {
         set "AdditionalMovementCost" -12
-        set "Vision" 9
+        set "Vision" 11
         set "Damage" 30.0
         set "SoundOnMovementStart" {
             set "bankId" "wmgfl_voymastina_mech_sfx"
@@ -73,7 +73,7 @@ clone "EntityTemplate" from="player_vehicle.generic_heavy_attack_walker" id="pla
 
     set "Properties" {
         set "AdditionalMovementCost" -12
-        set "Vision" 9
+        set "Vision" 11
         set "Damage" 30.0
         set "SoundOnMovementStart" {
             set "bankId" "wmgfl_voymastina_mech_sfx"
@@ -116,7 +116,7 @@ clone "VehicleItemTemplate" from="vehicle.chassis_walker_medium" id="vehicle.voy
     }
 
     set "DeployCosts" {
-        set "m_Supplies" 400
+        set "m_Supplies" 300
     }
 
     set "Icon" asset="voymastina/mech/Icon"
@@ -137,7 +137,7 @@ clone "VehicleItemTemplate" from="vehicle.chassis_walker_medium" id="vehicle.voy
     }
 
     set "DeployCosts" {
-        set "m_Supplies" 400
+        set "m_Supplies" 300
     }
 
     set "Icon" asset="voymastina/mech/Icon"

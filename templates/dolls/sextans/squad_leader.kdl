@@ -15,13 +15,13 @@ clone "SpeakerTemplate" from="carda" id="wmgfl_sextans_speaker" {
         set "m_DefaultTranslation" """
             Name: Sextans
 
-            Proficiency: Close Quarters & Support
+            Proficiency: The Hunter
 
             Birth: Unknown
 
             Age: Classified
 
-            Affiliation(s): Unknown
+            Affiliation(s): Elmo - Third-Gen Doll Echelon
             """
     }
 
@@ -44,11 +44,11 @@ clone "EntityTemplate" from="player_squad.carda" id="player_squad.sextans" {
     set "AnimatorTemplate" "animator.sextans"
 
     set "Properties" {
-        set "AdditionalMovementCost" -6
+        set "Vision" 11
     }
 
     set "Title" {
-        set "m_DefaultTranslation" "Elmo 3rd Generation Squad"
+        set "m_DefaultTranslation" "Elmo - Third-Gen Doll Echelon"
     }
 
     set "Description" {
@@ -82,27 +82,23 @@ clone "UnitLeaderTemplate" from="squad_leader.carda" id="squad_leader.sextans" {
     set "UnitDescription" {
         set "m_DefaultTranslation" """
             Agile and cunning Doll, formerly under the Orlog Corporation, was abandoned after a failed mission, suffering severe mental damage. She was subsequently rescued by the ELMO and became reliable companions.
-
             "Compared to my former colleagues, the Dolls around you seem somewhat... naive."
             """
     }
 
-    set "InitialAttributes" index=0 100
-    set "InitialAttributes" index=1 90
-    set "InitialAttributes" index=2 90
-    set "InitialAttributes" index=3 100
-    // InitialAttributes store as bytes, so 255 is the template's hard
-    // ceiling: her real Vitality target (400 = 80 HP) lives in
-    // SoloSquadSystem.AttributeOverrides and is applied by the attribute
-    // repair on top of this
+    set "InitialAttributes" index=0 125
+    set "InitialAttributes" index=1 100
+    set "InitialAttributes" index=2 100
+    set "InitialAttributes" index=3 110
     set "InitialAttributes" index=4 255
-    set "InitialAttributes" index=5 60
+    set "InitialAttributes" index=5 80
     set "InitialAttributes" index=6 100
 
     set "QualityLevel" 4
     set "GrowthPotential" 5
-    set "FixedSupplyCost" 300
-    set "SquaddieTax" 60
+    set "FixedSupplyCost" 400
+    set "PromotionCostMult" 0.8
+    set "SquaddieTax" 0
     set "Rarity" 5
 
     set "InitialPerk" "perk.sextans_rally"

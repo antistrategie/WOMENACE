@@ -24,7 +24,8 @@ clone "UnitLeaderTemplate" from="pilot.rewa" id="pilot.voymastina_mech" {
     set "PerkTrees" index=0 "perk_tree.voymastina_mech"
 
     set "QualityLevel" 4
-    set "FixedSupplyCost" 80
+    set "FixedSupplyCost" 100
+    set "PromotionCostMult" 0.8
 
     set "Slot" asset="voymastina/slot"
     set "SlotInactive" asset="voymastina/slot_inactive"

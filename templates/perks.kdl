@@ -1,0 +1,23 @@
+clone "PerkTemplate" from="perk.drive_by" id="perk.wmgfl_drive_by" {
+    set "Title" {
+        set "m_DefaultTranslation" "Drive By+"
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "-10 AP for next Standard Attack after moving. Applies to every weapon."
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            “Our more arcane historical records depict combatants utilizing hardware to drive past their enemies while simultaneously firing upon them with weapons atilt. We are uncertain as to the effectiveness of this strategy, but thanks to modern V&H Gyrostabilizers, our pilots can perhaps replicate this tactic with a greater degree of finesse.”
+
+              – TCR Study on Maneuver Warfare
+
+
+            <style="Highlight">• -10 <link="action_points">AP</link> for next Standard Attack after moving. Can trigger multiple times per turn.</style>
+            <style="Highlight">• Applies to every weapon, including melee and vehicle mounts.</style>
+            """
+    }
+
+    set "EventHandlers" index=0 {
+        set "Effect" "effect.wmgfl_drive_by"
+    }
+}

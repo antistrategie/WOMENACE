@@ -195,7 +195,22 @@ public sealed class SsrImprintSystem : JiangyuSystem
             var owner = SkillOwnedBy(skill, entry.OwnerTag);
             var stmpl = ResolveSkill(imp.SkillId);   // resolve (captures authored Repetitions) then override
             if (stmpl != null)
-                stmpl.Repetitions = (ushort)(owner ? imp.OwnerRepetitions : BaseRepetitionsOf(imp.SkillId));
+            {
+                var repetitions = (ushort)(owner ? imp.OwnerRepetitions : BaseRepetitionsOf(imp.SkillId));
+                stmpl.Repetitions = repetitions;
+                // A bay-granted instance fires off its own runtime clone
+                // template, not the shared one the line above set: the shot
+                // loop reads the clone, so the boost lands there too.
+                if (BaySkillSystem.IsBaySkill(skill.Pointer)
+                    && (skill.GetTemplate() as Il2CppObjectBase)?.TryCast<SkillTemplate>() is { } own
+                    && own.Pointer != stmpl.Pointer)
+                    // Scaled by the link factor: a linked shot is the
+                    // skill fired twice, so overwriting its repetitions with
+                    // the owner's count flat would undo the doubling and a
+                    // linked pair would fire a single volley.
+                    own.Repetitions = (ushort)Math.Min(ushort.MaxValue,
+                        repetitions * BaySkillSystem.RepetitionFactor(skill.Pointer));
+            }
         }
         catch (Exception ex) { Context.Log.Warn($"ssr: imprint fire failed: {ex.Message}"); }
     }
@@ -234,6 +249,16 @@ public sealed class SsrImprintSystem : JiangyuSystem
         var (entry, _) = BySkill(skill?.GetID());
         return entry != null && SkillOwnedBy(skill, entry.OwnerTag);
     }
+
+    // Whether this ACTOR counts as an SSR weapon's owning doll: the doll herself, or the weapons-bay
+    // carrier whose bay granted the weapon's skill this mission. The actor-shaped twin of
+    // IsOwnerWielding, for gates that fire where no skill instance is in hand (Cheyanne's aim
+    // trainer keys its score ledger and interrupt on the firer). Every "the bay counts as the
+    // owner" decision lives in this file, never re-derived per doll system.
+    public static bool IsOwningActor(Actor actor, string ownerTag, string grantedSkillId)
+        => actor != null
+            && (Affinity.CharacterTag(actor) == ownerTag
+                || BaySkillSystem.HasGrantedSkill(actor.Pointer, grantedSkillId));
 
     // The owner's multiplier on a skill's elemental build-up, 1 for everyone else and for skills with
     // no imprint. ElementalDamageHandler calls this per hit.
@@ -382,7 +407,11 @@ public sealed class SsrImprintSystem : JiangyuSystem
         foreach (var e in WielderCandidates(skill))
             if (e != null && Affinity.CharacterTag(e) == tag)
                 return true;
-        return false;
+        // An SSR slotted in OTs-14's weapons bay imprints onto her as if she
+        // were its owning doll (the bay's whole fantasy). The grant registry
+        // is the wielding proof: a bay skill instance exists only on the bay
+        // carrier's actor.
+        return skill != null && BaySkillSystem.IsBaySkill(skill.Pointer);
     }
 
     // Whether the viewer of this weapon's tooltip is its owning doll. Shared by the Pre hook (which sets
@@ -400,6 +429,42 @@ public sealed class SsrImprintSystem : JiangyuSystem
         var wielder = (item?.GetContainer()?.GetOwner() as Il2CppObjectBase)?.TryCast<Entity>();
         if (wielder != null)
             return Affinity.CharacterTag(wielder) == entry.OwnerTag;
+        // An SSR slotted in the weapons bay imprints onto the bay carrier, so
+        // its tooltip reads as owned (highlight + boosted stat rows) when SHE
+        // is the one looking at it. The viewer has to be checked: the boost
+        // reaches her and nobody else, so answering true for every viewer told
+        // any doll whose window happened to be open that she received a boost
+        // OnFillDamageInfo would never grant her. Bay items live in no
+        // container, so this can never shadow a real wielder above, and the
+        // read is non-mutating so a hover leaves no state behind.
+        // A linked group fires through a SYNTHETIC item that exists only
+        // mid-mission, held by the bay element, so the guid convention alone
+        // proves the bay is wielding it. This must NOT sit behind the
+        // leader-tag gate below: mid-mission that tag still holds whichever
+        // unit window was open last in strategy, which is why the linked
+        // tile's tooltip stayed inactive while both arms showed active.
+        if (item != null
+            && item.GetGuid()?.StartsWith(BayLink.LinkedGuidPrefix, StringComparison.Ordinal) == true)
+            return true;
+        if (item != null)
+        {
+            var slots = Bay.LoadoutOrNull(Context);
+            var itemGuid = item.GetGuid();
+            // The guid must be real: a guid-less item's null would match a
+            // null (empty) bay slot and read as bay-owned.
+            if (slots != null && !string.IsNullOrEmpty(itemGuid) && Array.IndexOf(slots, itemGuid) >= 0)
+            {
+                // Mid-mission the bay element is plainly wielding its slotted
+                // weapons, so the boost is active no matter which unit window
+                // was open last in strategy. That leader tag still gates the
+                // ARMORY, where the question is who is LOOKING: her window
+                // shows the boost she gets, any other doll's must not.
+                if (TacticalManager.Get() != null)
+                    return true;
+                if (_currentLeaderTag == Bay.CharacterTag)
+                    return true;
+            }
+        }
         return _currentLeaderTag != null && _currentLeaderTag == entry.OwnerTag;
     }
 

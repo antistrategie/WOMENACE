@@ -53,6 +53,19 @@ TRANSPARENT_MARKER = "ubertrans"
 # measurement.
 TRANSLUCENT_OVERRIDES = {
     "klukai/indigo_oath": {"Veil", "SuitLace", "SuitBra", "SkirtC", "SkirtD"},
+    # The cn client draws her veil hood and sheer overdress under _trans_ mesh
+    # names (c_OTs14SSR01_slg_cloth3_trans_lod0 / cloth4_trans_lod0); the
+    # DesmondChan repack names the sheets Cth3/Cth4 with no marker.
+    "ots14/default": {"Cth3-Hat", "Cth4-Hat", "Cth4-TopCloth"},
+    # The wedding dress. The cn client draws cloth1_trans + cloth1_trans1
+    # (the sheer cape and the sash), cloth2_trans (the under-skirt) and
+    # cloth3_trans (over-skirt, sheer sleeves and the glass slippers in one
+    # object). The Pearl materials sample an alpha-0 sheet and stay OPAQUE:
+    # routed blended they disappear entirely.
+    "ots14/destined_love": {
+        "Cth1-Cape", "Cth1-Belt", "Cth2-Skirt",
+        "Cth3-Skirt", "Cth3-Sleeve", "Cth3-GlassShoes",
+    },
 }
 
 # First match wins, so the specific parts come before the general ones. Matching

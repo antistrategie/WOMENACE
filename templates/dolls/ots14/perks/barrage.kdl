@@ -1,0 +1,19 @@
+clone "PerkTemplate" from="perk.barrage" id="perk.wmgfl_barrage" {
+    set "Title" {
+        set "m_DefaultTranslation" "Barrage+"
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "-15 AP cost for Heavy Weapons. Extends to bay ordnance."
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            “Munitions taken into the field are not meant to be stored again.”
+
+              – Planetary Jingwei Combat Manual
+
+
+            <style="Highlight">• <link="action_points">AP</link> costs reduced by -15 for HEAVY vehicle weapons.</style>
+            <style="Highlight">• Extends to ordnance in OTs-14's weapons bay: launchers, rockets, mortars, artillery and energy weapons.</style>
+            """
+    }
+}

@@ -246,9 +246,19 @@ public sealed class CheyanneRicochetSystem : JiangyuSystem
     private const float TracerHeight = 1.1f;
 
     private bool _sequencing;
+    // Repetitions committed while a chain was already in flight, each owed a
+    // chain of its own, at its own target, once the current one lands.
+    private readonly Queue<(Skill Skill, Actor User, Tile Tile)> _queuedChains = new();
 
     public override void OnInit()
         => Context.Patches.Postfix("Il2CppMenace.Tactical.Skills.Skill", "OnUse", 3, OnSkillUsed);
+
+    public override void OnSceneLoaded(int buildIndex, string sceneName)
+    {
+        // A mission ending mid-flight must not owe chains to the next one.
+        _queuedChains.Clear();
+        _sequencing = false;
+    }
 
     private void OnSkillUsed(PatchInfo info)
     {
@@ -264,13 +274,26 @@ public sealed class CheyanneRicochetSystem : JiangyuSystem
             // shows up here as two commits for one trigger pull.
             BounceChainAoEShape.UseCommitTile = null;
             Context.Log.Debug($"cheyanne ricochet: commit (result={info.Result ?? "null"}, sequencing={_sequencing})");
-            if (_sequencing || info.Result is false)
+            if (info.Result is false)
                 return;
             var user = (info.Args is { Count: > 0 } ? info.Args[0] : null) as Il2CppSystem.Object;
             var target = (info.Args is { Count: > 1 } ? info.Args[1] : null) as Il2CppSystem.Object;
             var tile = target?.TryCast<Tile>();
             if (tile == null)
                 return;
+            // OnUse arrives once per REPETITION, and a bay-linked rifle
+            // carries two or four of them. Each repetition flies its own
+            // chain, but the chains share static shape state (ApplyExactly),
+            // so they run back to back rather than overlapping: while one is
+            // in flight the rest queue WITH their own commit (a second
+            // trigger pull mid-flight fires at its own target, not the
+            // first pull's), and the audio the engine already played leads
+            // the bullets by a beat.
+            if (_sequencing)
+            {
+                _queuedChains.Enqueue((skill, user?.TryCast<Actor>(), tile));
+                return;
+            }
             Context.Coroutines.Start(Sequence(skill, user?.TryCast<Actor>(), tile));
         }
         catch (Exception ex)
@@ -352,8 +375,17 @@ public sealed class CheyanneRicochetSystem : JiangyuSystem
         }
         finally
         {
+            // The drain lives IN the finally so an aborted chain (a throw on
+            // a dying Il2Cpp object stops the coroutine) still pays its
+            // queued debt instead of leaking phantom chains into the next
+            // trigger pull.
             _sequencing = false;
             BounceChainAoEShape.ApplyExactly = null;
+            if (_queuedChains.Count > 0)
+            {
+                var next = _queuedChains.Dequeue();
+                Context.Coroutines.Start(Sequence(next.Skill, next.User, next.Tile));
+            }
         }
     }
 

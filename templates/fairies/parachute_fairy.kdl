@@ -135,6 +135,10 @@ clone "SkillTemplate" from="effect.wmgfl_drop_shock" id="effect.wmgfl_enhanced_d
     set "Description" {
         set "m_DefaultTranslation" "Rattled by the drop. Accuracy, Damage and Defence reduced by 40% for 2 turns."
     }
+    // Index patches against the SOURCE CLONE's final handler list: the
+    // loader's chained-clone pass rebases this clone onto the patched source
+    // (fresh deep copies) and replays these ops on top, so index 1..3 name
+    // the three ChangeProperty handlers the source appended.
     set "EventHandlers" index=1 {
         set "AmountMult" 0.6
     }

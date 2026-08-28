@@ -13,6 +13,30 @@ public static class Weapons
 {
     private static object NoSystem => new { error = "calibration system not initialised" };
 
+    private static readonly Dictionary<string, Il2CppMenace.Items.WeaponTemplate> GiveCache = new(StringComparer.Ordinal);
+
+    // Mint owned instances of any weapon into shared stock, for testing equip
+    // surfaces without the black market.
+    [MutatingVerb]
+    public static object Give(string weaponId, int count = 1)
+    {
+        var context = BayMountSystem.Instance?.Context;
+        if (context == null)
+            return new { error = "no mod context" };
+        var owned = Jiangyu.Game.Strategy.Inventory.Owned;
+        if (owned == null)
+            return new { error = "no strategy state / owned items" };
+        var template = Templates.Resolve<Il2CppMenace.Items.WeaponTemplate>(
+            weaponId, GiveCache, msg => context.Log.Warn($"weapons: {msg}"));
+        if (template == null)
+            return new { error = $"unknown weapon template '{weaponId}'" };
+        var minted = 0;
+        for (var i = 0; i < Math.Clamp(count, 0, 20); i++)
+            if (owned.AddItem(template, false, false) != null)
+                minted++;
+        return new { ok = true, weaponId, minted };
+    }
+
     // Every calibratable weapon instance the player owns: weapon, rank and holder.
     public static object Status()
         => CalibrationSystem.Instance?.DevStatus() ?? NoSystem;

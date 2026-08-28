@@ -166,10 +166,12 @@ public sealed class CalibrationSystem : JiangyuSystem
     }
 
     // A component's display name (its commodity Title, e.g. "WA 2000 Weapon Component"), falling back
-    // to the weapon name plus "Component" if the commodity carries no title.
+    // to the weapon name plus "Component" if the commodity carries no title. The fallback strips the
+    // baked rank marker: a doll without calibration content yet reaches it with a decorated weapon
+    // Title, and no other doll's modal shows ranks in component names.
     private string ComponentName(string weaponId)
         => Templates.DefaultText(Component(weaponId)?.Title,
-            Templates.DefaultText(Weapon(weaponId, quiet: true)?.Title, weaponId) + " Component");
+            Calibration.CleanName(Templates.DefaultText(Weapon(weaponId, quiet: true)?.Title, weaponId)) + " Component");
 
     private void OnWindowChanged(PatchInfo info)
     {
@@ -230,6 +232,10 @@ public sealed class CalibrationSystem : JiangyuSystem
         catch (Exception ex) { Context.Log.Warn($"calibration: grant reconcile failed: {ex.Message}"); }
     }
 
+    // Weapon ids already reported as having no component template, so a real
+    // typo surfaces once instead of once per window refresh.
+    private readonly HashSet<string> _warnedMissingComponent = new(StringComparer.Ordinal);
+
     private void GrantRun(string weaponId, int[] schedule, List<int> granted, int level, string tag)
     {
         foreach (var lvl in schedule)
@@ -237,7 +243,19 @@ public sealed class CalibrationSystem : JiangyuSystem
             if (lvl > level || granted.Contains(lvl))
                 continue;
             var component = Component(weaponId);
-            if (component == null || Inventory.AddItem(component) == null)
+            // No component template means the weapon has no calibration
+            // content yet, which is a legitimate state for a doll whose ranks
+            // have not landed. It is also exactly what a mistyped component id
+            // looks like, and staying silent there leaves the rank quietly
+            // uncraftable with nothing in the log to explain why. Warn once per
+            // weapon rather than on every window refresh.
+            if (component == null)
+            {
+                if (_warnedMissingComponent.Add(weaponId))
+                    Context.Log.Warn($"calibration: no component template for '{weaponId}', its ranks cannot be granted");
+                return;
+            }
+            if (Inventory.AddItem(component) == null)
             {
                 Context.Log.Warn($"calibration: component grant failed for '{weaponId}' at level {lvl}");
                 return;

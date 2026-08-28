@@ -1,0 +1,12 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="../theme.uss" />
+    <Style src="bay.uss" />
+    <ui:VisualElement name="BayAlternatives" class="window wm-bay-modal">
+        <ui:VisualElement class="unit-window-background" />
+        <ui:VisualElement class="unit-window-border" />
+        <ui:Label name="bay-title" text="Select Bay Weapon" class="wm-bay-title" />
+        <ui:ScrollView name="bay-scroll" class="wm-bay-scroll">
+            <ui:VisualElement name="bay-list" class="wm-bay-list" />
+        </ui:ScrollView>
+    </ui:VisualElement>
+</ui:UXML>

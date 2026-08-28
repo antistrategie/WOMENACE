@@ -1,0 +1,99 @@
+clone "WeaponTemplate" from="weapon.generic_assault_rifle_tier1_kpac" id="weapon.ots14" {
+    append "Tags" "jy_no_sell"
+    set "Title" {
+        set "m_DefaultTranslation" "OTs-14"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Assault Rifle"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "A firearm that's quite compatible with OTs-14, featuring improved recoil control and tactical rails. For her this isn't just a weapon, but a yardstick to measure the differences between herself and \"her other self\"."
+    }
+
+    set "Model" asset="weapon/ots14/main"
+    set "ModelSecondary" asset="weapon/ots14_arms/main"
+    set "VisualAlterationSlotSecondary" enum="VisualAlterationSlot" "Back_Special"
+    set "Icon" asset="weapon/ots14/Icon"
+    set "IconEquipment" asset="weapon/ots14/IconEquipment"
+    set "IconEquipmentDisabled" asset="weapon/ots14/IconEquipmentDisabled"
+    set "IconSkillBar" asset="weapon/ots14/IconSkillBar"
+    set "IconSkillBarDisabled" asset="weapon/ots14/IconSkillBarDisabled"
+
+    set "AccuracyBonus" 0.0
+    set "AccuracyDropoff" -8.0
+    set "ArmorPenetration" 16.0
+    set "ArmorPenetrationDropoff" -1.9
+
+    set "Damage" 13.0
+    set "DamageDropoff" -0.85
+    set "DamageToArmorDurability" 12.0
+    set "DamageToArmorDurabilityDropoff" -0.7
+
+    set "MaxRange" 6
+    set "IdealRange" 3
+    set "Suppression" 3.0
+
+    set "DeployCosts" {
+        set "m_Supplies" 20
+    }
+
+    set "BlackMarketMaxQuantity" 0
+
+    set "SkillsGranted" index=0 "active.fire_ots14"
+    set "SkillsGranted" index=1 "active.fire_ots14_sustained"
+}
+
+clone "SkillTemplate" from="active.fire_assault_rifle_tier1_556" id="active.fire_ots14" {
+    clear "SoundsOnAttack"
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "weapons_soundbank"
+        set "itemId" "small_caliber_brass_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_burst_distant"
+    }
+    clear "SoundsOnAttackFar"
+    append "SoundsOnAttackFar" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_burst_distant"
+    }
+}
+
+clone "SkillTemplate" from="active.fire_assault_rifle_sustained_fire_tier1_556" id="active.fire_ots14_sustained" {
+    clear "SoundsOnAttack"
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_single"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "weapons_soundbank"
+        set "itemId" "small_caliber_brass_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_single_distant"
+    }
+    clear "SoundsOnAttackFar"
+    append "SoundsOnAttackFar" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_single_distant"
+    }
+}
+
+// The bay's stat-carrier template: every bay item's runtime ItemSkill is
+// built on this inert hidden passive so its (template, item) pair can never
+// collide with a granted fire skill's in the container's typed lookups
+// (the mining laser's heat handler resolves by exactly that pair).
+clone "SkillTemplate" from="passive.encumbered" id="passive.wmgfl_bay_carrier" {
+    set "Title" {
+        set "m_DefaultTranslation" "Weapons Bay"
+    }
+    set "IsHidden" #true
+    set "IsRemovedAfterCombat" #true
+    clear "EventHandlers"
+}

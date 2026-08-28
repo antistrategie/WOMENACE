@@ -1,0 +1,29 @@
+{
+  "parameters": [
+    { "name": "Fire_Scapula_L", "type": "Trigger" },
+    { "name": "Fire_Scapula1_R", "type": "Trigger" },
+    { "name": "Fire_Scapula1_L", "type": "Trigger" },
+    { "name": "Fire_Scapula_R", "type": "Trigger" }
+  ],
+  "states": [
+    { "name": "Idle", "clip": "idle", "loop": true, "default": true },
+    { "name": "Fire_Scapula_L", "clip": "fire_Scapula_L" },
+    { "name": "Fire_Scapula1_R", "clip": "fire_Scapula1_R" },
+    { "name": "Fire_Scapula1_L", "clip": "fire_Scapula1_L" },
+    { "name": "Fire_Scapula_R", "clip": "fire_Scapula_R" }
+  ],
+  "transitions": [
+    { "from": "Idle", "to": "Fire_Scapula_L", "duration": 0.03, "conditions": [["Fire_Scapula_L", "Trigger"]] },
+    { "from": "Idle", "to": "Fire_Scapula1_R", "duration": 0.03, "conditions": [["Fire_Scapula1_R", "Trigger"]] },
+    { "from": "Idle", "to": "Fire_Scapula1_L", "duration": 0.03, "conditions": [["Fire_Scapula1_L", "Trigger"]] },
+    { "from": "Idle", "to": "Fire_Scapula_R", "duration": 0.03, "conditions": [["Fire_Scapula_R", "Trigger"]] },
+    { "from": "Fire_Scapula_L", "to": "Fire_Scapula_L", "duration": 0.03, "conditions": [["Fire_Scapula_L", "Trigger"]] },
+    { "from": "Fire_Scapula1_R", "to": "Fire_Scapula1_R", "duration": 0.03, "conditions": [["Fire_Scapula1_R", "Trigger"]] },
+    { "from": "Fire_Scapula1_L", "to": "Fire_Scapula1_L", "duration": 0.03, "conditions": [["Fire_Scapula1_L", "Trigger"]] },
+    { "from": "Fire_Scapula_R", "to": "Fire_Scapula_R", "duration": 0.03, "conditions": [["Fire_Scapula_R", "Trigger"]] },
+    { "from": "Fire_Scapula_L", "to": "Idle", "exitTime": 1.0, "duration": 0.08 },
+    { "from": "Fire_Scapula1_R", "to": "Idle", "exitTime": 1.0, "duration": 0.08 },
+    { "from": "Fire_Scapula1_L", "to": "Idle", "exitTime": 1.0, "duration": 0.08 },
+    { "from": "Fire_Scapula_R", "to": "Idle", "exitTime": 1.0, "duration": 0.08 }
+  ]
+}

@@ -1,0 +1,52 @@
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.ots14_default" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
+    set "Title" {
+        set "m_DefaultTranslation" "Dark Sun's Shadow"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Combat Gear"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "OTs-14 in her usual outfit. Its cold tones hide a shining edge. Rather than be a beacon that leads the masses, she prefers to be a shadow that belongs solely to you."
+    }
+    set "Icon" asset="ots14/armor/default/Icon"
+    set "IconEquipment" asset="ots14/armor/default/IconEquipment"
+    set "IconSkillBar" asset="ots14/armor/default/IconSkillBar"
+    clear "MaleModels"
+    append "MaleModels" asset="ots14/default/main"
+    clear "FemaleModels"
+    append "FemaleModels" asset="ots14/default/main"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_transmog"
+    append "Tags" "jy_no_sell"
+}
+
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.ots14_destined_love" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
+    set "Title" {
+        set "m_DefaultTranslation" "Destined Love"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Wedding Dress"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            "Commander, you are the one that I have deemed to be worthy of my trust and belief, so let us stay side-by-side together forever..."
+            OTs-14 slowly walks toward you. The scene she's replayed in her neural cloud countless times is finally within reach.
+            """
+    }
+    set "Icon" asset="ots14/armor/destined_love/Icon"
+    set "IconEquipment" asset="ots14/armor/destined_love/IconEquipment"
+    set "IconSkillBar" asset="ots14/armor/destined_love/IconSkillBar"
+    clear "MaleModels"
+    append "MaleModels" asset="ots14/destined_love/main"
+    clear "FemaleModels"
+    append "FemaleModels" asset="ots14/destined_love/main"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_transmog"
+    append "Tags" "jy_no_sell"
+}

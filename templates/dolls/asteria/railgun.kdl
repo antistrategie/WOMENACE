@@ -112,6 +112,13 @@ clone "SkillTemplate" from="active.launch_rocket" id="active.asteria_railgun_sho
         set "ImpactEffect" asset="impact_laser_large_earth_01"
     }
 
+    // The slug does not stop at the first body: one hit punches through up
+    // to nine elements of the struck squad (index 0 is the inherited Attack
+    // handler, index 1 ClearTileEffectGroup).
+    set "EventHandlers" index=0 {
+        set "ElementsHit" 9
+    }
+
     append "EventHandlers" type="Il2CppMenace.Tactical.Skills.Effects.SetAnimatorTrigger" {
         set "Parameter" "TriggerCustomSkillEffect"
         set "Delay" 0.0

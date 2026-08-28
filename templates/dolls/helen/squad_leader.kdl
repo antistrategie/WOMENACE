@@ -21,7 +21,7 @@ clone "SpeakerTemplate" from="carda" id="wmgfl_helen_speaker" {
 
             Age: Classified
 
-            Affiliation(s): Classified
+            Affiliation(s): Elmo - Combined Echelon
             """
     }
 
@@ -34,7 +34,7 @@ clone "SpeakerTemplate" from="carda" id="wmgfl_helen_speaker" {
 clone "EntityTemplate" from="player_squad.carda" id="player_squad.helen" {
     append "Tags" "wmgfl_helen"
     set "Title" {
-        set "m_DefaultTranslation" "Doll Community"
+        set "m_DefaultTranslation" "Elmo - Combined Echelon"
     }
     set "Description" {
         set "m_DefaultTranslation" "Gentle in appearance, and extremely skilled at utilizing rules, adept at achieving desired goals through certain loopholes. Possesses extraordinary insight, always able to see through the essence of people's hearts beyond their surface behaviors. When interacting with those around her, she occasionally uses playful pranks to draw closer to others, guiding those who haven't realized their own feelings to epiphanies, and helping them overcome their weaknesses. In critical moments, she is also willing to sacrifice herself to protect the important people around her."
@@ -75,6 +75,7 @@ clone "UnitLeaderTemplate" from="squad_leader.carda" id="squad_leader.helen" {
     set "QualityLevel" 3
     set "GrowthPotential" 5
     set "FixedSupplyCost" 100
+    set "PromotionCostMult" 0.8
     set "SquaddieTax" 25
     set "Rarity" 5
 

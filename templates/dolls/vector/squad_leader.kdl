@@ -21,7 +21,7 @@ clone "SpeakerTemplate" from="sy" id="wmgfl_vector_speaker" {
 
             Age: Classified
 
-            Affiliation(s): H.I.D.E. 404
+            Affiliation(s): H.I.D.E. 404 Team B
             """
     }
 
@@ -75,6 +75,7 @@ clone "UnitLeaderTemplate" from="squad_leader.sy" id="squad_leader.vector" {
     set "QualityLevel" 3
     set "GrowthPotential" 5
     set "FixedSupplyCost" 100
+    set "PromotionCostMult" 0.8
     set "SquaddieTax" 25
     set "Rarity" 5
 
