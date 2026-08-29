@@ -1,0 +1,57 @@
+clone "SkillTemplate" from="effect.stunned" id="effect.lewis_gathering_steam" {
+    clear "EventHandlers"
+
+    set "Icon" asset="lewis/buff_gathering_steam"
+
+    set "Title" {
+        set "m_CategoryName" ""
+        set "m_FieldName" ""
+        set "m_DefaultTranslation" "Gathering Steam"
+    }
+    set "ShortDescription" {
+        set "m_CategoryName" ""
+        set "m_FieldName" ""
+        set "m_DefaultTranslation" "Bonus damage per stack."
+    }
+    set "Description" {
+        set "m_CategoryName" ""
+        set "m_FieldName" ""
+        set "m_DefaultTranslation" "Every hit that lands feeds the next. Bonus damage per stack, up to 3."
+    }
+
+    append "EventHandlers" type="WOMENACE:GatheringSteamStatus" {}
+}
+
+clone "PerkTemplate" from="perk.full_send" id="perk.lewis_gathering_steam" {
+    set "Title" {
+        set "m_DefaultTranslation" "Gathering Steam"
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "Landing a hit builds a stack. Stacks add flat damage and never fall off."
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            "Every reload's one more round in the belt. You want to see what round twelve looks like?"
+
+            – Lewis, before someone changes the subject
+
+
+            <style="Highlight">• The first hit Lewis lands each turn builds a stack, up to 3. Each stack adds 4 flat damage to her shots. Stacks persist for the rest of the mission.</style>
+            """
+    }
+
+    set "Icon" asset="lewis/perks/gathering_steam_badge"
+    set "IconDisabled" asset="lewis/perks/gathering_steam_inactive"
+    set "PerkIcon" asset="lewis/perks/gathering_steam_badge"
+
+    clear "EventHandlers"
+    append "EventHandlers" type="WOMENACE:GatheringSteam" {
+        set "MaxStacks" 3
+        set "DamagePerStack" 4
+        set "StatusEffect" ref="SkillTemplate" "effect.lewis_gathering_steam"
+    }
+    append "EventHandlers" type="ApplySkillToSelf" {
+        set "SkillToApply" "effect.lewis_gathering_steam"
+        set "ChanceToApply" 100
+    }
+}
