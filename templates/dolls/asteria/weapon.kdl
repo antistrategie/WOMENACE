@@ -1,0 +1,84 @@
+clone "WeaponTemplate" from="weapon.generic_assault_rifle_tier1_kpac" id="weapon.asteria" {
+    append "Tags" "jy_no_sell"
+    set "Title" {
+        set "m_DefaultTranslation" "AR-15"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Assault Rifle"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "[PLACEHOLDER] Gun."
+    }
+
+    set "Model" asset="weapon/asteria/main"
+    set "Icon" asset="weapon/asteria/Icon"
+    set "IconEquipment" asset="weapon/asteria/IconEquipment"
+    set "IconEquipmentDisabled" asset="weapon/asteria/IconEquipmentDisabled"
+    set "IconSkillBar" asset="weapon/asteria/IconSkillBar"
+    set "IconSkillBarDisabled" asset="weapon/asteria/IconSkillBarDisabled"
+
+    set "AccuracyBonus" 15.0
+    set "AccuracyDropoff" -5.0
+    set "ArmorPenetration" 27.0
+    set "ArmorPenetrationDropoff" -1.87
+
+    set "Damage" 9.0
+    set "DamageDropoff" -0.83
+    set "DamageToArmorDurability" 9.0
+    set "DamageToArmorDurabilityDropoff" -0.62
+
+    set "MaxRange" 9
+    set "IdealRange" 5
+    set "Suppression" 3.0
+
+    set "DeployCosts" {
+        set "m_Supplies" 13
+    }
+
+    set "BlackMarketMaxQuantity" 0
+
+    set "SkillsGranted" index=0 "active.fire_asteria"
+    set "SkillsGranted" index=1 "active.fire_asteria_sustained"
+}
+
+clone "SkillTemplate" from="active.fire_assault_rifle_tier1_556" id="active.fire_asteria" {
+    clear "SoundsOnAttack"
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "weapons_soundbank"
+        set "itemId" "small_caliber_brass_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_burst_distant"
+    }
+    clear "SoundsOnAttackFar"
+    append "SoundsOnAttackFar" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_burst_distant"
+    }
+}
+
+clone "SkillTemplate" from="active.fire_assault_rifle_sustained_fire_tier1_556" id="active.fire_asteria_sustained" {
+    clear "SoundsOnAttack"
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_single"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "weapons_soundbank"
+        set "itemId" "small_caliber_brass_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_single_distant"
+    }
+    clear "SoundsOnAttackFar"
+    append "SoundsOnAttackFar" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_single_distant"
+    }
+}

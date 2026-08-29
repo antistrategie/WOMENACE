@@ -26,6 +26,11 @@ public static class Unlocks
         // authored: it is weapon.<doll>_ssr by the Calibration convention. Equippable by anyone, but
         // the owner-only bonus lives in SsrImprintSystem.
         Weapon,
+        // A named weapon item granted to the shared inventory at this level. Items lists the weapon
+        // template ids. Unlike Weapon this carries no Calibration convention and no imprint entry:
+        // it is for a doll's signature piece that is an ordinary item once granted, such as
+        // Asteria's particle cannon.
+        SpecialWeapon,
         // A vehicle item granted to the shared inventory at this level. Items lists the vehicle item
         // ids. Once granted it is a normal armoury item, equippable by any pilot-capable unit.
         Vehicle,
@@ -113,6 +118,10 @@ public static class Unlocks
         {
             new Entry { Level = 4, Feature = Feature.Skins, Armors = new[] { "armor.ots14_destined_love" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_ots14/lv4", "Outfit: Destined Love") },
         },
+        ["wmgfl_asteria"] = new[]
+        {
+            new Entry { Level = 4, Feature = Feature.SpecialWeapon, Items = new[] { "specialweapon.asteria_railgun" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_asteria/lv4", "Special Weapon: Particle Cannon") },
+        },
     };
 
     public static IReadOnlyList<Entry> EntriesFor(string characterTag)
@@ -136,6 +145,16 @@ public static class Unlocks
     {
         foreach (var entry in EntriesFor(characterTag))
             if (entry.Feature is Feature.Vehicle or Feature.Mech && level >= entry.Level)
+                foreach (var id in entry.Items)
+                    yield return id;
+    }
+
+    // The named weapon ids a character has unlocked at this level (every SpecialWeapon entry at or
+    // below it). Granted to the shared inventory by exact id, equippable by anyone from then on.
+    public static IEnumerable<string> UnlockedSpecialWeapons(string characterTag, int level)
+    {
+        foreach (var entry in EntriesFor(characterTag))
+            if (entry.Feature == Feature.SpecialWeapon && level >= entry.Level)
                 foreach (var id in entry.Items)
                     yield return id;
     }

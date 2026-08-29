@@ -1,0 +1,78 @@
+clone "PerkTemplate" from="perk.steady_gun" id="perk.asteria_bond" {
+    set "Title" {
+        set "m_DefaultTranslation" "Bond Connextion"
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "Select a friendly squad and give them a buff."
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            Always there for a friend in need.
+
+            <style="Highlight">• Grants the skill 'Bond Connextion'. Asteria bonds with a friendly squad and that squad deals 15% more damage for the rest of the battle.</style>
+            <style="Highlight">• The bond holds a single charge per mission.</style>
+            """
+    }
+
+    set "Icon" asset="asteria/perks/bond"
+    set "IconDisabled" asset="asteria/perks/bond_inactive"
+    set "PerkIcon" asset="asteria/perks/bond"
+
+    clear "EventHandlers"
+    append "EventHandlers" type="AddSkill" {
+        set "Event" enum="AddEvent" "OnMissionStart"
+        set "SkillToAdd" "active.asteria_bond_connextion"
+    }
+}
+
+clone "SkillTemplate" from="offmap.shield_projector" id="active.asteria_bond_connextion" {
+    set "Title" {
+        set "m_DefaultTranslation" "Bond Connextion"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Bond with a friendly squad. That squad deals 15% more damage for the rest of the battle."
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "Bonds with a friendly squad, raising its damage by 15% for the rest of the battle."
+    }
+    set "Icon" asset="asteria/skills/bond_connextion"
+    set "IconDisabled" asset="asteria/skills/bond_connextion_disabled"
+    set "TargetsAllowed" enum="SkillTarget" "AlliedActor"
+    set "ActionPointCost" 10
+    set "HideApCosts" #false
+    set "ExecutingElement" enum="ExecutingElementType" "SpecialOnly"
+    set "IsLimitedUses" #false
+    set "IsStacking" #false
+    set "IsRemovedAfterCombat" #true
+    clear "EventHandlers"
+    append "EventHandlers" type="AddSkill" {
+        set "Event" enum="AddEvent" "OnUse"
+        set "SkillToAdd" "effect.asteria_bond"
+        set "ShowHUDText" #true
+    }
+    append "EventHandlers" type="WOMENACE:MissionCharge" {
+        set "Group" "asteria_bond"
+    }
+}
+
+clone "SkillTemplate" from="effect.bleeding" id="effect.asteria_bond" {
+    set "Icon" asset="asteria/effects/bond"
+    set "Title" {
+        set "m_DefaultTranslation" "Bond"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Asteria is bonded with this squad. Damage dealt increased by 15%."
+    }
+    clear "EventHandlers"
+    append "EventHandlers" type="ChangeProperty" {
+        set "Trigger" enum="UpdateEvent" "OnUpdate"
+        set "PropertyType" enum="EntityPropertyType" "DamageMult"
+        set "Amount" 0
+        set "AmountMult" 1.15
+    }
+    append "EventHandlers" type="DisplayText" {
+        set "Event" enum="DisplayEvent" "OnAdded"
+        set "LocaKey" "asteria_bond"
+        set "DefaultText" "Bonded!"
+    }
+}

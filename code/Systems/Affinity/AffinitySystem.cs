@@ -92,7 +92,7 @@ public sealed class AffinitySystem : JiangyuSystem
             foreach (var entry in entries)
             {
                 var wantsArmors = entry.Feature == Unlocks.Feature.Skins;
-                var wantsItems = entry.Feature is Unlocks.Feature.Vehicle or Unlocks.Feature.Mech;
+                var wantsItems = entry.Feature is Unlocks.Feature.Vehicle or Unlocks.Feature.Mech or Unlocks.Feature.SpecialWeapon;
                 if (wantsArmors != entry.Armors.Length > 0 || wantsItems != entry.Items.Length > 0)
                     Context.Log.Warn($"affinity: unlock entry {tag} lv{entry.Level} ({entry.Feature}) has mismatched data arrays");
             }
@@ -200,7 +200,7 @@ public sealed class AffinitySystem : JiangyuSystem
     private static AffinityTooltip.RewardKind KindOf(Unlocks.Feature feature) => feature switch
     {
         Unlocks.Feature.Skins => AffinityTooltip.RewardKind.Outfit,
-        Unlocks.Feature.Weapon => AffinityTooltip.RewardKind.Weapon,
+        Unlocks.Feature.Weapon or Unlocks.Feature.SpecialWeapon => AffinityTooltip.RewardKind.Weapon,
         Unlocks.Feature.Mech => AffinityTooltip.RewardKind.Mech,
         Unlocks.Feature.Vehicle => AffinityTooltip.RewardKind.Vehicle,
         _ => AffinityTooltip.RewardKind.Other,
@@ -463,6 +463,17 @@ public sealed class AffinitySystem : JiangyuSystem
                     continue;
                 owned.AddItem(template, false, false);
                 Context.Log.Info($"affinity: unlocked weapon '{id}' (level {level})");
+            }
+
+            // A named signature weapon: no Calibration ranks to account for, so ownership is the
+            // exact id and the grant lands once.
+            foreach (var id in Unlocks.UnlockedSpecialWeapons(characterTag, level))
+            {
+                var template = Templates.Resolve<WeaponTemplate>(id, _weaponCache, msg => Context.Log.Warn($"affinity: {msg}"));
+                if (template == null || OwnsInstance(owned, itemId => itemId == id))
+                    continue;
+                owned.AddItem(template, false, false);
+                Context.Log.Info($"affinity: granted special weapon '{id}' (level {level})");
             }
 
             // A character's signature vehicle is theirs for as long as they have the level: a

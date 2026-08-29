@@ -1,0 +1,221 @@
+clone "TagTemplate" from="unique" id="wmgfl_asteria"
+
+clone "SpeakerTemplate" from="sy" id="wmgfl_asteria_speaker" {
+    set "Tags" "wmgfl_asteria pirate_sl female infantry waybacker wmgfl_class_ar"
+    set "Nickname" {
+        set "m_DefaultTranslation" "Asteria"
+    }
+    set "Forename" {
+        set "m_DefaultTranslation" "Asteria"
+    }
+    set "Surname" {
+        set "m_DefaultTranslation" ""
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            Name: Asteria (ST AR-15)
+
+            Proficiency: Fire Support
+
+            Birth: Unknown
+
+            Age: Classified
+
+            Affiliation(s): AR Team
+            """
+    }
+
+    set "BarkImage" asset="asteria/bark"
+    set "StandLookLeftImage" asset="asteria/stand_look_left"
+    set "StandLookRightImage" asset="asteria/stand_look_right"
+    set "StandLookRightInactiveImage" asset="asteria/stand_look_right_inactive"
+}
+
+clone "EntityTemplate" from="player_squad.sy" id="player_squad.asteria" {
+    append "Tags" "wmgfl_asteria"
+    set "Title" {
+        set "m_DefaultTranslation" "AR Team"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "As a member of the AR team, she is now more composed and calm than before. After experiencing the departure of M4 and parting ways with the commander, she has come to cherish her comrades even more. She acts with a results-oriented mindset, paying little attention to the process; coupled with her taciturn nature and aversion to arguing, she often leads to misunderstandings. Often, it is only after she has silently made many sacrifices that others realize her good intentions. And this is precisely her unique way of treating others with gentleness."
+    }
+
+    set "Badge" asset="asteria/badge_mini"
+    set "BadgeWhite" asset="asteria/badge_mini"
+    clear "Items"
+    append "Items" "armor.player_fatigues"
+    append "Items" "weapon.asteria"
+
+    set "Scale" {
+        set "x" 1.0
+        set "y" 1.0
+    }
+    set "OverrideScaleForSquadLeader" #false
+}
+
+clone "UnitLeaderTemplate" from="squad_leader.sy" id="squad_leader.asteria" {
+    set "InfantryUnitTemplate" "player_squad.asteria"
+    set "SpeakerTemplate" "wmgfl_asteria_speaker"
+    set "CustomHead" #null
+    set "UnitTitle" {
+        set "m_DefaultTranslation" "Tactical Doll"
+    }
+    set "UnitDescription" {
+        set "m_DefaultTranslation" "As a member of the AR team, she is now more composed and calm than before. After experiencing the departure of M4 and parting ways with the commander, she has come to cherish her comrades even more. She acts with a results-oriented mindset, paying little attention to the process; coupled with her taciturn nature and aversion to arguing, she often leads to misunderstandings. Often, it is only after she has silently made many sacrifices that others realize her good intentions. And this is precisely her unique way of treating others with gentleness."
+    }
+
+    set "InitialAttributes" index=0 88
+    set "InitialAttributes" index=1 80
+    set "InitialAttributes" index=2 80
+    set "InitialAttributes" index=3 100
+    set "InitialAttributes" index=4 100
+    set "InitialAttributes" index=5 40
+    set "InitialAttributes" index=6 100
+
+    set "QualityLevel" 3
+    set "GrowthPotential" 5
+    set "FixedSupplyCost" 100
+    set "PromotionCostMult" 0.8
+    set "SquaddieTax" 25
+    set "Rarity" 5
+
+    set "InitialPerk" "perk.asteria_bond"
+    set "PerkTrees" index=0 "perk_tree.asteria"
+
+    set "Slot" asset="asteria/slot"
+    set "SlotInactive" asset="asteria/slot_inactive"
+    set "SlotBadge" asset="asteria/slot_badge"
+
+    set "BadgeDragged" asset="asteria/badge_dragged"
+    set "BigBadge" asset="asteria/big_badge"
+    set "BadgeUnitWindow" asset="asteria/badge_unit_window"
+    set "BadgeMini" asset="asteria/badge_mini"
+
+    set "HiringSelectBarkSound" {
+        set "bankId" "wmgfl_tactical_barks_asteria_va"
+        set "itemId" "Series_Chosen_Series_Tone_Positive_006"
+    }
+    set "HiredBarkSound" {
+        set "bankId" "wmgfl_tactical_barks_asteria_va"
+        set "itemId" "Series_Chosen_Auto_Series_Tone_Positive_007"
+    }
+
+    set "PromotionBarkSounds" index=0 {
+        set "PerkTier" 1
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_asteria_va"
+            set "itemId" "Series_Up_001"
+        }
+    }
+    set "PromotionBarkSounds" index=1 {
+        set "PerkTier" 2
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_asteria_va"
+            set "itemId" "Series_Up_002"
+        }
+    }
+    set "PromotionBarkSounds" index=2 {
+        set "PerkTier" 3
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_asteria_va"
+            set "itemId" "Series_Up_003"
+        }
+    }
+    set "PromotionBarkSounds" index=3 {
+        set "PerkTier" 4
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_asteria_va"
+            set "itemId" "Series_Up_005"
+        }
+    }
+
+    clear "EmotionalStateResponses"
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Eager"
+        set "Text" {
+            set "m_DefaultTranslation" "Good work. If we are running a sweep against Paradeus, I believe my experience could help."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_asteria_va"
+            set "itemId" "Single_Login_001"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Determined"
+        set "Text" {
+            set "m_DefaultTranslation" "Please rely on me more."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_asteria_va"
+            set "itemId" "Series_Up_003"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Overconfident"
+        set "Text" {
+            set "m_DefaultTranslation" "Only I am allowed to stand by the Commander."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_asteria_va"
+            set "itemId" "Series_Win_Single_Win_001"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Euphoric"
+        set "Text" {
+            set "m_DefaultTranslation" "This what you want?"
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_asteria_va"
+            set "itemId" "Single_Passive_SSR_001"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Hesitant"
+        set "Text" {
+            set "m_DefaultTranslation" "Haven't felt this in a while."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_asteria_va"
+            set "itemId" "Series_Up_004"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Frustrated"
+        set "Text" {
+            set "m_DefaultTranslation" "Can I still get stronger?"
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_asteria_va"
+            set "itemId" "Series_Up_002"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Disheartened"
+        set "Text" {
+            set "m_DefaultTranslation" "Sorry, I'll reflect on it later."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_asteria_va"
+            set "itemId" "Series_Lose_Single_Lose_001"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Miserable"
+        set "Text" {
+            set "m_DefaultTranslation" "..."
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "GoodwillTowards"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "AnimosityTowards"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+}

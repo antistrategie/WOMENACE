@@ -44,9 +44,13 @@ clone "SkillTemplate" from="active.treat_wounds" id="active.wmgfl_bay_repair" {
     set "Icon" asset="ots14/skills/repair"
     set "IconDisabled" asset="ots14/skills/repair_disabled"
     set "ActionPointCost" 20
-    set "Uses" 1
+    set "IsLimitedUses" #false
     set "IsRemovedAfterCombat" #true
     clear "EventHandlers"
+    append "EventHandlers" type="WOMENACE:HealUserToFull" {}
+    append "EventHandlers" type="WOMENACE:MissionCharge" {
+        set "Group" "ots14_field_kit"
+    }
 }
 
 clone "SkillTemplate" from="active.rogue_ammo_runner_refill_ammo" id="active.wmgfl_bay_reload" {
@@ -63,7 +67,9 @@ clone "SkillTemplate" from="active.rogue_ammo_runner_refill_ammo" id="active.wmg
     set "MinRange" 0
     set "MaxRange" 0
     set "ActionPointCost" 20
-    set "Uses" 1
-    set "IsLimitedUses" #true
+    set "IsLimitedUses" #false
     set "IsRemovedAfterCombat" #true
+    append "EventHandlers" type="WOMENACE:MissionCharge" {
+        set "Group" "ots14_field_kit"
+    }
 }

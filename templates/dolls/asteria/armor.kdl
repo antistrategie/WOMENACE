@@ -1,0 +1,24 @@
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.asteria_default" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
+    set "Title" {
+        set "m_DefaultTranslation" "Outfit"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Field Outfit"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "[PLACEHOLDER] Asteria's everyday outfit."
+    }
+    set "Icon" asset="asteria/armor/default/Icon"
+    set "IconEquipment" asset="asteria/armor/default/IconEquipment"
+    set "IconSkillBar" asset="asteria/armor/default/IconSkillBar"
+    clear "MaleModels"
+    append "MaleModels" asset="asteria/default/main"
+    clear "FemaleModels"
+    append "FemaleModels" asset="asteria/default/main"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_transmog"
+    append "Tags" "jy_no_sell"
+}
