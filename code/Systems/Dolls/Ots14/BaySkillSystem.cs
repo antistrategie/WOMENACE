@@ -656,6 +656,18 @@ public sealed class BaySkillSystem : JiangyuSystem
                 foreach (var (_, sk) in skills)
                     if (sk != null)
                         live.Add(sk.Pointer);
+            // A currently linked item's STAT CARRIER is as live as its
+            // actives: BuildPropertiesForUse folds the weapon's stats into a
+            // shot through the carrier, so sweeping it left the linked item
+            // carrierless and every linked volley landed for zero damage.
+            var carrierGuids = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var pair in LinkedSkills.Keys)
+            {
+                var linkedItem = BayLink.LinkedItemFor(Context, pair);
+                var linkedGuid = linkedItem?.GetGuid();
+                if (!string.IsNullOrEmpty(linkedGuid))
+                    carrierGuids.Add(linkedGuid);
+            }
             var removed = 0;
             void Sweep(Il2CppSystem.Collections.Generic.List<BaseSkill> list)
             {
@@ -666,6 +678,8 @@ public sealed class BaySkillSystem : JiangyuSystem
                     if (guid == null || !guid.StartsWith(BayLink.LinkedGuidPrefix, StringComparison.Ordinal))
                         continue;
                     if (live.Contains(candidate.Pointer))
+                        continue;
+                    if (candidate.TryCast<ItemSkill>() != null && carrierGuids.Contains(guid))
                         continue;
                     candidate.m_IsGarbage = true;
                     removed++;
