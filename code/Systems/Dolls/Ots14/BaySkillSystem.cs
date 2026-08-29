@@ -1198,8 +1198,10 @@ public sealed class BaySkillSystem : JiangyuSystem
     }
 
     // Rotates the arm a linked shot leaves from, one spawn point at a time,
-    // so a pair alternates and a quad walks all four barrels.
+    // so a pair alternates and a quad walks all four barrels. The recoil
+    // kicks rotate on their own counter, never on this one.
     private static int _linkedMuzzleCycle;
+    private static int _linkedKickCycle;
 
     private void OnGetSpawnpoint(PatchInfo info)
     {
@@ -1263,12 +1265,14 @@ public sealed class BaySkillSystem : JiangyuSystem
         else if (TryGetLinked(skillPtr, out var pair, out _))
         {
             // A linked volley's rounds walk the group's arms, so the kicks
-            // and the swapped muzzle rotate with them. Shares the spawnpoint
-            // cycle: both count rounds, and the arms only need to take
-            // turns, not agree call for call.
+            // and the swapped muzzle rotate with them. On its OWN counter:
+            // each planned round calls GetMuzzle here AND GetSpawnpoint in
+            // BayMuzzleFor, and sharing one counter double-stepped it, which
+            // parked every projectile on the same arm while the kicks took
+            // the other.
             var members = BayLink.Groups[pair];
-            _linkedMuzzleCycle++;
-            slot = members[(_linkedMuzzleCycle & int.MaxValue) % members.Length];
+            _linkedKickCycle++;
+            slot = members[(_linkedKickCycle & int.MaxValue) % members.Length];
         }
         else
         {
