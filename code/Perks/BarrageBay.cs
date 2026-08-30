@@ -10,9 +10,9 @@ namespace WOMENACE.Code;
 // ISkillFilter that KDL cannot touch, so an infantry bay never qualifies.
 // The CLONE's own deep-copied filter is wrapped (the vanilla perk is left
 // untouched, so this is hers alone): anything the vanilla filter accepted
-// still passes, plus bay-granted skills whose authored template carried a
-// deployment/setup gate - the bay's definition of a HEAVY weapon (mortars,
-// tripod guns); rockets and rifles stay full price.
+// still passes, plus bay weapons that classify as ORDNANCE by category
+// label (Bay.IsOrdnance: launchers, rockets, mortars, artillery, energy
+// weapons); rifles, snipers and machineguns stay full price.
 public sealed class BarrageBaySystem : JiangyuSystem
 {
     public override void OnTemplatesApplied()

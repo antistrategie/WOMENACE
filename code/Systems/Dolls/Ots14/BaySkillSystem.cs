@@ -526,13 +526,7 @@ public sealed class BaySkillSystem : JiangyuSystem
             }
             GrantLinkedGroups(element, actor, container);
             if (granted > 0)
-            {
                 Context.Log.Debug($"bay: granted {granted} skill(s) to her actor");
-                // The registry is populated now, so the magazine-pouch payout
-                // can recognise the grants (the vanilla add event fired too
-                // early for that).
-                Ots14BayAmmoSystem.SweepGranted(container);
-            }
         }
         catch (Exception ex)
         {

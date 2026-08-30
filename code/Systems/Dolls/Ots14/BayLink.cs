@@ -296,6 +296,17 @@ public static class BayLink
         clone.Repetitions = (ushort)Math.Min(ushort.MaxValue, Math.Max(arms, (int)source.Repetitions * arms));
         if (source.RepetitionDelay > 0f)
             clone.RepetitionDelay = source.RepetitionDelay / arms;
+        // Vanilla only ever applies this recipe to skills that do NOT animate
+        // per repetition (minigun salvo: a 0.03s engine-timed stream, the
+        // animation played once). The tripod MGs animate per repetition at
+        // their authored 0.1-0.16s cadence, and a linked stream at a quarter
+        // of that waits on each ShootBurst re-trigger instead: bullets trail
+        // the trigger pull and stretch with frame time. Below the slowest
+        // per-rep cadence vanilla ships, the animation cannot pace the
+        // stream, so the linked clone fires it engine-timed; slower linked
+        // skills (a rocket per arm) keep their per-shot animation.
+        if (clone.IsPlayingAnimationForEachRepetition && clone.RepetitionDelay < 0.1f)
+            clone.IsPlayingAnimationForEachRepetition = false;
         LinkedSkills[cacheKey] = clone;
         return clone;
     }
