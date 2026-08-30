@@ -451,8 +451,12 @@ public sealed class SsrImprintSystem : JiangyuSystem
             var slots = Bay.LoadoutOrNull(Context);
             var itemGuid = item.GetGuid();
             // The guid must be real: a guid-less item's null would match a
-            // null (empty) bay slot and read as bay-owned.
-            if (slots != null && !string.IsNullOrEmpty(itemGuid) && Array.IndexOf(slots, itemGuid) >= 0)
+            // null (empty) bay slot and read as bay-owned. And the item must
+            // not sit in some doll's loadout: a slot can briefly name an
+            // instance a doll equipped afterwards (the bay yields on the
+            // next Prune), and until then the equipping doll is the owner.
+            if (slots != null && !string.IsNullOrEmpty(itemGuid) && Array.IndexOf(slots, itemGuid) >= 0
+                && !Bay.IsEquipped(item))
             {
                 // Mid-mission the bay element is plainly wielding its slotted
                 // weapons, so the boost is active no matter which unit window

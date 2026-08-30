@@ -664,10 +664,13 @@ public sealed class BayEquipUISystem : JiangyuSystem
                 continue;
             var guid = item.GetGuid();
             var current = slots[_pickSlot] == guid;
-            // CanSlot's one refusal is an instance already slotted elsewhere.
+            // CanSlot's refusals, restated as row states: an instance some
+            // doll has equipped, or one already slotted elsewhere in the bay.
             string blocked = null;
             var inBay = Array.IndexOf(slots, guid);
-            if (!current && inBay >= 0)
+            if (Bay.IsEquipped(item))
+                blocked = Locale.Text("WOMENACE::ui/bay_equipped", "EQUIPPED");
+            else if (!current && inBay >= 0)
                 blocked = Locale.Text("WOMENACE::ui/bay_in_slot", "IN BAY") + $" {inBay + 1:00}";
             list.Add(BuildRow(window, item, current, blocked));
         }

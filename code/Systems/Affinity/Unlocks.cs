@@ -116,7 +116,7 @@ public static class Unlocks
         },
         ["wmgfl_ots14"] = new[]
         {
-            new Entry { Level = 4, Feature = Feature.Skins, Armors = new[] { "armor.ots14_destined_love" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_ots14/lv4", "Outfit: Destined Love") },
+            new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.ots14_destined_love" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_ots14/lv2", "Outfit: Destined Love") },
         },
         ["wmgfl_asteria"] = new[]
         {

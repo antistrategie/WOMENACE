@@ -28,8 +28,6 @@ namespace WOMENACE.Code;
 //    leave the weapon in the fist instead of her rifle.
 public sealed class BaySkillSystem : JiangyuSystem
 {
-    private const string WeaponId = "weapon.ots14";
-
     internal sealed class BaySkillInfo
     {
         public int Slot;
@@ -391,7 +389,7 @@ public sealed class BaySkillSystem : JiangyuSystem
             if (info.Args[0] is not int elementIndex || elementIndex != 0)
                 return;
             var items = (info.Args[1] as Il2CppObjectBase)?.TryCast<ItemContainer>();
-            if (items?.GetItemAtSlot(ItemSlot.InfantryWeapon)?.GetTemplate()?.GetID() != WeaponId)
+            if (!Bay.IsHerContainer(items))
                 return;
             // The element's entity is wired up AFTER attachments are created,
             // so the grant cannot run inline here: wait for the actor and its
@@ -451,6 +449,11 @@ public sealed class BaySkillSystem : JiangyuSystem
     {
         try
         {
+            // Evict stale slots before granting: an item sold or equipped on
+            // a doll since the last armoury visit must not arm the bay.
+            var dropped = Bay.Prune(Context);
+            if (dropped > 0)
+                Context.Log.Debug($"bay: pruned {dropped} slot(s) at mission grant (sold or equipped elsewhere)");
             var slots = Bay.Loadout(Context);
             var granted = 0;
             for (var i = 0; i < Bay.SlotCount; i++)

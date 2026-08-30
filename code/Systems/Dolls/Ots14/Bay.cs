@@ -1,4 +1,6 @@
 using Il2CppMenace.Items;
+using Il2CppMenace.Strategy;
+using Il2CppMenace.Tactical;
 using Il2CppInterop.Runtime.InteropTypes;
 using Jiangyu.Sdk;
 
@@ -10,7 +12,10 @@ namespace WOMENACE.Code;
 // slotted, and the bay survives save round-trips through Context.State like
 // transmog and affinity do. The equip surface (the user's modal, and the dev
 // verbs until it exists) writes slots through TrySetSlot, which owns the
-// rules: special weapons only, each owned instance in at most one slot.
+// rules: special weapons only, each owned instance in at most one slot, and
+// never an instance some doll has equipped (one physical item in two
+// loadouts aliases its skill list across both units, so each bar drew the
+// union and either doll could fire the other's copy on the other's AP).
 public sealed class BayState
 {
     // character tag -> item guid per slot (null = empty).
@@ -21,6 +26,7 @@ public static class Bay
 {
     public const int SlotCount = 4;
     public const string CharacterTag = "wmgfl_ots14";
+    public const string WeaponId = "weapon.ots14";
 
     // The one vanilla infrastructure skill every tripod weapon grants for its
     // set-up step. The bay has no deploy step, so this skill is never granted
@@ -59,8 +65,9 @@ public static class Bay
             : null;
     }
 
-    // Drop slots whose item no longer exists (sold, or otherwise gone). A stale
-    // guid paints an empty tile that still offers UNEQUIP.
+    // Drop slots whose item no longer exists (sold, or otherwise gone) or is
+    // no longer available (a doll equipped it, which ResolveItem reports as
+    // missing). A stale guid paints an empty tile that still offers UNEQUIP.
     //
     // Guarded on the inventory being readable first: ResolveItem cannot tell
     // "this item is gone" from "there is no inventory to ask yet", and pruning
@@ -97,11 +104,67 @@ public static class Bay
             return null;
         try
         {
-            return (Jiangyu.Game.Strategy.Inventory.Owned?.GetItemByGuid(guid) as Il2CppObjectBase)?.TryCast<Item>();
+            var item = (Jiangyu.Game.Strategy.Inventory.Owned?.GetItemByGuid(guid) as Il2CppObjectBase)?.TryCast<Item>();
+            // An instance some doll has equipped is off limits even when a
+            // slot still names it (a doll equipped it AFTER it was slotted):
+            // resolving it as missing makes every consumer treat the slot as
+            // empty, and the next Prune turns that into the persistent
+            // eviction. Equip wins, the bay yields.
+            return item != null && IsEquipped(item) ? null : item;
         }
         catch
         {
             return null;
+        }
+    }
+
+    // Whether some unit has this instance equipped. An equipped item sits in
+    // its owner's ItemContainer; stock and bay instances have none (the
+    // container lifecycle keeps the link current on every equip/unequip, and
+    // it is what the vanilla unused-instance lookups read too).
+    public static bool IsEquipped(BaseItem item)
+    {
+        try
+        {
+            return item?.GetContainer() != null;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    // Whether a leader item container is OTs-14's own, whatever primary she
+    // carries. The owner linkage names her outright (the strategy leader, or
+    // the tactical entity once it is wired), and a container whose owner
+    // names some OTHER doll is never hers, even holding her signature rifle.
+    // The rifle fallback decides only for containers with no readable doll
+    // owner: element creation can run before the owner is wired, and vanilla
+    // squads carry no speaker tag, so that path keeps the old weapon-only
+    // gate's behaviour.
+    public static bool IsHerContainer(ItemContainer items)
+    {
+        if (items == null)
+            return false;
+        try
+        {
+            var owner = items.GetOwner() as Il2CppObjectBase;
+            var tag = Affinity.CharacterTag(owner?.TryCast<BaseUnitLeader>())
+                ?? Affinity.CharacterTag(owner?.TryCast<Entity>());
+            if (tag != null)
+                return tag == CharacterTag;
+        }
+        catch
+        {
+            // owner unreadable mid-creation: the rifle fallback decides
+        }
+        try
+        {
+            return items.GetItemAtSlot(ItemSlot.InfantryWeapon)?.GetTemplate()?.GetID() == WeaponId;
+        }
+        catch
+        {
+            return false;
         }
     }
 
@@ -169,6 +232,11 @@ public static class Bay
         if (!IsBayWeapon(item))
         {
             error = $"'{item.GetTemplate()?.GetID()}' is not a special weapon";
+            return false;
+        }
+        if (IsEquipped(item))
+        {
+            error = "that instance is equipped on a unit";
             return false;
         }
         var slots = LoadoutOrNull(context, characterTag);

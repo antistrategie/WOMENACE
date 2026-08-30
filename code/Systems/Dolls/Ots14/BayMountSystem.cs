@@ -45,8 +45,12 @@ internal sealed class BayMountSet
 // snapped straight into its deployed state instead of playing the unfold.
 public sealed class BayMountSystem : JiangyuSystem
 {
-    private const string WeaponId = "weapon.ots14";
     private const string MountNodeName = "wmgfl_bay_weapon";
+
+    // The arms instance the bay spawns itself when her equipped primary is
+    // not weapon.ots14 (vanilla only creates the arms as that weapon's
+    // ModelSecondary). A stable name so re-runs reuse instead of stacking.
+    private const string SpawnedArmsName = "wmgfl_ots14_arms";
 
     // Mount placement tuning, all relative to her facing at spawn: weapons sit
     // forward of the palm, pushed outward past her silhouette, and the four
@@ -106,6 +110,17 @@ public sealed class BayMountSystem : JiangyuSystem
     private readonly List<Il2CppUI.PrefabControllers.ArmoryElement> _previews = new();
     private bool _watching;
 
+    // Previews recognised as hers. Create names the leader in its first
+    // argument; the refresh and spawn-event hooks do not, so a preview
+    // identified once is remembered by pointer for as long as the scene
+    // lives (a Create for a DIFFERENT leader un-remembers it, since the
+    // armoury reuses preview objects across selections).
+    private readonly HashSet<IntPtr> _herPreviews = new();
+
+    // Template cache for resolving the arms prefab off weapon.ots14, the
+    // Ots14ArmoryPreviewSystem idiom.
+    private readonly Dictionary<string, WeaponTemplate> _weapons = new(StringComparer.Ordinal);
+
     private void OnStageRefreshed(PatchInfo info)
     {
         if (!_watching)
@@ -148,7 +163,13 @@ public sealed class BayMountSystem : JiangyuSystem
                     }
                     try
                     {
-                        if (SceneQuery.FindNamed(preview.gameObject, ArmMeshNode) != null && NeedsRemount(preview.Pointer))
+                        // A stage rebuild can destroy bay-spawned arms along
+                        // with the model instance it replaces: respawn them
+                        // for a preview known to be hers before re-mounting.
+                        var hasArms = SceneQuery.FindNamed(preview.gameObject, ArmMeshNode) != null;
+                        if (!hasArms && _herPreviews.Contains(preview.Pointer))
+                            hasArms = SpawnPreviewArms(preview);
+                        if (hasArms && NeedsRemount(preview.Pointer))
                             MountOnArms(preview.Pointer, preview.gameObject, ArmouryFacing(preview), null, tactical: false);
                     }
                     catch
@@ -263,6 +284,7 @@ public sealed class BayMountSystem : JiangyuSystem
     {
         Mounts.Clear();
         _previews.Clear();
+        _herPreviews.Clear();
         _watching = false;
     }
 
@@ -276,12 +298,17 @@ public sealed class BayMountSystem : JiangyuSystem
             if (info.Args[0] is not int elementIndex || elementIndex != 0)
                 return;
             var items = (info.Args[1] as Il2CppObjectBase)?.TryCast<ItemContainer>();
-            if (items?.GetItemAtSlot(ItemSlot.InfantryWeapon)?.GetTemplate()?.GetID() != WeaponId)
+            if (!Bay.IsHerContainer(items))
                 return;
             var attachments = element.GetAttachments();
             if (attachments == null)
                 return;
+            // With her own rifle equipped, vanilla attached the arms as its
+            // ModelSecondary at Back_Special; with any other primary nothing
+            // did, so the bay attaches the same prefab itself.
             attachments.TryGetFirstAttachmentInSlot(VisualAlterationSlot.Back_Special, out var back);
+            if (back == null || SceneQuery.FindNamed(back, ArmMeshNode) == null)
+                back = EnsureSpawnedArms(element);
             if (back == null)
                 return;
             var tactical = false;
@@ -295,6 +322,12 @@ public sealed class BayMountSystem : JiangyuSystem
                 // no tactical state machinery in this scene
             }
             MountOnArms(element.Pointer, back, element.transform, element, tactical);
+            // The aim servo used to find the arms through its own postfix on
+            // this same method, which cannot see arms spawned by THIS postfix
+            // (patch order between siblings is registration order): it is
+            // registered directly instead, the patch-order-proof route the
+            // reveal system already rides.
+            Ots14AimFollowSystem.Instance?.Register(element, back);
         }
         catch (Exception ex)
         {
@@ -302,15 +335,93 @@ public sealed class BayMountSystem : JiangyuSystem
         }
     }
 
+    // The arms prefab, resolved from the template registry rather than from
+    // her equipped weapon: the bay is hers whatever primary she carries.
+    private GameObject ArmsModel()
+    {
+        var template = Templates.Resolve<WeaponTemplate>(Bay.WeaponId, _weapons,
+            msg => Context.Log.Warn($"bay: {msg}"));
+        var model = template?.ModelSecondary;
+        // Unity-null aware: a destroyed/unset reference must not escape as a
+        // fake-non-null (the light-mortar EntireModel lesson).
+        return model != null ? model : null;
+    }
+
+    // Attaches the arms prefab to a tactical element that vanilla left
+    // armless, through the engine's own socket primitive (the railgun-carry
+    // idiom), with a direct socket-parented instantiate as the fallback
+    // (AttachPrefab resolves through m_Mesh, which is null on transmogged
+    // doll bodies). The glb is authored in the Back_Special socket frame
+    // with every node at identity, so identity local placement is correct.
+    private GameObject EnsureSpawnedArms(Element element)
+    {
+        var reused = SceneQuery.FindNamed(element.gameObject, SpawnedArmsName);
+        if (reused != null)
+            return reused.gameObject;
+        var model = ArmsModel();
+        if (model == null)
+            return null;
+        var socketName = VisualAlterationSlot.Back_Special.GetAttachmentPointName();
+        GameObject spawned = null;
+        try
+        {
+            element.AttachPrefab(model, socketName);
+            spawned = SceneQuery.FindNamed(element.gameObject, model.name + "(Clone)")?.gameObject;
+        }
+        catch (Exception ex)
+        {
+            Context.Log.Warn($"bay: AttachPrefab failed: {ex.GetType().Name}: {ex.Message}");
+        }
+        if (spawned == null)
+        {
+            var socket = SceneQuery.FindNamed(element.gameObject, socketName);
+            if (socket == null)
+            {
+                Context.Log.Warn($"bay: no '{socketName}' socket on her element, arms not attached");
+                return null;
+            }
+            var instance = UnityEngine.Object.Instantiate(model, socket, false);
+            instance.transform.localPosition = Vector3.zero;
+            instance.transform.localRotation = Quaternion.identity;
+            spawned = instance;
+        }
+        spawned.name = SpawnedArmsName;
+        Context.Log.Debug("bay: arms attached by the bay (her primary is not her own rifle)");
+        return spawned;
+    }
+
     // The armoury preview's attachments come from the ArmoryElement flow,
-    // identified as hers by the arms prefab's unique mesh node.
+    // identified as hers by the arms prefab's unique mesh node - or, when
+    // she carries another primary and vanilla spawned no arms at all, by the
+    // leader Create names in its first argument (the railgun-carry idiom).
     private void OnArmoryElement(PatchInfo info)
     {
         try
         {
             var preview = (info.Instance as Il2CppObjectBase)?.TryCast<Il2CppUI.PrefabControllers.ArmoryElement>();
-            if (preview == null || SceneQuery.FindNamed(preview.gameObject, ArmMeshNode) == null)
+            if (preview == null)
                 return;
+            var leader = info.Args is { Count: > 0 }
+                ? (info.Args[0] as Il2CppObjectBase)?.TryCast<Il2CppMenace.Strategy.BaseUnitLeader>()
+                : null;
+            if (leader != null)
+            {
+                if (Affinity.CharacterTag(leader) == Bay.CharacterTag)
+                    _herPreviews.Add(preview.Pointer);
+                else
+                    _herPreviews.Remove(preview.Pointer);
+            }
+            if (SceneQuery.FindNamed(preview.gameObject, ArmMeshNode) == null)
+            {
+                if (!_herPreviews.Contains(preview.Pointer) || !SpawnPreviewArms(preview))
+                    return;
+            }
+            else
+            {
+                // The arm mesh is unique to her, so its presence identifies
+                // the preview even on the hooks that carry no leader.
+                _herPreviews.Add(preview.Pointer);
+            }
             if (!_previews.Exists(p => p != null && p.Pointer == preview.Pointer))
                 _previews.Add(preview);
             MountOnArms(preview.Pointer, preview.gameObject, ArmouryFacing(preview), null, tactical: false);
@@ -318,6 +429,38 @@ public sealed class BayMountSystem : JiangyuSystem
         catch (Exception ex)
         {
             Context.Log.Warn($"bay armoury mount failed: {ex.GetType().Name}: {ex.Message}");
+        }
+    }
+
+    // Instantiates the arms prefab under the preview's Back_Special socket,
+    // for her preview when the equipped primary is not weapon.ots14 (vanilla
+    // only spawns the arms as that weapon's ModelSecondary). This runs in a
+    // postfix, after the armoury's controller stomp, so the fresh instance
+    // keeps its authored controller and the breathing sway plays.
+    private bool SpawnPreviewArms(Il2CppUI.PrefabControllers.ArmoryElement preview)
+    {
+        try
+        {
+            var model = ArmsModel();
+            if (model == null)
+                return false;
+            var socketName = VisualAlterationSlot.Back_Special.GetAttachmentPointName();
+            var socket = SceneQuery.FindNamed(preview.gameObject, socketName);
+            if (socket == null)
+            {
+                Context.Log.Warn($"bay: preview has no '{socketName}' socket for the arms");
+                return false;
+            }
+            var arms = UnityEngine.Object.Instantiate(model, socket, false);
+            arms.name = SpawnedArmsName;
+            arms.transform.localPosition = Vector3.zero;
+            arms.transform.localRotation = Quaternion.identity;
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Context.Log.Warn($"bay: preview arms spawn failed: {ex.GetType().Name}: {ex.Message}");
+            return false;
         }
     }
 

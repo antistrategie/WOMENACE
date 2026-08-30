@@ -1,6 +1,4 @@
 using System.Collections;
-using Il2CppInterop.Runtime.InteropTypes;
-using Il2CppMenace.Items;
 using Il2CppMenace.Tactical;
 using Jiangyu.Sdk;
 using UnityEngine;
@@ -24,8 +22,13 @@ namespace WOMENACE.Code;
 // servo-driven hardware rather than snapping.
 public sealed class Ots14AimFollowSystem : JiangyuSystem
 {
-    private const string WeaponId = "weapon.ots14";
     private const string ArmMeshNode = "c_OTs14SSR01_Arm_slg_1_lod0";
+
+    // Registration is a direct call from BayMountSystem, never a sibling
+    // postfix on Element.CreateAttachments: the mount system can SPAWN the
+    // arms inside its own postfix (when her primary is not her rifle), and
+    // sibling patch order would decide whether this system ever saw them.
+    internal static Ots14AimFollowSystem Instance { get; private set; }
 
     // One servo per arm, each with its own lag. Left and right are deliberately
     // not mirrored so the pairs never move in lockstep.
@@ -53,7 +56,7 @@ public sealed class Ots14AimFollowSystem : JiangyuSystem
 
     public override void OnInit()
     {
-        Context.Patches.Postfix("Il2CppMenace.Tactical.Element", "CreateAttachments", OnCreateAttachments);
+        Instance = this;
     }
 
     public override void OnSceneLoaded(int buildIndex, string sceneName)
@@ -66,30 +69,17 @@ public sealed class Ots14AimFollowSystem : JiangyuSystem
         _loopHandle = null;
     }
 
-    private void OnCreateAttachments(PatchInfo info)
+    // Called by BayMountSystem once per element mount, with the arms host it
+    // resolved (vanilla-attached or bay-spawned). Idempotent: re-mounting a
+    // live element replaces its carrier.
+    internal void Register(Element element, GameObject back)
     {
         try
         {
-            var element = (info.Instance as Il2CppObjectBase)?.TryCast<Element>();
-            if (element == null || info.Args == null || info.Args.Count < 2)
+            if (element == null || back == null)
                 return;
-            // Only the squad's first element carries the arms. Both sibling
-            // postfixes on this method guard the same way; without it, a unit
-            // whose CreateAttachments runs per element gets one carrier per
-            // element, all driving the same scapula bones against each other.
-            if (info.Args[0] is not int elementIndex || elementIndex != 0)
-                return;
-            var items = (info.Args[1] as Il2CppObjectBase)?.TryCast<ItemContainer>();
-            var weapon = items?.GetItemAtSlot(ItemSlot.InfantryWeapon);
-            if (weapon?.GetTemplate()?.GetID() != WeaponId)
-                return;
-
-            var attachments = element.GetAttachments();
-            if (attachments == null)
-                return;
-            attachments.TryGetFirstAttachmentInSlot(VisualAlterationSlot.Back_Special, out var back);
             var head = SceneQuery.FindNamed(element.gameObject, "Head");
-            if (back == null || head == null || SceneQuery.FindNamed(back, ArmMeshNode) == null)
+            if (head == null || SceneQuery.FindNamed(back, ArmMeshNode) == null)
                 return;
             var scapulas = new Transform[ServoBones.Length];
             var spawnRots = new Quaternion[ServoBones.Length];
