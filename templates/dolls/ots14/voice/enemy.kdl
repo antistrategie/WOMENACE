@@ -118,6 +118,26 @@ clone "ConversationTemplate" from="JeanSy/enemy_killed" id="Ots14/enemy_killed" 
                     set "Text" "Your struggle is futile."
                 }
             }
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_ots14_va"
+                        set "itemId" "Series_Attack_Series_Tone_Positive_003"
+                    }
+                    set "RoleGuid" "Killer"
+                    set "Text" "Stay out of my way."
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_ots14_va"
+                        set "itemId" "Series_Ultimate_Single_Ultimate_SSR_001"
+                    }
+                    set "RoleGuid" "Killer"
+                    set "Text" "You’re done, maggots."
+                }
+            }
         }
         append "m_SerializedNodes" type="EMPTY" {}
     }

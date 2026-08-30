@@ -68,6 +68,16 @@ clone "ConversationTemplate" from="Carda_Early/enemy_killed" id="Sextans/enemy_k
                     set "Text" "Too weak."
                 }
             }
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_sextans_va"
+                        set "itemId" "Series_Skill01_Single_Skill_001"
+                    }
+                    set "RoleGuid" "Killer"
+                    set "Text" "I need to clean this up later."
+                }
+            }
         }
         append "m_SerializedNodes" type="EMPTY" {}
     }
