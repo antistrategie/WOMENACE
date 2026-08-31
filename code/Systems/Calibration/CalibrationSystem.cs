@@ -171,7 +171,9 @@ public sealed class CalibrationSystem : JiangyuSystem
     // Title, and no other doll's modal shows ranks in component names.
     private string ComponentName(string weaponId)
         => Templates.DefaultText(Component(weaponId)?.Title,
-            Calibration.CleanName(Templates.DefaultText(Weapon(weaponId, quiet: true)?.Title, weaponId)) + " Component");
+            string.Format(
+                Locale.Text("WOMENACE::ui/calibration/component_of", "{0} Component"),
+                Calibration.CleanName(Templates.DefaultText(Weapon(weaponId, quiet: true)?.Title, weaponId))));
 
     private void OnWindowChanged(PatchInfo info)
     {
@@ -435,9 +437,9 @@ public sealed class CalibrationSystem : JiangyuSystem
                 var nextAttack = next != null && next.SkillsGranted != null && next.SkillsGranted.Count > 0
                     ? FirstAttack(next.SkillsGranted[0])
                     : null;
-                rows.Add(new StatDelta { Name = "DAMAGE", Current = attack.Damage, Next = nextAttack?.Damage ?? attack.Damage });
-                rows.Add(new StatDelta { Name = "ARMOR PEN", Current = attack.ArmorPenetration, Next = nextAttack?.ArmorPenetration ?? attack.ArmorPenetration });
-                rows.Add(new StatDelta { Name = "ARMOR DMG", Current = attack.DamageToArmorDurability, Next = nextAttack?.DamageToArmorDurability ?? attack.DamageToArmorDurability });
+                rows.Add(new StatDelta { Name = DamageLabel.Resolve(), Current = attack.Damage, Next = nextAttack?.Damage ?? attack.Damage });
+                rows.Add(new StatDelta { Name = ArmorPenLabel.Resolve(), Current = attack.ArmorPenetration, Next = nextAttack?.ArmorPenetration ?? attack.ArmorPenetration });
+                rows.Add(new StatDelta { Name = ArmorDmgLabel.Resolve(), Current = attack.DamageToArmorDurability, Next = nextAttack?.DamageToArmorDurability ?? attack.DamageToArmorDurability });
             }
             return rows;
         }
@@ -447,7 +449,7 @@ public sealed class CalibrationSystem : JiangyuSystem
             var now = get(current);
             var then = next != null ? get(next) : now;
             if (next == null || System.Math.Abs(then - now) > 0.001f)
-                rows.Add(new StatDelta { Name = label, Current = now, Next = then });
+                rows.Add(new StatDelta { Name = label.Resolve(), Current = now, Next = then });
         }
         return rows;
     }
@@ -464,15 +466,26 @@ public sealed class CalibrationSystem : JiangyuSystem
         return null;
     }
 
-    private static readonly (string Label, Func<WeaponTemplate, float> Get)[] StatFields =
+    // The rank-comparison row labels. Declared as LocalisedText so the compiler extracts them into
+    // the POT: a bare literal handed to a Label never reaches a translator. The type has to be named
+    // in the expression, because extraction matches the literal `new LocalisedText("key", "text")`
+    // and a target-typed `new(...)` reads identically to a C# compiler but not to that scan.
+    private static readonly LocalisedText DamageLabel =
+        new LocalisedText("WOMENACE::ui/calibration/stat_damage", "DAMAGE");
+    private static readonly LocalisedText ArmorPenLabel =
+        new LocalisedText("WOMENACE::ui/calibration/stat_armor_pen", "ARMOR PEN");
+    private static readonly LocalisedText ArmorDmgLabel =
+        new LocalisedText("WOMENACE::ui/calibration/stat_armor_dmg", "ARMOR DMG");
+
+    private static readonly (LocalisedText Label, Func<WeaponTemplate, float> Get)[] StatFields =
     {
-        ("DAMAGE", w => w.Damage),
-        ("ARMOR PEN", w => w.ArmorPenetration),
-        ("ARMOR DMG", w => w.DamageToArmorDurability),
-        ("ACCURACY", w => w.AccuracyBonus),
-        ("IDEAL RANGE", w => w.IdealRange),
-        ("MAX RANGE", w => w.MaxRange),
-        ("SUPPRESSION", w => w.Suppression),
+        (DamageLabel, w => w.Damage),
+        (ArmorPenLabel, w => w.ArmorPenetration),
+        (ArmorDmgLabel, w => w.DamageToArmorDurability),
+        (new LocalisedText("WOMENACE::ui/calibration/stat_accuracy", "ACCURACY"), w => w.AccuracyBonus),
+        (new LocalisedText("WOMENACE::ui/calibration/stat_ideal_range", "IDEAL RANGE"), w => w.IdealRange),
+        (new LocalisedText("WOMENACE::ui/calibration/stat_max_range", "MAX RANGE"), w => w.MaxRange),
+        (new LocalisedText("WOMENACE::ui/calibration/stat_suppression", "SUPPRESSION"), w => w.Suppression),
     };
 
     // Calibrate one weapon instance up a rank, consuming one R0 stock duplicate. The equipped case

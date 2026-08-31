@@ -31,7 +31,10 @@ public sealed class SsrImprintSystem : JiangyuSystem
     {
         public string OwnerTag;
         public string OwnerName;
-        public string BonusText;
+        // The tooltip's boost line. A LocalisedText (explicit key + English) rather than a bare
+        // string: the compiler extracts the literal declaration into the POT, so the line ships
+        // translatable even though it is read here as data.
+        public LocalisedText BonusText;
         // The SSR weapon's template id, derived from the owner tag by the Calibration convention
         // (weapon.<doll>_ssr), so the id is never hand-authored in two places.
         public string WeaponId => Calibration.SsrWeaponIdFor(OwnerTag);
@@ -48,7 +51,8 @@ public sealed class SsrImprintSystem : JiangyuSystem
         {
             OwnerTag = "wmgfl_makiatto",
             OwnerName = "Makiatto",
-            BonusText = "Fires twice, hits harder, and builds Freeze faster.",
+            BonusText = new LocalisedText(
+                "WOMENACE::ui/ssr_imprint/wmgfl_makiatto", "Fires twice, hits harder, and builds Freeze faster."),
             OwnerDamage = 30,
             Skills = new[]
             {
@@ -59,7 +63,8 @@ public sealed class SsrImprintSystem : JiangyuSystem
         {
             OwnerTag = "wmgfl_soppo",
             OwnerName = "Soppo",
-            BonusText = "Hits harder, builds Freeze and Burn faster, and unlocks her stances.",
+            BonusText = new LocalisedText(
+                "WOMENACE::ui/ssr_imprint/wmgfl_soppo", "Hits harder, builds Freeze and Burn faster, and unlocks her stances."),
             OwnerDamage = 15,
             Skills = new[]
             {
@@ -71,7 +76,8 @@ public sealed class SsrImprintSystem : JiangyuSystem
         {
             OwnerTag = "wmgfl_vector",
             OwnerName = "Vector",
-            BonusText = "Hits on Burning targets apply Overburn causing Burn to spread to nearby enemies when they die.",
+            BonusText = new LocalisedText(
+                "WOMENACE::ui/ssr_imprint/wmgfl_vector", "Hits on Burning targets apply Overburn causing Burn to spread to nearby enemies when they die."),
             Skills = new[]
             {
                 // No stat bonus: the imprint is the Overburn effect (VectorSsrSystem's on-hit
@@ -91,7 +97,8 @@ public sealed class SsrImprintSystem : JiangyuSystem
             // Imprint Boost" tooltip and IsImprintWeapon (SSR-weapon status, out of the proficiency bonus).
             OwnerTag = "wmgfl_sextans",
             OwnerName = "Sextans",
-            BonusText = "Builds Shock on every hit.",
+            BonusText = new LocalisedText(
+                "WOMENACE::ui/ssr_imprint/wmgfl_sextans", "Builds Shock on every hit."),
         },
         new Entry
         {
@@ -104,7 +111,8 @@ public sealed class SsrImprintSystem : JiangyuSystem
             // exists for the "Cheyanne Imprint Boost" tooltip and IsImprintWeapon.
             OwnerTag = "wmgfl_cheyanne",
             OwnerName = "Cheyanne",
-            BonusText = "Aimlabs is free lil pup, but this is probably an okay alternative.",
+            BonusText = new LocalisedText(
+                "WOMENACE::ui/ssr_imprint/wmgfl_cheyanne", "Aimlabs is free lil pup, but this is probably an okay alternative."),
             Skills = new[]
             {
                 new SkillImprint { SkillId = "active.cheyanne_ssr_ricochet" },
@@ -329,11 +337,13 @@ public sealed class SsrImprintSystem : JiangyuSystem
 
             // Subheading (11px) + a manual bottom border + top margin: the section-divider look at the
             // body text size (AddSectionHeading is oversized; AddSubheading alone drops the divider).
-            var heading = data.AddSubheading($"{entry.OwnerName} Imprint Boost", null, NoIconSize, NoIconColour, true);
+            var heading = data.AddSubheading(
+                string.Format(Locale.Text("WOMENACE::ui/ssr_imprint/heading", "{0} Imprint Boost"), entry.OwnerName),
+                null, NoIconSize, NoIconColour, true);
             heading?.SetBorderBottom(true);
             heading?.SetMarginTop(6);
             var para = data.AddParagraph(
-                entry.BonusText, owned ? ParagraphStyle.Positive : ParagraphStyle.Default, null, NoIconSize, NoIconColour, true, false);
+                entry.BonusText.Resolve(), owned ? ParagraphStyle.Positive : ParagraphStyle.Default, null, NoIconSize, NoIconColour, true, false);
             if (!owned)
             {
                 var grey = new UnityEngine.Color(0.45f, 0.45f, 0.45f, 1f);

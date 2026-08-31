@@ -183,7 +183,7 @@ public sealed class NewGameSettingsSystem : JiangyuSystem
     private VisualElement BuildToggle(NewGameSettings.Setting setting)
     {
         var toggle = new LabeledToggle(
-            Locale.Text(setting.LabelKey, setting.LabelFallback),
+            setting.Label.Resolve(),
             setting.Get(NewGameSettings.Pending),
             true);
 

@@ -202,9 +202,27 @@ public static class Bay
     // Whether a bay item is ordnance/energy rather than a bullet gun. The
     // category label is the only honest signal: deployment gates cover
     // snipers and MMGs too, and AP costs are near-flat across the roster.
+    //
+    // The template id is read first because it never translates. A vanilla
+    // label does not either (the loader only ever rewrites text a mod
+    // authored), but one of our own weapons has its default replaced with the
+    // active language once a translation is installed, so the label alone
+    // would stop recognising our ordnance in every language but English.
     public static bool IsOrdnance(Item item)
     {
-        var label = Templates.DefaultText(WeaponOf(item)?.ShortName)?.ToLowerInvariant();
+        var weapon = WeaponOf(item);
+        if (weapon == null)
+            return false;
+
+        // Ids are underscore-joined, so only the single-word entries can match here; the label pass
+        // below still carries the spaced and hyphenated ones.
+        var id = weapon.GetID()?.ToLowerInvariant();
+        if (!string.IsNullOrEmpty(id))
+            foreach (var word in OrdnanceWords)
+                if (id.Contains(word, StringComparison.Ordinal))
+                    return true;
+
+        var label = Templates.DefaultText(weapon.ShortName)?.ToLowerInvariant();
         if (string.IsNullOrEmpty(label))
             return false;
         foreach (var word in OrdnanceWords)

@@ -186,7 +186,10 @@ public sealed class AffinitySystem : JiangyuSystem
             var step = Proficiency.AccuracyBonusForLevel(lvl) - Proficiency.AccuracyBonusForLevel(lvl - 1);
             if (step <= 0)
                 continue;
-            yield return new AffinityTooltip.Reward(lvl, $"+{step} accuracy (proficiency)", AffinityTooltip.RewardKind.Proficiency);
+            yield return new AffinityTooltip.Reward(
+                lvl,
+                string.Format(Locale.Text("WOMENACE::ui/affinity/proficiency_step", "+{0} accuracy (proficiency)"), step),
+                AffinityTooltip.RewardKind.Proficiency);
         }
     }
 
@@ -324,7 +327,12 @@ public sealed class AffinitySystem : JiangyuSystem
 
         var levelLabel = UI.Find(popover, UiSelector.Name("pop-level"))?.TryCast<Label>();
         if (levelLabel != null)
-            levelLabel.text = level >= Affinity.MaxLevel ? $"LEVEL {level:00}  ·  MAX" : $"LEVEL {level:00}";
+        {
+            var levelText = string.Format(Locale.Text("WOMENACE::ui/affinity/level", "LEVEL {0:00}"), level);
+            levelLabel.text = level >= Affinity.MaxLevel
+                ? levelText + "  ·  " + Locale.Text("WOMENACE::ui/affinity/level_max", "MAX")
+                : levelText;
+        }
 
         var track = UI.Find(popover, UiSelector.Name("pop-track"));
         if (track == null)

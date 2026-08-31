@@ -23,11 +23,13 @@ public static class NewGameSettings
     public static bool LimitDollSquadSize(ModContext context)
         => context.State.Get<NewGameOptions>().LimitDollSquadSize;
 
-    // One toggle in the WOMENACE section: its label and how it reads and writes an option.
+    // One toggle in the WOMENACE section: its label and how it reads and writes an option. Label is a
+    // LocalisedText because the compiler extracts translatable strings from literal declarations: a
+    // key and an English fallback held in separate properties and handed to Locale.Text as variables
+    // reads fine but never reaches the POT, so the label would ship untranslatable.
     public sealed class Setting
     {
-        public string LabelKey { get; set; }
-        public string LabelFallback { get; set; }
+        public LocalisedText Label { get; set; }
         public Func<NewGameOptions, bool> Get { get; set; }
         public Action<NewGameOptions, bool> Set { get; set; }
     }
@@ -37,22 +39,22 @@ public static class NewGameSettings
     {
         new Setting
         {
-            LabelKey = "WOMENACE::ui/newgame/disable_vanilla_leaders",
-            LabelFallback = "Disable vanilla squad leaders and pilots",
+            Label = new LocalisedText(
+                "WOMENACE::ui/newgame/disable_vanilla_leaders", "Disable vanilla squad leaders and pilots"),
             Get = o => o.DisableVanillaLeaders,
             Set = (o, v) => o.DisableVanillaLeaders = v,
         },
         new Setting
         {
-            LabelKey = "WOMENACE::ui/newgame/show_all_dolls",
-            LabelFallback = "Show all Dolls in new game list",
+            Label = new LocalisedText(
+                "WOMENACE::ui/newgame/show_all_dolls", "Show all Dolls in new game list"),
             Get = o => o.ShowAllDolls,
             Set = (o, v) => o.ShowAllDolls = v,
         },
         new Setting
         {
-            LabelKey = "WOMENACE::ui/newgame/limit_doll_squad_size",
-            LabelFallback = "Limit max number of dummy links to 5",
+            Label = new LocalisedText(
+                "WOMENACE::ui/newgame/limit_doll_squad_size", "Limit max number of dummy links to 5"),
             Get = o => o.LimitDollSquadSize,
             Set = (o, v) => o.LimitDollSquadSize = v,
         },

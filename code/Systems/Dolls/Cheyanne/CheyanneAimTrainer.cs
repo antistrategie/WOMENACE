@@ -139,9 +139,18 @@ internal static class CheyanneAimTrainer
             _hint = UI.Find(container, UiSelector.Name("wm-aim-hint"))?.TryCast<Label>();
             _results = UI.Find(container, UiSelector.Name("wm-aim-results"));
 
+            // These two keep the names the lookups above use, so they cannot carry a name="@key"
+            // marker (and UI.Localise only translates Labels in any case). Their text is set here.
+            if (_hint != null)
+                _hint.text = Locale.Text(
+                    "WOMENACE::ui/aim/hint", "every hit sharpens the shot   •   ESC to hold fire (cancel)");
+
             var fire = UI.Find(container, UiSelector.Name("wm-aim-continue"))?.TryCast<Button>();
             if (fire != null)
+            {
+                fire.text = Locale.Text("WOMENACE::ui/aim/fire", "FIRE");
                 fire.clickable.clicked += (Action)(() => { Sound.Click(); _continued = true; });
+            }
 
             BlurBackdrop(container);
 
@@ -248,7 +257,7 @@ internal static class CheyanneAimTrainer
                     break;   // one ball per trigger pull
                 }
                 if (_points != null)
-                    _points.text = $"{_score} PTS";
+                    _points.text = string.Format(Locale.Text("WOMENACE::ui/aim/points", "{0} PTS"), _score);
             }
 
             foreach (var ball in Balls)
@@ -285,20 +294,31 @@ internal static class CheyanneAimTrainer
         var shot = BounceChain.ForPoints(_score);
         var points = UI.Find(_root, UiSelector.Name("wm-aim-results-points"))?.TryCast<Label>();
         if (points != null)
-            points.text = $"{_score} PTS";
+            points.text = string.Format(Locale.Text("WOMENACE::ui/aim/points", "{0} PTS"), _score);
 
         var rows = UI.Find(_root, UiSelector.Name("wm-aim-results-rows"));
         if (rows != null)
         {
             rows.Clear();
-            rows.Add(Row(shot.Bounces == 1 ? "ricochet" : "ricochets", $"{shot.Bounces}"));
-            rows.Add(Row(shot.Range == 1 ? "tile of reach" : "tiles of reach", $"{shot.Range}"));
+            rows.Add(Row(
+                shot.Bounces == 1
+                    ? Locale.Text("WOMENACE::ui/aim/ricochet_one", "ricochet")
+                    : Locale.Text("WOMENACE::ui/aim/ricochet_many", "ricochets"),
+                $"{shot.Bounces}"));
+            rows.Add(Row(
+                shot.Range == 1
+                    ? Locale.Text("WOMENACE::ui/aim/reach_one", "tile of reach")
+                    : Locale.Text("WOMENACE::ui/aim/reach_many", "tiles of reach"),
+                $"{shot.Range}"));
             if (_shots > 0)
-                rows.Add(Row($"accuracy ({_hits} of {_shots})", $"{Mathf.RoundToInt(100f * _hits / _shots)}%"));
-            rows.Add(Row("hits per second", $"{_hits / RoundSeconds:0.0}"));
+                rows.Add(Row(
+                    string.Format(Locale.Text("WOMENACE::ui/aim/accuracy", "accuracy ({0} of {1})"), _hits, _shots),
+                    $"{Mathf.RoundToInt(100f * _hits / _shots)}%"));
+            rows.Add(Row(Locale.Text("WOMENACE::ui/aim/hits_per_second", "hits per second"), $"{_hits / RoundSeconds:0.0}"));
             if (shot.Bounces == 0)
             {
-                var note = new Label("the round goes straight through and stops");
+                var note = new Label(
+                    Locale.Text("WOMENACE::ui/aim/no_bounce", "the round goes straight through and stops"));
                 note.AddToClassList("wm-aim-row-note");
                 rows.Add(note);
             }

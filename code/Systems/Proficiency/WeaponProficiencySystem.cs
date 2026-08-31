@@ -69,12 +69,16 @@ public sealed class WeaponProficiencySystem : JiangyuSystem
         ["Sword"] = WeaponClass.Blade,
     };
 
+    // Reads the authored English, not the displayed text: ShortNameClasses is keyed by the game's
+    // English category labels, so a translated label would match nothing and every weapon would drop
+    // to the id fallback. Vanilla lines keep their English default in every language, which is what
+    // this needs, because a weapon locked to its own doll never reaches here (WeaponMatches answers
+    // from OnlyEquipableBy first).
     private static WeaponClass ClassifyByShortName(WeaponTemplate weapon)
     {
         try
         {
-            var line = weapon.ShortName;
-            var text = line != null ? line.GetTranslated(null) : null;
+            var text = Templates.DefaultText(weapon.ShortName);
             return !string.IsNullOrEmpty(text) && ShortNameClasses.TryGetValue(text.Trim(), out var wc)
                 ? wc
                 : WeaponClass.None;
@@ -100,16 +104,17 @@ public sealed class WeaponProficiencySystem : JiangyuSystem
         return WeaponClass.None;
     }
 
-    // A friendly plural for the class, for the tooltip text.
+    // A friendly plural for the class, for the tooltip text. Separate from ShortNameClasses above:
+    // that one matches the game's English category labels, this one is shown to the player.
     private static string ClassNoun(WeaponClass wc) => wc switch
     {
-        WeaponClass.AssaultRifle => "assault rifles",
-        WeaponClass.Smg => "SMGs",
-        WeaponClass.Rifle => "rifles",
-        WeaponClass.MachineGun => "machine guns",
-        WeaponClass.Shotgun => "shotguns",
-        WeaponClass.Blade => "blades",
-        _ => "weapons",
+        WeaponClass.AssaultRifle => Locale.Text("WOMENACE::ui/proficiency/class_ar", "assault rifles"),
+        WeaponClass.Smg => Locale.Text("WOMENACE::ui/proficiency/class_smg", "SMGs"),
+        WeaponClass.Rifle => Locale.Text("WOMENACE::ui/proficiency/class_rifle", "rifles"),
+        WeaponClass.MachineGun => Locale.Text("WOMENACE::ui/proficiency/class_mg", "machine guns"),
+        WeaponClass.Shotgun => Locale.Text("WOMENACE::ui/proficiency/class_shotgun", "shotguns"),
+        WeaponClass.Blade => Locale.Text("WOMENACE::ui/proficiency/class_blade", "blades"),
+        _ => Locale.Text("WOMENACE::ui/proficiency/class_any", "weapons"),
     };
 
     // The doll's display name from her character tag ("wmgfl_voymastina" -> "Voymastina").
@@ -348,13 +353,18 @@ public sealed class WeaponProficiencySystem : JiangyuSystem
 
             var matches = WeaponMatches(weapon, viewerTag, viewerClass);
 
-            var heading = data.AddSubheading($"{NameFromTag(viewerTag)} Weapon Proficiency", null, NoIconSize, NoIconColour, true);
+            var heading = data.AddSubheading(
+                string.Format(
+                    Locale.Text("WOMENACE::ui/proficiency/heading", "{0} Weapon Proficiency"), NameFromTag(viewerTag)),
+                null, NoIconSize, NoIconColour, true);
             heading?.SetBorderBottom(true);
             heading?.SetMarginTop(6);
 
-            var text = matches
-                ? $"Bonus accuracy for wielding her weapon type ({ClassNoun(viewerClass)})."
-                : $"Wield {ClassNoun(viewerClass)} for bonus accuracy.";
+            var text = string.Format(
+                matches
+                    ? Locale.Text("WOMENACE::ui/proficiency/matched", "Bonus accuracy for wielding her weapon type ({0}).")
+                    : Locale.Text("WOMENACE::ui/proficiency/unmatched", "Wield {0} for bonus accuracy."),
+                ClassNoun(viewerClass));
             var para = data.AddParagraph(
                 text, matches ? ParagraphStyle.Positive : ParagraphStyle.Default, null, NoIconSize, NoIconColour, true, false);
             if (!matches)

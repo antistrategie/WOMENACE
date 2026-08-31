@@ -339,7 +339,9 @@ public sealed class CalibrationUISystem : JiangyuSystem
     {
         var box = new VisualElement();
         var atMax = inst.Rank >= Calibration.MaxRank;
-        var label = new Label(atMax ? $"R{inst.Rank}  ·  MAX" : $"R{inst.Rank}  →  R{inst.Rank + 1}");
+        var label = new Label(atMax
+            ? $"R{inst.Rank}  ·  " + Locale.Text("WOMENACE::ui/calibration/rank_max", "MAX")
+            : $"R{inst.Rank}  →  R{inst.Rank + 1}");
         label.AddToClassList("wm-cal-sectionlabel");
         box.Add(label);
 
@@ -386,7 +388,7 @@ public sealed class CalibrationUISystem : JiangyuSystem
         actions.Add(ActionButton(Locale.Text("WOMENACE::ui/revert", "DERANK"), canRevert, () => Act(CalibrationSystem.Instance.Revert, -1)));
         foot.Add(actions);
 
-        var tally = new Label($"Duplicates {dupes}");
+        var tally = new Label(string.Format(Locale.Text("WOMENACE::ui/calibration/duplicates", "Duplicates {0}"), dupes));
         tally.AddToClassList("wm-cal-tally");
         foot.Add(tally);
         return foot;

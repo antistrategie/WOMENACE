@@ -15,7 +15,7 @@
         <ui:VisualElement name="wm-aim-reticle" class="wm-aim-reticle" picking-mode="Ignore" />
 
         <ui:VisualElement name="wm-aim-countstack" class="wm-aim-countstack" picking-mode="Ignore">
-            <ui:Label text="SHOOT THE ORANGE TARGETS" class="wm-aim-instruction" picking-mode="Ignore" />
+            <ui:Label name="@WOMENACE::ui/aim/instruction" text="SHOOT THE ORANGE TARGETS" class="wm-aim-instruction" picking-mode="Ignore" />
             <ui:VisualElement class="wm-aim-lights" picking-mode="Ignore">
                 <ui:VisualElement name="wm-aim-light-0" class="wm-aim-light" picking-mode="Ignore" />
                 <ui:VisualElement name="wm-aim-light-1" class="wm-aim-light" picking-mode="Ignore" />
