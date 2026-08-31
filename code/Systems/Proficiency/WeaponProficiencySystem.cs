@@ -17,8 +17,9 @@ namespace WOMENACE.Code;
 // the SSR weapons are excluded, their owner bonus being SsrImprintSystem's and kept separate.
 //
 // The class taxonomy and the affinity curve are the shared Proficiency model (read here and by the
-// affinity badge popover). A doll's own signature weapon is recognised through its authored
-// OnlyEquipableBy lock, and other weapons through the id-naming classifier below.
+// affinity badge popover). Every weapon is classified from the wmgfl_class_* tag it
+// carries when it is one of ours, and otherwise from its English category label, falling back to
+// the id-naming classifier below.
 //
 // The bonus lands on the leader's EntityProperties.Accuracy (rebuilt from base on each
 // UpdatePropertiesBasedOnAttributes, so a flat add never accumulates), which is the accuracy the
@@ -32,11 +33,16 @@ public sealed class WeaponProficiencySystem : JiangyuSystem
     // the reliable signal even when the id gives none (weapon.pirate_outcast_pipe_gun is a Battle
     // Rifle but its id says nothing). About twenty enemy/cut weapons carry no ShortName, so the id's
     // naming convention (weapon.generic_<class>_tier..., specialweapon.<class>_...) is the fallback.
-    // Our own weapons match via OnlyEquipableBy, so this only sees weapons a doll picked up elsewhere.
+    // Ours never reach either: they answer from their class tag above. OnlyEquipableBy is NOT the
+    // guard it looks like, since it only short-circuits for the doll a weapon is locked to, and one
+    // of ours in another doll's hands still arrives here.
     private static WeaponClass Classify(WeaponTemplate weapon)
     {
         if (weapon == null)
             return WeaponClass.None;
+        var byTag = ClassifyByTag(weapon);
+        if (byTag != WeaponClass.None)
+            return byTag;
         var byShortName = ClassifyByShortName(weapon);
         return byShortName != WeaponClass.None ? byShortName : ClassifyById(weapon.GetID());
     }
@@ -69,11 +75,52 @@ public sealed class WeaponProficiencySystem : JiangyuSystem
         ["Sword"] = WeaponClass.Blade,
     };
 
-    // Reads the authored English, not the displayed text: ShortNameClasses is keyed by the game's
-    // English category labels, so a translated label would match nothing and every weapon would drop
-    // to the id fallback. Vanilla lines keep their English default in every language, which is what
-    // this needs, because a weapon locked to its own doll never reaches here (WeaponMatches answers
-    // from OnlyEquipableBy first).
+    // Our own weapons name their class on their Tags, which is the only classification that
+    // survives translation. Vanilla weapons are read from their category label below, which is
+    // safe because the loader only ever rewrites text a mod authored, so a vanilla label keeps its
+    // English default in every language. A weapon of ours does not: its default IS the authored
+    // line the locale pass overwrites. Relying on OnlyEquipableBy instead would not cover it,
+    // because that only short-circuits for the doll a weapon is locked to, and one of ours in
+    // another doll's hands still reaches classification.
+    private static WeaponClass ClassifyByTag(WeaponTemplate weapon)
+    {
+        try
+        {
+            // Memoised on the template pointer. Classify sits under SelectedUnitPanel.UpdateStats,
+            // which runs every frame a unit is selected, and the tag walk marshals a list and reads
+            // a name per element. MeleeCookOffSystem and EntityWeaponParitySystem cache the same
+            // walk the same way.
+            if (_classByTemplate.TryGetValue(weapon.Pointer, out var cached))
+                return cached;
+
+            var wc = ReadClassTag(weapon);
+            _classByTemplate[weapon.Pointer] = wc;
+            return wc;
+        }
+        catch { return WeaponClass.None; }
+    }
+
+    private static readonly Dictionary<IntPtr, WeaponClass> _classByTemplate = new();
+
+    private static WeaponClass ReadClassTag(WeaponTemplate weapon)
+    {
+        try
+        {
+            var tags = weapon.Tags;
+            if (tags == null)
+                return WeaponClass.None;
+            for (var i = 0; i < tags.Count; i++)
+            {
+                var wc = Proficiency.ClassFromSpeakerTags(tags[i]?.name);
+                if (wc != WeaponClass.None)
+                    return wc;
+            }
+            return WeaponClass.None;
+        }
+        catch { return WeaponClass.None; }
+    }
+
+    // The game's English category labels, keyed as authored. Vanilla only: see ClassifyByTag.
     private static WeaponClass ClassifyByShortName(WeaponTemplate weapon)
     {
         try
@@ -354,8 +401,7 @@ public sealed class WeaponProficiencySystem : JiangyuSystem
             var matches = WeaponMatches(weapon, viewerTag, viewerClass);
 
             var heading = data.AddSubheading(
-                string.Format(
-                    Locale.Text("WOMENACE::ui/proficiency/heading", "{0} Weapon Proficiency"), NameFromTag(viewerTag)),
+                Locale.Format("WOMENACE::ui/proficiency/heading", "{0} Weapon Proficiency", NameFromTag(viewerTag)),
                 null, NoIconSize, NoIconColour, true);
             heading?.SetBorderBottom(true);
             heading?.SetMarginTop(6);

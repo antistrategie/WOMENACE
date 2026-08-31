@@ -73,6 +73,35 @@ class TransferConfig:
     fist_rotations: dict[str, float]
     hang_down_chain_prefixes: list[str]
     dress_leg_prefixes: list[str]
+    # Where the skirt stops being pelvis and starts being leg, as metres relative to the crotch.
+    # The default ramp (2cm above the crotch down to 20cm below it) suits a long skirt whose hem hangs clear of the
+    # thigh. A short or layered skirt sitting ON the thigh needs a much shallower ramp: the thigh
+    # rotates fully while a half-weighted panel over it rotates half as far, and the difference is
+    # the leg coming through the cloth.
+    dress_leg_blend_top: float
+    dress_leg_blend_depth: float  # measured DOWN FROM blend_top, not from the crotch
+    # Half-width, in metres, of the centreline strip over which the skirt blends between the two
+    # legs. Defaults to the hip half-width, which spreads the blend across the whole front: every
+    # panel is then a mix of both legs and rotates by the average, so the leg that actually swings
+    # outruns the cloth over it. Narrowing this welds each panel to the thigh it covers and leaves
+    # only a thin strip at the centre stretching between them.
+    dress_leg_split_width: float | None
+    # Half-width, in metres, of the front-to-back band over which the skirt stops following the
+    # legs. Only the FRONT of a skirt should follow them: the vanilla locomotion only ever swings a
+    # leg forward, so the back panel has nothing to follow, and weighting it to the legs drags it
+    # forward off the body and leaves the backside poking out through it. None keeps the whole
+    # skirt leg-following, which suits a skirt with no back panel to speak of.
+    dress_leg_front_band: float | None
+    # Where that band is centred, as metres in front of (negative) or behind (positive) the hip
+    # joint. The joint itself is the sensible default: cloth in front of it is what a forward
+    # swing reaches.
+    dress_leg_front_pivot: float
+    # Materials whose name contains any of these are deleted before anything else
+    # touches the mesh. MMD rigs ship alternate-state submeshes for parts the outfit
+    # covers -- bare feet under shoes, a torso patch under a top, named "(Hide)" or
+    # "Unused" -- which MMD viewers hide and a straight conversion does not, so they
+    # render as a second layer poking through the clothing that replaced them.
+    strip_material_patterns: list[str]
     # Skip the right-palm calibration for rigs whose animations are their own
     # captured clips rather than retargeted vanilla holds (Sextans): the clips
     # are self-consistent with the rig's existing mesh-vs-bone relationship,
@@ -104,6 +133,20 @@ class TransferConfig:
             fist_rotations={k: float(v) for k, v in data.get("fist_rotations", {}).items()},
             hang_down_chain_prefixes=list(data.get("hang_down_chain_prefixes", [])),
             dress_leg_prefixes=list(data.get("dress_leg_prefixes", [])),
+            dress_leg_blend_top=float(data.get("dress_leg_blend_top", 0.02)),
+            # 0.22 with the 0.02 default top puts blend_bottom back on crotch - 0.20, the ramp
+            # every rig built before these knobs existed was prepped with.
+            dress_leg_blend_depth=float(data.get("dress_leg_blend_depth", 0.22)),
+            dress_leg_split_width=(
+                float(data["dress_leg_split_width"])
+                if data.get("dress_leg_split_width") is not None else None
+            ),
+            dress_leg_front_band=(
+                float(data["dress_leg_front_band"])
+                if data.get("dress_leg_front_band") is not None else None
+            ),
+            dress_leg_front_pivot=float(data.get("dress_leg_front_pivot", 0.0)),
+            strip_material_patterns=list(data.get("strip_material_patterns", [])),
             skip_palm_calibration=bool(data.get("skip_palm_calibration", False)),
         )
 
@@ -2226,6 +2269,64 @@ def _compute_height_scale_against_reference(
     return reference.yspan_metres / pmx_body_height
 
 
+def strip_hidden_submeshes(pmx_meshes: list, patterns: list[str]) -> None:
+    """Delete faces belonging to alternate-state materials the outfit covers.
+
+    MMD rigs carry the geometry an outfit replaces rather than deleting it, marked
+    in the material name (``BodySkin(Feet/Hide)``, ``Set1-Socks-NoShoes(Hide)``).
+    An MMD viewer hides those materials; a straight conversion keeps them, so the
+    bare foot sits inside the shoe. The two are weighted differently -- the shoe
+    leans on LowerLeg, the foot under it on Foot -- so they deform apart and the
+    toes come through. Deleting the faces is the fix: nothing should ever draw them.
+
+    Runs before scaling and weight work so the removed geometry cannot influence
+    either. Vertices and edges left unused by the deletion go with the faces.
+    """
+    if not patterns:
+        return
+
+    import bmesh  # type: ignore
+
+    for mesh in pmx_meshes:
+        matched = [
+            slot.name for slot in mesh.material_slots
+            if slot.name and any(p in slot.name for p in patterns)
+        ]
+        if not matched:
+            continue
+
+        bm = bmesh.new()
+        bm.from_mesh(mesh.data)
+        bm.faces.ensure_lookup_table()
+        doomed_names = set(matched)
+        doomed = [
+            f for f in bm.faces
+            if mesh.material_slots[f.material_index].name in doomed_names
+        ]
+        faces_before = len(bm.faces)
+        verts_before = len(bm.verts)
+        bmesh.ops.delete(bm, geom=doomed, context="FACES")
+        bm.to_mesh(mesh.data)
+        bm.free()
+        mesh.data.update()
+
+        # Drop the now-empty slots so they do not reach the exported material list.
+        # temp_override rather than a context dict: Blender 4.0 removed the dict form.
+        for name in matched:
+            index = mesh.material_slots.find(name)
+            if index < 0:
+                continue
+            mesh.active_material_index = index
+            with bpy.context.temp_override(object=mesh, active_object=mesh, selected_objects=[mesh]):
+                bpy.ops.object.material_slot_remove()
+
+        print(
+            f"[info] stripped hidden submesh(es) from {mesh.name}: {', '.join(matched)} "
+            f"({faces_before - len(mesh.data.polygons)} face(s), "
+            f"{verts_before - len(mesh.data.vertices)} vert(s))"
+        )
+
+
 def redistribute_dress_to_legs(
     pmx_meshes: list,
     pmx_armature,
@@ -2269,11 +2370,24 @@ def redistribute_dress_to_legs(
         return
     arm_mw = pmx_armature.matrix_world
     crotch_z = ((arm_mw @ leg_l_bone.head_local).z + (arm_mw @ leg_r_bone.head_local).z) / 2
-    half_width = max(abs((arm_mw @ leg_l_bone.head_local).x), 0.06)
+    half_width = (
+        config.dress_leg_split_width
+        if config.dress_leg_split_width is not None
+        else max(abs((arm_mw @ leg_l_bone.head_local).x), 0.06)
+    )
+    half_width = max(half_width, 1e-3)
 
-    # Full pelvis above the crotch, full leg 20 cm below it, linear between.
-    blend_top = crotch_z + 0.02
-    blend_bottom = crotch_z - 0.20
+    # The character faces -Y, so cloth in FRONT of the hip joint is at a lower y than it.
+    leg_y = ((arm_mw @ leg_l_bone.head_local).y + (arm_mw @ leg_r_bone.head_local).y) / 2
+    front_pivot = leg_y + config.dress_leg_front_pivot
+    front_band = (
+        max(config.dress_leg_front_band, 1e-3)
+        if config.dress_leg_front_band is not None else None
+    )
+
+    # Full pelvis above the crotch, full leg a configured depth below it, linear between.
+    blend_top = crotch_z + config.dress_leg_blend_top
+    blend_bottom = blend_top - max(config.dress_leg_blend_depth, 1e-3)
 
     for mesh in pmx_meshes:
         groups = [
@@ -2300,6 +2414,11 @@ def redistribute_dress_to_legs(
                 continue
             world = mw @ v.co
             leg_frac = min(1.0, max(0.0, (blend_top - world.z) / (blend_top - blend_bottom)))
+            if front_band is not None:
+                # 1 in front of the band, 0 behind it. Whatever the back gives up here returns to
+                # the pelvis below, because the leg and hip shares are taken from one weight.
+                front = (front_pivot + front_band - world.y) / (2.0 * front_band)
+                leg_frac *= min(1.0, max(0.0, front))
             side = min(1.0, max(0.0, 0.5 + world.x / (2.0 * half_width)))
             index = [v.index]
             hips_vg.add(index, skirt_weight * (1.0 - leg_frac), "ADD")
@@ -2311,7 +2430,11 @@ def redistribute_dress_to_legs(
         if rewritten:
             print(
                 f"[info] dress-to-legs ({mesh.name}): rewrote {rewritten} vert(s) "
-                f"from {len(groups)} skirt group(s) (crotch z={crotch_z:.3f}m)"
+                f"from {len(groups)} skirt group(s) (crotch z={crotch_z:.3f}m, "
+                f"pelvis->leg ramp {blend_top:.3f}m..{blend_bottom:.3f}m"
+                + (f", front-only band y {front_pivot - front_band:+.3f}..{front_pivot + front_band:+.3f}"
+                   if front_band is not None else "")
+                + ")"
             )
 
 
@@ -2439,6 +2562,8 @@ def prep_pmx(config: "TransferConfig") -> tuple:
     # armature-smaller-than-mesh mismatch.
     for mesh in pmx_meshes:
         remove_shape_keys(mesh)
+
+    strip_hidden_submeshes(pmx_meshes, config.strip_material_patterns)
 
     # the PMX character keeps her own proportions. The uniform scale is only to bring
     # her into a sensible world size. Without proportional fit, we just compare

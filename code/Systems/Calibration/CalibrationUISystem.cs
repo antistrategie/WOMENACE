@@ -282,7 +282,7 @@ public sealed class CalibrationUISystem : JiangyuSystem
 
     private static string StockLabel(CalibrationInstance inst)
         => inst.Count > 1
-            ? string.Format(Locale.Text("WOMENACE::ui/stock_count", "Stock x{0}"), inst.Count)
+            ? Locale.Format("WOMENACE::ui/stock_count", "Stock x{0}", inst.Count)
             : Locale.Text("WOMENACE::ui/stock", "Stock");
 
     private void RebuildDetail()
@@ -339,9 +339,12 @@ public sealed class CalibrationUISystem : JiangyuSystem
     {
         var box = new VisualElement();
         var atMax = inst.Rank >= Calibration.MaxRank;
+        // Both forms are one key each, rank prefix and separator included, so the whole line is
+        // the translator's to reorder rather than a fragment glued to hard-coded punctuation.
         var label = new Label(atMax
-            ? $"R{inst.Rank}  ·  " + Locale.Text("WOMENACE::ui/calibration/rank_max", "MAX")
-            : $"R{inst.Rank}  →  R{inst.Rank + 1}");
+            ? Locale.Format("WOMENACE::ui/calibration/rank_max", "R{0}  ·  MAX", inst.Rank)
+            : Locale.Format(
+                "WOMENACE::ui/calibration/rank_step", "R{0}  →  R{1}", inst.Rank, inst.Rank + 1));
         label.AddToClassList("wm-cal-sectionlabel");
         box.Add(label);
 
@@ -388,7 +391,7 @@ public sealed class CalibrationUISystem : JiangyuSystem
         actions.Add(ActionButton(Locale.Text("WOMENACE::ui/revert", "DERANK"), canRevert, () => Act(CalibrationSystem.Instance.Revert, -1)));
         foot.Add(actions);
 
-        var tally = new Label(string.Format(Locale.Text("WOMENACE::ui/calibration/duplicates", "Duplicates {0}"), dupes));
+        var tally = new Label(Locale.Format("WOMENACE::ui/calibration/duplicates", "Duplicates {0}", dupes));
         tally.AddToClassList("wm-cal-tally");
         foot.Add(tally);
         return foot;

@@ -83,8 +83,7 @@ public sealed class FormSwapSystem : JiangyuSystem
             RestrictedChassisIds = ["vehicle.voymastina_mech", "vehicle.voymastina_mech_erwin"],
             DefaultChassisId = "vehicle.voymastina_mech",
             ToAltLabel = () => Locale.Text("WOMENACE::ui/deploy_sinbreaker", "DEPLOY SINBREAKER"),
-            ToAltLockedLabel = lv => string.Format(
-                Locale.Text("WOMENACE::ui/deploy_sinbreaker_locked", "SINBREAKER (LV.{0})"), lv),
+            ToAltLockedLabel = lv => Locale.Format("WOMENACE::ui/deploy_sinbreaker_locked", "SINBREAKER (LV.{0})", lv),
             ToBaseLabel = () => Locale.Text("WOMENACE::ui/deploy_infantry", "DEPLOY INFANTRY"),
             BaseTabLabel = () => Locale.Text("WOMENACE::ui/form_tab_sl", "SQUAD LEADER"),
             AltTabLabel = () => Locale.Text("WOMENACE::ui/form_tab_sinbreaker", "SINBREAKER"),
@@ -657,7 +656,7 @@ public sealed class FormSwapSystem : JiangyuSystem
             int level = Unlocks.MechLevel(characterTag);
             label?.text = pair.ToAltLockedLabel != null
                 ? pair.ToAltLockedLabel(level)
-                : string.Format(Locale.Text("WOMENACE::ui/swap_form_locked", "FORM LOCKED (LV.{0})"), level);
+                : Locale.Format("WOMENACE::ui/swap_form_locked", "FORM LOCKED (LV.{0})", level);
         }
     }
 

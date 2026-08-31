@@ -406,7 +406,7 @@ public sealed class TransmogPickerSystem : JiangyuSystem
                 tooltip.Line().Paragraph(description);
             if (!unlocked)
                 tooltip.Line().Paragraph(
-                    string.Format(Locale.Text("WOMENACE::ui/transmog_locked", "Unlocks at affinity level {0}"), unlockLevel),
+                    Locale.Format("WOMENACE::ui/transmog_locked", "Unlocks at affinity level {0}", unlockLevel),
                     Tooltip.Style.Disabled);
             return tooltip;
         });

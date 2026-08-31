@@ -31,8 +31,11 @@ clone "TagTemplate" from="unique" id="wmgfl_melee"
 clone "TagTemplate" from="unique" id="wmgfl_entity_weapon"
 
 // Weapon-type proficiency. A doll's speaker carries one of these to name the weapon
-// class she is trained on. WeaponProficiencySystem reads the tag and grants an
-// affinity-scaled accuracy bonus while she wields a weapon of that class.
+// class she is trained on, and each of our weapons carries the one naming its own
+// class. WeaponProficiencySystem reads the tag and grants an affinity-scaled accuracy
+// bonus while she wields a weapon of that class. Our weapons need the tag because they
+// are the only ones whose category label is rewritten into the active language once a
+// translation is installed, which leaves nothing English to classify them by.
 clone "TagTemplate" from="unique" id="wmgfl_class_ar"
 
 clone "TagTemplate" from="unique" id="wmgfl_class_smg"
@@ -42,6 +45,8 @@ clone "TagTemplate" from="unique" id="wmgfl_class_rifle"
 clone "TagTemplate" from="unique" id="wmgfl_class_mg"
 
 clone "TagTemplate" from="unique" id="wmgfl_class_blade"
+
+clone "TagTemplate" from="unique" id="wmgfl_class_shotgun"
 
 patch "StrategyConfig" "strategy_config" {
     append "InitialPickableUnitLeaders" "squad_leader.koleda_foot"

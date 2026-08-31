@@ -171,8 +171,7 @@ public sealed class CalibrationSystem : JiangyuSystem
     // Title, and no other doll's modal shows ranks in component names.
     private string ComponentName(string weaponId)
         => Templates.DefaultText(Component(weaponId)?.Title,
-            string.Format(
-                Locale.Text("WOMENACE::ui/calibration/component_of", "{0} Component"),
+            Locale.Format("WOMENACE::ui/calibration/component_of", "{0} Component",
                 Calibration.CleanName(Templates.DefaultText(Weapon(weaponId, quiet: true)?.Title, weaponId))));
 
     private void OnWindowChanged(PatchInfo info)
@@ -468,8 +467,11 @@ public sealed class CalibrationSystem : JiangyuSystem
 
     // The rank-comparison row labels. Declared as LocalisedText so the compiler extracts them into
     // the POT: a bare literal handed to a Label never reaches a translator. The type has to be named
-    // in the expression, because extraction matches the literal `new LocalisedText("key", "text")`
-    // and a target-typed `new(...)` reads identically to a C# compiler but not to that scan.
+    // in the expression, because extraction scans for a LocalisedText construction with its two
+    // string literals present, and a target-typed `new(...)` reads identically to a C# compiler but
+    // not to that scan. Do not write that construction out in full anywhere but real code: the
+    // extractor reads raw source and does not skip comments, so an illustrative one is collected as
+    // a real entry and shipped to translators.
     private static readonly LocalisedText DamageLabel =
         new LocalisedText("WOMENACE::ui/calibration/stat_damage", "DAMAGE");
     private static readonly LocalisedText ArmorPenLabel =

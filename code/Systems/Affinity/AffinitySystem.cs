@@ -188,7 +188,7 @@ public sealed class AffinitySystem : JiangyuSystem
                 continue;
             yield return new AffinityTooltip.Reward(
                 lvl,
-                string.Format(Locale.Text("WOMENACE::ui/affinity/proficiency_step", "+{0} accuracy (proficiency)"), step),
+                Locale.Format("WOMENACE::ui/affinity/proficiency_step", "+{0} accuracy (proficiency)", step),
                 AffinityTooltip.RewardKind.Proficiency);
         }
     }
@@ -328,10 +328,12 @@ public sealed class AffinitySystem : JiangyuSystem
         var levelLabel = UI.Find(popover, UiSelector.Name("pop-level"))?.TryCast<Label>();
         if (levelLabel != null)
         {
-            var levelText = string.Format(Locale.Text("WOMENACE::ui/affinity/level", "LEVEL {0:00}"), level);
+            // One key per composed line, separator included. Split across two keys joined here, a
+            // translator could not reorder the parts, change the separator, or put the max marker
+            // first, which some languages need.
             levelLabel.text = level >= Affinity.MaxLevel
-                ? levelText + "  ·  " + Locale.Text("WOMENACE::ui/affinity/level_max", "MAX")
-                : levelText;
+                ? Locale.Format("WOMENACE::ui/affinity/level_max", "LEVEL {0:00}  ·  MAX", level)
+                : Locale.Format("WOMENACE::ui/affinity/level", "LEVEL {0:00}", level);
         }
 
         var track = UI.Find(popover, UiSelector.Name("pop-track"));

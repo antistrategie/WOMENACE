@@ -338,7 +338,7 @@ public sealed class SsrImprintSystem : JiangyuSystem
             // Subheading (11px) + a manual bottom border + top margin: the section-divider look at the
             // body text size (AddSectionHeading is oversized; AddSubheading alone drops the divider).
             var heading = data.AddSubheading(
-                string.Format(Locale.Text("WOMENACE::ui/ssr_imprint/heading", "{0} Imprint Boost"), entry.OwnerName),
+                Locale.Format("WOMENACE::ui/ssr_imprint/heading", "{0} Imprint Boost", entry.OwnerName),
                 null, NoIconSize, NoIconColour, true);
             heading?.SetBorderBottom(true);
             heading?.SetMarginTop(6);

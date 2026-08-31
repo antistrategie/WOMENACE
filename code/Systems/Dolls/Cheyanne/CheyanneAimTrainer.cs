@@ -67,6 +67,12 @@ internal static class CheyanneAimTrainer
     private static Label _points;
     private static VisualElement _countStack;
     private static readonly List<VisualElement> _lights = new();
+    // The hint Label's element NAME in aim-trainer.uxml, which is also its loca key: UI.Localise
+    // translates an element named "@<key>", and the same element is found again by that full name.
+    // One constant because the two live in different files and a rename in the UXML alone would
+    // leave the lookup returning null with nothing to say so.
+    private const string HintKey = "@WOMENACE::ui/aim/hint";
+
     private static Label _hint;
     private static VisualElement _results;
 
@@ -125,6 +131,10 @@ internal static class CheyanneAimTrainer
             _aim = new Vector2(WorldCentre, WorldCentre);
 
             var container = tree.Instantiate();
+            // The tree is instantiated here rather than delivered through UI.Inject, and only the
+            // injection path localises automatically, so the @-marked Labels in the UXML need this
+            // call or they ship to translators and still paint English.
+            UI.Localise(container);
             Fill(container);
             host.Add(container);
             _root = container;
@@ -136,14 +146,15 @@ internal static class CheyanneAimTrainer
             _lights.Clear();
             for (var i = 0; i < CountdownFrom; i++)
                 _lights.Add(UI.Find(container, UiSelector.Name($"wm-aim-light-{i}")));
-            _hint = UI.Find(container, UiSelector.Name("wm-aim-hint"))?.TryCast<Label>();
+            _hint = UI.Find(container, UiSelector.Name(HintKey))?.TryCast<Label>();
             _results = UI.Find(container, UiSelector.Name("wm-aim-results"));
 
-            // These two keep the names the lookups above use, so they cannot carry a name="@key"
-            // marker (and UI.Localise only translates Labels in any case). Their text is set here.
-            if (_hint != null)
-                _hint.text = Locale.Text(
-                    "WOMENACE::ui/aim/hint", "every hit sharpens the shot   •   ESC to hold fire (cancel)");
+            // The hint carries its key as its element name, so UI.Localise above has already set
+            // its text and the lookup still works: an @-marked element is found by the full "@key".
+            // The score reads its own key here so the label is translated from the first frame
+            // rather than snapping over when the first shot lands.
+            if (_points != null)
+                _points.text = Locale.Format("WOMENACE::ui/aim/points", "{0} PTS", _score);
 
             var fire = UI.Find(container, UiSelector.Name("wm-aim-continue"))?.TryCast<Button>();
             if (fire != null)
@@ -257,7 +268,7 @@ internal static class CheyanneAimTrainer
                     break;   // one ball per trigger pull
                 }
                 if (_points != null)
-                    _points.text = string.Format(Locale.Text("WOMENACE::ui/aim/points", "{0} PTS"), _score);
+                    _points.text = Locale.Format("WOMENACE::ui/aim/points", "{0} PTS", _score);
             }
 
             foreach (var ball in Balls)
@@ -294,25 +305,25 @@ internal static class CheyanneAimTrainer
         var shot = BounceChain.ForPoints(_score);
         var points = UI.Find(_root, UiSelector.Name("wm-aim-results-points"))?.TryCast<Label>();
         if (points != null)
-            points.text = string.Format(Locale.Text("WOMENACE::ui/aim/points", "{0} PTS"), _score);
+            points.text = Locale.Format("WOMENACE::ui/aim/points", "{0} PTS", _score);
 
         var rows = UI.Find(_root, UiSelector.Name("wm-aim-results-rows"));
         if (rows != null)
         {
             rows.Clear();
+            // One key per row, not a singular/plural pair. A row is a stat readout: the label names
+            // the quantity and the numeral sits in its own column, so "ricochets / 1" reads the same
+            // way "hits per second / 1.0" does and needs no agreement with the count. The pair also
+            // could not have been translated properly: the catalogue has no gettext plural forms, so
+            // two hard-coded buckets serve neither the languages that need one form nor the several
+            // that need more than two.
             rows.Add(Row(
-                shot.Bounces == 1
-                    ? Locale.Text("WOMENACE::ui/aim/ricochet_one", "ricochet")
-                    : Locale.Text("WOMENACE::ui/aim/ricochet_many", "ricochets"),
-                $"{shot.Bounces}"));
+                Locale.Text("WOMENACE::ui/aim/ricochets", "ricochets"), $"{shot.Bounces}"));
             rows.Add(Row(
-                shot.Range == 1
-                    ? Locale.Text("WOMENACE::ui/aim/reach_one", "tile of reach")
-                    : Locale.Text("WOMENACE::ui/aim/reach_many", "tiles of reach"),
-                $"{shot.Range}"));
+                Locale.Text("WOMENACE::ui/aim/reach", "tiles of reach"), $"{shot.Range}"));
             if (_shots > 0)
                 rows.Add(Row(
-                    string.Format(Locale.Text("WOMENACE::ui/aim/accuracy", "accuracy ({0} of {1})"), _hits, _shots),
+                    Locale.Format("WOMENACE::ui/aim/accuracy", "accuracy ({0} of {1})", _hits, _shots),
                     $"{Mathf.RoundToInt(100f * _hits / _shots)}%"));
             rows.Add(Row(Locale.Text("WOMENACE::ui/aim/hits_per_second", "hits per second"), $"{_hits / RoundSeconds:0.0}"));
             if (shot.Bounces == 0)

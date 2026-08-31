@@ -203,24 +203,30 @@ public static class Bay
     // category label is the only honest signal: deployment gates cover
     // snipers and MMGs too, and AP costs are near-flat across the roster.
     //
-    // The template id is read first because it never translates. A vanilla
-    // label does not either (the loader only ever rewrites text a mod
-    // authored), but one of our own weapons has its default replaced with the
-    // active language once a translation is installed, so the label alone
-    // would stop recognising our ordnance in every language but English.
+    // A vanilla label never translates (the loader only ever rewrites text a
+    // mod authored), so vanilla is read from the label alone. One of our own
+    // weapons does have its default replaced with the active language once a
+    // translation is installed, so those are read from the template id first,
+    // which never translates.
+    //
+    // The id pass is OURS ONLY on purpose. An id carries the whole build,
+    // attachments included, so an assault rifle with an underbarrel launcher
+    // is `..._kpac_grenade_launcher` while its label is honestly "Assault
+    // Rifle". Reading vanilla ids would call that ordnance and contradict the
+    // bullets rule above; reading only our own ids keeps the naming under our
+    // control.
     public static bool IsOrdnance(Item item)
     {
         var weapon = WeaponOf(item);
         if (weapon == null)
             return false;
 
-        // Ids are underscore-joined, so only the single-word entries can match here; the label pass
-        // below still carries the spaced and hyphenated ones.
-        var id = weapon.GetID()?.ToLowerInvariant();
-        if (!string.IsNullOrEmpty(id))
-            foreach (var word in OrdnanceWords)
-                if (id.Contains(word, StringComparison.Ordinal))
-                    return true;
+        // Ours is answered from the id and stops there. Falling through to the label would put us
+        // back on translated text, which is the whole reason the id pass exists, and matching short
+        // English needles ("emp", "rpg", "stun") as substrings of arbitrary translated prose flips
+        // classifications by locale with nothing in the log to show for it.
+        if (IsOurs(weapon))
+            return IdSaysOrdnance(weapon.GetID());
 
         var label = Templates.DefaultText(weapon.ShortName)?.ToLowerInvariant();
         if (string.IsNullOrEmpty(label))
@@ -231,6 +237,59 @@ public static class Bay
         foreach (var word in OrdnanceExactWords)
             if (label == word)
                 return true;
+        return false;
+    }
+
+    // Whether the weapon is one of ours, read from the marker every WOMENACE weapon carries on its
+    // Tags. Authored, so it answers for exactly the weapons we name and no others. The instance-id
+    // sign would also separate runtime clones from serialised templates, but it answers a different
+    // question: the game and other mods build templates at runtime too, and one of those reaching
+    // the id pass is how a vanilla rifle with an underbarrel launcher gets called ordnance.
+    private static bool IsOurs(WeaponTemplate weapon)
+    {
+        try
+        {
+            var tags = weapon.Tags;
+            if (tags == null)
+                return false;
+            for (var i = 0; i < tags.Count; i++)
+                if (tags[i]?.name?.StartsWith(OurTagPrefix, StringComparison.Ordinal) == true)
+                    return true;
+            return false;
+        }
+        catch { return false; }
+    }
+
+    // The prefix every WOMENACE tag shares, which is what marks a template as ours.
+    private const string OurTagPrefix = "wmgfl_";
+
+    // Ordnance words matched against the id's `_`- and `.`-delimited segments rather than as bare
+    // substrings, so "autocannon" cannot match "cannon" and "grenadier" cannot match "grenade".
+    // Multi-word entries ("at rifle", "anti-tank") match a RUN of consecutive segments, for the
+    // same reason: joining the segments and searching the string would let "combat rifle" satisfy
+    // "at rifle" across the word boundary.
+    private static bool IdSaysOrdnance(string templateId)
+    {
+        if (string.IsNullOrEmpty(templateId))
+            return false;
+
+        var segments = templateId.ToLowerInvariant().Split('.', '_');
+        foreach (var word in OrdnanceWords)
+        {
+            var parts = word.Replace('-', ' ').Split(' ');
+            for (var i = 0; i + parts.Length <= segments.Length; i++)
+            {
+                var run = true;
+                for (var j = 0; j < parts.Length && run; j++)
+                    run = segments[i + j] == parts[j];
+                if (run)
+                    return true;
+            }
+        }
+        foreach (var word in OrdnanceExactWords)
+            foreach (var segment in segments)
+                if (segment == word)
+                    return true;
         return false;
     }
 
