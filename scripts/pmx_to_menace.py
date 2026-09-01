@@ -102,6 +102,13 @@ class TransferConfig:
     # "Unused" -- which MMD viewers hide and a straight conversion does not, so they
     # render as a second layer poking through the clothing that replaced them.
     strip_material_patterns: list[str]
+    # Vertices whose deform weight sits entirely on PMX bones whose name contains
+    # any of these are deleted, along with the faces that used them. An MMD
+    # accessory can ride a bone chain the humanoid rig has no counterpart for,
+    # and folding that chain onto the nearest humanoid bone anchors the accessory
+    # to a body part it was never tied to, so it hangs in mid-air as the limb it
+    # belongs to animates away.
+    strip_bone_patterns: list[str]
     # Skip the right-palm calibration for rigs whose animations are their own
     # captured clips rather than retargeted vanilla holds (Sextans): the clips
     # are self-consistent with the rig's existing mesh-vs-bone relationship,
@@ -147,6 +154,7 @@ class TransferConfig:
             ),
             dress_leg_front_pivot=float(data.get("dress_leg_front_pivot", 0.0)),
             strip_material_patterns=list(data.get("strip_material_patterns", [])),
+            strip_bone_patterns=list(data.get("strip_bone_patterns", [])),
             skip_palm_calibration=bool(data.get("skip_palm_calibration", False)),
         )
 
@@ -2285,8 +2293,6 @@ def strip_hidden_submeshes(pmx_meshes: list, patterns: list[str]) -> None:
     if not patterns:
         return
 
-    import bmesh  # type: ignore
-
     for mesh in pmx_meshes:
         matched = [
             slot.name for slot in mesh.material_slots
@@ -2295,35 +2301,113 @@ def strip_hidden_submeshes(pmx_meshes: list, patterns: list[str]) -> None:
         if not matched:
             continue
 
-        bm = bmesh.new()
-        bm.from_mesh(mesh.data)
-        bm.faces.ensure_lookup_table()
-        doomed_names = set(matched)
-        doomed = [
-            f for f in bm.faces
-            if mesh.material_slots[f.material_index].name in doomed_names
-        ]
-        faces_before = len(bm.faces)
-        verts_before = len(bm.verts)
-        bmesh.ops.delete(bm, geom=doomed, context="FACES")
-        bm.to_mesh(mesh.data)
-        bm.free()
-        mesh.data.update()
+        faces_before = len(mesh.data.polygons)
+        verts_before = len(mesh.data.vertices)
 
-        # Drop the now-empty slots so they do not reach the exported material list.
-        # temp_override rather than a context dict: Blender 4.0 removed the dict form.
+        # Deleted through edit mode, never through bmesh. A bmesh face delete leaves
+        # Blender 5.2.1 in a state that segfaults on whatever heavy operation comes
+        # next (saving the .blend, decimating, exporting glTF), on a mesh that
+        # validate() reports as clean and with no Python frame in the crash log. It
+        # does not reproduce on every mesh, so a bmesh version of this survives most
+        # of a batch before taking a run down.
+        clear_selection()
+        bpy.context.view_layer.objects.active = mesh
+        mesh.select_set(True)
+        bpy.ops.object.mode_set(mode="EDIT")
+        bpy.ops.mesh.select_all(action="DESELECT")
+        bpy.ops.mesh.select_mode(type="FACE")
         for name in matched:
             index = mesh.material_slots.find(name)
             if index < 0:
                 continue
             mesh.active_material_index = index
-            with bpy.context.temp_override(object=mesh, active_object=mesh, selected_objects=[mesh]):
-                bpy.ops.object.material_slot_remove()
+            bpy.ops.object.material_slot_select()
+        bpy.ops.mesh.delete(type="FACE")
+        bpy.ops.object.mode_set(mode="OBJECT")
+
+        # Drop the now-empty slots so they do not reach the exported material list.
+        # Through the mesh data, never bpy.ops.object.material_slot_remove, which
+        # segfaults the same way. pop() leaves every remaining polygon on the
+        # material it already had.
+        for name in matched:
+            index = mesh.data.materials.find(name)
+            if index < 0:
+                continue
+            mesh.data.materials.pop(index=index)
 
         print(
             f"[info] stripped hidden submesh(es) from {mesh.name}: {', '.join(matched)} "
             f"({faces_before - len(mesh.data.polygons)} face(s), "
             f"{verts_before - len(mesh.data.vertices)} vert(s))"
+        )
+
+
+def strip_bone_driven_geometry(pmx_meshes: list, patterns: list[str]) -> None:
+    """Delete geometry whose deform weight sits entirely on the named PMX bones.
+
+    An MMD accessory can ride a bone chain the humanoid rig has no counterpart
+    for. The ribbon on Makiatto's ballroom sleeve is one: it hangs off its own
+    BowRibbon chain, and the nearest humanoid bone to fold that chain onto is a
+    torso bone, which anchors the ribbon to her chest while the arm it is tied
+    around animates away from it. MENACE has no spare deform bones to give the
+    accessory instead, so the accessory comes off.
+
+    Matching is by substring against the PMX vertex-group name. Only vertices
+    carrying no weight outside the matched groups are deleted, so a pattern that
+    catches a bone the body also leans on takes none of the body with it.
+
+    Runs before the bone rename, while the groups still carry their PMX names,
+    and before scaling and weight work, so the removed geometry cannot influence
+    either. Faces left with a missing corner go with the vertices.
+    """
+    if not patterns:
+        return
+
+    for mesh in pmx_meshes:
+        matched = {
+            vg.index: vg.name for vg in mesh.vertex_groups
+            if any(p in vg.name for p in patterns)
+        }
+        if not matched:
+            continue
+
+        doomed = []
+        for vert in mesh.data.vertices:
+            total = sum(g.weight for g in vert.groups if g.weight > 0.0)
+            if total <= 0.0:
+                continue
+            share = sum(
+                g.weight for g in vert.groups
+                if g.weight > 0.0 and g.group in matched
+            )
+            if share >= total * 0.999:
+                doomed.append(vert.index)
+        if not doomed:
+            continue
+
+        verts_before = len(mesh.data.vertices)
+        faces_before = len(mesh.data.polygons)
+
+        # Deleted through edit mode for the same reason strip_hidden_submeshes is:
+        # a bmesh delete leaves Blender 5.2.1 crashing on whatever heavy operation
+        # comes next, on a mesh that validates clean.
+        clear_selection()
+        bpy.context.view_layer.objects.active = mesh
+        mesh.select_set(True)
+        for vert in mesh.data.vertices:
+            vert.select = False
+        for index in doomed:
+            mesh.data.vertices[index].select = True
+        bpy.ops.object.mode_set(mode="EDIT")
+        bpy.ops.mesh.select_mode(type="VERT")
+        bpy.ops.mesh.delete(type="VERT")
+        bpy.ops.object.mode_set(mode="OBJECT")
+
+        print(
+            f"[info] stripped bone-driven geometry from {mesh.name}: "
+            f"{', '.join(sorted(matched.values()))} "
+            f"({verts_before - len(mesh.data.vertices)} vert(s), "
+            f"{faces_before - len(mesh.data.polygons)} face(s))"
         )
 
 
@@ -2564,6 +2648,7 @@ def prep_pmx(config: "TransferConfig") -> tuple:
         remove_shape_keys(mesh)
 
     strip_hidden_submeshes(pmx_meshes, config.strip_material_patterns)
+    strip_bone_driven_geometry(pmx_meshes, config.strip_bone_patterns)
 
     # the PMX character keeps her own proportions. The uniform scale is only to bring
     # her into a sensible world size. Without proportional fit, we just compare
@@ -2662,6 +2747,14 @@ def finish_pmx(config: "TransferConfig", pmx_armature, pmx_meshes) -> None:
     """Stages 9-11: conform LOD names, decimate LOD1-N, purge, export glTF.
     Decimation runs on copies of LOD0, so any hand-painted weights on LOD0
     (the full-res mesh) propagate down to the lower LODs automatically."""
+    # Stripped here and not only in prep, so the config decides what ships whatever
+    # stage produced the mesh. A checkpoint prepped before its config grew
+    # strip_material_patterns still carries the hidden submeshes, and editing them out
+    # of the .blend is not available: saving a .blend after the deletion segfaults
+    # Blender 5.2.1 on some meshes, on a mesh validate() calls clean and with no Python
+    # frame in the crash log. Applying it on the way out leaves the checkpoint as
+    # authored. Idempotent, so a full run that already stripped in prep finds nothing.
+    strip_hidden_submeshes(pmx_meshes, config.strip_material_patterns)
     pmx_meshes = join_source_meshes(pmx_meshes)
 
     print("[info] conforming mesh names to LOD naming convention")

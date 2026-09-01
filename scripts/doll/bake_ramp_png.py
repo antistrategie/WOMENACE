@@ -91,14 +91,19 @@ def write_meta(png_path):
     meta_path = Path(str(png_path) + ".meta")
     if meta_path.exists():
         return
+    # Any already-imported ramp will do, so search outward rather than at a fixed
+    # depth: a ramps/ directory sits beside a character or beside a single outfit,
+    # and the shared dump sits at the Authored root above both.
+    candidates = [png_path.parent]
+    for parent in png_path.parents:
+        candidates.append(parent / "ramps")
+        candidates.append(parent / "shared" / "ramps")
     template = None
-    for sibling in png_path.parent.glob("ramp_*.png.meta"):
-        template = sibling.read_text()
-        break
-    if template is None:
-        shared = png_path.parents[2] / "shared" / "ramps"
-        for sibling in shared.glob("ramp_*.png.meta"):
+    for directory in candidates:
+        for sibling in sorted(directory.glob("ramp_*.png.meta")) if directory.is_dir() else []:
             template = sibling.read_text()
+            break
+        if template is not None:
             break
     if template is None:
         raise SystemExit(f"no sibling ramp meta to copy import settings from for {png_path}")

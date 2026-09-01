@@ -273,7 +273,14 @@ def resolve(doll_dir):
 
     # Per-character ramps sit beside the outfit folders; the global set sits in
     # Authored/shared/ramps. A doll overrides a shared ramp by shipping its own.
-    ramps_dirs = [doll_dir.parent / "ramps",
+    # The outfit's own ramps first, then the character's, then the global dump. GFL2
+    # authors gradients per OUTFIT, not per character: Klukai ships six sets, and her
+    # SSR0104 stockings read a gradient named after their texture (cloth8) where her
+    # default reads a silkstock one. A character-level ramp is right only where every
+    # outfit shares a look, so an outfit that differs drops its own ramps/ beside its
+    # model and they win.
+    ramps_dirs = [doll_dir / "ramps",
+                  doll_dir.parent / "ramps",
                   doll_dir.parent.parent / "shared" / "ramps"]
 
     bases = base_texture_by_material(gltf)
