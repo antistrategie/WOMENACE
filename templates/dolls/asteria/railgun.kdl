@@ -22,7 +22,7 @@ clone "WeaponTemplate" from="specialweapon.rocket_launcher_tier1_pal" id="specia
     set "IdealRange" 10
     set "MaxRange" 15
     set "AccuracyBonus" 15.0
-    set "AccuracyDropoff" -1.0
+    set "AccuracyDropoff" -2.0
     set "Damage" 250.0
     set "ArmorPenetration" 250.0
     set "DamageToArmorDurability" 400.0
@@ -112,9 +112,6 @@ clone "SkillTemplate" from="active.launch_rocket" id="active.asteria_railgun_sho
         set "ImpactEffect" asset="impact_laser_large_earth_01"
     }
 
-    // The slug does not stop at the first body: one hit punches through up
-    // to four elements of the struck squad (index 0 is the inherited Attack
-    // handler, index 1 ClearTileEffectGroup).
     set "EventHandlers" index=0 {
         set "ElementsHit" 4
     }
