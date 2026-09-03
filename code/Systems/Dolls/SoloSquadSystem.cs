@@ -149,12 +149,31 @@ public sealed class SoloSquadSystem : JiangyuSystem
     internal static bool IsSoloUnitTemplateId(string id)
         => id != null && SoloLeaderIds.Contains(id);
 
+    // Verdicts memoised by template pointer: IsSolo sits under every squaddie validation pass
+    // and IsSoloAttributes under the attribute getters, and each otherwise marshals the id
+    // string. Il2cpp's GC does not move objects, so the pointer is a stable key until the
+    // templates are rebuilt, when OnTemplatesApplied drops both maps.
+    private static readonly Dictionary<IntPtr, bool> SoloByUnitTemplate = new();
+    private static readonly Dictionary<IntPtr, bool> SoloByLeaderTemplate = new();
+
+    public override void OnTemplatesApplied()
+    {
+        SoloByUnitTemplate.Clear();
+        SoloByLeaderTemplate.Clear();
+    }
+
     internal static bool IsSolo(BaseUnitLeader leader)
     {
         try
         {
             var template = leader?.GetTemplate();
-            return IsSoloUnitTemplateId(template?.GetID() ?? template?.name);
+            if (template == null)
+                return false;
+            if (SoloByUnitTemplate.TryGetValue(template.Pointer, out var known))
+                return known;
+            var solo = IsSoloUnitTemplateId(template.GetID() ?? template.name);
+            SoloByUnitTemplate[template.Pointer] = solo;
+            return solo;
         }
         catch
         {
@@ -173,8 +192,15 @@ public sealed class SoloSquadSystem : JiangyuSystem
     {
         try
         {
-            var id = attributes?.LeaderTemplate?.GetID();
-            return id != null && SoloLeaderTemplateIds.Contains(id);
+            var template = attributes?.LeaderTemplate;
+            if (template == null)
+                return false;
+            if (SoloByLeaderTemplate.TryGetValue(template.Pointer, out var known))
+                return known;
+            var id = template.GetID();
+            var solo = id != null && SoloLeaderTemplateIds.Contains(id);
+            SoloByLeaderTemplate[template.Pointer] = solo;
+            return solo;
         }
         catch
         {

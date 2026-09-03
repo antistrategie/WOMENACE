@@ -289,7 +289,8 @@ public sealed class WeaponProficiencySystem : JiangyuSystem
                 return;
 
             var stats = panel.m_Stats;
-            for (var i = 0; stats != null && i < stats.Count; i++)
+            var count = stats?.Count ?? 0;
+            for (var i = 0; i < count; i++)
             {
                 var stat = stats[i];
                 if (stat?.m_PropertyConfig == null || stat.m_PropertyConfig.Type != PropertyDisplayConfig.Accuracy)
@@ -348,7 +349,8 @@ public sealed class WeaponProficiencySystem : JiangyuSystem
         var only = weapon.OnlyEquipableBy;
         if (only == null || dollTag == null)
             return false;
-        for (var i = 0; i < only.Count; i++)
+        var count = only.Count;
+        for (var i = 0; i < count; i++)
             if (only[i]?.name == dollTag)
                 return true;
         return false;

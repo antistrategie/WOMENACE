@@ -310,7 +310,8 @@ public sealed class EffectHudIconSystem : JiangyuSystem
     {
         var screen = UIManager.Get()?.GetActiveScreen()?.TryCast<UITactical>();
         var hudList = screen?.GetHUD()?.m_HUDList;
-        for (var i = 0; hudList != null && i < hudList.Count; i++)
+        var count = hudList?.Count ?? 0;
+        for (var i = 0; i < count; i++)
         {
             var unitHud = hudList[i]?.TryCast<Il2CppMenace.UI.Tactical.UnitHUD>();
             if (unitHud == null)

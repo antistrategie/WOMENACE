@@ -17,7 +17,8 @@ public static class Templates
         var list = all?.TryCast<Il2CppSystem.Collections.Generic.IReadOnlyList<T>>();
         if (list == null)
             yield break;
-        for (var i = 0; i < all.Count; i++)
+        var count = all.Count;
+        for (var i = 0; i < count; i++)
         {
             var t = list[i];
             if (t != null && t.IsAlive())
@@ -41,11 +42,18 @@ public static class Templates
         return fallback;
     }
 
-    // A template by id, or null if none matches.
+    // A template by id, or null if none matches. DataTemplateLoader.TryGet is the game's own id
+    // map (one dictionary read, and it answers for Jiangyu clones too), so it is asked first. The
+    // scan below stays as the fallback for anything the map does not hold, so this never resolves
+    // less than a walk of the collection would.
     public static T ById<T>(string id, Action<string> onError = null) where T : DataTemplate
     {
+        if (id == null)
+            return null;
         try
         {
+            if (DataTemplateLoader.TryGet<T>(id, out var direct) && direct.IsAlive())
+                return direct;
             foreach (var t in All<T>())
                 if (t.GetID() == id)
                     return t;

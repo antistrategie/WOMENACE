@@ -23,6 +23,9 @@ public sealed class Ots14BayBarSystem : JiangyuSystem
     // handles their updates, selection highlights and key threading itself;
     // the forwarding postfixes below stand in when the join failed).
     private bool _inBarList;
+    // Whether the row is showing. The per-frame button re-anchor only runs
+    // while it is, since a hidden row has no geometry to measure.
+    private bool _rowShown;
     // The bar the row lives in, so a link toggle can redraw it at once rather
     // than waiting for the next thing that happens to call UpdateSkills.
     private SkillBar _bar;
@@ -50,6 +53,7 @@ public sealed class Ots14BayBarSystem : JiangyuSystem
         _bar = null;
         _linkButtons.Clear();
         _inBarList = false;
+        _rowShown = false;
     }
 
     private void OnBarUpdated(PatchInfo info)
@@ -62,6 +66,7 @@ public sealed class Ots14BayBarSystem : JiangyuSystem
             var active = TacticalManager.Get()?.GetActiveActor();
             if (active == null || !BaySkillSystem.IsBayActor(active.Pointer))
             {
+                _rowShown = false;
                 if (_row != null)
                     _row.style.display = DisplayStyle.None;
                 // The slots themselves hide too: they sit in the bar's own
@@ -108,7 +113,8 @@ public sealed class Ots14BayBarSystem : JiangyuSystem
                 shown++;
             }
             UpdateLinkButtons(active.Pointer);
-            _row.style.display = shown > 0 ? DisplayStyle.Flex : DisplayStyle.None;
+            _rowShown = shown > 0;
+            _row.style.display = _rowShown ? DisplayStyle.Flex : DisplayStyle.None;
             AssignKeyBinds(bar);
         }
         catch (Exception ex)
@@ -136,6 +142,7 @@ public sealed class Ots14BayBarSystem : JiangyuSystem
             _slots = null;
             _linkButtons.Clear();
             _inBarList = false;
+            _rowShown = false;
         }
         var weaponSlots = bar.m_WeaponSlots;
         if (weaponSlots == null || weaponSlots.Count == 0)
@@ -440,10 +447,11 @@ public sealed class Ots14BayBarSystem : JiangyuSystem
     private void OnBarTick(PatchInfo info)
     {
         // The row's layout settles a frame after the rebuild, so the buttons
-        // are re-anchored on the tick as well as on the rebuild.
+        // are re-anchored on the tick as well as on the rebuild, while the
+        // row is showing.
         try
         {
-            if (_row != null && _slots != null)
+            if (_rowShown && _row != null && _slots != null)
                 foreach (var (group, button) in _linkButtons)
                 {
                     var host = ButtonHost(group);

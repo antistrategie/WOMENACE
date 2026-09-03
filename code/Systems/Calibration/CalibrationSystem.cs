@@ -43,6 +43,7 @@ public sealed class CalibrationSystem : JiangyuSystem
     // (which was the "the workshop wants a component I don't have" trap).
     public override void OnSceneLoaded(int buildIndex, string sceneName)
     {
+        Calibration.ForgetDollNames();
         // Retry rank-name decoration here: special-weapon rank clones are not in the WeaponTemplate
         // collection yet at OnTemplatesApplied. DecorateRankNames catches any that resolve via ById;
         // DecorateFromItems catches the rest off the owned item instances (special-weapon ranks).
@@ -57,7 +58,11 @@ public sealed class CalibrationSystem : JiangyuSystem
     // Runs after the clone templates exist. Stamp each rank weapon's name with its gold "R<N>"
     // marker (read from the base weapon's name, so it is never hand-authored per rank and the
     // marker shows everywhere the game renders the item name: tooltip heading, slot, list).
-    public override void OnTemplatesApplied() => DecorateRankNames();
+    public override void OnTemplatesApplied()
+    {
+        Calibration.ForgetDollNames();
+        DecorateRankNames();
+    }
 
     // Special-weapon rank clones register a little after OnTemplatesApplied (they miss the first
     // pass), so this retries on every scene load until every rank resolves, then stops.

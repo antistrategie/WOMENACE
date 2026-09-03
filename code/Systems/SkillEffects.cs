@@ -42,11 +42,13 @@ internal static class SkillEffects
         // Keep scanning past a template match that is not a Skill: the container holds
         // BaseSkill, so a non-Skill entry sharing the template must not end the search.
         var all = skills.GetAllSkills();
-        for (var i = 0; all != null && i < all.Count; i++)
+        var settled = all?.Count ?? 0;
+        for (var i = 0; i < settled; i++)
             if (all[i]?.GetTemplate()?.Pointer == template.Pointer && all[i].TryCast<Skill>() is { } match)
                 return match;
         var queued = skills.GetSkillsInAddQueue();
-        for (var i = 0; queued != null && i < queued.Count; i++)
+        var pending = queued?.Count ?? 0;
+        for (var i = 0; i < pending; i++)
             if (queued[i]?.GetTemplate()?.Pointer == template.Pointer && queued[i].TryCast<Skill>() is { } queuedMatch)
                 return queuedMatch;
         return null;
@@ -61,11 +63,13 @@ internal static class SkillEffects
             return 0;
         var count = 0;
         var all = skills.GetAllSkills();
-        for (var i = 0; all != null && i < all.Count; i++)
+        var settled = all?.Count ?? 0;
+        for (var i = 0; i < settled; i++)
             if (all[i]?.GetTemplate()?.Pointer == template.Pointer)
                 count++;
         var queued = skills.GetSkillsInAddQueue();
-        for (var i = 0; queued != null && i < queued.Count; i++)
+        var pending = queued?.Count ?? 0;
+        for (var i = 0; i < pending; i++)
             if (queued[i]?.GetTemplate()?.Pointer == template.Pointer)
                 count++;
         return count;
@@ -81,14 +85,16 @@ internal static class SkillEffects
         if (skills == null || slots.Count == 0)
             return;
         var all = skills.GetAllSkills();
-        for (var i = 0; all != null && i < all.Count; i++)
+        var settled = all?.Count ?? 0;
+        for (var i = 0; i < settled; i++)
         {
             var pointer = all[i]?.GetTemplate()?.Pointer ?? IntPtr.Zero;
             if (pointer != IntPtr.Zero && slots.TryGetValue(pointer, out var slot))
                 counts[slot]++;
         }
         var queued = skills.GetSkillsInAddQueue();
-        for (var i = 0; queued != null && i < queued.Count; i++)
+        var pending = queued?.Count ?? 0;
+        for (var i = 0; i < pending; i++)
         {
             var pointer = queued[i]?.GetTemplate()?.Pointer ?? IntPtr.Zero;
             if (pointer != IntPtr.Zero && slots.TryGetValue(pointer, out var slot))

@@ -59,8 +59,22 @@ public static class Calibration
     public static string SsrWeaponIdFor(string characterTag) => WeaponIdFor(characterTag) + "_ssr";
 
     // Whether a doll name belongs to one of our characters: the character tag template exists.
+    // Memoised by name, both verdicts: TryResolveWeaponId runs per owned weapon on every unit
+    // window refresh and under the tactical stats panel, and a vanilla name misses every time.
+    // CalibrationSystem drops the map whenever the templates are rebuilt or a scene loads, so a
+    // tag registered after a first lookup is picked up on the next pass.
+    private static readonly Dictionary<string, bool> DollNames = new(StringComparer.Ordinal);
+
+    internal static void ForgetDollNames() => DollNames.Clear();
+
     private static bool IsDoll(string dollName)
-        => Templates.ById<Il2CppMenace.Tags.TagTemplate>(Affinity.Tag + "_" + dollName) != null;
+    {
+        if (DollNames.TryGetValue(dollName, out var known))
+            return known;
+        var isDoll = Templates.ById<Il2CppMenace.Tags.TagTemplate>(Affinity.Tag + "_" + dollName) != null;
+        DollNames[dollName] = isDoll;
+        return isDoll;
+    }
 
     // Resolve a weapon template id (any rank) to the calibratable base id it belongs to, or false
     // when it is not a doll weapon. Accepts weapon.<doll>[_ssr][_r<N>]; membership comes from the

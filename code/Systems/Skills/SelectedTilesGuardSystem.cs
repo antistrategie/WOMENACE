@@ -160,8 +160,9 @@ public sealed class SelectedTilesGuardSystem : JiangyuSystem
                 return;
             // Index the Il2Cpp list, never foreach it: its boxed struct
             // enumerator does not advance (see the note on Templates.All).
-            var snapshot = new List<Tile>(live.Count);
-            for (var i = 0; i < live.Count; i++)
+            var liveCount = live.Count;
+            var snapshot = new List<Tile>(liveCount);
+            for (var i = 0; i < liveCount; i++)
             {
                 var tile = live[i];
                 if (tile != null)

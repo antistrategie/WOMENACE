@@ -274,8 +274,9 @@ public sealed class RallyBarsSystem : JiangyuSystem
     internal static int SumHitpoints(Actor actor)
     {
         var elements = actor?.GetElements();
+        var count = elements?.Count ?? 0;
         var total = 0;
-        for (var i = 0; elements != null && i < elements.Count; i++)
+        for (var i = 0; i < count; i++)
             total += elements[i]?.GetHitpoints() ?? 0;
         return total;
     }
@@ -283,8 +284,9 @@ public sealed class RallyBarsSystem : JiangyuSystem
     internal static int SumHitpointsMax(Actor actor)
     {
         var elements = actor?.GetElements();
+        var count = elements?.Count ?? 0;
         var total = 0;
-        for (var i = 0; elements != null && i < elements.Count; i++)
+        for (var i = 0; i < count; i++)
             total += elements[i]?.GetHitpointsMax() ?? 0;
         return total;
     }
@@ -355,7 +357,8 @@ public sealed class RallyBarsSystem : JiangyuSystem
         {
             var screen = Il2CppMenace.UI.UIManager.Get()?.GetActiveScreen()?.TryCast<Il2CppMenace.UI.UITactical>();
             var hudList = screen?.GetHUD()?.m_HUDList;
-            for (var i = 0; hudList != null && i < hudList.Count; i++)
+            var count = hudList?.Count ?? 0;
+            for (var i = 0; i < count; i++)
             {
                 var hud = hudList[i]?.TryCast<Il2CppMenace.UI.Tactical.UnitHUD>();
                 if (hud == null)
