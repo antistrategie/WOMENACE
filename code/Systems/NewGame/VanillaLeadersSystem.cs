@@ -18,7 +18,7 @@ namespace WOMENACE.Code;
 //   - the new-game initial-leader pick, by narrowing StrategyConfig.InitialPickableUnitLeaders when
 //     START GAME is pressed, before the pick dialog reads it,
 //   - the dossier hiring pools, by narrowing DossierItemTemplate.m_UnlockedLeaders for the duration
-//     of each Redeem,
+//     of each Redeem (the same swap also reshuffles the pool, on every redeem, see OnRedeemPre),
 //   - the black market stock, by removing any dossier whose effective pool is exhausted (a pilot
 //     dossier with no modded pilot to grant, a squad-leader dossier once every modded leader is
 //     acquired) so a dead, un-redeemable dossier never sits on the shelf,
@@ -32,10 +32,11 @@ namespace WOMENACE.Code;
 // per-campaign option so they keep working after a save reload.
 //
 // When the option is off this system leaves the leader pools alone: other mods (custom squad
-// leaders, all-leaders-pickable tweaks) own whatever they put there. The only write the off path
-// ever makes is re-adding vanilla leaders this system itself removed on an earlier press, and that
-// merge only adds entries, so another mod's pool edits are never overwritten and a merge that finds
-// nothing missing writes nothing.
+// leaders, all-leaders-pickable tweaks) own whatever they put there. The only lasting write the off
+// path ever makes is re-adding vanilla leaders this system itself removed on an earlier press, and
+// that merge only adds entries, so another mod's pool edits are never overwritten and a merge that
+// finds nothing missing writes nothing. The dossier reshuffle is not a write in that sense: it is a
+// view Redeem sees for the length of one call, and the postfix puts the pool back exactly as found.
 public sealed class VanillaLeadersSystem : JiangyuSystem
 {
     private const string StrategyConfigId = "strategy_config";
@@ -75,7 +76,8 @@ public sealed class VanillaLeadersSystem : JiangyuSystem
         // START GAME: merge back any previous narrowing, then narrow the live pool if the option is on.
         Context.Patches.Prefix("Il2CppMenace.UI.Menu.NewGameWindow", "ExecNewGame", _ => ApplyPickFilter());
 
-        // Each dossier redeem: while the option is on, roll only from modded leaders.
+        // Each dossier redeem: reshuffle the pool, and while the option is on, roll only from modded
+        // leaders.
         Context.Patches.Prefix("Il2CppMenace.Items.DossierItemTemplate", "Redeem", OnRedeemPre);
         Context.Patches.Postfix("Il2CppMenace.Items.DossierItemTemplate", "Redeem", OnRedeemPost);
 
@@ -311,6 +313,15 @@ public sealed class VanillaLeadersSystem : JiangyuSystem
         catch (Exception ex) { Context.Log.Warn($"vanilla-leaders: pick pool narrow failed: {ex.Message}"); }
     }
 
+    // Vanilla Redeem collects every pool entry the roster does not know yet, in pool order, then
+    // draws one with a PseudoRandom freshly seeded from the campaign seed. A fresh generator with the
+    // same seed draws the same index every time (for pools of 17 to 32 entries the very same number),
+    // so which entry a dossier grants is a function of position: the leaders the game ships at the
+    // front of the pool go first, and the dolls appended behind them only surface once that prefix
+    // is exhausted, or never, depending on the seed. So the pool handed to Redeem is reordered as
+    // well as narrowed: a deterministic shuffle keyed on the campaign seed and how many of the
+    // dossier's leaders are already acquired, which moves with every grant. The draw then lands on a
+    // uniformly random candidate, and a reload still rolls the same leader, as vanilla intends.
     private void OnRedeemPre(PatchInfo info)
     {
         // Heal a swap a previous Redeem left un-restored: the SDK exposes only a Harmony postfix (no
@@ -320,26 +331,36 @@ public sealed class VanillaLeadersSystem : JiangyuSystem
         RestoreSwapped();
         try
         {
-            if (!NewGameSettings.DisableVanillaLeaders(Context))
-                return;
             var dossier = (info.Instance as Il2CppObjectBase)?.TryCast<DossierItemTemplate>();
             var original = dossier?.m_UnlockedLeaders;
-            if (original == null || !TryFilterVanilla(original, out var kept, out _))
-                return;   // no vanilla leaders in this pool, nothing to filter
-
-            // Skip on grantability, not mere membership: if no modded entry is still available to
-            // grant (a pilot dossier with no modded pilots, or a squad-leader dossier whose modded
-            // leaders are all acquired) block the roll rather than let it roll an exhausted pool.
-            // Mirrors the market scrub, so an un-scrubbed dossier still behaves.
-            var roster = StrategyState.Get()?.Roster;
-            var grantable = roster == null ? kept.Count : kept.Count(t => IsGrantable(t, roster));
-            if (grantable == 0)
-            {
-                info.Skip = true;
+            if (original == null || original.Length == 0)
                 return;
+            var state = StrategyState.Get();
+            var roster = state?.Roster;
+            var all = ToList(original);
+
+            var pool = all;
+            if (NewGameSettings.DisableVanillaLeaders(Context) && TryFilterVanilla(original, out var kept, out _))
+            {
+                // Skip on grantability, not mere membership: if no modded entry is still available to
+                // grant (a pilot dossier with no modded pilots, or a squad-leader dossier whose modded
+                // leaders are all acquired) block the roll rather than let it roll an exhausted pool.
+                // Mirrors the market scrub, so an un-scrubbed dossier still behaves.
+                var grantable = roster == null ? kept.Count : kept.Count(t => IsGrantable(t, roster));
+                if (grantable == 0)
+                {
+                    info.Skip = true;
+                    return;
+                }
+                pool = kept;
             }
 
-            var written = ToArray(kept);
+            // Counted over the whole pool, not the narrowed one, so the salt does not depend on the
+            // option. Every grant from this dossier raises it by one.
+            var acquired = roster == null ? 0 : all.Count(t => IsAcquired(t, roster));
+            Shuffle(pool, unchecked((state?.GetSeed() ?? 0) * 397 + acquired));
+
+            var written = ToArray(pool);
             _swappedDossier = dossier;
             _savedUnlocked = original;
             _writtenUnlocked = written;
@@ -439,19 +460,21 @@ public sealed class VanillaLeadersSystem : JiangyuSystem
         return false;
     }
 
-    // A leader still grantable by a dossier: mod-added and never acquired (status Unknown, the same
-    // entry the game's own redeem would roll). Shared by the market scrub and the Redeem skip so the
-    // two cannot disagree on what "exhausted" means. A form-swap doll wearing her alt form reads as
-    // Unknown here (the swap stashes her base form out of the roster), but she is acquired: her base
-    // form is never grantable while the alt is active.
+    // A leader still grantable by a dossier: mod-added and never acquired. Shared by the market scrub
+    // and the Redeem skip so the two cannot disagree on what "exhausted" means.
     private static bool IsGrantable(UnitLeaderTemplate leader, Roster roster)
+        => leader != null && !IsVanilla(leader) && !IsAcquired(leader, roster);
+
+    // A leader the campaign already holds in some form: any roster status but Unknown (the entry the
+    // game's own redeem would roll), or a form-swap doll wearing her alt form. She reads as Unknown
+    // (the swap stashes her base form out of the roster) but is acquired: her base form is never
+    // grantable while the alt is active.
+    private static bool IsAcquired(UnitLeaderTemplate leader, Roster roster)
     {
-        if (leader == null || IsVanilla(leader))
-            return false;
         if (FormSwapSystem.BaseFormStashed(leader.GetID()))
-            return false;
+            return true;
         roster.GetLeaderByTemplate(leader, out var status);
-        return status == UnitLeaderStatus.Unknown;
+        return status != UnitLeaderStatus.Unknown;
     }
 
     // Split a leader pool into mod-added entries to keep and vanilla entries to drop, shared by the
@@ -524,6 +547,19 @@ public sealed class VanillaLeadersSystem : JiangyuSystem
         try { current = StrategyConfig.Current; } catch { }
         if (current != null && seen.Add(current.Pointer))
             yield return current;
+    }
+
+    // Fisher-Yates over a seeded System.Random: a seeded instance runs the same fixed algorithm on
+    // every runtime, so one seed always yields one order. HashCode.Combine and string hashes are
+    // randomised per process and must not feed the seed.
+    private static void Shuffle(List<UnitLeaderTemplate> list, int seed)
+    {
+        var random = new Random(seed);
+        for (var i = list.Count - 1; i > 0; i--)
+        {
+            var j = random.Next(i + 1);
+            (list[i], list[j]) = (list[j], list[i]);
+        }
     }
 
     private static List<UnitLeaderTemplate> ToList(Il2CppReferenceArray<UnitLeaderTemplate> array)
