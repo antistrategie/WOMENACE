@@ -14,7 +14,11 @@ Common uses:
     scripts/bridge.py workshop off     # re-lock both gates
     scripts/bridge.py oci              # grant 500 O.C.I. components
     scripts/bridge.py oci 1000         # grant a different amount (negative takes away)
-    scripts/bridge.py blackmarket      # restock the black market, report the stock count
+    scripts/bridge.py blackmarket      # restock the black market, as a restock token would
+    scripts/bridge.py blackmarket stock  # list what is on the shelf without touching it
+    scripts/bridge.py blackmarket open   # open the black market screen
+    scripts/bridge.py goods            # 30 valuable minerals to sell, 80 trade value each
+    scripts/bridge.py goods 10 --commodity commodity.delicious_plants
     scripts/bridge.py winmission       # kill remaining enemies + complete objectives
     scripts/bridge.py hud off          # take the mission UI down for a clean shot
     scripts/bridge.py hud on           # put it back
@@ -128,7 +132,14 @@ def main():
     oci.add_argument("amount", nargs="?", type=int, default=500,
                      help="how many components to add, negative takes away (default 500)")
 
-    sub.add_parser("blackmarket", help="restock the black market and report the stock count")
+    blackmarket = sub.add_parser("blackmarket", help="restock the black market, or inspect or open it")
+    blackmarket.add_argument("action", nargs="?", choices=["restock", "stock", "open"], default="restock",
+                             help="restock the shelf (default), stock lists it, open shows the screen")
+
+    goods = sub.add_parser("goods", help="add trade goods to sell at the black market (default 30 valuable minerals)")
+    goods.add_argument("count", nargs="?", type=int, default=30, help="how many units to add (default 30)")
+    goods.add_argument("--commodity", default="commodity.valuable_minerals",
+                       help="commodity template id to add (default commodity.valuable_minerals)")
 
     sub.add_parser("winmission", help="kill remaining enemies and complete objectives")
 
@@ -161,7 +172,12 @@ def main():
     elif options.cmd == "oci":
         _emit(run_verb("Oci.Grant", [options.amount], mutate=True))
     elif options.cmd == "blackmarket":
-        _emit(run_verb("Market.Refresh", mutate=True))
+        if options.action == "stock":
+            _emit(run_verb("Trade.Stock"))
+        else:
+            _emit(run_verb("Trade.Restock" if options.action == "restock" else "Trade.Open", mutate=True))
+    elif options.cmd == "goods":
+        _emit(run_verb("Trade.Goods", [options.count, options.commodity], mutate=True))
     elif options.cmd == "winmission":
         _emit(command("winmission"))
     elif options.cmd == "hud":
