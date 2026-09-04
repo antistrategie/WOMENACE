@@ -79,6 +79,19 @@ public static class Transmog
         return def;
     }
 
+    // The body prefab an outfit renders, by the convention the bakes follow: armor.<name>_<variant>
+    // is baked to <name>/<variant>/main. Null when the id is not one of the character's outfits.
+    public static string BodyAssetFor(string characterTag, string armorId)
+    {
+        if (characterTag == null || armorId == null || !characterTag.StartsWith("wmgfl_", StringComparison.Ordinal))
+            return null;
+        var name = characterTag["wmgfl_".Length..];
+        var prefix = $"armor.{name}_";
+        if (!armorId.StartsWith(prefix, StringComparison.Ordinal) || armorId.Length == prefix.Length)
+            return null;
+        return $"{name}/{armorId[prefix.Length..]}/main";
+    }
+
     public static void SetSelection(ModContext context, string characterTag, string armorId)
     {
         var key = Affinity.KeyForTag(characterTag);
