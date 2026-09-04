@@ -51,6 +51,7 @@ Persisted cross-system state belongs in `Context.State.Get<T>()`. Reusable rules
 - Character prefabs use `unity/Assets/Prefabs/<character>/<variant>/main.prefab` and KDL asset names such as `<character>/<variant>/main`.
 - Weapon prefabs use `unity/Assets/Prefabs/weapon/<name>/main.prefab` and KDL asset names such as `weapon/<name>/main`.
 - Asset references preserve nested paths. For example, `assets/additions/audio/weapons/rf/rf_shot_01.wav` is `asset="weapons/rf/rf_shot_01"`.
+- Audio under `assets/additions/audio/` compiles to Vorbis held compressed in memory. Clips above 48 kHz keep PCM, which is how the 96 kHz weapon effects stay uncompressed without a per-asset setting. Portraits compile to DXT5 and sprites to BC7 when their dimensions divide by four.
 - Run `scripts/pmx_to_menace.py` before the scripts under `scripts/doll/`. The PMX conversion regenerates the mesh and discards later doll-preparation work.
 - Doll squads normally pin `EntityTemplate.Scale` to `(1, 1)` and disable the squad-leader scale override. Every element uses the same Doll body, so vanilla random scale variation looks like inconsistent character height.
 - Collision-prone IDs use the `wmgfl_` prefix. IDs already namespaced by a Doll or Jiangyu's cross-mod contract tags do not need another prefix.
