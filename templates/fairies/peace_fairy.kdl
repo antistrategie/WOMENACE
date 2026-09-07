@@ -44,7 +44,7 @@ clone "SkillTemplate" from="offmap.shield_projector" id="offmap.wmgfl_peace_fair
     set "TargetsAllowed" enum="SkillTarget" "EmptyTile"
     set "IsTargeted" #false
     set "AimingType" enum="AimingType" "None"
-    set "Uses" 1
+    set "Uses" 2
     clear "EventHandlers"
     append "EventHandlers" type="WOMENACE:BlanketEffect" {
         set "EffectId" "effect.wmgfl_peace"
@@ -93,7 +93,7 @@ clone "ShipUpgradeTemplate" from="oci.wmgfl_peace_fairy" id="oci.wmgfl_enhanced_
         set "m_DefaultTranslation" "This Fairy has the power to end strife twice over. It can otherwise be used to mediate even the bitterest disputes."
     }
     set "ShortDescription" {
-        set "m_DefaultTranslation" "<style=\"Highlight\">• Gain the Offmap Ability \"Enhanced Peace Fairy\" which makes every unit on the map immune to damage for the whole of the next round. Usable twice per mission.</style>"
+        set "m_DefaultTranslation" "<style=\"Highlight\">• Gain the Offmap Ability \"Enhanced Peace Fairy\" which makes every unit on the map immune to damage for the whole of the next round. Usable 3 times per operation.</style>"
     }
     set "OciPointsCosts" 90
     clear "Effects"
@@ -113,5 +113,5 @@ clone "SkillTemplate" from="offmap.wmgfl_peace_fairy" id="offmap.wmgfl_enhanced_
     set "Title" {
         set "m_DefaultTranslation" "Enhanced Peace Fairy"
     }
-    set "Uses" 2
+    set "Uses" 3
 }
