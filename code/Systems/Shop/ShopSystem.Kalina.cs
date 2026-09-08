@@ -193,7 +193,7 @@ public sealed partial class ShopSystem
             {
                 Sound.Click();
                 if (SelectOutfit(outfit.Id))
-                    BuildOutfits();
+                    HideOutfits();
             });
             _outfitGrid.Add(card);
         }
