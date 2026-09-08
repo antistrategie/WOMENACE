@@ -6,8 +6,8 @@ using Jiangyu.Sdk;
 namespace WOMENACE.Code;
 
 // Dev verbs for exercising MeleeCookOffSystem in a live mission, since the bridge
-// cannot drive combat directly (no move-and-attack command) and the vanilla cook-off
-// is chance-gated at 5%.
+// cannot drive combat directly (no move-and-attack command) and vehicle deathrattles
+// are often chance gated.
 //
 // CookOff runs one half of an A/B: it spawns a target next to a player unit, grants
 // it racial.critical_hit_explosion (Chance 100, IsAttack payload) so the blast is
@@ -33,6 +33,7 @@ public static class Melee
     // next to, and its hitpoints at the moment the killing blow landed.
     private static Actor _witness;
     private static int _witnessHpAtKill;
+    private static int _witnessSceneGeneration;
     private static string _lastRun = "none";
 
     // Which of our melee skills currently carry wmgfl_melee, read off the LIVE
@@ -52,7 +53,7 @@ public static class Melee
             for (var i = 0; tags != null && i < tags.Count; i++)
                 if (tags[i]?.name != null)
                     names.Add(tags[i].name);
-            rows.Add(new { id, melee = names.Contains("wmgfl_melee"), tags = names });
+            rows.Add(new { id, melee = MeleeSkills.IsMelee(template), tags = names });
         }
         return rows;
     }
@@ -85,8 +86,30 @@ public static class Melee
             lastDeathrattlePayload = d.LastDeathrattlePayload,
             damageAtSpared = d.DamageAtSpared,
             lastSparedHit = d.LastSparedHit,
-            turnEndClears = d.TurnEndClears,
+            blastsLaunched = d.BlastsLaunched,
+            sourceMisses = d.SourceMisses,
             lastSparedSource = d.LastSparedSource,
+            lastBlastSource = d.LastBlastSource,
+            airborneDamageRestored = MeleeVsFliersSystem.Instance?.DamageRestored ?? 0,
+            lastAirborneHit = MeleeVsFliersSystem.Instance?.LastRestoredHit ?? "none",
+        };
+    }
+
+    public static object Airborne(Actor target)
+    {
+        if (!Mission.InMission || target == null || !InCurrentMission(target))
+            return new { error = "select a target in the current mission" };
+        var template = target.GetTemplate()?.TryCast<EntityTemplate>();
+        var tags = new List<string>();
+        for (var i = 0; template?.Tags != null && i < template.Tags.Count; i++)
+            tags.Add(template.Tags[i]?.name);
+        return new
+        {
+            target = template?.GetID(),
+            flying = template?.MovementType?.Flying ?? false,
+            tags = string.Join(", ", tags),
+            airborne = MeleeVsFliersSystem.IsAirborne(target),
+            hp = target.GetHitpoints(),
         };
     }
 
@@ -96,11 +119,10 @@ public static class Melee
     {
         if (_witness == null)
             return new { run = _lastRun, error = "no CookOff run yet" };
-        // Guard against answering with an actor from a finished mission (the Il2Cpp
-        // wrapper keeps a dead one resolvable). Membership of the live actor list is
-        // the test, not the round number, which ticks on during a run.
-        if (!Mission.InMission || !InCurrentMission(_witness))
-            return new { run = _lastRun, error = "the CookOff run was in a different mission; re-run it" };
+        // Dead witnesses can leave the live actor list. Use the scene generation so
+        // a lethal blast is reported as damage rather than as a mission change.
+        if (!Mission.InMission || _witnessSceneGeneration != MeleeCookOffSystem.Instance.SceneGeneration)
+            return new { run = _lastRun, error = "the cook-off test was in a different mission, re-run it" };
 
         var alive = _witness.IsAlive();
         // The witness is normally a multi-element squad, and a blast that guts a
@@ -115,6 +137,38 @@ public static class Melee
             witnessHpNow = hp,
             blastLanded = !alive || hp < _witnessHpAtKill,
         };
+    }
+
+    // Leave a guaranteed exploder alive for the player to kill with a normal attack.
+    // An explicit witness and optional tile keep the comparison beside the intended
+    // squad. Removing armour avoids a melee test stalling on vehicle armour.
+    [MutatingVerb]
+    public static object Spawn(Actor witness, Tile tile = null)
+    {
+        if (!Mission.InMission || witness == null || !InCurrentMission(witness) || !witness.IsAlive())
+            return new { error = "select a living witness in the current mission" };
+        var origin = witness.GetTile();
+        var target = Templates.ById<EntityTemplate>(DefaultTargetId);
+        var blast = Templates.ById<SkillTemplate>(BlastId);
+        if (origin == null || target == null || blast == null)
+            return new { error = "unresolved target, blast or witness tile" };
+
+        var victim = tile == null ? SpawnAdjacent(target, origin) : Units.Spawn(target, HostileFaction(), tile);
+        if (victim == null)
+            return new { error = "could not spawn the target on a free tile" };
+        string refusal = null;
+        if (!SkillEffects.TryAddEffect(victim, blast, msg => refusal = msg))
+        {
+            Units.Despawn(victim);
+            return new { error = $"could not grant '{BlastId}': {refusal ?? "unknown"}" };
+        }
+
+        victim.SetArmorDurability(0);
+        _witness = witness;
+        _witnessHpAtKill = RallyBarsSystem.SumHitpoints(witness);
+        _witnessSceneGeneration = MeleeCookOffSystem.Instance.SceneGeneration;
+        _lastRun = "manual melee";
+        return new { target = victim, blast = BlastId, armour = 0, next = "kill the target with melee, then call Melee.Report and Melee.Probe" };
     }
 
     // Spawn an exploding target beside a player unit and kill it, attributing the kill
@@ -172,6 +226,7 @@ public static class Melee
         Combat.Heal(witness, RallyBarsSystem.SumHitpointsMax(witness));
         _witness = witness;
         _witnessHpAtKill = RallyBarsSystem.SumHitpoints(witness);
+        _witnessSceneGeneration = MeleeCookOffSystem.Instance.SceneGeneration;
         _lastRun = melee ? "melee" : "control";
 
         // The game's own debug-destroy DamageInfo. A hand-built one carries no armour
@@ -234,7 +289,7 @@ public static class Melee
         if (_witness == null)
             return new { error = "no CookOff run yet" };
         if (!Mission.InMission || !InCurrentMission(_witness))
-            return new { error = "the CookOff run was in a different mission; re-run it" };
+            return new { error = "the cook-off test was in a different mission, re-run it" };
 
         var rifle = Templates.ById<SkillTemplate>(ControlSkillId);
         if (rifle == null)

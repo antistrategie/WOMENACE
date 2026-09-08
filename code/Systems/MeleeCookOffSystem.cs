@@ -6,36 +6,14 @@ using Jiangyu.Sdk;
 
 namespace WOMENACE.Code;
 
-// Keeps a target that dies to one of our melee attacks from killing the doll who
-// killed it.
-//
-// MENACE hangs its on-death blasts off a Deathrattle skill handler: a pirate rocket
-// truck carries racial.pirate_rocket_truck_explosion_death (40% chance), a gas tank
-// racial.gas_tank_death, and ANY vehicle that took the critical-hit defect picks up
-// racial.critical_hit_explosion for the rest of the mission. Each fires an area
-// attack centred on the wreck when it dies. That is a fair trade for a rifle squad
-// shooting from cover, and a death sentence for a doll who had to close to blade
-// range to land the kill.
-//
-// The blast still happens: it is drawn, it is heard, and it still guts whatever else
-// is standing around the wreck. Only the melee attacker is passed over. Cancelling
-// the deathrattle outright would be simpler, but it would delete the explosion's
-// presentation and hand the player a silent, consequence-free demolition tool, and it
-// would matter even when the attacker was never in the radius to begin with (the
-// mech's pile bunker reaches six tiles).
-//
-// Scope: the killing skill must carry wmgfl_melee, a tag no vanilla skill has, so
-// only our blades and the pile bunker trip it, and the deathrattle's payload must be
-// an attack, so a harmless on-death event such as the worker drone's morale scream is
-// untouched.
+// Protects the killer from a deathrattle blast after a wmgfl_melee killing blow.
+// Only the killer's hitpoint and armour damage are waived. The explosion's effects
+// and damage to everyone else still resolve, including delegated shrapnel.
+// Non-attack deathrattles, such as the worker drone's morale scream, are unaffected.
 public sealed class MeleeCookOffSystem : JiangyuSystem
 {
-    private const string MeleeTag = "wmgfl_melee";
-
 #if JIANGYU_DEV
-    // Gate-by-gate counters for the Melee.Probe dev verb. The suppression is invisible
-    // when it works and invisible when it silently does not, so a failed run needs to
-    // say WHICH gate rejected it rather than leaving log absence to be guessed at.
+    // Gate counters distinguish missing kill attribution from unmatched blast damage.
     internal sealed class Counters
     {
         public int MeleeHitsSeen, LedgerAdds, DeathrattleCalls, PayloadResolved,
@@ -45,7 +23,7 @@ public sealed class MeleeCookOffSystem : JiangyuSystem
         public string LastDeathrattlePayload = "none";
         public int DamageAtSpared;
         public string LastSparedHit = "none";
-        public int TurnEndClears;
+        public int BlastsLaunched, SourceMisses;
         public string LastSparedSource = "none";
         public string LastBlastSource = "none";
     }
@@ -54,42 +32,37 @@ public sealed class MeleeCookOffSystem : JiangyuSystem
     internal readonly Counters Diagnostics = new();
     internal int LedgerSize => _meleeStruck.Count;
     internal int SparedSize => _sparedFrom.Count;
+    internal int SceneGeneration { get; private set; }
 #endif
 
-    // Verdict per skill template, so the tag list is walked once per skill rather than
-    // once per hit. Caching the TagTemplate's own pointer instead looks tidier but does
-    // not work: the instance the loader registers is not the instance that ends up in
-    // a skill's Tags list, so the compare never matches.
+    // Cache the tag verdict per skill template to avoid marshalling tags on every hit.
     private readonly Dictionary<IntPtr, bool> _isMelee = new();
 
-    // Attackers being passed over, and which blasts each is being passed over for.
-    //
-    // Matching on the blast rather than on "the next hit that lands" is what makes this
-    // safe. TriggerSkill rolls the deathrattle's Chance AFTER this prefix has run, and
-    // both pirate trucks are Chance 40, so most entries are for a blast that never
-    // fires. Those orphans are harmless here: nothing else carries that SourceSkill, so
-    // they simply never match and get dropped at the next clear. A waiver scoped to
-    // "the next hit" would instead be spent absorbing reaction fire or a burn tick.
-    //
-    // Entries are not consumed on use, because one blast can land more than once:
-    // active.rocket_truck_explosion is Repetitions 6, and one thrust or ult can kill two
-    // exploders at once.
+    private sealed class Deathrattle
+    {
+        // Retain the wrapper while its native pointer is used as a dictionary key.
+        public Skill Origin;
+        public Actor Attacker;
+        public string PayloadId;
+    }
+
+    private readonly Dictionary<IntPtr, Deathrattle> _deathrattles = new();
+
+    // Retain the actual launched skills, not their shared templates. Another wreck
+    // can use the same template without sharing this protection. Repetitions and
+    // delayed impacts keep their waiver until the mission ends, including when an
+    // unrelated actor finishes its turn while the explosion is still resolving.
     private sealed class Waiver
     {
         public Actor Attacker;
-        public readonly HashSet<IntPtr> Blasts = new();
+        public readonly Dictionary<IntPtr, Skill> Blasts = new();
     }
 
     private readonly Dictionary<IntPtr, Waiver> _sparedFrom = new();
 
-    // The last melee hit each actor took, and who landed it, so the deathrattle can ask
-    // what killed the wreck and which unit to pass the blast over. Entity.GetLastAttackedBySkill() looks like it should serve
-    // instead, but a bridge probe read it back null on a kill that Entity.Killer
-    // recorded fine: the engine sets it further up the attack path than
-    // Actor.OnDamageReceived, so it cannot be relied on here. Only melee hits are
-    // recorded, and any later hit clears the entry, so this stays a handful of entries
-    // at most. The Actor wrapper is retained alongside the pointer key so the address
-    // can never be recycled to a different actor mid-mission.
+    // A deathrattle can run before Killer and GetLastAttackedBySkill are populated.
+    // Record the attacker before damage resolves and clear the entry on a later
+    // non-melee hit. Retaining the actor wrappers prevents native pointer reuse.
     private sealed class MeleeHit
     {
         public Actor Victim;
@@ -100,9 +73,13 @@ public sealed class MeleeCookOffSystem : JiangyuSystem
 
     public override void OnSceneLoaded(int buildIndex, string sceneName)
     {
+        _deathrattles.Clear();
         _sparedFrom.Clear();
         _meleeStruck.Clear();
         _isMelee.Clear();
+#if JIANGYU_DEV
+        SceneGeneration++;
+#endif
     }
 
     public override void OnInit()
@@ -113,21 +90,10 @@ public sealed class MeleeCookOffSystem : JiangyuSystem
         // Both DeathrattleHandler.OnDeath and OnElementDeath funnel through this
         // private helper, so one hook covers the actor-wide and per-element forms.
         Context.Patches.Prefix("Il2CppMenace.Tactical.Skills.Effects.DeathrattleHandler", "TriggerSkill", OnDeathrattle);
+        Context.Patches.Prefix("Il2CppMenace.Tactical.Skills.Skill", "Use", 2, OnBlastUse);
         // The 3-arg overload is the concrete Actor override (a 4-arg form also
         // exists), the same binding MeleeVsFliersSystem uses.
         Context.Patches.Prefix("Il2CppMenace.Tactical.Actor", "OnDamageReceived", 3, OnDamageReceived);
-        // InvokeOnTurnEnd(Actor) is raised from Actor.SetTurnDone, so this fires whenever
-        // any unit anywhere finishes acting, not on a turn boundary. That makes it a
-        // coarse upper bound on how long a waiver can linger rather than a precise
-        // lifetime, which is fine now that a waiver only matches its own blast.
-        Context.Patches.Postfix("Il2CppMenace.Tactical.TacticalManager", "InvokeOnTurnEnd", _ =>
-        {
-#if JIANGYU_DEV
-            if (_sparedFrom.Count > 0)
-                Diagnostics.TurnEndClears++;
-#endif
-            _sparedFrom.Clear();
-        });
     }
 
     // A wreck is about to detonate. If a melee attack of ours is what killed it, note
@@ -140,6 +106,12 @@ public sealed class MeleeCookOffSystem : JiangyuSystem
             Diagnostics.DeathrattleCalls++;
 #endif
             var handler = (info.Instance as Il2CppObjectBase)?.TryCast<DeathrattleHandler>();
+            var origin = handler?.ParentSkill;
+            if (origin == null)
+                return;
+            // Per-element deathrattles can fire again after a different attacker
+            // lands the next kill. Each invocation decides its own protection.
+            _deathrattles.Remove(origin.Pointer);
             var payload = handler?.m_Template?.Skill;
 #if JIANGYU_DEV
             if (payload != null)
@@ -150,8 +122,7 @@ public sealed class MeleeCookOffSystem : JiangyuSystem
                     Diagnostics.PayloadIsAttack++;
             }
 #endif
-            // IsAttack separates the seven damaging blasts from the on-death events
-            // that cannot hurt anyone.
+            // Only attack payloads need damage protection.
             if (payload == null || !payload.IsAttack)
                 return;
 
@@ -161,25 +132,55 @@ public sealed class MeleeCookOffSystem : JiangyuSystem
 #if JIANGYU_DEV
             Diagnostics.WreckInLedger++;
 #endif
-            // The attacker comes from the ledger, not Entity.Killer: a bridge probe
-            // caught Killer still null here and populated only once the damage call
-            // has returned, which is after the deathrattle has already run.
+            // The receive prefix captures the attacker before this nested deathrattle.
             var killer = hit.Attacker;
             if (killer == null)
                 return;
 #if JIANGYU_DEV
             Diagnostics.KillerResolved++;
-            Diagnostics.SpareRecorded++;
 #endif
-
-            if (!_sparedFrom.TryGetValue(killer.Pointer, out var waiver))
-                _sparedFrom[killer.Pointer] = waiver = new Waiver { Attacker = killer };
-            waiver.Blasts.Add(payload.Pointer);
-            Context.Log.Debug($"melee cook-off: '{payload.GetID()}' will pass over its melee attacker");
+            _deathrattles[origin.Pointer] = new Deathrattle
+            {
+                Origin = origin,
+                Attacker = killer,
+                PayloadId = payload.GetID(),
+            };
         }
         catch (Exception ex)
         {
             Context.Log.Warn($"melee cook-off: deathrattle check failed: {ex.GetType().Name}: {ex.Message}");
+        }
+    }
+
+    // TriggerSkill (native RVA 0x752F90) sets the launched skill's SourceSkill to
+    // the handler's ParentSkill before calling Use. Bind here, after the chance roll,
+    // so failed rolls never create a waiver. AddSkillHandler.OnApply (0x745100)
+    // attributes delegated shrapnel to this launched instance through SourceSkill.
+    private void OnBlastUse(PatchInfo info)
+    {
+        try
+        {
+            if (_deathrattles.Count == 0 || info.Instance is not Skill blast)
+                return;
+            var source = blast.SourceSkill;
+            if (source == null || !_deathrattles.TryGetValue(source.Pointer, out var deathrattle)
+                || blast.GetTemplate()?.GetID() != deathrattle.PayloadId)
+                return;
+
+            var killer = deathrattle.Attacker;
+            if (!_sparedFrom.TryGetValue(killer.Pointer, out var waiver))
+                _sparedFrom[killer.Pointer] = waiver = new Waiver { Attacker = killer };
+            waiver.Blasts[blast.Pointer] = blast;
+#if JIANGYU_DEV
+            Diagnostics.BlastsLaunched++;
+            Diagnostics.SpareRecorded++;
+            Diagnostics.LastBlastSource = Describe(blast);
+#endif
+            Context.Log.Debug($"melee cook-off: '{deathrattle.PayloadId}' will pass over its melee attacker");
+        }
+        catch (Exception ex)
+        {
+            Context.Log.Warn($"melee cook-off: blast tracking failed: {ex.GetType().Name}: {ex.Message}");
         }
     }
 
@@ -218,27 +219,25 @@ public sealed class MeleeCookOffSystem : JiangyuSystem
                 return;
             if (!_sparedFrom.TryGetValue(victim.Pointer, out var waiver))
                 return;
-            // The blast delegates its damage to a differently named skill, but the engine
-            // stamps that skill's SourceSkill with the deathrattle payload it came from,
-            // so this identifies the blast precisely. Skill.Source would be tidier still
-            // and is what TriggerSkill sets, but a bridge probe read it back null here.
-            var origin = SafeTemplatePointer(skill?.SourceSkill);
-            if (origin == IntPtr.Zero || !waiver.Blasts.Contains(origin))
-                return;
-
             var damageInfo = (info.Args is { Count: > 2 } ? info.Args[2] : null) as DamageInfo;
 #if JIANGYU_DEV
+            // Record before matching so a rejected source is visible in Melee.Probe.
             Diagnostics.DamageAtSpared++;
             Diagnostics.LastSparedHit = damageInfo == null
                 ? $"{payload?.GetID() ?? "null-skill"} damageInfo=null"
                 : $"{payload?.GetID() ?? "null-skill"} aoe={damageInfo.IsAoE} dmg={damageInfo.Damage} armour={damageInfo.ArmorDamage}";
-            // TriggerSkill stamps the blast it launches with Source = the wreck's last
-            // attacker and SourceSkill = the deathrattle skill. If the delegated damage
-            // skill still carries them, the whole waiver can go: the gate becomes
-            // "this damage came from a blast whose source is me", evaluated at damage
-            // time, with no window to orphan and no repetition to miss.
             Diagnostics.LastSparedSource = Describe(skill);
 #endif
+            // Critical-hit and hover-bomb explosions both deliver direct payload
+            // damage followed by shrapnel. Include the incoming skill itself before
+            // walking its sources. Instance identity keeps unrelated blasts separate.
+            if (!ComesFromBlast(skill, waiver))
+            {
+#if JIANGYU_DEV
+                Diagnostics.SourceMisses++;
+#endif
+                return;
+            }
             if (damageInfo == null)
                 return;
             damageInfo.Damage = 0;
@@ -262,22 +261,28 @@ public sealed class MeleeCookOffSystem : JiangyuSystem
         {
             if (skill == null)
                 return "skill=null";
-            var source = skill.Source;
-            var sourceSkill = skill.SourceSkill;
-            var sourceName = source == null ? "null" : (source.TryCast<Actor>() != null ? "actor" : "entity");
-            var sourceId = sourceSkill?.GetTemplate()?.GetID() ?? "null";
-            return $"Source={sourceName} SourceSkill={sourceId}";
+            var chain = new List<string>();
+            for (var depth = 0; skill != null && depth < 16; depth++)
+            {
+                chain.Add($"{skill.GetTemplate()?.GetID() ?? "null"}@{skill.Pointer.ToInt64():X}");
+                skill = skill.SourceSkill;
+            }
+            return string.Join(" <- ", chain);
         }
         catch (Exception ex) { return $"unreadable {ex.GetType().Name}"; }
     }
 #endif
 
-    // The template a skill instance came from, as a raw pointer, or zero when it cannot
-    // be read. Reading a field off a dead Il2Cpp object can throw.
-    private static IntPtr SafeTemplatePointer(Skill skill)
+    private static bool ComesFromBlast(Skill skill, Waiver waiver)
     {
-        try { return skill?.GetTemplate()?.Pointer ?? IntPtr.Zero; }
-        catch { return IntPtr.Zero; }
+        // Bound traversal in case another mod supplies a cyclic source chain.
+        for (var depth = 0; skill != null && depth < 16; depth++)
+        {
+            if (waiver.Blasts.ContainsKey(skill.Pointer))
+                return true;
+            skill = skill.SourceSkill;
+        }
+        return false;
     }
 
     // Runs per damage event, so the answer is memoised per skill template: the tag walk
@@ -288,10 +293,7 @@ public sealed class MeleeCookOffSystem : JiangyuSystem
             return false;
         if (_isMelee.TryGetValue(template.Pointer, out var cached))
             return cached;
-        var melee = false;
-        var tags = template.Tags;
-        for (var i = 0; !melee && tags != null && i < tags.Count; i++)
-            melee = tags[i]?.name == MeleeTag;
+        var melee = MeleeSkills.IsMelee(template);
         _isMelee[template.Pointer] = melee;
 #if JIANGYU_DEV
         Diagnostics.LastSkillEvaluated = template.GetID();

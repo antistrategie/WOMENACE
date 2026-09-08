@@ -1,3 +1,14 @@
+clone "SkillTemplate" from="effect.drive_by" id="effect.wmgfl_drive_by" {
+    set "EventHandlers" index=1 {
+        set "SkillFilter" type="IsAttackFilter" {
+        }
+    }
+    set "EventHandlers" index=2 {
+        set "SkillFilter" type="IsAttackFilter" {
+        }
+    }
+}
+
 clone "PerkTemplate" from="perk.drive_by" id="perk.wmgfl_drive_by" {
     set "Title" {
         set "m_DefaultTranslation" "Drive By+"
