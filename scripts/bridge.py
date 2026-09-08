@@ -10,8 +10,10 @@ Common uses:
 
     scripts/bridge.py gifts            # top up 5 of every gift commodity
     scripts/bridge.py gifts 10         # top up 10 of each instead
-    scripts/bridge.py workshop         # unlock the ship workshop (+ blueprint vouchers)
+    scripts/bridge.py workshop         # unlock Workshop, Kalina's Shop and blueprint vouchers
     scripts/bridge.py workshop off     # re-lock both gates
+    scripts/bridge.py shop             # open Kalina's Shop
+    scripts/bridge.py sardis 1000       # grant Sardis Gold for shop testing
     scripts/bridge.py oci              # grant 500 O.C.I. components
     scripts/bridge.py oci 1000         # grant a different amount (negative takes away)
     scripts/bridge.py blackmarket      # restock the black market, as a restock token would
@@ -124,9 +126,13 @@ def main():
     gifts = sub.add_parser("gifts", help="top up every gift commodity (default 5 of each)")
     gifts.add_argument("count", nargs="?", type=int, default=5, help="how many of each gift (default 5)")
 
-    workshop = sub.add_parser("workshop", help="unlock the ship workshop (+ blueprint vouchers)")
+    workshop = sub.add_parser("workshop", help="unlock Workshop, Kalina's Shop and blueprint vouchers")
     workshop.add_argument("state", nargs="?", choices=["on", "off"], default="on",
                           help="on unlocks (default), off re-locks both gates")
+
+    sub.add_parser("shop", help="open Kalina's Shop (requires the Workshop unlock)")
+    sardis = sub.add_parser("sardis", help="grant Sardis Gold for shop testing")
+    sardis.add_argument("count", nargs="?", type=int, default=1000)
 
     oci = sub.add_parser("oci", help="grant O.C.I. components (default 500)")
     oci.add_argument("amount", nargs="?", type=int, default=500,
@@ -169,6 +175,10 @@ def main():
         _emit(run_verb("Gifts.Give", [options.count], mutate=True))
     elif options.cmd == "workshop":
         _emit(run_verb("Workshop.Unlock", [options.state == "on"], mutate=True))
+    elif options.cmd == "shop":
+        _emit(run_verb("Shop.Open", mutate=True))
+    elif options.cmd == "sardis":
+        _emit(run_verb("Shop.Sardis", [options.count], mutate=True))
     elif options.cmd == "oci":
         _emit(run_verb("Oci.Grant", [options.amount], mutate=True))
     elif options.cmd == "blackmarket":

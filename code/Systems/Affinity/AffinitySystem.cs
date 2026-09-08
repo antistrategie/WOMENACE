@@ -178,8 +178,8 @@ public sealed class AffinitySystem : JiangyuSystem
     // the running total). None for non-proficiency dolls (no class tag).
     private static IEnumerable<AffinityTooltip.Reward> ProficiencyRewards(AffinityTooltip.Info info)
     {
-        var cls = Proficiency.ClassFromSpeakerTags(info.SpeakerTags);
-        if (cls == Proficiency.WeaponClass.None)
+        var cls = WeaponClasses.ClassFromTags(info.SpeakerTags);
+        if (cls == WeaponClass.None)
             yield break;
         for (var lvl = 1; lvl <= Affinity.MaxLevel; lvl++)
         {
@@ -369,13 +369,13 @@ public sealed class AffinitySystem : JiangyuSystem
     // node), the level number in its own fixed column so every reward line shares one indent, then
     // the level's rewards stacked to the right. The current level's fill stops AT its node, so 0
     // progress reads as "at this level", not "almost at the next".
-    private static VisualElement BuildLevelRow(int lvl, int current, List<AffinityTooltip.Reward> rewards)
+    internal static VisualElement BuildLevelRow(int lvl, int current, List<AffinityTooltip.Reward> rewards, int maxLevel = 0)
     {
         var state = lvl < current ? "done" : lvl == current ? "current" : "locked";
         var row = new VisualElement();
         row.AddToClassList("wm-aff-lvl-row");
         row.AddToClassList("wm-aff-lvl-row--" + state);
-        if (lvl >= Affinity.MaxLevel)
+        if (lvl >= (maxLevel > 0 ? maxLevel : Affinity.MaxLevel))
             row.AddToClassList("wm-aff-lvl-row--last");
 
         var rail = new VisualElement();
@@ -445,8 +445,7 @@ public sealed class AffinitySystem : JiangyuSystem
         ApplyUnlocks(key, Affinity.LeaderOf(window));
     }
 
-    // Grant the character's level-gated SSR weapons into the shared inventory once they are
-    // unlocked. Keyed off the Unlocks registry and idempotent: a weapon already owned is skipped.
+    // Weapon grants are recorded separately from inventory. Consuming a weapon cannot grant it again.
     // Skins need no grant: they are transmog outfits, not items, and the transmog picker reads
     // their unlock level straight from Unlocks.
     private void ApplyUnlocks(int key, BaseUnitLeader leader)
@@ -462,16 +461,24 @@ public sealed class AffinitySystem : JiangyuSystem
                 return;
 
             var characterTag = Affinity.CharacterTag(leader);
+            var grantedWeapons = Context.State.Get<AffinityState>().ForLeader(key).GrantedWeaponIds;
 
             foreach (var id in Unlocks.UnlockedWeapons(characterTag, level))
             {
-                var template = Templates.Resolve<WeaponTemplate>(id, _weaponCache, msg => Context.Log.Warn($"affinity: {msg}"));
-                // Ownership must count EVERY calibration rank, not just the base R0: once the player
-                // calibrates, they own a ranked clone (r1-r6) and no base R0, so a base-only check
-                // would think the weapon is missing and re-grant a fresh R0 on every window refresh.
-                if (template == null || OwnsInstance(owned, itemId => Calibration.TryParseRank(itemId, id, out _)))
+                if (grantedWeapons.Contains(id))
                     continue;
-                owned.AddItem(template, false, false);
+                var template = Templates.Resolve<WeaponTemplate>(id, _weaponCache, msg => Context.Log.Warn($"affinity: {msg}"));
+                if (template == null)
+                    continue;
+                // Existing saves may already own a calibrated copy without a grant ledger.
+                if (OwnsInstance(owned, itemId => Calibration.TryParseRank(itemId, id, out _)))
+                {
+                    grantedWeapons.Add(id);
+                    continue;
+                }
+                if (owned.AddItem(template, false, false) == null)
+                    continue;
+                grantedWeapons.Add(id);
                 Context.Log.Info($"affinity: unlocked weapon '{id}' (level {level})");
             }
 
@@ -479,10 +486,14 @@ public sealed class AffinitySystem : JiangyuSystem
             // exact id and the grant lands once.
             foreach (var id in Unlocks.UnlockedSpecialWeapons(characterTag, level))
             {
-                var template = Templates.Resolve<WeaponTemplate>(id, _weaponCache, msg => Context.Log.Warn($"affinity: {msg}"));
-                if (template == null || OwnsInstance(owned, itemId => itemId == id))
+                if (grantedWeapons.Contains(id))
                     continue;
-                owned.AddItem(template, false, false);
+                var template = Templates.Resolve<WeaponTemplate>(id, _weaponCache, msg => Context.Log.Warn($"affinity: {msg}"));
+                if (template == null)
+                    continue;
+                if (!OwnsInstance(owned, itemId => itemId == id) && owned.AddItem(template, false, false) == null)
+                    continue;
+                grantedWeapons.Add(id);
                 Context.Log.Info($"affinity: granted special weapon '{id}' (level {level})");
             }
 

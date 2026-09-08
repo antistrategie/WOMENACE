@@ -1,0 +1,5 @@
+// Rogue Army's introduction unlocks the Workshop and Kalina's Shop together through WorkshopAccess.
+// The Construct-era memorandum otherwise announces a second unlock much later in the campaign.
+patch "ConversationTemplate" "event_story_workshop_unlock" {
+    set "Active" #false
+}

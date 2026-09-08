@@ -35,6 +35,7 @@ clone "WeaponTemplate" from="weapon.voymastina" id="weapon.voymastina_r6" {
 }
 
 clone "CommodityTemplate" from="commodity.construct_weapon_parts" id="commodity.wmgfl_component_voymastina" {
+    append "Tags" "wmgfl_weapon_component"
     set "Title" {
         set "m_DefaultTranslation" "Kalashnikova-15 Component"
     }
@@ -53,15 +54,23 @@ clone "BlueprintTemplate" from="blueprint.squad_weapon_electro_magnetic_enhanced
     set "m_CraftingResult" "weapon.voymastina"
     clear "m_CraftingMaterials"
     append "m_CraftingMaterials" {
-        set "Template" "commodity.wmgfl_component_voymastina"
+        set "Template" "commodity.wmgfl_part_ar_barrel"
         set "Count" 1
     }
     append "m_CraftingMaterials" {
-        set "Template" "commodity.construct_weapon_parts"
-        set "Count" 4
+        set "Template" "commodity.wmgfl_part_ar_receiver"
+        set "Count" 1
     }
     append "m_CraftingMaterials" {
-        set "Template" "commodity.construct_cybernetic_optics"
-        set "Count" 2
+        set "Template" "commodity.wmgfl_part_ar_grip"
+        set "Count" 1
+    }
+    append "m_CraftingMaterials" {
+        set "Template" "commodity.wmgfl_part_ar_sights"
+        set "Count" 1
+    }
+    append "m_CraftingMaterials" {
+        set "Template" "commodity.wmgfl_component_voymastina"
+        set "Count" 1
     }
 }

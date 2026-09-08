@@ -287,6 +287,7 @@ clone "SkillTemplate" from="active.sextans_ult_rend" id="active.sextans_ult_rend
 }
 
 clone "CommodityTemplate" from="commodity.construct_weapon_parts" id="commodity.wmgfl_component_sextans" {
+    append "Tags" "wmgfl_weapon_component"
     set "Title" {
         set "m_DefaultTranslation" "Nightsnake Component"
     }
@@ -305,16 +306,16 @@ clone "BlueprintTemplate" from="blueprint.squad_weapon_electro_magnetic_enhanced
     set "m_CraftingResult" "weapon.sextans"
     clear "m_CraftingMaterials"
     append "m_CraftingMaterials" {
-        set "Template" "commodity.wmgfl_component_sextans"
+        set "Template" "commodity.wmgfl_part_bld_blank"
         set "Count" 1
     }
     append "m_CraftingMaterials" {
-        set "Template" "commodity.construct_weapon_parts"
-        set "Count" 4
+        set "Template" "commodity.wmgfl_part_bld_hilt"
+        set "Count" 1
     }
     append "m_CraftingMaterials" {
-        set "Template" "commodity.construct_cybernetic_optics"
-        set "Count" 2
+        set "Template" "commodity.wmgfl_component_sextans"
+        set "Count" 1
     }
 }
 
@@ -608,6 +609,7 @@ clone "SkillTemplate" from="active.sextans_ssr_ult_rend" id="active.sextans_ssr_
 }
 
 clone "CommodityTemplate" from="commodity.construct_weapon_parts" id="commodity.wmgfl_component_sextans_ssr" {
+    append "Tags" "wmgfl_weapon_component"
     set "Title" {
         set "m_DefaultTranslation" "Twilight Rose Component"
     }
@@ -626,19 +628,15 @@ clone "BlueprintTemplate" from="blueprint.squad_weapon_electro_magnetic_enhanced
     set "m_CraftingResult" "weapon.sextans_ssr"
     clear "m_CraftingMaterials"
     append "m_CraftingMaterials" {
-        set "Template" "commodity.wmgfl_component_sextans_ssr"
+        set "Template" "commodity.wmgfl_part_bld_blank"
         set "Count" 1
     }
     append "m_CraftingMaterials" {
-        set "Template" "commodity.construct_weapon_parts"
-        set "Count" 4
+        set "Template" "commodity.wmgfl_part_bld_hilt"
+        set "Count" 1
     }
     append "m_CraftingMaterials" {
-        set "Template" "commodity.construct_cybernetic_optics"
-        set "Count" 2
-    }
-    append "m_CraftingMaterials" {
-        set "Template" "commodity.construct_advanced_alloys"
-        set "Count" 2
+        set "Template" "commodity.wmgfl_component_sextans_ssr"
+        set "Count" 1
     }
 }

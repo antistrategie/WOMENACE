@@ -5,14 +5,24 @@ namespace WOMENACE.Code;
 
 // The shared weapon-calibration model: the id conventions and the component schedule every
 // calibration consumer reads (CalibrationSystem, the affinity badge popover, the dev verbs).
-// A doll's weapon calibrates from rank 0 (the base template) to rank 6 by merging in freshly
-// crafted duplicates at the workshop. Every id derives from the character tag (wmgfl_<doll>):
+// Every upgrade uses an R0 duplicate. Upgrades from R3 also require a calibration core.
+// Every id derives from the character tag (wmgfl_<doll>):
 // the weapon is weapon.<doll>, its SSR weapon.<doll>_ssr, rank clones <base>_r<N>, its component
 // commodity.wmgfl_component_<doll> and its duplicate recipe blueprint.wmgfl_<doll>_duplicate.
 // There is no per-doll registry anywhere: enrolling a doll is pure KDL.
 public static class Calibration
 {
     public const int MaxRank = 6;
+    public const int CoreStartRank = 3;
+
+    public static IEnumerable<string> UpgradeMaterialIds(string baseWeaponId, int rank)
+    {
+        if (string.IsNullOrEmpty(baseWeaponId) || rank < 0 || rank >= MaxRank)
+            yield break;
+        yield return baseWeaponId;
+        if (rank >= CoreStartRank)
+            yield return CalibrationCores.ForWeapon(baseWeaponId);
+    }
 
     // Rank-marker colours (baked into the weapon name, matching theme.uss). Calibrated ranks read in
     // the game's gold; the base rank (R0) reads in a muted grey so it shows as "uncalibrated" rather
@@ -38,10 +48,7 @@ public static class Calibration
         return marker >= 0 ? name.Substring(0, marker) : name;
     }
 
-    // Affinity levels that grant one component each. The normal run opens the track at level 1; the
-    // SSR run opens at level 4, the level right after the SSR weapon unlocks. Both hand out six
-    // components (levels 1-6 and 4-9), overlapping at 4-6 where a level grants one of each: exactly
-    // the six duplicates a weapon needs to reach rank 6, no slack.
+    // Each track grants six components for additional weapons and calibration duplicates.
     public static readonly int[] NormalComponentLevels = { 1, 2, 3, 4, 5, 6 };
     public static readonly int[] SsrComponentLevels = { 4, 5, 6, 7, 8, 9 };
 

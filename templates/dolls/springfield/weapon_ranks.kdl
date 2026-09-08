@@ -58,6 +58,7 @@ clone "WeaponTemplate" from="weapon.springfield" id="weapon.springfield_r6" {
 }
 
 clone "CommodityTemplate" from="commodity.construct_weapon_parts" id="commodity.wmgfl_component_springfield" {
+    append "Tags" "wmgfl_weapon_component"
     set "Title" {
         set "m_DefaultTranslation" "M1903 Weapon Component"
     }
@@ -76,15 +77,23 @@ clone "BlueprintTemplate" from="blueprint.squad_weapon_electro_magnetic_enhanced
     set "m_CraftingResult" "weapon.springfield"
     clear "m_CraftingMaterials"
     append "m_CraftingMaterials" {
-        set "Template" "commodity.wmgfl_component_springfield"
+        set "Template" "commodity.wmgfl_part_rf_barrel"
         set "Count" 1
     }
     append "m_CraftingMaterials" {
-        set "Template" "commodity.construct_weapon_parts"
-        set "Count" 4
+        set "Template" "commodity.wmgfl_part_rf_receiver"
+        set "Count" 1
     }
     append "m_CraftingMaterials" {
-        set "Template" "commodity.construct_cybernetic_optics"
-        set "Count" 2
+        set "Template" "commodity.wmgfl_part_rf_grip"
+        set "Count" 1
+    }
+    append "m_CraftingMaterials" {
+        set "Template" "commodity.wmgfl_part_rf_sights"
+        set "Count" 1
+    }
+    append "m_CraftingMaterials" {
+        set "Template" "commodity.wmgfl_component_springfield"
+        set "Count" 1
     }
 }

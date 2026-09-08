@@ -42,12 +42,12 @@ public static class Weapons
         => CalibrationSystem.Instance?.DevStatus() ?? NoSystem;
 
     // Craft one R0 duplicate of the doll's base weapon through its blueprint (consumes the component
-    // and the salvage materials), as assembling at the workshop bench would.
+    // and the class parts), as assembling at the workshop bench would.
     [MutatingVerb]
     public static object Craft(string characterTag = "wmgfl_makiatto")
         => CalibrationSystem.Instance?.DevCraft(characterTag) ?? NoSystem;
 
-    // Merge the doll's equipped weapon with one duplicate, raising its calibration rank.
+    // Upgrade the doll's equipped weapon using the current rank's duplicate and core costs.
     [MutatingVerb]
     public static object Merge(string characterTag = "wmgfl_makiatto")
         => CalibrationSystem.Instance?.DevMerge(characterTag) ?? NoSystem;
@@ -97,6 +97,7 @@ public static class Weapons
         var workshop = manager.OpenScreen(WorkshopUIScreen.PREFAB_NAME)?.TryCast<WorkshopUIScreen>();
         if (workshop == null)
             return new { error = "workshop screen did not open" };
+        ShopSystem.Instance?.ShowWorkshop();
 
         var available = new List<string>();
         var list = workshop.m_SortedAvailableBlueprints;
@@ -112,4 +113,14 @@ public static class Weapons
         };
     }
 
+    [MutatingVerb]
+    public static object CalibrateStock(string weaponId, bool revert = false)
+    {
+        var system = CalibrationSystem.Instance;
+        var item = system?.Instances().FirstOrDefault(instance => instance.Leader == null && instance.Item.GetTemplate().GetID() == weaponId);
+        if (item == null)
+            return new { ok = false, error = "stock weapon not found" };
+        var result = revert ? system.Revert(item) : system.Merge(item);
+        return new { result.ok, result.error };
+    }
 }

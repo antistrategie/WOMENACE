@@ -1,0 +1,16 @@
+clone "CommodityTemplate" from="commodity.valuable_minerals" id="commodity.wmgfl_sardis_gold" {
+    set "Title" {
+        set "m_DefaultTranslation" "Sardis Gold"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Sardis"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "A currency used in black markets since before World War Three as an untraceable alternative to government currencies."
+    }
+    append "Tags" "jy_no_sell"
+    set "TradeValue" 0
+    set "Rarity" 0
+    set "BlackMarketMaxQuantity" 0
+    set "MinCampaignProgress" 0
+}

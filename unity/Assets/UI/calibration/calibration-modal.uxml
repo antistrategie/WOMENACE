@@ -3,7 +3,9 @@
     <Style src="calibration.uss" />
     <ui:VisualElement name="wm-cal-screen" class="wm-cal-screen">
         <ui:VisualElement name="wm-cal-blocker" class="wm-cal-blocker" />
-        <ui:VisualElement class="wm-cal-panel">
+        <ui:VisualElement class="window wm-cal-panel">
+            <ui:VisualElement class="unit-window-background wm-cal-fill" picking-mode="Ignore" />
+            <ui:VisualElement class="unit-window-border wm-cal-fill" picking-mode="Ignore" />
             <ui:VisualElement class="wm-cal-header">
                 <ui:Label name="@WOMENACE::ui/calibration" text="CALIBRATION" class="wm-cal-title" />
                 <ui:Button name="wm-cal-close" text="X" class="wm-cal-close" />

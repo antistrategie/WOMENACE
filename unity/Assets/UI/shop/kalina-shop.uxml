@@ -1,0 +1,32 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="../theme.uss" />
+    <Style src="../affinity/affinity.uss" />
+    <Style src="kalina-shop.uss" />
+    <ui:Label name="wm-shop-balance" class="wm-shop-balance" />
+    <ui:VisualElement class="wm-shop-panel">
+        <ui:VisualElement name="wm-shop-tabs" class="wm-shop-tabs" />
+        <ui:ScrollView name="wm-shop-scroll" mode="Vertical" class="wm-shop-scroll">
+            <ui:VisualElement name="wm-shop-grid" class="wm-shop-grid" />
+        </ui:ScrollView>
+        <ui:VisualElement name="wm-shop-checkout" class="wm-shop-checkout">
+            <ui:Label name="@WOMENACE::ui/kalina/total_label" text="TOTAL" class="wm-shop-total-label" />
+            <ui:Label name="wm-shop-total" class="wm-shop-total" />
+        </ui:VisualElement>
+        <ui:Label name="wm-shop-feedback" class="wm-shop-feedback" />
+    </ui:VisualElement>
+    <ui:VisualElement name="wm-kalina-portrait" class="wm-kalina-portrait" />
+    <ui:Label name="wm-kalina-dialogue" class="wm-kalina-dialogue" picking-mode="Ignore" />
+    <ui:VisualElement name="wm-kalina-affinity" class="wm-aff-pop wm-kalina-affinity" />
+    <ui:VisualElement name="wm-kalina-outfits" class="wm-kalina-outfits">
+        <ui:VisualElement name="wm-kalina-outfits-blocker" class="wm-kalina-outfits-blocker" />
+        <ui:VisualElement class="wm-kalina-outfit-panel">
+            <ui:VisualElement class="wm-kalina-outfit-header">
+                <ui:Label name="@WOMENACE::ui/kalina/outfits" text="KALINA'S OUTFITS" class="wm-kalina-outfit-title" />
+                <ui:Button name="wm-kalina-outfits-close" text="X" class="wm-kalina-outfits-close" />
+            </ui:VisualElement>
+            <ui:ScrollView name="wm-kalina-outfit-scroll" mode="Vertical" class="wm-kalina-outfit-scroll">
+                <ui:VisualElement name="wm-kalina-outfit-grid" class="wm-kalina-outfit-grid" />
+            </ui:ScrollView>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

@@ -35,6 +35,7 @@ clone "WeaponTemplate" from="weapon.papasha" id="weapon.papasha_r6" {
 }
 
 clone "CommodityTemplate" from="commodity.construct_weapon_parts" id="commodity.wmgfl_component_papasha" {
+    append "Tags" "wmgfl_weapon_component"
     set "Title" {
         set "m_DefaultTranslation" "PPSh-41 Component"
     }
@@ -53,15 +54,23 @@ clone "BlueprintTemplate" from="blueprint.squad_weapon_electro_magnetic_enhanced
     set "m_CraftingResult" "weapon.papasha"
     clear "m_CraftingMaterials"
     append "m_CraftingMaterials" {
-        set "Template" "commodity.wmgfl_component_papasha"
+        set "Template" "commodity.wmgfl_part_smg_barrel"
         set "Count" 1
     }
     append "m_CraftingMaterials" {
-        set "Template" "commodity.construct_weapon_parts"
-        set "Count" 4
+        set "Template" "commodity.wmgfl_part_smg_receiver"
+        set "Count" 1
     }
     append "m_CraftingMaterials" {
-        set "Template" "commodity.construct_cybernetic_optics"
-        set "Count" 2
+        set "Template" "commodity.wmgfl_part_smg_grip"
+        set "Count" 1
+    }
+    append "m_CraftingMaterials" {
+        set "Template" "commodity.wmgfl_part_smg_sights"
+        set "Count" 1
+    }
+    append "m_CraftingMaterials" {
+        set "Template" "commodity.wmgfl_component_papasha"
+        set "Count" 1
     }
 }

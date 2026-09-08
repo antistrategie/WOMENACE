@@ -190,4 +190,5 @@ public sealed class AffinityState
 public sealed class LeaderState
 {
     public int Affinity { get; set; }
+    public List<string> GrantedWeaponIds { get; set; } = [];
 }

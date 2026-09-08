@@ -1,5 +1,6 @@
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using Il2CppMenace.States;
+using Il2CppMenace.Items;
 using Jiangyu.Sdk;
 
 namespace WOMENACE.Code;
@@ -11,10 +12,17 @@ namespace WOMENACE.Code;
 [DevVerb]
 public static class Workshop
 {
+    [MutatingVerb]
+    public static object RogueArmy(bool on = true)
+    {
+        StrategyState.Get().SetConversationVarValue(WorkshopAccess.RogueArmyUnlocked, on ? 1 : 0);
+        return new { workshop = WorkshopAccess.IsUnlocked, rogueArmy = WorkshopAccess.Read(WorkshopAccess.RogueArmyUnlocked) };
+    }
+
     // Flip the story conversation variables that gate the workshop, exactly as the campaign does when
     // it unlocks the module. StrategyState fires OnConversationVarChanged on set, and the ship's
     // StrategyNavigation listens for it, so the workshop nav button appears (or vanishes) without a
-    // screen reload. `on` drives the workshop gate; `vouchers` mirrors the same value onto the
+    // screen reload. `on` drives the workshop gate. `vouchers` mirrors the same value onto the
     // blueprint-voucher gate the crafting UI needs, so a plain Unlock opens both.
     [MutatingVerb]
     public static object Unlock(bool on = true, bool vouchers = true)
@@ -32,6 +40,7 @@ public static class Workshop
         {
             ok = true,
             workshop = Read(state, StrategyState.CONV_VAR_WORKSHOP_UNLOCKED),
+            kalinasShop = WorkshopAccess.IsUnlocked,
             blueprintVouchers = Read(state, StrategyState.CONV_VAR_BLUEPRINT_VOUCHERS_UNLOCKED),
         };
     }
@@ -44,5 +53,28 @@ public static class Workshop
         for (var i = 0; i < name.Length; i++)
             chars[i] = name[i];
         return state.GetConversationVarValue(chars);
+    }
+
+    [MutatingVerb]
+    public static object Disassemble(string weaponId)
+    {
+        var system = WorkshopSystem.Instance;
+        var item = system?.Disassemblable().FirstOrDefault(item => item.GetTemplate().GetID() == weaponId);
+        var result = system == null ? (false, "workshop unavailable") : system.Disassemble(item);
+        return new { ok = result.Item1, error = result.Item2 };
+    }
+
+    [MutatingVerb]
+    public static object DisassemblyView()
+    {
+        Weapons.OpenWorkshop();
+        WorkshopSystem.Instance?.SetMode(true);
+        return new { ok = true };
+    }
+
+    public static object DisassemblyEligibility(string weaponId)
+    {
+        var weapon = Templates.ById<WeaponTemplate>(weaponId);
+        return new { weaponId, baseGame = BaseGameWeapons.Contains(weapon), weaponClass = WeaponParts.DisassemblyClass(weapon).ToString() };
     }
 }

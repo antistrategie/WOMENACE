@@ -1,0 +1,49 @@
+.wm-workshop-tabs {
+    position: absolute;
+    left: 35px;
+    right: 35px;
+    top: 7px;
+    height: 24px;
+    flex-direction: row;
+}
+.wm-workshop-tab {
+    flex-grow: 1;
+    width: 148px;
+    height: 24px;
+    margin-right: 4px;
+    border-color: #48463f;
+}
+.wm-workshop-tab-active { border-color: #bcb096; }
+.wm-disassembly {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 35px;
+    bottom: 0;
+}
+.wm-disassembly-banner {
+    position: absolute;
+    left: 35px;
+    top: 11px;
+    width: 307px;
+    height: 109px;
+    background-color: #171a18;
+    border-width: 1px;
+    border-color: #34332c;
+}
+.wm-disassembly-image {
+    position: absolute;
+    right: 4px;
+    bottom: 1px;
+    width: 230px;
+    height: 98px;
+    -unity-background-scale-mode: scale-to-fit;
+}
+.wm-disassembly-title { font-size: 10px; color: #e4e1b4; margin-left: 8px; margin-top: 6px; }
+.wm-disassembly-subtitle { font-size: 9px; color: #b89786; margin-left: 8px; }
+.wm-disassembly-heading { position: absolute; top: 174px; left: 0; right: 0; -unity-text-align: middle-center; font-size: 17px; color: #e1e1e1; }
+.wm-disassembly-parts { position: absolute; top: 216px; left: 0; right: 0; flex-direction: row; justify-content: center; }
+.wm-disassembly-parts > VisualElement { width: 48px; height: 48px; margin-right: 7px; }
+.wm-disassembly-action { position: absolute; left: 88px; bottom: 147px; width: 200px; height: 28px; }
+.wm-disassembly-feedback { position: absolute; left: 15px; right: 15px; bottom: 107px; font-size: 10px; color: #bcb096; -unity-text-align: middle-center; white-space: normal; }
+.wm-disassembly-empty { margin-top: 180px; color: #bcb096; -unity-text-align: middle-center; }

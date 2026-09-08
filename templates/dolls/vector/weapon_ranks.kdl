@@ -35,6 +35,7 @@ clone "WeaponTemplate" from="weapon.vector" id="weapon.vector_r6" {
 }
 
 clone "CommodityTemplate" from="commodity.construct_weapon_parts" id="commodity.wmgfl_component_vector" {
+    append "Tags" "wmgfl_weapon_component"
     set "Title" {
         set "m_DefaultTranslation" "Ksvec .45 ACP Component"
     }
@@ -53,16 +54,24 @@ clone "BlueprintTemplate" from="blueprint.squad_weapon_electro_magnetic_enhanced
     set "m_CraftingResult" "weapon.vector"
     clear "m_CraftingMaterials"
     append "m_CraftingMaterials" {
-        set "Template" "commodity.wmgfl_component_vector"
+        set "Template" "commodity.wmgfl_part_smg_barrel"
         set "Count" 1
     }
     append "m_CraftingMaterials" {
-        set "Template" "commodity.construct_weapon_parts"
-        set "Count" 4
+        set "Template" "commodity.wmgfl_part_smg_receiver"
+        set "Count" 1
     }
     append "m_CraftingMaterials" {
-        set "Template" "commodity.construct_cybernetic_optics"
-        set "Count" 2
+        set "Template" "commodity.wmgfl_part_smg_grip"
+        set "Count" 1
+    }
+    append "m_CraftingMaterials" {
+        set "Template" "commodity.wmgfl_part_smg_sights"
+        set "Count" 1
+    }
+    append "m_CraftingMaterials" {
+        set "Template" "commodity.wmgfl_component_vector"
+        set "Count" 1
     }
 }
 
@@ -104,6 +113,7 @@ clone "WeaponTemplate" from="weapon.vector_ssr" id="weapon.vector_ssr_r6" {
 }
 
 clone "CommodityTemplate" from="commodity.construct_weapon_parts" id="commodity.wmgfl_component_vector_ssr" {
+    append "Tags" "wmgfl_weapon_component"
     set "Title" {
         set "m_DefaultTranslation" "Banshee's Whisper Component"
     }
@@ -122,19 +132,23 @@ clone "BlueprintTemplate" from="blueprint.squad_weapon_electro_magnetic_enhanced
     set "m_CraftingResult" "weapon.vector_ssr"
     clear "m_CraftingMaterials"
     append "m_CraftingMaterials" {
-        set "Template" "commodity.wmgfl_component_vector_ssr"
+        set "Template" "commodity.wmgfl_part_smg_barrel"
         set "Count" 1
     }
     append "m_CraftingMaterials" {
-        set "Template" "commodity.construct_weapon_parts"
-        set "Count" 4
+        set "Template" "commodity.wmgfl_part_smg_receiver"
+        set "Count" 1
     }
     append "m_CraftingMaterials" {
-        set "Template" "commodity.construct_cybernetic_optics"
-        set "Count" 2
+        set "Template" "commodity.wmgfl_part_smg_grip"
+        set "Count" 1
     }
     append "m_CraftingMaterials" {
-        set "Template" "commodity.construct_advanced_alloys"
-        set "Count" 2
+        set "Template" "commodity.wmgfl_part_smg_sights"
+        set "Count" 1
+    }
+    append "m_CraftingMaterials" {
+        set "Template" "commodity.wmgfl_component_vector_ssr"
+        set "Count" 1
     }
 }

@@ -9,11 +9,8 @@ using UnityEngine.UIElements;
 
 namespace WOMENACE.Code;
 
-// Weapon calibration: a doll's weapon ranks up (r1 to r6) by merging in duplicates crafted at the
-// workshop from finite affinity-granted components. This system owns the component grants (an
-// idempotent per-level ledger, reconciled whenever a doll's window shows or her affinity changes,
-// which also back-fills saves already past component levels) and the craft, merge and split
-// operations the dev verbs drive today and the calibration UI will drive later.
+// Component grants use a per-level ledger. Every calibration consumes an R0 duplicate,
+// with an additional core from R3. Every reversal returns one R0 duplicate.
 public sealed class CalibrationSystem : JiangyuSystem
 {
     public static CalibrationSystem Instance { get; private set; }
@@ -297,69 +294,28 @@ public sealed class CalibrationSystem : JiangyuSystem
     // Every calibratable weapon the player owns, as individual instances: each equipped weapon on a
     // hired doll that is a registered weapon (any rank), plus every unequipped stock copy. Weapons
     // are not doll-bound, so the same weapon can appear more than once at different ranks.
-    public List<CalibrationInstance> Instances()
+    public List<CalibrationInstance> Instances() => Instances(new InventoryStock());
+
+    private List<CalibrationInstance> Instances(InventoryStock stock)
     {
         var result = new List<CalibrationInstance>();
         var owned = Inventory.Owned;
         if (owned == null)
             return result;
 
-        var equippedPtrs = new HashSet<System.IntPtr>();
-        var hired = Leaders.Hired();
-        for (var i = 0; hired != null && i < hired.Count; i++)
+        foreach (var (leader, item) in stock.EquippedItems)
         {
-            var leader = hired[i];
-            var items = Leaders.EquippedItems(leader);
-            for (var j = 0; items != null && j < items.Count; j++)
-            {
-                var item = items[j];
-                if (item == null || !Calibration.TryResolveWeaponId(item.GetTemplate()?.GetID(), out var baseId, out var rank))
-                    continue;
-                equippedPtrs.Add(item.Pointer);
-                result.Add(MakeInstance(item, baseId, rank, leader));
-            }
+            if (!Calibration.TryResolveWeaponId(item.GetTemplate()?.GetID(), out var baseId, out var rank))
+                continue;
+            result.Add(MakeInstance(item, baseId, rank, leader));
         }
 
-        var reserved = StashedReservations();
-        var all = new Il2CppSystem.Collections.Generic.List<BaseItem>();
-        owned.GetInstances(all);
-        for (var i = 0; i < all.Count; i++)
+        foreach (var item in stock.Weapons(weapon => Calibration.TryResolveWeaponId(weapon.GetID(), out _, out _)))
         {
-            var item = all[i]?.TryCast<Item>();
-            if (item == null || equippedPtrs.Contains(item.Pointer) || !Calibration.TryResolveWeaponId(item.GetTemplate()?.GetID(), out var baseId, out var rank))
-                continue;
-            // A swapped-out form's personal weapon is owned-but-unequipped, not stock: it is
-            // re-equipped on the swap back, so it must not be offered for calibration (merging would
-            // swap its template identity out from under the form snapshot) or consumed as fodder.
-            if (TakeReservation(reserved, item.GetTemplate()?.GetID()))
-                continue;
+            Calibration.TryResolveWeaponId(item.GetTemplate().GetID(), out var baseId, out var rank);
             result.Add(MakeInstance(item, baseId, rank, null));
         }
         return result;
-    }
-
-    // One reservation per stashed-loadout entry: the weapons FormSwapSystem will re-equip when a
-    // swapped-out form returns. Only that many instances are protected; extra copies are real stock.
-    private static Dictionary<string, int> StashedReservations()
-    {
-        var reserved = new Dictionary<string, int>(StringComparer.Ordinal);
-        var swap = FormSwapSystem.Instance;
-        if (swap == null)
-            return reserved;
-        foreach (var id in swap.StashedItemTemplateIds())
-            reserved[id] = reserved.TryGetValue(id, out var n) ? n + 1 : 1;
-        return reserved;
-    }
-
-    private static bool TakeReservation(Dictionary<string, int> reserved, string id)
-    {
-        if (id == null || reserved.Count == 0 || !reserved.TryGetValue(id, out var n) || n <= 0)
-            return false;
-        if (n == 1)
-            reserved.Remove(id);
-        else
-            reserved[id] = n - 1;
-        return true;
     }
 
     private CalibrationInstance MakeInstance(Item item, string baseId, int rank, BaseUnitLeader leader)
@@ -375,49 +331,10 @@ public sealed class CalibrationSystem : JiangyuSystem
 
     // The R0 stock copies of a weapon available as merge fodder: unequipped base instances other
     // than the one being calibrated.
-    public int DuplicateCount(string baseWeaponId, Item exclude = null)
-        => StockDuplicates(baseWeaponId, exclude).Count;
-
-    private List<Item> StockDuplicates(string baseWeaponId, Item exclude)
-    {
-        var dupes = new List<Item>();
-        var owned = Inventory.Owned;
-        var baseTemplate = Weapon(baseWeaponId, quiet: true);
-        if (owned == null || baseTemplate == null)
-            return dupes;
-
-        var reserved = StashedReservations();
-        var equippedPtrs = EquippedPointers();
-        var all = new Il2CppSystem.Collections.Generic.List<BaseItem>();
-        owned.GetInstances(all);
-        for (var i = 0; i < all.Count; i++)
-        {
-            var item = all[i]?.TryCast<Item>();
-            if (item == null || (exclude != null && item.Pointer == exclude.Pointer) || equippedPtrs.Contains(item.Pointer))
-                continue;
-            if (item.GetTemplate()?.GetID() != baseWeaponId)
-                continue;
-            // A swapped-out form's stashed personal weapon is reserved, never merge fodder.
-            if (TakeReservation(reserved, baseWeaponId))
-                continue;
-            dupes.Add(item);
-        }
-        return dupes;
-    }
-
-    private HashSet<System.IntPtr> EquippedPointers()
-    {
-        var set = new HashSet<System.IntPtr>();
-        var hired = Leaders.Hired();
-        for (var i = 0; hired != null && i < hired.Count; i++)
-        {
-            var items = Leaders.EquippedItems(hired[i]);
-            for (var j = 0; items != null && j < items.Count; j++)
-                if (items[j] != null)
-                    set.Add(items[j].Pointer);
-        }
-        return set;
-    }
+    private List<Item> StockDuplicates(string baseWeaponId, Item exclude, InventoryStock stock)
+        => stock.Available(Weapon(baseWeaponId, quiet: true))
+            .Where(item => exclude == null || item.Pointer != exclude.Pointer)
+            .Select(item => item.TryCast<Item>()).Where(item => item != null).ToList();
 
     // The stat rows that change from a rank to the next (an upgrade preview). At max rank every stat
     // is returned as its final value with no delta.
@@ -495,12 +412,42 @@ public sealed class CalibrationSystem : JiangyuSystem
         (new LocalisedText("WOMENACE::ui/calibration/stat_suppression", "SUPPRESSION"), w => w.Suppression),
     };
 
-    // Calibrate one weapon instance up a rank, consuming one R0 stock duplicate. The equipped case
-    // swaps the new rank into the doll's hands; the stock case swaps the inventory instance. Either
-    // way the new rank is placed before the old instance and the duplicate are destroyed.
+    public IReadOnlyList<(BaseItemTemplate Template, IReadOnlyList<BaseItem> Stock)> UpgradeMaterials(CalibrationInstance target)
+        => UpgradeMaterials(target, new InventoryStock());
+
+    private IReadOnlyList<(BaseItemTemplate Template, IReadOnlyList<BaseItem> Stock)> UpgradeMaterials(
+        CalibrationInstance target, InventoryStock inventory)
+    {
+        var materials = new List<(BaseItemTemplate, IReadOnlyList<BaseItem>)>();
+        foreach (var id in Calibration.UpgradeMaterialIds(target.BaseWeaponId, target.Rank))
+        {
+            var duplicate = id == target.BaseWeaponId;
+            BaseItemTemplate template = duplicate ? Weapon(id, quiet: true) : Templates.ById<CommodityTemplate>(id);
+            var stock = template == null ? new List<BaseItem>()
+                : duplicate ? StockDuplicates(id, target.Item, inventory).Cast<BaseItem>().ToList()
+                : inventory.Available(template).ToList();
+            materials.Add((template, stock));
+        }
+        return materials;
+    }
+
+    // The UI can outlive an inventory refresh, so an operation must revalidate its instance.
+    private bool IsCurrent(CalibrationInstance target, InventoryStock stock)
+    {
+        if (target?.Item == null
+            || !Calibration.TryResolveWeaponId(target.Item.GetTemplate()?.GetID(), out var baseId, out var rank)
+            || baseId != target.BaseWeaponId || rank != target.Rank)
+            return false;
+        return target.Leader == null
+            ? stock.ContainsAll(new BaseItem[] { target.Item })
+            : stock.EquippedItems.Any(entry => entry.Item.Pointer == target.Item.Pointer
+                && entry.Leader.Pointer == target.Leader.Pointer);
+    }
+
     public (bool ok, string error) Merge(CalibrationInstance target)
     {
-        if (target?.Item == null)
+        var stock = new InventoryStock();
+        if (!IsCurrent(target, stock))
             return (false, "no weapon selected");
         if (target.Rank >= Calibration.MaxRank)
             return (false, "already at max rank");
@@ -509,22 +456,47 @@ public sealed class CalibrationSystem : JiangyuSystem
         if (nextTemplate == null)
             return (false, "rank template missing");
 
-        var dupes = StockDuplicates(target.BaseWeaponId, target.Item);
-        if (dupes.Count == 0)
-            return (false, "no duplicate to consume");
+        var materials = UpgradeMaterials(target, stock);
+        if (materials.Count == 0 || materials.Any(material => material.Stock.Count == 0))
+            return (false, "calibration material missing");
 
-        if (!Replace(target, nextTemplate, out var error))
-            return (false, error);
-        Inventory.RemoveItem(dupes[0]);
+        var payments = materials.Select(material => material.Stock[0]).ToList();
+        if (target.Leader == null)
+        {
+            payments.Add(target.Item);
+            var result = InventoryExchange.Run(payments, new[] { ((BaseItemTemplate)nextTemplate, 1) }, Context.Log, stock);
+            if (!result.ok)
+                return result;
+        }
+        else
+        {
+            var paid = InventoryExchange.Run(payments, Array.Empty<(BaseItemTemplate, int)>(), Context.Log, stock);
+            if (!paid.ok)
+                return paid;
+            try
+            {
+                if (!Replace(target, nextTemplate, out var error))
+                {
+                    InventoryExchange.Restore(payments);
+                    return (false, error);
+                }
+            }
+            catch (Exception ex)
+            {
+                InventoryExchange.Restore(payments);
+                Context.Log.Error($"Calibration failed after reserving materials: {ex}");
+                return (false, Locale.Text("WOMENACE::ui/calibration/replace_failed", "The weapon could not be calibrated."));
+            }
+        }
         Context.Log.Info($"calibration: merged '{target.BaseWeaponId}' r{target.Rank} -> r{target.Rank + 1}");
         return (true, null);
     }
 
-    // Revert one weapon instance down a rank, returning an R0 duplicate to stock (so component
-    // capacity is conserved and reverting never mints value).
+    // Every rank returns an R0 weapon. Cores themselves are never refunded.
     public (bool ok, string error) Revert(CalibrationInstance target)
     {
-        if (target?.Item == null)
+        var stock = new InventoryStock();
+        if (!IsCurrent(target, stock))
             return (false, "no weapon selected");
         if (target.Rank < 1)
             return (false, "already at rank 0");
@@ -534,28 +506,36 @@ public sealed class CalibrationSystem : JiangyuSystem
         if (prevTemplate == null || baseTemplate == null)
             return (false, "rank template missing");
 
-        if (!Replace(target, prevTemplate, out var error))
-            return (false, error);
-        Inventory.AddItem(baseTemplate);
+        if (target.Leader == null)
+            return InventoryExchange.Run(new BaseItem[] { target.Item },
+                new[] { ((BaseItemTemplate)prevTemplate, 1), ((BaseItemTemplate)baseTemplate, 1) }, Context.Log, stock);
+
+        var duplicate = Inventory.AddItem(baseTemplate);
+        if (duplicate == null)
+            return (false, "duplicate creation failed");
+        try
+        {
+            if (!Replace(target, prevTemplate, out var error))
+            {
+                Inventory.RemoveItem(duplicate);
+                return (false, error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Inventory.RemoveItem(duplicate);
+            Context.Log.Error($"Calibration revert failed: {ex}");
+            return (false, Locale.Text("WOMENACE::ui/calibration/replace_failed", "The weapon could not be calibrated."));
+        }
         Context.Log.Info($"calibration: reverted '{target.BaseWeaponId}' r{target.Rank} -> r{target.Rank - 1}");
         return (true, null);
     }
 
-    // Replace a weapon instance with another rank template. Stock instances just swap in inventory.
-    // Equipped instances rebuild the holder's whole loadout (RemoveAll + re-add, substituting the one
-    // weapon), the way FormSwapSystem does: unequipping a squad leader's weapon on its own makes the
-    // game auto-fill the empty slot with a default carbine, so the atomic rebuild is what keeps the
-    // swap clean.
+    // Unequipping a squad leader's weapon alone auto-fills the slot with a default carbine.
+    // Rebuild the whole loadout, retaining the exact other instances, to avoid that substitution.
     private bool Replace(CalibrationInstance target, WeaponTemplate replacement, out string error)
     {
         error = null;
-        if (target.Leader == null)
-        {
-            Inventory.RemoveItem(target.Item);
-            Inventory.AddItem(replacement);
-            return true;
-        }
-
         var container = target.Leader.GetItems();
         var owned = Inventory.Owned;
         if (container == null || owned == null)
@@ -564,47 +544,59 @@ public sealed class CalibrationSystem : JiangyuSystem
             return false;
         }
 
-        // Mint an owned instance of the replacement to equip from.
-        Inventory.AddItem(replacement);
-        var targetId = target.Item.GetTemplate()?.GetID();
-
-        // Snapshot the loadout as template REFERENCES (not ids), substituting the one target weapon
-        // with the replacement rank. Re-resolving ids would silently drop any template not in the
-        // loader's collection (special-weapon rank clones register late), and a dropped slot here
-        // means an equipped weapon vanishes in the rebuild below.
-        var templates = new List<ItemTemplate>();
-        var substituted = false;
+        var loadout = new List<Item>();
         var all = container.GetAllItems();
         for (var i = 0; all != null && i < all.Count; i++)
+            if (all[i] is { } item)
+                loadout.Add(item);
+        if (!loadout.Any(item => item.Pointer == target.Item.Pointer))
         {
-            var tmpl = all[i]?.GetTemplate()?.TryCast<ItemTemplate>();
-            if (tmpl == null)
-                continue;
-            if (!substituted && tmpl.GetID() == targetId)
-            {
-                templates.Add(replacement);
-                substituted = true;
-            }
-            else
-            {
-                templates.Add(tmpl);
-            }
+            error = "weapon is no longer equipped";
+            return false;
         }
 
-        // Rebuild the container from owned instances, so no slot is ever left empty to auto-fill.
-        container.RemoveAll();
-        foreach (var tmpl in templates)
+        var added = Inventory.AddItem(replacement);
+        if (added == null)
         {
-            var inst = owned.GetUnusedInstance(tmpl, false);
-            if (inst != null)
-                container.Add(inst, true);
-            else
-                Context.Log.Warn($"calibration: no owned instance of '{tmpl.GetID()}' to re-equip");
+            error = "replacement creation failed";
+            return false;
         }
 
-        // The old target rank is now an unequipped owned copy; destroy it.
-        Inventory.RemoveItem(target.Item);
-        return true;
+        // Keep the exact other instances. Choosing unused copies by template can substitute
+        // a stashed weapon or another owned copy while rebuilding an unrelated equipment slot.
+        try
+        {
+            var replacementItem = added.TryCast<Item>();
+            if (replacementItem == null)
+                throw new InvalidOperationException("Replacement is not an equippable item.");
+            container.RemoveAll();
+            foreach (var item in loadout)
+            {
+                var equip = item.Pointer == target.Item.Pointer ? replacementItem : item;
+                container.Add(equip, true);
+                if (equip.GetContainer()?.Pointer != container.Pointer)
+                    throw new InvalidOperationException("The loadout rejected an item.");
+            }
+            if (!Inventory.RemoveItem(target.Item))
+                throw new InvalidOperationException("The original weapon is no longer owned.");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Context.Log.Error($"Calibration loadout replacement failed: {ex}");
+            try
+            {
+                container.RemoveAll();
+                foreach (var item in loadout)
+                    container.Add(item, true);
+            }
+            finally
+            {
+                Inventory.RemoveItem(added);
+            }
+            error = Locale.Text("WOMENACE::ui/calibration/replace_failed", "The weapon could not be calibrated.");
+            return false;
+        }
     }
 
     // --- dev verbs ------------------------------------------------------------------------------
@@ -620,7 +612,7 @@ public sealed class CalibrationSystem : JiangyuSystem
     }
 
     // Craft an R0 duplicate through the blueprint (the workshop's job), for testing without the
-    // workshop UI. Consumes the component + salvage.
+    // workshop UI. Consumes the component + class parts.
     public object DevCraft(string characterTag)
     {
         if (Affinity.KeyForTag(characterTag) == 0)

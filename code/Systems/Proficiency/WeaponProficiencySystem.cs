@@ -6,7 +6,6 @@ using Il2CppMenace.UI;
 using Il2CppMenace.UI.Tactical;
 using Jiangyu.Sdk;
 using UnityEngine.UIElements;
-using WeaponClass = WOMENACE.Code.Proficiency.WeaponClass;
 
 namespace WOMENACE.Code;
 
@@ -16,10 +15,8 @@ namespace WOMENACE.Code;
 // without ever forbidding the alternatives. Both the normal and the special weapon slot count; only
 // the SSR weapons are excluded, their owner bonus being SsrImprintSystem's and kept separate.
 //
-// The class taxonomy and the affinity curve are the shared Proficiency model (read here and by the
-// affinity badge popover). Every weapon is classified from the wmgfl_class_* tag it
-// carries when it is one of ours, and otherwise from its English category label, falling back to
-// the id-naming classifier below.
+// WeaponClasses owns classification. Proficiency owns the affinity accuracy curve, shared with
+// the affinity badge popover.
 //
 // The bonus lands on the leader's EntityProperties.Accuracy (rebuilt from base on each
 // UpdatePropertiesBasedOnAttributes, so a flat add never accumulates), which is the accuracy the
@@ -28,142 +25,6 @@ namespace WOMENACE.Code;
 // Proficiency" line, green when the weapon matches her class and greyed when it does not.
 public sealed class WeaponProficiencySystem : JiangyuSystem
 {
-    // MENACE has no weapon-class field. A weapon's ShortName IS its category label ("Battle Rifle",
-    // "SMG", "Light Machinegun", ...) shown as the tooltip subtitle, so classify by that first: it is
-    // the reliable signal even when the id gives none (weapon.pirate_outcast_pipe_gun is a Battle
-    // Rifle but its id says nothing). About twenty enemy/cut weapons carry no ShortName, so the id's
-    // naming convention (weapon.generic_<class>_tier..., specialweapon.<class>_...) is the fallback.
-    // Ours never reach either: they answer from their class tag above. OnlyEquipableBy is NOT the
-    // guard it looks like, since it only short-circuits for the doll a weapon is locked to, and one
-    // of ours in another doll's hands still arrives here.
-    private static WeaponClass Classify(WeaponTemplate weapon)
-    {
-        if (weapon == null)
-            return WeaponClass.None;
-        var byTag = ClassifyByTag(weapon);
-        if (byTag != WeaponClass.None)
-            return byTag;
-        var byShortName = ClassifyByShortName(weapon);
-        return byShortName != WeaponClass.None ? byShortName : ClassifyById(weapon.GetID());
-    }
-
-    // The ShortName category as it reads in the armoury/tooltip subtitle, mapped to a proficiency
-    // class. Anything not here (Laser Rifle, Plasma, launchers, mortars, ...) is left unclassified.
-    private static readonly Dictionary<string, WeaponClass> ShortNameClasses = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ["Assault Rifle"] = WeaponClass.AssaultRifle,
-        ["Heavy Assault Rifle"] = WeaponClass.AssaultRifle,
-        ["Enhanced AR"] = WeaponClass.AssaultRifle,
-        ["Carbine"] = WeaponClass.AssaultRifle,
-        ["Automatic Rifle"] = WeaponClass.AssaultRifle,
-        ["SMG"] = WeaponClass.Smg,
-        ["Heavy SMG"] = WeaponClass.Smg,
-        ["PDW"] = WeaponClass.Smg,
-        ["Battle Rifle"] = WeaponClass.Rifle,
-        ["Sniper Rifle"] = WeaponClass.Rifle,
-        ["Sniper"] = WeaponClass.Rifle,
-        ["Bolt-Action Rifle"] = WeaponClass.Rifle,
-        ["DMR"] = WeaponClass.Rifle,
-        ["AT Rifle"] = WeaponClass.Rifle,
-        ["Light Machinegun"] = WeaponClass.MachineGun,
-        ["Medium MG"] = WeaponClass.MachineGun,
-        ["MMG"] = WeaponClass.MachineGun,
-        ["HMG"] = WeaponClass.MachineGun,
-        ["Minigun"] = WeaponClass.MachineGun,
-        ["Shotgun"] = WeaponClass.Shotgun,
-        ["Sweeper"] = WeaponClass.Shotgun,
-        ["Sword"] = WeaponClass.Blade,
-    };
-
-    // Our own weapons name their class on their Tags, which is the only classification that
-    // survives translation. Vanilla weapons are read from their category label below, which is
-    // safe because the loader only ever rewrites text a mod authored, so a vanilla label keeps its
-    // English default in every language. A weapon of ours does not: its default IS the authored
-    // line the locale pass overwrites. Relying on OnlyEquipableBy instead would not cover it,
-    // because that only short-circuits for the doll a weapon is locked to, and one of ours in
-    // another doll's hands still reaches classification.
-    private static WeaponClass ClassifyByTag(WeaponTemplate weapon)
-    {
-        try
-        {
-            // Memoised on the template pointer. Classify sits under SelectedUnitPanel.UpdateStats,
-            // which runs every frame a unit is selected, and the tag walk marshals a list and reads
-            // a name per element. MeleeCookOffSystem and EntityWeaponParitySystem cache the same
-            // walk the same way.
-            if (_classByTemplate.TryGetValue(weapon.Pointer, out var cached))
-                return cached;
-
-            var wc = ReadClassTag(weapon);
-            _classByTemplate[weapon.Pointer] = wc;
-            return wc;
-        }
-        catch { return WeaponClass.None; }
-    }
-
-    private static readonly Dictionary<IntPtr, WeaponClass> _classByTemplate = new();
-
-    private static WeaponClass ReadClassTag(WeaponTemplate weapon)
-    {
-        try
-        {
-            var tags = weapon.Tags;
-            if (tags == null)
-                return WeaponClass.None;
-            for (var i = 0; i < tags.Count; i++)
-            {
-                var wc = Proficiency.ClassFromSpeakerTags(tags[i]?.name);
-                if (wc != WeaponClass.None)
-                    return wc;
-            }
-            return WeaponClass.None;
-        }
-        catch { return WeaponClass.None; }
-    }
-
-    // The game's English category labels, keyed as authored. Vanilla only: see ClassifyByTag.
-    private static WeaponClass ClassifyByShortName(WeaponTemplate weapon)
-    {
-        try
-        {
-            var text = Templates.DefaultText(weapon.ShortName);
-            return !string.IsNullOrEmpty(text) && ShortNameClasses.TryGetValue(text.Trim(), out var wc)
-                ? wc
-                : WeaponClass.None;
-        }
-        catch { return WeaponClass.None; }
-    }
-
-    // Fallback for weapons with no ShortName (enemy constructs, cut tier3 guns). Ordered so a
-    // battle-rifle marksman variant is a rifle before the carbine (assault-rifle) rule, and the
-    // sniper/marksman family classifies as rifle. A bare "rifle" is deliberately not matched, so an
-    // energy "laser_rifle"/"plasma_rifle" stays unclassified.
-    private static WeaponClass ClassifyById(string id)
-    {
-        if (string.IsNullOrEmpty(id))
-            return WeaponClass.None;
-        if (id.Contains("sword") || id.Contains("blade") || id.Contains("melee")) return WeaponClass.Blade;
-        if (id.Contains("battle_rifle")) return WeaponClass.Rifle;
-        if (id.Contains("sniper") || id.Contains("marksman") || id.Contains("dmr") || id.Contains("anti_materiel")) return WeaponClass.Rifle;
-        if (id.Contains("assault_rifle") || id.Contains("carbine")) return WeaponClass.AssaultRifle;
-        if (id.Contains("shotgun") || id.Contains("sweeper")) return WeaponClass.Shotgun;
-        if (id.Contains("smg") || id.Contains("pdw")) return WeaponClass.Smg;
-        if (id.Contains("machinegun") || id.Contains("chaingun") || id.Contains("minigun") || id.Contains("repeater")) return WeaponClass.MachineGun;
-        return WeaponClass.None;
-    }
-
-    // A friendly plural for the class, for the tooltip text. Separate from ShortNameClasses above:
-    // that one matches the game's English category labels, this one is shown to the player.
-    private static string ClassNoun(WeaponClass wc) => wc switch
-    {
-        WeaponClass.AssaultRifle => Locale.Text("WOMENACE::ui/proficiency/class_ar", "assault rifles"),
-        WeaponClass.Smg => Locale.Text("WOMENACE::ui/proficiency/class_smg", "SMGs"),
-        WeaponClass.Rifle => Locale.Text("WOMENACE::ui/proficiency/class_rifle", "rifles"),
-        WeaponClass.MachineGun => Locale.Text("WOMENACE::ui/proficiency/class_mg", "machine guns"),
-        WeaponClass.Shotgun => Locale.Text("WOMENACE::ui/proficiency/class_shotgun", "shotguns"),
-        WeaponClass.Blade => Locale.Text("WOMENACE::ui/proficiency/class_blade", "blades"),
-        _ => Locale.Text("WOMENACE::ui/proficiency/class_any", "weapons"),
-    };
-
     // The doll's display name from her character tag ("wmgfl_voymastina" -> "Voymastina").
     private static string NameFromTag(string characterTag)
     {
@@ -232,7 +93,7 @@ public sealed class WeaponProficiencySystem : JiangyuSystem
         if (leader == null)
             return 0;
         var tags = Affinity.OurSpeakerTags(leader);
-        var dollClass = Proficiency.ClassFromSpeakerTags(tags);
+        var dollClass = WeaponClasses.ClassFromTags(tags);
         if (dollClass == WeaponClass.None)
             return 0;
         var tag = Affinity.ParseCharacterTag(tags);
@@ -341,7 +202,7 @@ public sealed class WeaponProficiencySystem : JiangyuSystem
             return false;
         if (LockedTo(weapon, dollTag))
             return true;
-        return Classify(weapon) == dollClass;
+        return WeaponClasses.Classify(weapon) == dollClass;
     }
 
     private static bool LockedTo(WeaponTemplate weapon, string dollTag)
@@ -412,7 +273,7 @@ public sealed class WeaponProficiencySystem : JiangyuSystem
                 matches
                     ? Locale.Text("WOMENACE::ui/proficiency/matched", "Bonus accuracy for wielding her weapon type ({0}).")
                     : Locale.Text("WOMENACE::ui/proficiency/unmatched", "Wield {0} for bonus accuracy."),
-                ClassNoun(viewerClass));
+                WeaponClasses.Plural(viewerClass));
             var para = data.AddParagraph(
                 text, matches ? ParagraphStyle.Positive : ParagraphStyle.Default, null, NoIconSize, NoIconColour, true, false);
             if (!matches)
@@ -439,7 +300,7 @@ public sealed class WeaponProficiencySystem : JiangyuSystem
         if (wielder != null)
         {
             var tags = Affinity.OurSpeakerTags(wielder);
-            return (Affinity.ParseCharacterTag(tags), Proficiency.ClassFromSpeakerTags(tags));
+            return (Affinity.ParseCharacterTag(tags), WeaponClasses.ClassFromTags(tags));
         }
         // No combat wielder: the item is owned by the non-Entity unit-window leader, so use the
         // tracked one (the armoury/loadout case).
@@ -454,7 +315,7 @@ public sealed class WeaponProficiencySystem : JiangyuSystem
             {
                 var tags = Affinity.OurSpeakerTags(Affinity.LeaderOf(window));
                 _viewerTag = Affinity.ParseCharacterTag(tags);
-                _viewerClass = Proficiency.ClassFromSpeakerTags(tags);
+                _viewerClass = WeaponClasses.ClassFromTags(tags);
             }
         }
         catch (Exception ex) { Context.Log.Warn($"proficiency: window track failed: {ex.Message}"); }

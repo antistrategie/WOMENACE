@@ -8,11 +8,8 @@ using UnityEngine.UIElements;
 
 namespace WOMENACE.Code;
 
-// The weapon calibration screen: a fullscreen dialog opened from the Workshop. Layout is UXML
-// (calibration/calibration-modal) + USS (calibration.uss), so it wears the game's own window frame
-// and styling; this code only fills the dynamic parts (the weapon list and the selected weapon's
-// detail) with elements carrying the USS classes. Weapons are instances, not doll-bound, so the same
-// weapon can appear more than once at different ranks.
+// Weapons are individual instances, so one weapon type can appear at several ranks or on
+// different holders. Stock copies at the same rank share a row.
 public sealed class CalibrationUISystem : JiangyuSystem
 {
     public static CalibrationUISystem Instance { get; private set; }
@@ -30,24 +27,17 @@ public sealed class CalibrationUISystem : JiangyuSystem
         // The Workshop entry: a button under the projects list opens the calibration screen. The
         // screen itself is injected once into the screen root, hidden, and toggled by the button.
         UI.Inject(
-            UiTarget.Screen<WorkshopUIScreen>().AppendTo(UiSelector.Name("ProjectsPanel")),
+            UiTarget.Screen<WorkshopUIScreen>().AppendTo(UiSelector.Name(WorkshopUi.Projects)),
             BuildOpenButton);
         UI.Inject(
-            UiTarget.Screen<WorkshopUIScreen>().AppendTo(UiSelector.Name("Root")),
+            UiTarget.Screen<WorkshopUIScreen>().AppendTo(UiSelector.Name(WorkshopUi.Root)),
             "calibration/calibration-modal",
             WireModal);
 
-        // A weapon's duplicate blueprint is offered by the workshop once the player OWNS that weapon
-        // (any rank): the normal weapon comes with the doll, the SSR unlocks at affinity Lv3. We add
-        // the dupe blueprints for owned calibratable weapons into the workshop's available list before
-        // it renders its projects (prefix UpdateWindow), and again on open in case OnOpened renders
-        // without an UpdateWindow of its own.
-        Context.Patches.Prefix("Il2CppMenace.UI.Strategy.WorkshopUIScreen", "UpdateWindow", OnWorkshopUpdate);
-        Context.Patches.Postfix("Il2CppMenace.UI.Strategy.WorkshopUIScreen", "OnOpened", OnWorkshopOpened);
         // The workshop's project-preview name is an ItemName label with rich text off, so a ranked
         // result weapon's marker shows as raw tags. Enable rich text on it after each render/selection.
-        Context.Patches.Postfix("Il2CppMenace.UI.Strategy.WorkshopUIScreen", "UpdateWindow", OnWorkshopRendered);
-        Context.Patches.Postfix("Il2CppMenace.UI.Strategy.WorkshopUIScreen", "SetSelectedBlueprint", OnWorkshopRendered);
+        Context.Patches.Postfix(WorkshopUi.ScreenType, "UpdateWindow", OnWorkshopRendered);
+        Context.Patches.Postfix(WorkshopUi.ScreenType, "SetSelectedBlueprint", OnWorkshopRendered);
     }
 
     private void OnWorkshopRendered(PatchInfo info) => EnableWorkshopItemNameRichText();
@@ -59,60 +49,6 @@ public sealed class CalibrationUISystem : JiangyuSystem
         var root = _modal?.panel?.visualTree;
         if (root != null)
             CalibrationSystem.EnableItemNameRichText(root);
-    }
-
-    // Ensure every owned calibratable weapon's duplicate blueprint is in the workshop's available
-    // list, then let the game render. Idempotent (skips blueprints already offered).
-    private void OnWorkshopUpdate(PatchInfo info)
-    {
-        InjectOwnedBlueprints((info.Instance as Il2CppSystem.Object)?.TryCast<WorkshopUIScreen>());
-    }
-
-    // On open, inject then force a render so the recipes show immediately even if OnOpened built its
-    // projects list without calling UpdateWindow.
-    private void OnWorkshopOpened(PatchInfo info)
-    {
-        var workshop = (info.Instance as Il2CppSystem.Object)?.TryCast<WorkshopUIScreen>();
-        if (workshop != null && InjectOwnedBlueprints(workshop))
-        {
-            try { workshop.UpdateWindow(); }
-            catch (Exception ex) { Context.Log.Warn($"calibration: workshop refresh failed: {ex.Message}"); }
-        }
-    }
-
-    // Add the dupe blueprint for each owned calibratable weapon the workshop is not already offering.
-    // Returns whether anything was added.
-    private bool InjectOwnedBlueprints(WorkshopUIScreen workshop)
-    {
-        try
-        {
-            var list = workshop?.m_SortedAvailableBlueprints;
-            if (list == null)
-                return false;
-            var seen = new HashSet<string>(StringComparer.Ordinal);
-            var added = false;
-            foreach (var inst in CalibrationSystem.Instance?.Instances() ?? [])
-            {
-                if (!seen.Add(inst.BaseWeaponId))
-                    continue;
-                var blueprint = Templates.ById<Il2CppMenace.Items.BlueprintTemplate>(Calibration.BlueprintIdFor(inst.BaseWeaponId));
-                if (blueprint == null || ListHasBlueprint(list, blueprint))
-                    continue;
-                list.Add(blueprint);
-                added = true;
-            }
-            return added;
-        }
-        catch (Exception ex) { Context.Log.Warn($"calibration: blueprint inject failed: {ex.Message}"); return false; }
-    }
-
-    private static bool ListHasBlueprint(Il2CppSystem.Collections.Generic.List<Il2CppMenace.Items.BlueprintTemplate> list, Il2CppMenace.Items.BlueprintTemplate blueprint)
-    {
-        var id = blueprint.GetID();
-        for (var i = 0; i < list.Count; i++)
-            if (list[i]?.GetID() == id)
-                return true;
-        return false;
     }
 
     public override void OnUnload()
@@ -136,9 +72,17 @@ public sealed class CalibrationUISystem : JiangyuSystem
         // screen so the absolute fullscreen modal inside it has a full-size containing block, and
         // toggle THIS element's visibility (its child wm-cal-screen fills it via USS).
         _modal = root;
-        FillParent(root);
+        UiLayout.Fill(root);
         _list = UI.Find(root, UiSelector.Name("wm-cal-list"));
         _detail = UI.Find(root, UiSelector.Name("wm-cal-detail"));
+        var scroll = _list?.TryCast<ScrollView>();
+        if (scroll != null)
+        {
+            scroll.horizontalScrollerVisibility = ScrollerVisibility.Hidden;
+            // The native scroll content uses a row independently of its scrolling direction.
+            scroll.contentContainer.style.flexDirection = FlexDirection.Column;
+            scroll.contentContainer.style.flexWrap = Wrap.NoWrap;
+        }
         UI.Localise(root);
 
         // The close X is a real Button: wire its clickable (the proven click path), not a
@@ -251,32 +195,42 @@ public sealed class CalibrationUISystem : JiangyuSystem
 
     private VisualElement BuildRow(int index, CalibrationInstance inst)
     {
-        var row = new VisualElement();
+        var row = new Button { focusable = false };
+        row.AddToClassList("unit-equipment-slot");
         row.AddToClassList("wm-cal-row");
         if (index == _selected)
             row.AddToClassList("wm-cal-row--active");
 
-        var banner = new VisualElement();
-        banner.AddToClassList("wm-cal-banner");
+        var banner = new VisualElement { name = "Image", pickingMode = PickingMode.Ignore };
+        banner.AddToClassList("wm-cal-fill");
         var sprite = CalibrationSystem.Instance?.BannerSprite(inst.BaseWeaponId);
         if (sprite != null)
             banner.style.backgroundImage = new StyleBackground(sprite);
-        var name = new Label(inst.WeaponName);
+        row.Add(banner);
+        var border = new VisualElement { pickingMode = PickingMode.Ignore };
+        border.AddToClassList("unit-equipment-slot-border");
+        border.AddToClassList("wm-cal-fill");
+        row.Add(border);
+        var selected = new VisualElement { pickingMode = PickingMode.Ignore };
+        selected.AddToClassList("slot-selected-border");
+        selected.AddToClassList("wm-cal-fill");
+        selected.SetVisible(index == _selected);
+        row.Add(selected);
+
+        var name = new Label(inst.WeaponName) { pickingMode = PickingMode.Ignore };
         name.AddToClassList("wm-cal-name");
-        banner.Add(name);
-        var rank = new Label($"R{inst.Rank}");
+        row.Add(name);
+        var rank = new Label($"R{inst.Rank}") { pickingMode = PickingMode.Ignore };
         rank.AddToClassList("wm-cal-rank");
         if (inst.Rank == 0)
             rank.AddToClassList("wm-cal-rank--base");
-        banner.Add(rank);
-        row.Add(banner);
+        row.Add(rank);
 
-        var who = new Label(inst.Holder ?? StockLabel(inst));
+        var who = new Label(inst.Holder ?? StockLabel(inst)) { pickingMode = PickingMode.Ignore };
         who.AddToClassList("wm-cal-who");
         row.Add(who);
 
-        row.RegisterCallback<PointerDownEvent>(
-            DelegateSupport.ConvertDelegate<EventCallback<PointerDownEvent>>((Action<PointerDownEvent>)(_ => { Sound.Click(); Select(index); })));
+        row.clickable.clicked += (Action)(() => { Sound.Click(); Select(index); });
         return row;
     }
 
@@ -297,8 +251,7 @@ public sealed class CalibrationUISystem : JiangyuSystem
         var head = new VisualElement();
         head.AddToClassList("wm-cal-detailhead");
         var title = new VisualElement();
-        title.style.flexDirection = new StyleEnum<FlexDirection>(FlexDirection.Row);
-        title.style.alignItems = new StyleEnum<Align>(Align.Center);
+        title.AddToClassList("wm-cal-detailtitle");
         var name = new Label(inst.WeaponName);
         name.AddToClassList("wm-cal-detailname");
         title.Add(name);
@@ -338,6 +291,7 @@ public sealed class CalibrationUISystem : JiangyuSystem
     private VisualElement BuildStats(CalibrationInstance inst)
     {
         var box = new VisualElement();
+        box.AddToClassList("wm-cal-stats");
         var atMax = inst.Rank >= Calibration.MaxRank;
         // Both forms are one key each, rank prefix and separator included, so the whole line is
         // the translator's to reorder rather than a fragment glued to hard-coded punctuation.
@@ -381,26 +335,56 @@ public sealed class CalibrationUISystem : JiangyuSystem
         var foot = new VisualElement();
         foot.AddToClassList("wm-cal-foot");
 
-        var dupes = CalibrationSystem.Instance.DuplicateCount(inst.BaseWeaponId, inst.Item);
-        var canMerge = inst.Rank < Calibration.MaxRank && dupes > 0;
+        var system = CalibrationSystem.Instance;
+        var materials = system.UpgradeMaterials(inst);
+        var canMerge = materials.Count > 0 && materials.All(material => material.Stock.Count > 0);
         var canRevert = inst.Rank >= 1;
+
+        var costs = new VisualElement();
+        costs.AddToClassList("wm-cal-costs");
+        foreach (var (material, stock) in materials)
+        {
+            if (material == null)
+                continue;
+            var cost = new VisualElement();
+            cost.AddToClassList("wm-cal-cost");
+            var tile = new ItemTile(material, 1);
+            tile.Root.name = "wm-cal-material-" + material.GetID();
+            tile.Root.AddToClassList("wm-cal-material-icon");
+            ItemTileStyle.Align(tile);
+            foreach (var nativeLabel in UI.FindAll(tile.Root, UiSelector.Type<Label>()))
+                nativeLabel.SetVisible(false);
+            WorkshopItemStyle.Apply(tile.Root, material);
+            cost.Add(tile.Root);
+            var text = new VisualElement();
+            text.AddToClassList("wm-cal-material-text");
+            var name = new Label(Templates.DefaultText(material.Title)) { enableRichText = true };
+            name.AddToClassList("wm-cal-material-name");
+            text.Add(name);
+            var owned = new Label(Locale.Format("WOMENACE::ui/calibration/material_count", "{0} / 1", stock.Count));
+            owned.AddToClassList("wm-cal-material-count");
+            if (stock.Count == 0)
+                owned.AddToClassList("wm-cal-material-missing");
+            text.Add(owned);
+            cost.Add(text);
+            costs.Add(cost);
+        }
+        if (costs.childCount > 0)
+            foot.Add(costs);
 
         var actions = new VisualElement();
         actions.AddToClassList("wm-cal-actions");
         actions.Add(ActionButton(Locale.Text("WOMENACE::ui/calibrate_action", "CALIBRATE"), canMerge, () => Act(CalibrationSystem.Instance.Merge, 1)));
-        actions.Add(ActionButton(Locale.Text("WOMENACE::ui/revert", "DERANK"), canRevert, () => Act(CalibrationSystem.Instance.Revert, -1)));
+        actions.Add(ActionButton(Locale.Text("WOMENACE::ui/revert", "REVERT"), canRevert, () => Act(CalibrationSystem.Instance.Revert, -1)));
         foot.Add(actions);
 
-        var tally = new Label(Locale.Format("WOMENACE::ui/calibration/duplicates", "Duplicates {0}", dupes));
-        tally.AddToClassList("wm-cal-tally");
-        foot.Add(tally);
+        if (canRevert)
+        {
+            var refund = new Label(Locale.Format("WOMENACE::ui/calibration/refund", "Revert: +1 {0} R0", inst.WeaponName));
+            refund.AddToClassList("wm-cal-tally");
+            foot.Add(refund);
+        }
         return foot;
-    }
-
-    private static void FillParent(VisualElement e)
-    {
-        e.style.position = new StyleEnum<Position>(Position.Absolute);
-        e.style.left = e.style.right = e.style.top = e.style.bottom = new StyleLength(0f);
     }
 
     private VisualElement ActionButton(string text, bool enabled, Action onClick)

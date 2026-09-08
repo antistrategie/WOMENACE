@@ -58,6 +58,7 @@ clone "WeaponTemplate" from="weapon.makiatto" id="weapon.makiatto_r6" {
 }
 
 clone "CommodityTemplate" from="commodity.construct_weapon_parts" id="commodity.wmgfl_component_makiatto" {
+    append "Tags" "wmgfl_weapon_component"
     set "Title" {
         set "m_DefaultTranslation" "WA 2000 Weapon Component"
     }
@@ -76,16 +77,24 @@ clone "BlueprintTemplate" from="blueprint.squad_weapon_electro_magnetic_enhanced
     set "m_CraftingResult" "weapon.makiatto"
     clear "m_CraftingMaterials"
     append "m_CraftingMaterials" {
-        set "Template" "commodity.wmgfl_component_makiatto"
+        set "Template" "commodity.wmgfl_part_rf_barrel"
         set "Count" 1
     }
     append "m_CraftingMaterials" {
-        set "Template" "commodity.construct_weapon_parts"
-        set "Count" 4
+        set "Template" "commodity.wmgfl_part_rf_receiver"
+        set "Count" 1
     }
     append "m_CraftingMaterials" {
-        set "Template" "commodity.construct_cybernetic_optics"
-        set "Count" 2
+        set "Template" "commodity.wmgfl_part_rf_grip"
+        set "Count" 1
+    }
+    append "m_CraftingMaterials" {
+        set "Template" "commodity.wmgfl_part_rf_sights"
+        set "Count" 1
+    }
+    append "m_CraftingMaterials" {
+        set "Template" "commodity.wmgfl_component_makiatto"
+        set "Count" 1
     }
 }
 
@@ -132,6 +141,7 @@ clone "WeaponTemplate" from="weapon.makiatto_ssr" id="weapon.makiatto_ssr_r6" {
 }
 
 clone "CommodityTemplate" from="commodity.construct_weapon_parts" id="commodity.wmgfl_component_makiatto_ssr" {
+    append "Tags" "wmgfl_weapon_component"
     set "Title" {
         set "m_DefaultTranslation" "Bittersweet Caramel Component"
     }
@@ -150,19 +160,23 @@ clone "BlueprintTemplate" from="blueprint.squad_weapon_electro_magnetic_enhanced
     set "m_CraftingResult" "weapon.makiatto_ssr"
     clear "m_CraftingMaterials"
     append "m_CraftingMaterials" {
-        set "Template" "commodity.wmgfl_component_makiatto_ssr"
+        set "Template" "commodity.wmgfl_part_rf_barrel"
         set "Count" 1
     }
     append "m_CraftingMaterials" {
-        set "Template" "commodity.construct_weapon_parts"
-        set "Count" 4
+        set "Template" "commodity.wmgfl_part_rf_receiver"
+        set "Count" 1
     }
     append "m_CraftingMaterials" {
-        set "Template" "commodity.construct_cybernetic_optics"
-        set "Count" 2
+        set "Template" "commodity.wmgfl_part_rf_grip"
+        set "Count" 1
     }
     append "m_CraftingMaterials" {
-        set "Template" "commodity.construct_advanced_alloys"
-        set "Count" 2
+        set "Template" "commodity.wmgfl_part_rf_sights"
+        set "Count" 1
+    }
+    append "m_CraftingMaterials" {
+        set "Template" "commodity.wmgfl_component_makiatto_ssr"
+        set "Count" 1
     }
 }
