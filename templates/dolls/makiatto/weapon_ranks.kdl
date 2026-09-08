@@ -58,7 +58,6 @@ clone "WeaponTemplate" from="weapon.makiatto" id="weapon.makiatto_r6" {
 }
 
 clone "CommodityTemplate" from="commodity.construct_weapon_parts" id="commodity.wmgfl_component_makiatto" {
-    append "Tags" "wmgfl_weapon_component"
     set "Title" {
         set "m_DefaultTranslation" "WA 2000 Weapon Component"
     }
@@ -141,7 +140,6 @@ clone "WeaponTemplate" from="weapon.makiatto_ssr" id="weapon.makiatto_ssr_r6" {
 }
 
 clone "CommodityTemplate" from="commodity.construct_weapon_parts" id="commodity.wmgfl_component_makiatto_ssr" {
-    append "Tags" "wmgfl_weapon_component"
     set "Title" {
         set "m_DefaultTranslation" "Bittersweet Caramel Component"
     }

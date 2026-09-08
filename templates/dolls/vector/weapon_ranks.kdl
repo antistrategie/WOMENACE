@@ -35,7 +35,6 @@ clone "WeaponTemplate" from="weapon.vector" id="weapon.vector_r6" {
 }
 
 clone "CommodityTemplate" from="commodity.construct_weapon_parts" id="commodity.wmgfl_component_vector" {
-    append "Tags" "wmgfl_weapon_component"
     set "Title" {
         set "m_DefaultTranslation" "Ksvec .45 ACP Component"
     }
@@ -113,7 +112,6 @@ clone "WeaponTemplate" from="weapon.vector_ssr" id="weapon.vector_ssr_r6" {
 }
 
 clone "CommodityTemplate" from="commodity.construct_weapon_parts" id="commodity.wmgfl_component_vector_ssr" {
-    append "Tags" "wmgfl_weapon_component"
     set "Title" {
         set "m_DefaultTranslation" "Banshee's Whisper Component"
     }
