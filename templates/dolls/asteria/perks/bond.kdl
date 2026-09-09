@@ -23,6 +23,58 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.asteria_bond" {
         set "Event" enum="AddEvent" "OnMissionStart"
         set "SkillToAdd" "active.asteria_bond_connextion"
     }
+    // The charge. Using a skill tagged asteria_bond makes Asteria use the spend skill on herself,
+    // which plants the spent marker, and the bond skill greys while she carries it. The perk hosts
+    // this rather than the bond skill because AddSkill on the bond skill lands on the bonded ally,
+    // and `Uses 1` on the skill is no gate at all: the engine re-derives uses from the template at
+    // every turn boundary.
+    append "EventHandlers" type="ApplySkillToSelf" {
+        set "SkillToApply" "active.asteria_bond_spend"
+        set "Event" enum="ApplyOnEvent" "OnSkillWithTagsUsed"
+        append "RequiredTags" "asteria_bond"
+        set "RequiredLogic" enum="LogicType" "Or"
+        set "ChanceToApply" 100
+    }
+}
+
+clone "TagTemplate" from="unique" id="asteria_bond"
+
+// What ApplySkillToSelf fires. It does not add SkillToApply to the actor: it creates an instance
+// and uses it on the owner's tile, free and without a usability check, so a bare status effect
+// there does nothing. A hidden self-use active whose own AddSkill lands the marker is the shape
+// vanilla uses (damage_effect.powerlines_damaged.active, active.emp_discharge_small).
+clone "SkillTemplate" from="active.special.lucky_shot" id="active.asteria_bond_spend" {
+    set "Title" {
+        set "m_DefaultTranslation" "Bond Spent"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Asteria has bonded with a squad this mission."
+    }
+    set "IsHidden" #true
+    set "ActionPointCost" 0
+    set "IsLimitedUses" #false
+    set "IsRemovedAfterCombat" #true
+    // Used on the owner's own tile, so it reaches no further than that.
+    set "MaxRange" 0
+    set "AoEType" enum="SkillAoEType" "CenterOnly"
+    clear "EventHandlers"
+    append "EventHandlers" type="AddSkill" {
+        set "Event" enum="AddEvent" "OnUse"
+        set "SkillToAdd" "effect.asteria_bond_spent"
+    }
+}
+
+// Marks the bond as spent for the rest of the mission. A hidden status effect on Asteria
+// herself, so it survives every resync and a mid-mission save, and the engine drops it after
+// combat like any other effect.
+clone "SkillTemplate" from="effect.reduced_ap_after_transport" id="effect.asteria_bond_spent" {
+    set "Title" {
+        set "m_DefaultTranslation" "Bond Spent"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Asteria has bonded with a squad this mission."
+    }
+    clear "EventHandlers"
 }
 
 clone "SkillTemplate" from="offmap.shield_projector" id="active.asteria_bond_connextion" {
@@ -41,17 +93,20 @@ clone "SkillTemplate" from="offmap.shield_projector" id="active.asteria_bond_con
     set "ActionPointCost" 10
     set "HideApCosts" #false
     set "ExecutingElement" enum="ExecutingElementType" "SpecialOnly"
+    // No use counter. The charge is the spent marker, and a counter the engine refills each
+    // turn would disagree with it on the tile.
     set "IsLimitedUses" #false
     set "IsStacking" #false
     set "IsRemovedAfterCombat" #true
+    append "Tags" "asteria_bond"
     clear "EventHandlers"
     append "EventHandlers" type="AddSkill" {
         set "Event" enum="AddEvent" "OnUse"
         set "SkillToAdd" "effect.asteria_bond"
         set "ShowHUDText" #true
     }
-    append "EventHandlers" type="WOMENACE:MissionCharge" {
-        set "Group" "asteria_bond"
+    append "EventHandlers" type="LimitUsability" {
+        append "NotUsableIfActorHasSkill" "effect.asteria_bond_spent"
     }
 }
 

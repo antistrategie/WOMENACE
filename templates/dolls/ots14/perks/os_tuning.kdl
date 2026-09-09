@@ -32,6 +32,57 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.wmgfl_os_tuning" {
         set "Event" enum="AddEvent" "OnMissionStart"
         set "SkillToAdd" "active.wmgfl_bay_reload"
     }
+    // The kit's one charge. Using either skill tagged wmgfl_field_kit makes OTs-14 use the spend
+    // skill on herself, which plants the spent marker, and both skills grey while she carries it.
+    // `Uses 1` on the skills is no gate: the engine re-derives uses from the template at every
+    // turn boundary.
+    append "EventHandlers" type="ApplySkillToSelf" {
+        set "SkillToApply" "active.wmgfl_field_kit_spend"
+        set "Event" enum="ApplyOnEvent" "OnSkillWithTagsUsed"
+        append "RequiredTags" "wmgfl_field_kit"
+        set "RequiredLogic" enum="LogicType" "Or"
+        set "ChanceToApply" 100
+    }
+}
+
+clone "TagTemplate" from="unique" id="wmgfl_field_kit"
+
+// What ApplySkillToSelf fires. It does not add SkillToApply to the actor: it creates an instance
+// and uses it on the owner's tile, free and without a usability check, so a bare status effect
+// there does nothing. A hidden self-use active whose own AddSkill lands the marker is the shape
+// vanilla uses (damage_effect.powerlines_damaged.active, active.emp_discharge_small).
+clone "SkillTemplate" from="active.special.lucky_shot" id="active.wmgfl_field_kit_spend" {
+    set "Title" {
+        set "m_DefaultTranslation" "Field Kit Spent"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "OTs-14 has used her field kit this mission."
+    }
+    set "IsHidden" #true
+    set "ActionPointCost" 0
+    set "IsLimitedUses" #false
+    set "IsRemovedAfterCombat" #true
+    // Used on the owner's own tile, so it reaches no further than that.
+    set "MaxRange" 0
+    set "AoEType" enum="SkillAoEType" "CenterOnly"
+    clear "EventHandlers"
+    append "EventHandlers" type="AddSkill" {
+        set "Event" enum="AddEvent" "OnUse"
+        set "SkillToAdd" "effect.wmgfl_field_kit_spent"
+    }
+}
+
+// Marks the field kit as spent for the rest of the mission. A hidden status effect on OTs-14
+// herself, so it survives every resync and a mid-mission save, and the engine drops it after
+// combat like any other effect.
+clone "SkillTemplate" from="effect.reduced_ap_after_transport" id="effect.wmgfl_field_kit_spent" {
+    set "Title" {
+        set "m_DefaultTranslation" "Field Kit Spent"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "OTs-14 has used her field kit this mission."
+    }
+    clear "EventHandlers"
 }
 
 clone "SkillTemplate" from="active.treat_wounds" id="active.wmgfl_bay_repair" {
@@ -44,12 +95,15 @@ clone "SkillTemplate" from="active.treat_wounds" id="active.wmgfl_bay_repair" {
     set "Icon" asset="ots14/skills/repair"
     set "IconDisabled" asset="ots14/skills/repair_disabled"
     set "ActionPointCost" 20
+    // No use counter. The charge is the spent marker, and a counter the engine refills each
+    // turn would disagree with it on the tile.
     set "IsLimitedUses" #false
     set "IsRemovedAfterCombat" #true
+    append "Tags" "wmgfl_field_kit"
     clear "EventHandlers"
     append "EventHandlers" type="WOMENACE:HealUserToFull" {}
-    append "EventHandlers" type="WOMENACE:MissionCharge" {
-        set "Group" "ots14_field_kit"
+    append "EventHandlers" type="LimitUsability" {
+        append "NotUsableIfActorHasSkill" "effect.wmgfl_field_kit_spent"
     }
 }
 
@@ -69,7 +123,8 @@ clone "SkillTemplate" from="active.rogue_ammo_runner_refill_ammo" id="active.wmg
     set "ActionPointCost" 20
     set "IsLimitedUses" #false
     set "IsRemovedAfterCombat" #true
-    append "EventHandlers" type="WOMENACE:MissionCharge" {
-        set "Group" "ots14_field_kit"
+    append "Tags" "wmgfl_field_kit"
+    append "EventHandlers" type="LimitUsability" {
+        append "NotUsableIfActorHasSkill" "effect.wmgfl_field_kit_spent"
     }
 }

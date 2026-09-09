@@ -151,8 +151,13 @@ internal sealed class ShopHost : IDisposable
 
     public void ShowWorkshop()
     {
+        var leavingShop = _wantShop;
         _wantShop = false;
         Refresh();
+        // The navigation button reopens a screen that is already active without OnOpened, so
+        // the panels would come back showing the stock they rendered before the shop traded.
+        if (leavingShop)
+            UIManager.Get()?.GetActiveScreen()?.TryCast<WorkshopUIScreen>()?.UpdateWindow();
     }
 
     public void Refresh()

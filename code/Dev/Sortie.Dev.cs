@@ -17,6 +17,7 @@ namespace WOMENACE.Code;
 //   Sortie.Where   -> where we are (scene, active screen, prep readiness, in-mission)
 //   Sortie.Open    -> open mission prep for the current operation's mission
 //   Sortie.Launch  -> launch the prepped mission, once its preview has landed
+//   Sortie.Skills  -> the active actor's skills as the engine judges them
 //
 // Named Sortie, not Mission: the verb runner matches class short names
 // case-insensitively and the SDK's own Mission class would shadow it.
@@ -100,6 +101,34 @@ public static class Sortie
             maxSupplies = maxSupplies.GetAmount(),
             next = "poll Sortie.Where until inMission is true",
         };
+    }
+
+    // The active actor's skill list as the engine judges it, for checking a once-per-mission
+    // gate without reading the skill bar: whether each skill is usable right now, and which
+    // status effects (a spent marker among them) the actor carries.
+    public static object Skills()
+    {
+        var actor = TacticalManager.Get()?.GetActiveActor();
+        var skills = actor?.GetSkills()?.GetAllSkills();
+        if (skills == null)
+            return new { error = "no active actor" };
+        var rows = new List<string>();
+        for (var i = 0; i < skills.Count; i++)
+        {
+            var skill = skills[i];
+            if (skill == null)
+                continue;
+            var active = skill.TryCast<Il2CppMenace.Tactical.Skills.Skill>();
+            var handlers = active?.GetSkillEventHandlers();
+            var kinds = new List<string>();
+            for (var h = 0; handlers != null && h < handlers.Length; h++)
+                kinds.Add(handlers[h]?.GetIl2CppType().Name ?? "null");
+            rows.Add(active != null
+                ? $"{skill.GetID()} usable={active.IsUsable()} enabled={skill.IsEnabled()} hidden={skill.IsHidden()} uses={active.GetUses()}/{active.GetMaxUses()} handlers=[{string.Join(",", kinds)}]"
+                : $"{skill.GetID()} enabled={skill.IsEnabled()} hidden={skill.IsHidden()}");
+        }
+        // Joined into one string: the verb runner's JSON layer renders arrays as their type name.
+        return new { actor = actor.GetTemplate()?.GetID(), count = rows.Count, skills = string.Join("\n", rows) };
     }
 
     private static UIScreen ActiveScreen()
