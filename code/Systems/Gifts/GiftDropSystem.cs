@@ -1,6 +1,7 @@
 using Il2CppInterop.Runtime.InteropTypes;
 using Il2CppMenace.Items;
 using Il2CppMenace.States;
+using Il2CppMenace.Strategy;
 using Il2CppMenace.Tactical;
 using Jiangyu.Game;
 using Jiangyu.Sdk;
@@ -15,6 +16,8 @@ namespace WOMENACE.Code;
 // roll, weighted by the enemy's tier, granted straight to the shared inventory the gift modal reads.
 public sealed class GiftDropSystem : JiangyuSystem
 {
+    private ShipUpgradeTemplate _enhancedRescueFairy;
+
     // An enemy is matched to the first tier whose MaxCost is >= its ArmyPointCost (the game's own
     // difficulty/value number, ~60 for weak grunts up past ~250 for elites). On a player kill it
     // rolls every gift whose Rarity falls in [MinRarity, MaxRarity], each at DropChance percent. The
@@ -55,6 +58,10 @@ public sealed class GiftDropSystem : JiangyuSystem
     // one's result.
     private System.IntPtr _rollingMission;
 
+    public override void OnTemplatesApplied()
+        => _enhancedRescueFairy = Templates.ById<ShipUpgradeTemplate>("oci.wmgfl_enhanced_rescue_fairy",
+            message => Context.Log.Warn($"gift drops: {message}"));
+
     public override void OnInit()
     {
         // Fires on every actor death with (target, killer, killerFaction). Single overload, so it
@@ -92,8 +99,12 @@ public sealed class GiftDropSystem : JiangyuSystem
             // Only roll within a campaign (a tactical mission always is). Gifts are not banked here:
             // they ride the result-screen loot list (see OnShowMissionResult), which the native flow
             // banks. Banking here too would double the grant.
-            if (StrategyState.Get() == null)
+            var state = StrategyState.Get();
+            if (state == null)
                 return;
+            var rescueFairies = _enhancedRescueFairy == null ? 0
+                : state.ShipUpgrades?.GetInstallsCount(_enhancedRescueFairy) ?? 0;
+            var dropChance = Math.Min(100, tier.DropChance + 10 * rescueFairies);
 
             // Drop any gifts left queued by a mission that ended without a result screen, so they
             // cannot leak into this mission's result.
@@ -110,7 +121,7 @@ public sealed class GiftDropSystem : JiangyuSystem
             {
                 if (gift.Rarity < tier.MinRarity || gift.Rarity > tier.MaxRarity)
                     continue;
-                if (UnityEngine.Random.Range(0, 100) >= tier.DropChance)
+                if (UnityEngine.Random.Range(0, 100) >= dropChance)
                     continue;
                 // Queue it for delivery on the mission-result screen (display + native banking there).
                 _pendingGifts.Add(gift);

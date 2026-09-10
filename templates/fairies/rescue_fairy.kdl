@@ -1,0 +1,97 @@
+clone "ShipUpgradeTemplate" from="oci.wmgfl_fairy_lodge" id="oci.wmgfl_rescue_fairy" {
+    set "Icon" asset="fairies/rescue_fairy"
+    set "Name" {
+        set "m_DefaultTranslation" "Rescue Fairy"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Rescue Fairy"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "\"Rescues\" loot from defeated enemies. Can be used in assembling everyone for an outing or a meal on regular days."
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "<style=\"Highlight\">• All player units gain +8% item drop chance when killing enemies.</style>"
+    }
+    set "UnlockType" enum="ShipUpgradeUnlockType" "EventOnly"
+    set "UnlockSelectWeight" 0
+    set "OciPointsCosts" 60
+    clear "Effects"
+    append "Effects" type="AddSkillToEntitiesEffect" {
+        set "Faction" enum="EntityFaction" "Player"
+        set "Infantry" #true
+        set "Vehicles" #true
+        set "Turrets" #true
+        set "Skill" "passive.wmgfl_rescue_fairy"
+    }
+    clear "ChildUpgrades"
+    append "ChildUpgrades" "oci.wmgfl_enhanced_rescue_fairy"
+    append "AdditionalShipUpgradeEffectGivers" "oci.wmgfl_fairy_lodge"
+}
+
+clone "ShipUpgradeTemplate" from="oci.wmgfl_rescue_fairy" id="oci.wmgfl_enhanced_rescue_fairy" {
+    set "Icon" asset="fairies/enhanced_rescue_fairy"
+    set "Name" {
+        set "m_DefaultTranslation" "Enhanced Rescue Fairy"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Enhanced Rescue Fairy"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "\"Rescues\" loot from defeated enemies. Can be used in assembling everyone for an outing or a meal on regular days."
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" """
+            <style="Highlight">• All player units gain +15% item drop chance when killing enemies.
+            • +10% affinity gift drop chance.</style>
+            """
+    }
+    set "OciPointsCosts" 90
+    // Ship-upgrade clones share nested effects, so create a separate effect for this tier.
+    clear "Effects"
+    append "Effects" type="AddSkillToEntitiesEffect" {
+        set "Faction" enum="EntityFaction" "Player"
+        set "Infantry" #true
+        set "Vehicles" #true
+        set "Turrets" #true
+        set "Skill" "passive.wmgfl_enhanced_rescue_fairy"
+    }
+    clear "ChildUpgrades"
+}
+
+// Trinketing adds percentage points through ChangeDropChanceHandler (RVA 0x74B9D0).
+// TacticalState.OnFinished (RVA 0x73CFA0) reads the killer's handlers during the native loot roll.
+clone "SkillTemplate" from="passive.additional_hitpoints_maintenance_line" id="passive.wmgfl_rescue_fairy" {
+    set "Icon" asset="fairies/rescue_fairy"
+    set "IsStacking" #true
+    set "Title" {
+        set "m_DefaultTranslation" "Rescue Fairy"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Increased item drop chance when killing enemies."
+        clear "m_Placeholders"
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "Increased item drop chance when killing enemies."
+        clear "m_Placeholders"
+    }
+    clear "EventHandlers"
+    append "EventHandlers" type="ChangeDropChance" {
+        set "AdditionalDropChance" 8
+    }
+}
+
+clone "SkillTemplate" from="passive.wmgfl_rescue_fairy" id="passive.wmgfl_enhanced_rescue_fairy" {
+    set "Icon" asset="fairies/enhanced_rescue_fairy"
+    set "Title" {
+        set "m_DefaultTranslation" "Enhanced Rescue Fairy"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Increased item drop chance when killing enemies."
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "Increased item drop chance when killing enemies."
+    }
+    set "EventHandlers" index=0 {
+        set "AdditionalDropChance" 15
+    }
+}

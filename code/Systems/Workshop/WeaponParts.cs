@@ -56,7 +56,7 @@ public static class WeaponParts
 
 public sealed class WorkshopState
 {
-    // Recipes remain available after the last copy is consumed or sold. Inventory and hired
-    // leaders back-fill this discovery ledger on workshop entry for existing campaigns.
+    // Recipes remain available after the last copy is consumed or sold. Workshop entry also
+    // discovers starting loadouts and weapons unlocked by a hired Doll's affinity.
     public List<string> KnownWeaponIds { get; set; } = [];
 }

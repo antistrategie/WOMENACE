@@ -19,8 +19,15 @@ clone "ShipUpgradeTemplate" from="oci.unbent_medevac" id="oci.wmgfl_fairy_lodge"
     append "ChildUpgrades" "oci.wmgfl_reinforcement_fairy"
     append "ChildUpgrades" "oci.wmgfl_peace_fairy"
     append "ChildUpgrades" "oci.wmgfl_parachute_fairy"
+    append "ChildUpgrades" "oci.wmgfl_rescue_fairy"
 }
 
-patch "ShipUpgradeSlotTemplate" "ship_upgrade_slot.hull" {
+clone "ShipUpgradeSlotTemplate" from="ship_upgrade_slot.hull" id="ship_upgrade_slot.wmgfl_fairies" {
+    set "Name" {
+        set "m_DefaultTranslation" "Fairies"
+    }
+    // FairySlotsSystem owns the additional slots outside the game's ten-slot save arrays.
+    clear "Slots"
+    clear "BasicUpgrades"
     append "BasicUpgrades" "oci.wmgfl_fairy_lodge"
 }

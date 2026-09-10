@@ -111,10 +111,7 @@ internal sealed partial class ProcurementView
             CloseOverlay(_exchange);
         }
         else
-        {
-            System.ReconcileClaims();
             Refresh();
-        }
     }
 
     public void Refresh()

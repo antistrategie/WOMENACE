@@ -1,4 +1,3 @@
-using Il2CppMenace.Items;
 using Il2CppMenace.Strategy;
 using Il2CppMenace.Tactical;
 using Il2CppMenace.UI.Strategy;
@@ -32,33 +31,6 @@ public static class Affinity
     // The top level, derived from the curve: level 1 plus one level per threshold. Property (not a
     // field) so it reads StepThresholds lazily, after that array's initialiser has run.
     public static int MaxLevel => StepThresholds.Length + 1;
-
-    internal static void ReconcileLimitedGrants(ModContext context, string characterTag, OwnedItems owned)
-    {
-        if (owned == null)
-            return;
-        var key = KeyForTag(characterTag);
-        var state = context.State.Get<AffinityState>();
-        state.Leaders.TryGetValue(key, out var leader);
-        var level = LevelForPoints(leader?.Affinity ?? 0);
-        var procurement = context.State.Get<ProcurementState>();
-        // Record pre-ledger affinity copies before a Procurement reward can become
-        // indistinguishable from them. A Procurement claim never proves an affinity grant.
-        // GetInstanceCount (RVA 0x5A8D40) includes equipped copies in the owned template list.
-        RecordExisting<WeaponTemplate>(Unlocks.UnlockedSpecialWeapons(characterTag, level), saved => saved.GrantedWeaponIds);
-        RecordExisting<VehicleItemTemplate>(Unlocks.UnlockedItems(characterTag, level), saved => saved.GrantedVehicleIds);
-
-        void RecordExisting<T>(IEnumerable<string> ids, Func<LeaderState, List<string>> ledger) where T : BaseItemTemplate
-        {
-            foreach (var id in ids)
-                if ((leader == null || !ledger(leader).Contains(id)) && procurement.Claimed(id) == 0
-                    && Templates.ById<T>(id) is { } template && owned.GetInstanceCount(template) > 0)
-                {
-                    leader ??= state.ForLeader(key);
-                    ledger(leader).Add(id);
-                }
-        }
-    }
 
     public static int LevelForPoints(int points)
     {

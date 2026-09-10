@@ -73,8 +73,7 @@ var saved = JsonSerializer.Serialize(plan.State);
 using (var json = JsonDocument.Parse(saved))
     Assert(json.RootElement.GetProperty("Counters").TryGetProperty("Equipment", out _),
         "Saved counter keys must use stable section names");
-// Existing saves can carry an unused lifetime pull total alongside the live ledger.
-var restored = JsonSerializer.Deserialize<ProcurementState>(saved[..^1] + ",\"Pulls\":100}")!;
+var restored = JsonSerializer.Deserialize<ProcurementState>(saved)!;
 var next = Procurement.Plan(plan.State, catalogue, 10, 123);
 var reload = Procurement.Plan(restored, catalogue, 10, 123);
 Assert(next.Rewards.Select(reward => reward.Id).SequenceEqual(reload.Rewards.Select(reward => reward.Id)), "Save reload must preserve the next random rewards");

@@ -25,24 +25,6 @@ public sealed class ProcurementSystem : JiangyuSystem
             Instance = null;
     }
 
-    public void ReconcileClaims()
-    {
-        var roster = StrategyState.Get()?.Roster;
-        if (roster == null)
-            return;
-        // Existing campaigns may have obtained these leaders through another route. A known
-        // leader cannot use a second dossier, including after dismissal or death.
-        foreach (var entry in Catalogue.Entries.Where(entry => entry.Leader != null))
-        {
-            if (LeaderRecruitment.IsAcquired(entry.Leader, roster) && State.Claimed(entry.Reward.Id) == 0)
-                State.Claims[entry.Reward.Id] = entry.Reward.Limit;
-        }
-        var owned = Inventory.Owned;
-        foreach (var (character, unlocks) in Unlocks.ByCharacter)
-            if (unlocks.Any(unlock => Unlocks.UsesItemIds(unlock.Feature)))
-                Affinity.ReconcileLimitedGrants(Context, character, owned);
-    }
-
     public (bool ok, string error, IReadOnlyList<ProcurementCatalogue.Entry> rewards) Pull(int count)
     {
         if (_trading || !WorkshopAccess.IsUnlocked || count != 1 && count != 10 || Catalogue.Rewards.Count == 0)
@@ -59,7 +41,6 @@ public sealed class ProcurementSystem : JiangyuSystem
         var committed = false;
         try
         {
-            ReconcileClaims();
             var plan = Procurement.Plan(State, Catalogue.Rewards, count, StrategyState.Get().GetSeed());
             var rewards = plan.Rewards.Select(reward => Catalogue.ById[reward.Id]).ToList();
             var stock = new InventoryStock();

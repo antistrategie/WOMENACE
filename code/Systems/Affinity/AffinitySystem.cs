@@ -450,7 +450,6 @@ public sealed class AffinitySystem : JiangyuSystem
                 return;
 
             var characterTag = Affinity.CharacterTag(leader);
-            Affinity.ReconcileLimitedGrants(Context, characterTag, owned);
             var grantedWeapons = Context.State.Get<AffinityState>().ForLeader(key).GrantedWeaponIds;
 
             foreach (var id in Unlocks.UnlockedWeapons(characterTag, level))
@@ -460,12 +459,6 @@ public sealed class AffinitySystem : JiangyuSystem
                 var template = Templates.Resolve<WeaponTemplate>(id, _weaponCache, msg => Context.Log.Warn($"affinity: {msg}"));
                 if (template == null)
                     continue;
-                // Existing saves may already own a calibrated copy without a grant ledger.
-                if (OwnsInstance(owned, itemId => Calibration.TryParseRank(itemId, id, out _)))
-                {
-                    grantedWeapons.Add(id);
-                    continue;
-                }
                 if (owned.AddItem(template, false, false) == null)
                     continue;
                 grantedWeapons.Add(id);
@@ -501,21 +494,6 @@ public sealed class AffinitySystem : JiangyuSystem
             }
         }
         catch (Exception ex) { Context.Log.Warn($"affinity: unlock failed: {ex.Message}"); }
-    }
-
-    // Match every calibration rank of a base weapon id. A ranked SSR's clone is not
-    // in GetAll<WeaponTemplate>, so the scan goes by id.
-    private static bool OwnsInstance(OwnedItems owned, Func<string, bool> matches)
-    {
-        var all = new Il2CppSystem.Collections.Generic.List<BaseItem>();
-        owned.GetInstances(all);
-        for (var i = 0; i < all.Count; i++)
-        {
-            var itemId = all[i]?.TryCast<Item>()?.GetTemplate()?.GetID();
-            if (itemId != null && matches(itemId))
-                return true;
-        }
-        return false;
     }
 
     // Read the rarity brackets and colours from the game's UIConfig once. Falls back to the shipped
