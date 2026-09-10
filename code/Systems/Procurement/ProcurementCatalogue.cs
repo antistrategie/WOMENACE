@@ -1,5 +1,6 @@
 using Il2CppMenace.Items;
 using Il2CppMenace.Strategy;
+using Jiangyu.Game.Ui;
 using Jiangyu.Sdk;
 using UnityEngine;
 
@@ -169,7 +170,7 @@ public sealed class ProcurementCatalogue
         public bool IsUnlock => Leader != null || Outfit != null;
         public string Name => Outfit?.Name.Resolve() ?? DisplayName(Template);
         public string DollName => Templates.DefaultText(Template.ShortName, Name);
-        public Texture2D Art => Leader?.SpeakerTemplate?.StandLookLeftImage;
+        public Texture2D Art => Portraits.GetStanding(Leader?.SpeakerTemplate, StandingPortrait.Left);
         public Sprite Icon => Template?.TryCast<ItemTemplate>()?.IconEquipment ?? Template?.Icon;
         public string Type => Template?.TryCast<VehicleItemTemplate>() != null ? TypeVehicle
             : Template?.TryCast<ArmorTemplate>() != null ? TypeArmour : TypeWeapon;

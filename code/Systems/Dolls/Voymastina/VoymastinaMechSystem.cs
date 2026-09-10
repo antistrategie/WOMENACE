@@ -10,7 +10,7 @@ public sealed class VoymastinaMechSystem : JiangyuSystem
     private const float SpeedMultiplier = 5f;
 
     private static readonly string[] TargetTemplateIds =
-        { "player_vehicle.voymastina_mech", "player_vehicle.voymastina_mech_erwin" };
+        { VehicleModels.Sinbreaker, VehicleModels.SinbreakerErwin };
 
     private static readonly Dictionary<string, string> SkillAnimTrigger = new(StringComparer.Ordinal)
     {

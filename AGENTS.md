@@ -50,6 +50,7 @@ Persisted cross-system state belongs in `Context.State.Get<T>()`. Reusable rules
 - WOMENACE adds content instead of replacing vanilla assets. Additions belong under `assets/additions/` or in mod-owned Unity bundles, then templates point to them.
 - Character prefabs use `unity/Assets/Prefabs/<character>/<variant>/main.prefab` and KDL asset names such as `<character>/<variant>/main`. Outfit templates (`armor.<character>_<variant>`) carry no body: `TransmogSystem` loads `<character>/<variant>/main` the first time a doll wears the outfit, so a doll nobody fields costs no memory.
 - Weapon prefabs use `unity/Assets/Prefabs/weapon/<name>/main.prefab` and KDL asset names such as `weapon/<name>/main`.
+- `VehicleModelSystem` loads The Sinner and both Sinbreaker bodies on first preview or tactical spawn. Their entity templates inherit a fallback prefab and carry no eager bundle reference.
 - Asset references preserve nested paths. For example, `assets/additions/audio/weapons/rf/rf_shot_01.wav` is `asset="weapons/rf/rf_shot_01"`.
 - Audio under `assets/additions/audio/` compiles to Vorbis held compressed in memory. Clips above 48 kHz keep PCM, which is how the 96 kHz weapon effects stay uncompressed without a per-asset setting. Portraits compile to DXT5 and sprites to BC7 when their dimensions divide by four.
 - Run `scripts/pmx_to_menace.py` before the scripts under `scripts/doll/`. The PMX conversion regenerates the mesh and discards later doll-preparation work.

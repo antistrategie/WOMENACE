@@ -28,7 +28,6 @@ namespace WOMENACE.Code;
 // is [[EntityWeaponParitySystem]], shared with the mech's guns.
 public sealed class KoledaCarSystem : JiangyuSystem
 {
-    private const string CarId = "player_vehicle.koleda_car";
     private const string SalvoId = "active.sinner_mg";
     private const string DoorsParam = "DoorsOut";
 
@@ -108,7 +107,7 @@ public sealed class KoledaCarSystem : JiangyuSystem
             return false;
         if (!_carResolved)
         {
-            var car = Templates.ById<EntityTemplate>(CarId);
+            var car = Templates.ById<EntityTemplate>(VehicleModels.Sinner);
             if (car == null)
                 return false;
             _carTemplate = car.Pointer;
