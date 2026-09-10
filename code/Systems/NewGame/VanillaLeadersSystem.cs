@@ -54,8 +54,7 @@ public sealed class VanillaLeadersSystem : JiangyuSystem
     // option restores the authored pick pool without touching entries anyone else put there.
     private readonly List<UnitLeaderTemplate> _addedDolls = new();
 
-    // The dossiers whose leader rosters union into "all dolls" for the widening.
-    private static readonly string[] DollDossierIds = { "dossier.squad_leader", "dossier.pilot" };
+    private static readonly string[] BlackMarketDossierIds = { "dossier.squad_leader", "dossier.pilot" };
 
     // Redeem transient-filter state (redeems are not re-entrant, so one slot suffices).
     private DossierItemTemplate _swappedDossier;
@@ -250,17 +249,18 @@ public sealed class VanillaLeadersSystem : JiangyuSystem
         catch (Exception ex) { Context.Log.Warn($"vanilla-leaders: show-all removal failed: {ex.Message}"); }
     }
 
-    // Add extra starting Dolls from the ordinary Black Market dossier pools. Procurement-only
-    // Dolls enter through Procurement. Filter by speaker tag to keep this option scoped to WOMENACE.
+    // Black Market and Procurement dossiers use acquirable forms, so swap-only leaders do not
+    // appear as duplicate Dolls. Filter by speaker tag to keep this option scoped to WOMENACE.
     private void WidenPickPool(StrategyConfig config)
     {
         try
         {
             var pool = ToList(config.InitialPickableUnitLeaders);
             var added = new List<UnitLeaderTemplate>();
-            foreach (var dossierId in DollDossierIds)
+            var dossiers = BlackMarketDossierIds.Select(id => Templates.ById<DossierItemTemplate>(id))
+                .Concat(Templates.All<DossierItemTemplate>().Where(ProcurementCatalogue.IsProcurementDossier));
+            foreach (var dossier in dossiers)
             {
-                var dossier = Templates.ById<DossierItemTemplate>(dossierId);
                 var leaders = dossier?.m_UnlockedLeaders;
                 if (leaders == null)
                     continue;

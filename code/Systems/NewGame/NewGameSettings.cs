@@ -47,7 +47,7 @@ public static class NewGameSettings
         new Setting
         {
             Label = new LocalisedText(
-                "WOMENACE::ui/newgame/show_all_dolls", "Include Black Market Dolls in new game list"),
+                "WOMENACE::ui/newgame/show_all_dolls", "Include all Dolls in new game list"),
             Get = o => o.ShowAllDolls,
             Set = (o, v) => o.ShowAllDolls = v,
         },
@@ -70,8 +70,7 @@ public sealed class NewGameOptions
     // other mods' custom leaders alike: see VanillaLeadersSystem for how vanilla is recognised.
     public bool DisableVanillaLeaders { get; set; }
 
-    // Adds Dolls from the ordinary Black Market dossiers to the initial pick list.
-    // Procurement-only Dolls enter the campaign through Procurement.
+    // Adds all Dolls from Black Market and Procurement dossiers to the initial pick list.
     public bool ShowAllDolls { get; set; }
 
     // When true, a WOMENACE leader's squad is capped at five bodies (the doll plus at most four
