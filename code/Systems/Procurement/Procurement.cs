@@ -114,6 +114,7 @@ public sealed class ProcurementReward(string id, ProcurementSection section, int
     public readonly string Id = id;
     public readonly ProcurementSection Section = section;
     public readonly int Limit = limit;
+    public bool ReturnsOnLoss => Limit > 0 && Section is ProcurementSection.Equipment or ProcurementSection.Special;
 }
 
 public sealed class ProcurementPlan(ProcurementState state, IReadOnlyList<ProcurementReward> rewards)
@@ -127,15 +128,39 @@ public sealed class ProcurementState
     public uint RandomState { get; set; }
     public Dictionary<ProcurementSection, int> Counters { get; set; } = [];
     public Dictionary<string, int> Claims { get; set; } = new(StringComparer.Ordinal);
+    // Retain origin after loss so a sold copy bought back still counts towards its limit.
+    public Dictionary<string, string> EquipmentItems { get; set; } = new(StringComparer.Ordinal);
 
     public int Counter(ProcurementSection section) => Counters.GetValueOrDefault(section);
     public int Claimed(string id) => Claims.GetValueOrDefault(id);
     public bool Available(ProcurementReward reward) => reward.Limit == 0 || Claimed(reward.Id) < reward.Limit;
+
+    public void TrackEquipment(ProcurementReward reward, string itemGuid)
+    {
+        if (!reward.ReturnsOnLoss)
+            return;
+        if (string.IsNullOrEmpty(itemGuid))
+            throw new ArgumentException("A Procurement equipment reward needs an item GUID.", nameof(itemGuid));
+        EquipmentItems.Add(itemGuid, reward.Id);
+    }
+
+    public void RefreshEquipmentClaims(Func<string, bool> ownsItem)
+    {
+        // Finish the inventory read before changing any claims. An unreadable inventory
+        // cannot reopen part of the pool, and affinity copies never enter this ledger.
+        var counts = new Dictionary<string, int>(StringComparer.Ordinal);
+        foreach (var (guid, id) in EquipmentItems)
+            counts[id] = counts.GetValueOrDefault(id) + (ownsItem(guid) ? 1 : 0);
+        foreach (var (id, count) in counts)
+            Claims[id] = count;
+    }
+
     public ProcurementState Copy() => new()
     {
         RandomState = RandomState,
         Counters = new(Counters),
         Claims = new(Claims, StringComparer.Ordinal),
+        EquipmentItems = new(EquipmentItems, StringComparer.Ordinal),
     };
 
     public void Apply(ProcurementState state)
@@ -143,5 +168,6 @@ public sealed class ProcurementState
         RandomState = state.RandomState;
         Counters = state.Counters;
         Claims = state.Claims;
+        EquipmentItems = state.EquipmentItems;
     }
 }

@@ -9,7 +9,8 @@ internal static class InventoryExchange
     // Prepare outputs before consuming stock. Rollback restores the original objects to
     // preserve their GUIDs.
     public static (bool ok, string error) Run(IReadOnlyList<BaseItem> inputs,
-        IReadOnlyList<(BaseItemTemplate Template, int Count)> outputs, IModLog log = null, InventoryStock stock = null)
+        IReadOnlyList<(BaseItemTemplate Template, int Count)> outputs, IModLog log = null, InventoryStock stock = null,
+        Action<IReadOnlyList<BaseItem>> recordOutputs = null)
     {
         var owned = Inventory.Owned;
         if (owned == null)
@@ -33,6 +34,9 @@ internal static class InventoryExchange
                     added.Add(item);
                 }
             Remove(inputs, removed);
+            // Record into the caller's pending state before committing. A failed record
+            // must roll back the items and payment together.
+            recordOutputs?.Invoke(added);
             return (true, null);
         }
         catch (Exception ex)

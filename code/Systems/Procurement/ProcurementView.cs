@@ -119,6 +119,7 @@ internal sealed partial class ProcurementView
         _refreshExchange?.Invoke();
         if (!_visible)
             return;
+        System.RefreshEquipmentClaims();
         RefreshHome();
         var available = Catalogue.Rewards.Count > 0;
         _one.SetEnabled(!_busy && available);

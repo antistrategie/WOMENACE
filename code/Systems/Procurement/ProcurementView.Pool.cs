@@ -16,6 +16,7 @@ internal sealed partial class ProcurementView
     {
         if (_busy)
             return;
+        System.RefreshEquipmentClaims();
         _section = section;
         _poolPage = 0;
         _filter = "";

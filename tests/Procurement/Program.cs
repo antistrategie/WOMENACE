@@ -112,6 +112,82 @@ var curiositySaved = JsonSerializer.Deserialize<ProcurementState>(JsonSerializer
 Assert(!curiositySaved.Available(catalogue.Single(reward => reward.Section == ProcurementSection.Curios)),
     "The Curio unlock must survive saving without an inventory item");
 
+var special = catalogue.Single(reward => reward.Section == ProcurementSection.Special);
+var equipmentState = new ProcurementState();
+equipmentState.Counters[ProcurementSection.Special] = Procurement.Pity(ProcurementSection.Special) - 1;
+var equipmentPull = Procurement.Plan(equipmentState, catalogue, 1, 42);
+Assert(equipmentPull.Rewards.Single() == special, "A due special guarantee must award the available equipment");
+equipmentPull.State.TrackEquipment(special, "procurement-railgun");
+Assert(equipmentState.EquipmentItems.Count == 0 && equipmentState.Available(special),
+    "Recording a pending award must not commit its item origin or claim");
+equipmentState.Apply(equipmentPull.State);
+var owned = new HashSet<string> { "procurement-railgun", "affinity-railgun" };
+equipmentState.RefreshEquipmentClaims(owned.Contains);
+Assert(equipmentState.Claimed(special.Id) == 1 && !equipmentState.Available(special),
+    "Owning both copies must consume only the Procurement copy's limit");
+owned.Remove("affinity-railgun");
+equipmentState.RefreshEquipmentClaims(owned.Contains);
+Assert(!equipmentState.Available(special), "Losing the affinity copy must not reopen Procurement");
+owned.Add("affinity-railgun");
+owned.Remove("procurement-railgun");
+var equipmentCounter = equipmentState.Counter(ProcurementSection.Special);
+var equipmentRandomState = equipmentState.RandomState;
+equipmentState.RefreshEquipmentClaims(owned.Contains);
+Assert(equipmentState.Available(special) && equipmentState.Claimed(special.Id) == 0,
+    "Losing the Procurement copy must reopen its reward while the affinity copy remains owned");
+Assert(equipmentState.Counter(ProcurementSection.Special) == equipmentCounter && equipmentState.RandomState == equipmentRandomState,
+    "Returning lost equipment must not advance pity or the random stream");
+equipmentState.Counters[ProcurementSection.Special] = Procurement.Pity(ProcurementSection.Special) - 1;
+var replacement = Procurement.Plan(equipmentState, catalogue, 10, 42);
+Assert(replacement.Rewards.Count(reward => reward == special) == 1,
+    "A reopened reward must be drawable once within a ten-pull");
+replacement.State.TrackEquipment(special, "replacement-railgun");
+Assert(!equipmentState.EquipmentItems.ContainsKey("replacement-railgun") && equipmentState.Available(special),
+    "A failed replacement exchange must leave the original ledger and eligibility intact");
+equipmentState.Apply(replacement.State);
+owned.Add("replacement-railgun");
+var equipmentReload = JsonSerializer.Deserialize<ProcurementState>(JsonSerializer.Serialize(equipmentState))!;
+equipmentReload.RefreshEquipmentClaims(owned.Contains);
+Assert(equipmentReload.EquipmentItems["replacement-railgun"] == special.Id && !equipmentReload.Available(special),
+    "Saving and loading must preserve the replacement copy's origin and limit");
+owned.Add("procurement-railgun");
+equipmentReload.RefreshEquipmentClaims(owned.Contains);
+Assert(equipmentReload.Claimed(special.Id) == 2 && !equipmentReload.Available(special),
+    "Buying back a previously sold Procurement copy must restore its claim alongside any replacement");
+owned.Remove("replacement-railgun");
+equipmentReload.RefreshEquipmentClaims(owned.Contains);
+Assert(equipmentReload.Claimed(special.Id) == 1 && !equipmentReload.Available(special),
+    "Losing a replacement must not reopen the pool while another Procurement copy is owned");
+owned.Remove("procurement-railgun");
+equipmentReload.RefreshEquipmentClaims(owned.Contains);
+Assert(equipmentReload.Available(special), "Repeated Procurement losses must reopen the reward");
+
+var vehicle = new ProcurementReward("vehicle", ProcurementSection.Special, 1);
+var separateEquipment = equipmentState.Copy();
+separateEquipment.TrackEquipment(vehicle, "procurement-vehicle");
+separateEquipment.Claims[vehicle.Id] = 1;
+separateEquipment.RefreshEquipmentClaims(guid => guid == "procurement-vehicle");
+Assert(separateEquipment.Available(special) && !separateEquipment.Available(vehicle),
+    "Losing a weapon must not reset a different equipment reward's limit");
+separateEquipment.RefreshEquipmentClaims(guid => guid != "procurement-railgun");
+var beforeUnreadableInventory = JsonSerializer.Serialize(separateEquipment);
+var unreadableInventoryRejected = false;
+try
+{
+    separateEquipment.RefreshEquipmentClaims(guid => guid == "procurement-vehicle"
+        ? throw new InvalidOperationException("Inventory unavailable") : false);
+}
+catch (InvalidOperationException) { unreadableInventoryRejected = true; }
+Assert(unreadableInventoryRejected && JsonSerializer.Serialize(separateEquipment) == beforeUnreadableInventory,
+    "A failed inventory read must leave every equipment claim intact");
+
+var permanentClaims = exhausted.Copy();
+foreach (var reward in catalogue.Where(reward => !reward.ReturnsOnLoss))
+    permanentClaims.TrackEquipment(reward, "non-equipment");
+permanentClaims.RefreshEquipmentClaims(_ => false);
+Assert(permanentClaims.EquipmentItems.Count == 0 && catalogue.Where(reward => reward.Limit > 0)
+    .All(reward => !permanentClaims.Available(reward)),
+    "Permanent unlocks and claims without a tracked item must remain spent");
 
 var partsOnly = Procurement.Plan(new ProcurementState(), new[] { catalogue[0] }, 10, 42);
 Assert(partsOnly.Rewards.All(reward => reward.Id == "part"), "All empty section weights must return to parts");

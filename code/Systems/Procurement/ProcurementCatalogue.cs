@@ -12,7 +12,7 @@ public sealed class ProcurementCatalogue
     public const string TypeArmour = "armour";
     public const string TypeVehicle = "vehicle";
 
-    // Limits are lifetime Procurement claims. Affinity grants have their own ledger.
+    // Limits count owned Procurement copies. Affinity grants have their own ledger.
     private static readonly (string Id, int Limit)[] SpecialItems =
     {
         ("specialweapon.asteria_railgun", 1),

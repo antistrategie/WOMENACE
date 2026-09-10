@@ -25,6 +25,22 @@ public sealed class ProcurementSystem : JiangyuSystem
             Instance = null;
     }
 
+    internal void RefreshEquipmentClaims()
+    {
+        // The shop and pull entry points have a loaded campaign. Scene-load callbacks
+        // can run before inventory restoration, and an exchange can still roll back.
+        if (_trading || Inventory.Owned is not { } owned)
+            return;
+        try
+        {
+            State.RefreshEquipmentClaims(guid => owned.GetItemByGuid(guid) != null);
+        }
+        catch (Exception ex)
+        {
+            Context.Log.Warn($"Procurement could not refresh equipment claims: {ex}");
+        }
+    }
+
     public (bool ok, string error, IReadOnlyList<ProcurementCatalogue.Entry> rewards) Pull(int count)
     {
         if (_trading || !WorkshopAccess.IsUnlocked || count != 1 && count != 10 || Catalogue.Rewards.Count == 0)
@@ -36,6 +52,7 @@ public sealed class ProcurementSystem : JiangyuSystem
             return (false, Locale.Text("WOMENACE::ui/procurement/unavailable", "Procurement is unavailable."), null);
         if (Pieces < cost)
             return (false, Locale.Text("WOMENACE::ui/procurement/need_pieces", "Not enough Collapse Pieces."), null);
+        RefreshEquipmentClaims();
         _trading = true;
         var unlocked = new List<UnitLeaderTemplate>();
         var committed = false;
@@ -59,7 +76,15 @@ public sealed class ProcurementSystem : JiangyuSystem
             var outputs = rewards.Where(entry => !entry.IsUnlock)
                 .GroupBy(entry => entry.Reward.Id)
                 .Select(group => (group.First().Template, group.Count())).ToList();
-            var result = InventoryExchange.Run(payment, outputs, Context.Log, stock);
+            var result = InventoryExchange.Run(payment, outputs, Context.Log, stock, items =>
+            {
+                foreach (var item in items)
+                {
+                    var reward = Catalogue.ById[item.GetBaseItemTemplate().GetID()].Reward;
+                    if (reward.ReturnsOnLoss)
+                        plan.State.TrackEquipment(reward, item.GetGuid());
+                }
+            });
             if (!result.ok)
                 return (false, result.error, null);
             State.Apply(plan.State);
