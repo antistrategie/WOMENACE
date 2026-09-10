@@ -36,6 +36,9 @@ public static class Unlocks
         Vehicle,
     }
 
+    // These features declare reward IDs in Entry.Items. SSR weapons derive their IDs from Calibration.
+    public static bool UsesItemIds(Feature feature) => feature is Feature.Vehicle or Feature.Mech or Feature.SpecialWeapon;
+
     // One unlock at a level: its gameplay Feature (if any), the data that feature needs, and the
     // popover Title for that level. Title is a LocalisedText (explicit translation key + English) so
     // it is BOTH translatable (the compiler extracts the literal into the POT) and the single source
@@ -139,8 +142,7 @@ public static class Unlocks
     }
 
     // The vehicle item ids a character has unlocked at this level (every Vehicle and Mech entry at
-    // or below it). Granted to the shared inventory, and re-granted whenever one is missing, so a
-    // chassis destroyed in combat comes back.
+    // or below it). Each affinity grant is recorded even after a chassis is lost.
     public static IEnumerable<string> UnlockedItems(string characterTag, int level)
     {
         foreach (var entry in EntriesFor(characterTag))

@@ -1,5 +1,7 @@
+using Il2CppInterop.Runtime;
 using Il2CppMenace.Tools;
 using Jiangyu.Game;
+using UnityEngine;
 
 namespace WOMENACE.Code;
 
@@ -8,6 +10,18 @@ namespace WOMENACE.Code;
 // one place rather than being recopied, slightly differently, by each.
 public static class Templates
 {
+    // Resources reads packaged game assets. The live DataTemplate catalogue also
+    // contains runtime mod clones and cannot establish base-game provenance.
+    // JIANGYU-CONTRACT: GetBaseFolder (RVA 0x5029D0) maps BaseItemTemplate and its subclasses to Data/Items/,
+    // covering weapons, armour and vehicles. Confirmed from native code and metadata.
+    public static IEnumerable<T> Packaged<T>() where T : DataTemplate
+    {
+        var folder = DataTemplateLoader.GetBaseFolder(Il2CppType.Of<T>());
+        foreach (var template in Resources.LoadAll<T>(folder))
+            if (template != null && template.IsAlive())
+                yield return template;
+    }
+
     // Every live template of type T. GetAll is array-backed, so it is an IReadOnlyList: index it.
     // The Il2Cpp enumerator path does not advance (its boxed struct enumerator stays put), so never
     // foreach the raw collection. Dead (non-alive) templates are skipped.

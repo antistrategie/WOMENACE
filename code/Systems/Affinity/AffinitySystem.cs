@@ -92,7 +92,7 @@ public sealed class AffinitySystem : JiangyuSystem
             foreach (var entry in entries)
             {
                 var wantsArmors = entry.Feature == Unlocks.Feature.Skins;
-                var wantsItems = entry.Feature is Unlocks.Feature.Vehicle or Unlocks.Feature.Mech or Unlocks.Feature.SpecialWeapon;
+                var wantsItems = Unlocks.UsesItemIds(entry.Feature);
                 if (wantsArmors != entry.Armors.Length > 0 || wantsItems != entry.Items.Length > 0)
                     Context.Log.Warn($"affinity: unlock entry {tag} lv{entry.Level} ({entry.Feature}) has mismatched data arrays");
             }
@@ -302,17 +302,6 @@ public sealed class AffinitySystem : JiangyuSystem
         catch { }
     }
 
-    // Make the whole popover transparent to pointer picking, so the left-clamped position overlapping
-    // the badge still lets the badge underneath keep its hover (no flicker) and no click is eaten.
-    private static void IgnorePicking(VisualElement element)
-    {
-        if (element == null)
-            return;
-        element.pickingMode = PickingMode.Ignore;
-        for (var i = 0; i < element.childCount; i++)
-            IgnorePicking(element.ElementAt(i));
-    }
-
     // Fill the popover for the window's leader: the header level, then one row per affinity level
     // (1..max) carrying that level's rewards. Returns false (no popover) when the window is not one
     // of ours or the doll earns nothing at any level.
@@ -361,7 +350,7 @@ public sealed class AffinitySystem : JiangyuSystem
             rewards?.Sort((a, b) => a.Kind.CompareTo(b.Kind));
             track.Add(BuildLevelRow(lvl, level, rewards));
         }
-        IgnorePicking(popover);
+        UiLayout.IgnorePicking(popover);
         return true;
     }
 
@@ -461,6 +450,7 @@ public sealed class AffinitySystem : JiangyuSystem
                 return;
 
             var characterTag = Affinity.CharacterTag(leader);
+            Affinity.ReconcileLimitedGrants(Context, characterTag, owned);
             var grantedWeapons = Context.State.Get<AffinityState>().ForLeader(key).GrantedWeaponIds;
 
             foreach (var id in Unlocks.UnlockedWeapons(characterTag, level))
@@ -482,8 +472,7 @@ public sealed class AffinitySystem : JiangyuSystem
                 Context.Log.Info($"affinity: unlocked weapon '{id}' (level {level})");
             }
 
-            // A named signature weapon: no Calibration ranks to account for, so ownership is the
-            // exact id and the grant lands once.
+            // Affinity and Procurement each grant their own copy of a signature weapon.
             foreach (var id in Unlocks.UnlockedSpecialWeapons(characterTag, level))
             {
                 if (grantedWeapons.Contains(id))
@@ -491,31 +480,31 @@ public sealed class AffinitySystem : JiangyuSystem
                 var template = Templates.Resolve<WeaponTemplate>(id, _weaponCache, msg => Context.Log.Warn($"affinity: {msg}"));
                 if (template == null)
                     continue;
-                if (!OwnsInstance(owned, itemId => itemId == id) && owned.AddItem(template, false, false) == null)
+                if (owned.AddItem(template, false, false) == null)
                     continue;
                 grantedWeapons.Add(id);
                 Context.Log.Info($"affinity: granted special weapon '{id}' (level {level})");
             }
 
-            // A character's signature vehicle is theirs for as long as they have the level: a
-            // Sinner or a Sinbreaker chassis lost in combat is replaced free, so losing a mission
-            // never costs a doll her defining kit. The ownership check is the whole gate, so the
-            // replacement lands only once the wreck is actually gone from the inventory.
+            var grantedVehicles = Context.State.Get<AffinityState>().ForLeader(key).GrantedVehicleIds;
             foreach (var id in Unlocks.UnlockedItems(characterTag, level))
             {
-                var template = Templates.Resolve<VehicleItemTemplate>(id, _vehicleCache, msg => Context.Log.Warn($"affinity: {msg}"));
-                if (template == null || OwnsInstance(owned, itemId => itemId == id))
+                if (grantedVehicles.Contains(id))
                     continue;
-                owned.AddItem(template, false, false);
+                var template = Templates.Resolve<VehicleItemTemplate>(id, _vehicleCache, msg => Context.Log.Warn($"affinity: {msg}"));
+                if (template == null)
+                    continue;
+                if (owned.AddItem(template, false, false) == null)
+                    continue;
+                grantedVehicles.Add(id);
                 Context.Log.Info($"affinity: granted vehicle '{id}' (level {level})");
             }
         }
         catch (Exception ex) { Context.Log.Warn($"affinity: unlock failed: {ex.Message}"); }
     }
 
-    // Whether the player owns any instance whose template id satisfies the match. The weapon path
-    // matches every calibration rank of a base id (a ranked SSR's clone is not even in
-    // GetAll<WeaponTemplate>, so the scan goes by id), the vehicle path matches the exact id.
+    // Match every calibration rank of a base weapon id. A ranked SSR's clone is not
+    // in GetAll<WeaponTemplate>, so the scan goes by id.
     private static bool OwnsInstance(OwnedItems owned, Func<string, bool> matches)
     {
         var all = new Il2CppSystem.Collections.Generic.List<BaseItem>();

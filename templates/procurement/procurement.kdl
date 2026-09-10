@@ -1,0 +1,46 @@
+clone "TagTemplate" from="unique" id="wmgfl_procurement_dossier"
+
+clone "CommodityTemplate" from="commodity.wmgfl_sardis_gold" id="commodity.wmgfl_collapse_piece" {
+    set "Title" {
+        set "m_DefaultTranslation" "Collapse Piece"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Collapse Piece"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "A high-value currency circulating in small areas within the Contamination Zone, produced by renowned individuals among the underground brokers. When minted, the issuing underground brokers often engrave their own logo on it. \"Collapse pieces must be used with the corresponding underground broker. Using the wrong one won't do!\" Can be used to purchase designated supplies."
+    }
+    set "Icon" asset="procurement/collapse_piece"
+}
+
+clone "DossierItemTemplate" from="dossier.squad_leader" id="dossier.wmgfl_sextans" {
+    set "Title" {
+        set "m_DefaultTranslation" "Sextans dossier"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Sextans"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Makes Sextans available for recruitment."
+    }
+    clear "m_UnlockedLeaders"
+    append "m_UnlockedLeaders" "squad_leader.sextans"
+    append "Tags" "wmgfl_procurement_dossier"
+    append "Tags" "jy_no_sell"
+    set "BlackMarketMaxQuantity" 0
+    set "TradeValue" 0
+}
+
+clone "DossierItemTemplate" from="dossier.wmgfl_sextans" id="dossier.wmgfl_ots14" {
+    set "Title" {
+        set "m_DefaultTranslation" "OTs-14 dossier"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "OTs-14"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Makes OTs-14 available for recruitment."
+    }
+    clear "m_UnlockedLeaders"
+    append "m_UnlockedLeaders" "squad_leader.ots14"
+}

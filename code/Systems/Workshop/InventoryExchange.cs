@@ -13,12 +13,12 @@ internal static class InventoryExchange
     {
         var owned = Inventory.Owned;
         if (owned == null)
-            return (false, "No campaign inventory.");
+            return (false, Locale.Text("WOMENACE::ui/workshop/no_inventory", "No campaign inventory."));
         stock ??= new InventoryStock();
         if (!stock.ContainsAll(inputs))
-            return (false, "Selected stock is no longer available.");
+            return (false, Locale.Text("WOMENACE::ui/workshop/stock_unavailable", "Selected stock is no longer available."));
         if (outputs.Any(output => output.Template == null || output.Count < 1))
-            return (false, "Item template unavailable.");
+            return (false, Locale.Text("WOMENACE::ui/workshop/template_unavailable", "Item template unavailable."));
 
         var added = new List<BaseItem>();
         var removed = new List<BaseItem>();
@@ -107,8 +107,8 @@ internal static class InventoryExchange
     {
         // OwnedItems.RemoveItem(BaseItem), RVA 0x5AB0C0, removes from the template list and
         // calls TryRemoveVehicle. It does not change seen items or unloadable instances.
-        // These exchanges use weapons and commodities, so restoring their original objects
-        // preserves native state without minting new GUIDs through AddItem.
+        // Rollback inputs are weapons or commodities. Restoring their original objects keeps
+        // their GUIDs. Vehicle inputs require OwnedItems to rebuild the strategy vehicle registry.
         var instances = Inventory.Owned.GetRawInstances();
         foreach (var item in items)
         {

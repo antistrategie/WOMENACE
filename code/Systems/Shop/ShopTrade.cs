@@ -13,18 +13,22 @@ public static class ShopTrade
     public static (bool ok, string error) Run(IReadOnlyDictionary<string, int> selection, bool buy, KalinaState state, IModLog log = null)
     {
         if (!WorkshopAccess.IsUnlocked)
-            return (false, "Workshop is locked.");
+            return (false, Locale.Text("WOMENACE::ui/shop/locked", "Workshop is locked."));
         var catalogue = ShopCatalogue.Create(buy);
+        if (selection.Any(pair => pair.Value != 0 && !catalogue.Items.ContainsKey(pair.Key)))
+            return (false, Locale.Text("WOMENACE::ui/shop/item_unavailable", "Item is unavailable."));
         var total = catalogue.Total(selection);
-        if (total <= 0)
-            return (false, "Select items first.");
+        if (total < 0)
+            return (false, Locale.Text("WOMENACE::ui/shop/invalid_selection", "Selection is invalid."));
+        if (total == 0)
+            return (false, Locale.Text("WOMENACE::ui/shop/select_items", "Select items first."));
         var currency = Templates.ById<CommodityTemplate>(Kalina.CurrencyId);
         if (currency == null || Inventory.Owned == null)
-            return (false, "Sardis Gold is unavailable.");
+            return (false, Locale.Text("WOMENACE::ui/shop/currency_unavailable", "Sardis Gold is unavailable."));
         if (buy && (total > Balance || state.SardisSpent > long.MaxValue - total))
-            return (false, "Not enough Sardis.");
+            return (false, Locale.Text("WOMENACE::ui/shop/need_sardis", "Not enough Sardis."));
         if (!buy && total > int.MaxValue - (long)Balance)
-            return (false, "Sardis balance is full.");
+            return (false, Locale.Text("WOMENACE::ui/shop/balance_full", "Sardis balance is full."));
 
         var inputs = new List<BaseItem>();
         var outputs = new List<(BaseItemTemplate Template, int Count)>();
@@ -35,16 +39,14 @@ public static class ShopTrade
         {
             if (count == 0)
                 continue;
-            if (!catalogue.Items.TryGetValue(id, out var entry))
-                return (false, "Item is unavailable.");
-            var template = entry.Template;
+            var template = catalogue.Items[id].Template;
             if (buy)
                 outputs.Add((template, count));
             else
             {
                 var stock = inventory.Available(template, count).ToList();
                 if (stock.Count != count)
-                    return (false, "Selected stock is no longer available.");
+                    return (false, Locale.Text("WOMENACE::ui/workshop/stock_unavailable", "Selected stock is no longer available."));
                 inputs.AddRange(stock);
             }
         }
@@ -52,7 +54,7 @@ public static class ShopTrade
         {
             inputs.AddRange(inventory.Available(currency, (int)total));
             if (inputs.Count != total)
-                return (false, "Not enough Sardis.");
+                return (false, Locale.Text("WOMENACE::ui/shop/need_sardis", "Not enough Sardis."));
         }
         else
             outputs.Add((currency, (int)total));

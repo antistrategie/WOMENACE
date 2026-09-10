@@ -1,3 +1,4 @@
+using System.Globalization;
 using Il2CppInterop.Runtime;
 using Il2CppMenace.Items;
 using Il2CppMenace.UI;
@@ -13,6 +14,7 @@ using TextButton = Jiangyu.Game.Ui.Components.TextButton;
 
 namespace WOMENACE.Code;
 
+[DependsOn(typeof(ProcurementSystem))]
 public sealed partial class ShopSystem : JiangyuSystem
 {
     public static ShopSystem Instance { get; private set; }
@@ -20,15 +22,20 @@ public sealed partial class ShopSystem : JiangyuSystem
 
     private VisualElement _root, _grid, _portrait, _affinity, _outfits, _outfitGrid;
     private ScrollView _scroll;
-    private Label _balance, _total, _feedback;
+    private IVisualElementScheduledItem _scrollRestore;
+    private Label _total, _feedback;
     private TextButton _checkout;
     private ShopHost _host;
     private ShopCatalogue _catalogue;
+    private ShopArtwork _artwork;
+    private ShopCurrency _currency;
+    private ProcurementView _procurement;
+    private bool _procurementActive;
     private readonly Dictionary<string, int> _buySelection = new(StringComparer.Ordinal);
     private readonly Dictionary<string, int> _sellSelection = new(StringComparer.Ordinal);
     private readonly Vector2[] _scrollOffsets = new Vector2[2];
     private bool _buy = true;
-    private int _holdEpoch, _lastBalance = -1;
+    private int _holdEpoch, _scrollEpoch, _lastBalance = -1, _lastPieces = -1;
     private Dictionary<string, int> Selection => _buy ? _buySelection : _sellSelection;
 
     public override void OnInit()
@@ -47,6 +54,7 @@ public sealed partial class ShopSystem : JiangyuSystem
         _sellSelection.Clear();
         _currentDialogue = null;
         _greetingPending = false;
+        _procurementActive = false;
         Array.Clear(_scrollOffsets, 0, _scrollOffsets.Length);
     }
 
@@ -64,9 +72,11 @@ public sealed partial class ShopSystem : JiangyuSystem
     private void SetHostVisible(bool show)
     {
         _holdEpoch++;
+        CancelScrollRestore();
         if (!show)
             HoverDelay.Cancel(ref _affinityHover);
         _root?.SetVisible(show);
+        _procurement?.SetVisible(show && _procurementActive);
         _affinity?.SetVisible(false);
         HideOutfits();
         if (show && _grid != null)
@@ -74,12 +84,14 @@ public sealed partial class ShopSystem : JiangyuSystem
             BuildCatalogue();
             RefreshPortrait();
             RefreshDialogue();
+            SetTradeVisibility();
         }
     }
 
     private void Bind(VisualElement root)
     {
         _root = root;
+        root.name = "wm-shop-root";
         UiLayout.Fill(root);
         root.pickingMode = PickingMode.Ignore;
         // Only detaching this injection ends the shop view. Removing a child tile must not
@@ -93,8 +105,9 @@ public sealed partial class ShopSystem : JiangyuSystem
         _grid = UI.Find(root, UiSelector.Name("wm-shop-grid"));
         _scroll = UI.Find(root, UiSelector.Name("wm-shop-scroll"))?.TryCast<ScrollView>();
         ConstrainVerticalScroll(_scroll);
-        _balance = UI.Find(root, UiSelector.Name("wm-shop-balance"))?.TryCast<Label>();
-        _total = UI.Find(root, UiSelector.Name("wm-shop-total"))?.TryCast<Label>();
+        _artwork = new ShopArtwork(Context);
+        _currency = new ShopCurrency(_artwork);
+        _total = _currency.Amount(UI.Find(root, UiSelector.Name("wm-shop-total")), ShopCurrency.Gold, "0");
         _feedback = UI.Find(root, UiSelector.Name("wm-shop-feedback"))?.TryCast<Label>();
         _portrait = UI.Find(root, UiSelector.Name("wm-kalina-portrait"));
         _affinity = UI.Find(root, UiSelector.Name("wm-kalina-affinity"));
@@ -106,33 +119,119 @@ public sealed partial class ShopSystem : JiangyuSystem
             var button = new TextButton(buy ? BuyLabel() : SellLabel());
             button.Root.name = buy ? "wm-shop-buy" : "wm-shop-sell";
             button.Root.AddToClassList("wm-shop-tab");
+            ShopVisuals.Surface(button.Root, ShopSurface.Tab);
             button.OnClick(() => SetTab(buy));
             tabs.Add(button.Root);
         }
+        var procurementTab = new TextButton(Locale.Text("WOMENACE::ui/procurement/tab", "PROCUREMENT"));
+        procurementTab.Root.name = "wm-shop-procurement";
+        procurementTab.Root.AddToClassList("wm-shop-tab");
+        ShopVisuals.Surface(procurementTab.Root, ShopSurface.Tab);
+        procurementTab.OnClick(ShowProcurement);
+        tabs.Add(procurementTab.Root);
         _checkout = new TextButton(BuyLabel()).OnClick(Checkout);
         _checkout.Root.name = "wm-shop-checkout-button";
+        _checkout.Root.AddToClassList("wm-shop-primary");
+        ShopVisuals.Surface(_checkout.Root, ShopSurface.Button);
         UI.Find(root, UiSelector.Name("wm-shop-checkout"))?.Add(_checkout.Root);
+        ShopVisuals.Surface(UI.Find(root, UiSelector.Class("wm-shop-panel")), ShopSurface.Panel);
         _scroll.RegisterCallback<WheelEvent>(DelegateSupport.ConvertDelegate<EventCallback<WheelEvent>>(
-            (Action<WheelEvent>)(_ => _holdEpoch++)), TrickleDown.TrickleDown);
+            (Action<WheelEvent>)(_ => { _holdEpoch++; CancelScrollRestore(); })), TrickleDown.TrickleDown);
         BindKalina();
+        _procurement = new ProcurementView(Context, root, RefreshCheckout, _currency, _artwork);
+        _currency.BuildWallet(UI.Find(root, UiSelector.Name("wm-shop-wallet")), () => _procurement.OpenExchange(50));
         UI.Localise(root);
         root.SetVisible(false);
-        // Native rewards and bridge grants can change Sardis outside the trade path. This reads
-        // one template count, without walking coin instances or rebuilding the catalogue.
+        // Native rewards can change currencies outside the trade path. Read template counts
+        // without walking item instances or rebuilding the catalogue.
         root.schedule.Execute(DelegateSupport.ConvertDelegate<Il2CppSystem.Action>(() =>
         {
-            if (_host.IsOpen && _root.IsVisible() && ShopTrade.Balance != _lastBalance)
+            if (_host.IsOpen && _root.IsVisible()
+                && (ShopTrade.Balance != _lastBalance || ProcurementSystem.Pieces != _lastPieces))
+            {
                 RefreshCheckout();
+                _procurement.Refresh();
+            }
         })).Every(250);
         _host.Refresh();
     }
 
     public void SetTab(bool buy)
     {
-        _scrollOffsets[_buy ? 0 : 1] = _scroll.scrollOffset;
+        SaveScrollOffset();
+        _procurementActive = false;
+        _procurement.SetVisible(false);
         _buy = buy;
+        SetTradeVisibility();
         _feedback.text = "";
         BuildCatalogue();
+    }
+
+    public void ShowProcurement()
+    {
+        SaveScrollOffset();
+        CancelScrollRestore();
+        _procurementActive = true;
+        SetTradeVisibility();
+        _procurement.SetVisible(true);
+    }
+
+    private void SaveScrollOffset()
+    {
+        if (!_procurementActive && _scrollRestore == null)
+            _scrollOffsets[_buy ? 0 : 1] = _scroll.scrollOffset;
+    }
+
+    private void RestoreScrollOffset()
+    {
+        CancelScrollRestore();
+        var scroll = _scroll;
+        var offset = _scrollOffsets[_buy ? 0 : 1];
+        var epoch = _scrollEpoch;
+        // Queue from a scheduled callback so a layout pass separates the rebuild from restoration.
+        _scrollRestore = scroll.schedule.Execute(DelegateSupport.ConvertDelegate<Il2CppSystem.Action>(() =>
+        {
+            if (epoch != _scrollEpoch)
+                return;
+            if (_procurementActive)
+            {
+                _scrollRestore = null;
+                return;
+            }
+            _scrollRestore = scroll.schedule.Execute(DelegateSupport.ConvertDelegate<Il2CppSystem.Action>(() =>
+            {
+                if (epoch != _scrollEpoch)
+                    return;
+                _scrollRestore = null;
+                if (!_procurementActive)
+                    scroll.scrollOffset = offset;
+            }));
+        }));
+    }
+
+    private void CancelScrollRestore()
+    {
+        _scrollEpoch++;
+        try { _scrollRestore?.Pause(); }
+        catch { }
+        _scrollRestore = null;
+    }
+
+    private void SetTradeVisibility()
+    {
+        _scroll.SetVisible(!_procurementActive);
+        UI.Find(_root, UiSelector.Name("wm-shop-checkout"))?.SetVisible(!_procurementActive);
+        HoverDelay.Cancel(ref _affinityHover);
+        _affinity.SetVisible(false);
+        foreach (var name in new[] { "wm-shop-buy", "wm-shop-sell", "wm-shop-procurement" })
+        {
+            var tab = UI.Find(_root, UiSelector.Name(name));
+            if (tab == null)
+                continue;
+            tab.EnableInClassList("wm-shop-tab-active", name == "wm-shop-procurement"
+                ? _procurementActive : !_procurementActive && (name == "wm-shop-buy") == _buy);
+            ShopVisuals.Refresh(tab);
+        }
     }
 
     private void BuildCatalogue()
@@ -140,9 +239,8 @@ public sealed partial class ShopSystem : JiangyuSystem
         _catalogue = ShopCatalogue.Create(_buy);
         _holdEpoch++;
         _grid.Clear();
-        foreach (var buy in new[] { true, false })
-            UI.Find(_root, UiSelector.Name(buy ? "wm-shop-buy" : "wm-shop-sell"))
-                ?.EnableInClassList("wm-shop-tab-active", buy == _buy);
+        foreach (var id in Selection.Keys.Where(id => !_catalogue.Items.ContainsKey(id)).ToList())
+            Selection.Remove(id);
         var stock = new Dictionary<string, int>(StringComparer.Ordinal);
         if (!_buy)
         {
@@ -160,7 +258,7 @@ public sealed partial class ShopSystem : JiangyuSystem
             foreach (var group in category.Groups)
                 AddGroup(group, stock);
         }
-        _scroll.scrollOffset = _scrollOffsets[_buy ? 0 : 1];
+        RestoreScrollOffset();
         RefreshCheckout();
     }
 
@@ -193,13 +291,10 @@ public sealed partial class ShopSystem : JiangyuSystem
             // Parts use their Sardis price. Buy stock has no artificial supply limit to display.
             foreach (var element in UI.FindAll(tile.Root, UiSelector.Type<Label>()))
                 element.SetVisible(false);
-            var priceLabel = new Label(price.ToString());
-            priceLabel.AddToClassList("wm-shop-price");
-            priceLabel.pickingMode = PickingMode.Ignore;
-            tile.Root.Add(priceLabel);
+            _currency.Amount(tile.Root, ShopCurrency.Gold, price.ToString("N0", CultureInfo.InvariantCulture), "wm-shop-price");
             if (!_buy)
             {
-                var owned = new Label(count.ToString());
+                var owned = new Label(count.ToString(CultureInfo.InvariantCulture));
                 owned.AddToClassList("wm-shop-owned");
                 owned.pickingMode = PickingMode.Ignore;
                 tile.Root.Add(owned);
@@ -233,9 +328,10 @@ public sealed partial class ShopSystem : JiangyuSystem
     private void RefreshCheckout()
     {
         _lastBalance = ShopTrade.Balance;
-        _balance.text = Locale.Format("WOMENACE::ui/kalina/balance", "{0:N0} Sardis Gold", _lastBalance);
+        _lastPieces = ProcurementSystem.Pieces;
+        _currency.Refresh(_lastBalance, _lastPieces);
         var total = _catalogue.Total(Selection);
-        _total.text = Locale.Format("WOMENACE::ui/kalina/total", "{0:N0} Sardis", Math.Max(0, total));
+        _total.text = Math.Max(0, total).ToString("N0", CultureInfo.InvariantCulture);
         UI.Find(_checkout.Root, UiSelector.Class("text-button-label"))?.TryCast<Label>()?.text = _buy ? BuyLabel() : SellLabel();
         _checkout.Root.SetEnabled(total > 0 && (!_buy || total <= _lastBalance));
     }
@@ -245,7 +341,7 @@ public sealed partial class ShopSystem : JiangyuSystem
         var result = Trade(Selection, _buy);
         if (result.ok)
             Selection.Clear();
-        _scrollOffsets[_buy ? 0 : 1] = _scroll.scrollOffset;
+        SaveScrollOffset();
         BuildCatalogue();
         _feedback.text = result.ok ? "" : result.error;
     }

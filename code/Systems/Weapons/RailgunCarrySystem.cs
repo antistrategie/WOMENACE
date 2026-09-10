@@ -276,7 +276,7 @@ public sealed class RailgunCarrySystem : JiangyuSystem
     {
         try
         {
-            var sound = SoundManager.GetSoundInstance(new ID(Fnv1a32(SoundBankId), Fnv1a32(DeploySoundId)));
+            var sound = SoundManager.GetSoundInstance(new ID(SoundIds.FromName(SoundBankId), SoundIds.FromName(DeploySoundId)));
             // m_Mesh is null on transmogged doll bodies, so the weapon itself is the anchor
             var at = carrier.HandGun != null ? carrier.HandGun.transform : carrier.Element?.transform;
             if (sound == null || at == null)
@@ -290,17 +290,6 @@ public sealed class RailgunCarrySystem : JiangyuSystem
         {
             Context.Log.Warn($"railgun carry: deploy sound failed: {ex.GetType().Name}: {ex.Message}");
         }
-    }
-
-    private static int Fnv1a32(string s)
-    {
-        var hash = 2166136261u;
-        foreach (var b in System.Text.Encoding.UTF8.GetBytes(s))
-        {
-            hash ^= b;
-            hash *= 16777619u;
-        }
-        return unchecked((int)hash);
     }
 
     private void Apply(Carrier carrier, bool deployed)

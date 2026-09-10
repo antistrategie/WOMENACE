@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Procurement.Tests" />
     <Reference Include="UnityEngine.AnimationModule">
       <HintPath>$(GameAssembliesDir)/UnityEngine.AnimationModule.dll</HintPath>
       <Private>false</Private>

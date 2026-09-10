@@ -7,9 +7,9 @@ public static class Kalina
     public const string CurrencyId = "commodity.wmgfl_sardis_gold";
     public const int SardisPerAffinityPoint = 5;
     public const int AffinityPerLevel = 100;
-    public static int MaxLevel => Outfits.Length;
+    public static int MaxLevel => AffinityOutfits.Length;
 
-    public static readonly Outfit[] Outfits =
+    public static readonly Outfit[] AffinityOutfits =
     {
         // Character_Profile_Kalina.png
         new("default", new LocalisedText("WOMENACE::ui/kalina/default", "Default"),
@@ -61,6 +61,16 @@ public static class Kalina
             672.0f, 868.0f, 22.0f, 31.0f, 670.0f, 867.0f, 33.732f, 132.0f, 232.536f, 300.0f, -50f),
     };
 
+    public static readonly Outfit[] CurioOutfits =
+    {
+        new("perlica", new LocalisedText("WOMENACE::ui/kalina/perlica", "Perlica"),
+            1346f, 1060f, 313f, 20f, 1097f, 1060f, -10f, 16f, 320f, 424.49f),
+    };
+
+    public static IEnumerable<Outfit> Outfits => AffinityOutfits.Concat(CurioOutfits);
+    public static IEnumerable<Outfit> VisibleOutfits(ProcurementState procurement) =>
+        AffinityOutfits.Concat(CurioOutfits.Where(outfit => procurement?.Claimed(outfit.RewardId) > 0));
+
     public sealed class Outfit(string id, LocalisedText name,
         float sourceWidth, float sourceHeight,
         float cropLeft, float cropTop, float cropRight, float cropBottom,
@@ -68,7 +78,11 @@ public static class Kalina
     {
         public readonly string Id = id;
         public readonly LocalisedText Name = name;
-        public int Level => Array.IndexOf(Outfits, this) + 1;
+        public int Level => Array.IndexOf(AffinityOutfits, this) + 1;
+        public string RewardId => "outfit.wmgfl_kalina_" + Id;
+        public string Asset => "kalina__" + Id;
+        public bool IsUnlocked(KalinaState affinity, ProcurementState procurement) =>
+            Level > 0 ? Level <= affinity.Level : procurement?.Claimed(RewardId) > 0;
         public readonly float ThumbnailTop = thumbnailTop;
         public readonly float SourceWidth = sourceWidth, SourceHeight = sourceHeight;
         public readonly float CropLeft = cropLeft, CropTop = cropTop, CropRight = cropRight, CropBottom = cropBottom;

@@ -3,6 +3,7 @@ using Il2CppMenace.UI;
 using Il2CppMenace.UI.Strategy;
 using Jiangyu.Game.Ui;
 using Jiangyu.Sdk;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace WOMENACE.Code;
@@ -18,6 +19,8 @@ internal sealed class ShopHost : IDisposable
     private bool _wantShop;
     private Label _nativeHeading;
     private string _nativeHeadingText;
+    private VisualElement _factions;
+    private StyleLength _factionsTop, _factionsBottom;
     public bool IsOpen => _wantShop;
 
     private sealed class NavigationBinding(NavigationButton button,
@@ -37,6 +40,7 @@ internal sealed class ShopHost : IDisposable
         // Jiangyu restores injections on activation. Refresh this host's mode and selection too.
         context.Patches.Postfix("Il2CppMenace.UI.UIScreen", "Activate", _ => OnScreenActivated());
         context.Patches.Postfix("Il2CppMenace.UI.Strategy.StrategyNavigation", "InitWorkshopButton", _ => RefreshNavigation());
+        context.Patches.Postfix("Il2CppMenace.UI.Strategy.SystemMapUIScreen", "OnOpened", _ => RefreshNavigation());
         context.Patches.Postfix("Il2CppMenace.States.StrategyState", "SetConversationVarValue", info =>
         {
             if (info.Args[0]?.ToString() == Il2CppMenace.States.StrategyState.CONV_VAR_WORKSHOP_UNLOCKED)
@@ -53,6 +57,7 @@ internal sealed class ShopHost : IDisposable
     {
         _wantShop = false;
         RestoreNavigation();
+        RestoreFactionPosition();
         if (_nativeHeading != null)
             _nativeHeading.text = _nativeHeadingText;
         _nativeHeading = null;
@@ -72,6 +77,7 @@ internal sealed class ShopHost : IDisposable
     {
         ShowWorkshop();
         RestoreNavigation();
+        RestoreFactionPosition();
         _navigation.Remove();
     }
 
@@ -85,7 +91,49 @@ internal sealed class ShopHost : IDisposable
         button.SetOnLeftClickedAction(DelegateSupport.ConvertDelegate<Il2CppSystem.Action<InteractiveElement>>(
             (Action<InteractiveElement>)(_ => Open())));
         button.SetVisible(WorkshopAccess.IsUnlocked);
+        button.RegisterCallback<GeometryChangedEvent>(DelegateSupport.ConvertDelegate<EventCallback<GeometryChangedEvent>>(
+            (Action<GeometryChangedEvent>)(_ => PositionFactions(button))));
         return button;
+    }
+
+    private void PositionFactions(NavigationButton shop)
+    {
+        var screen = UIManager.Get()?.GetActiveScreen()?.TryCast<SystemMapUIScreen>();
+        var list = screen?.m_StoryFactions;
+        var factions = list == null ? null : UI.Find(list, UiSelector.Name("StoryFactions"));
+        if (factions?.parent == null || shop?.panel == null
+            || UI.Find(screen.GetRootElement(), UiSelector.Name("wm-kalina-shop-button"))?.Pointer != shop.Pointer)
+            return;
+        if (_factions?.Pointer != factions.Pointer)
+        {
+            RestoreFactionPosition();
+            _factions = factions;
+            _factionsTop = factions.style.top;
+            _factionsBottom = factions.style.bottom;
+        }
+        if (!WorkshopAccess.IsUnlocked)
+        {
+            factions.style.top = _factionsTop;
+            factions.style.bottom = _factionsBottom;
+            return;
+        }
+        if (shop.worldBound.height <= 0)
+            return;
+        // StoryFactions is bottom-anchored inside a zero-width StoryFactionList wrapper.
+        // Moving the wrapper leaves the visible heading in place. Position the content.
+        var bottom = factions.parent.WorldToLocal(new Vector2(shop.worldBound.xMin, shop.worldBound.yMax)).y;
+        factions.style.bottom = new StyleLength(StyleKeyword.Auto);
+        factions.style.top = bottom + 12f;
+    }
+
+    private void RestoreFactionPosition()
+    {
+        if (_factions != null)
+        {
+            _factions.style.top = _factionsTop;
+            _factions.style.bottom = _factionsBottom;
+        }
+        _factions = null;
     }
 
     private void OnScreenActivated()
@@ -114,6 +162,8 @@ internal sealed class ShopHost : IDisposable
         var workshop = UI.Find(root, UiSelector.Name(WorkshopUi.Navigation))?.TryCast<NavigationButton>();
         shop?.SetVisible(WorkshopAccess.IsUnlocked);
         shop?.SetSelected(_wantShop && screen.TryCast<WorkshopUIScreen>() != null);
+        if (shop != null)
+            shop.schedule.Execute(DelegateSupport.ConvertDelegate<Il2CppSystem.Action>(() => PositionFactions(shop))).StartingIn(0);
         if (workshop == null)
             return;
         if (_wantShop)

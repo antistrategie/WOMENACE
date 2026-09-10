@@ -250,10 +250,8 @@ public sealed class VanillaLeadersSystem : JiangyuSystem
         catch (Exception ex) { Context.Log.Warn($"vanilla-leaders: show-all removal failed: {ex.Message}"); }
     }
 
-    // Append every WOMENACE doll missing from the pick pool, sourced from the dossier rosters (the
-    // one registry that lists every doll, including those strategy_config leaves out of the initial
-    // pick). Additive only, filtered to our own leaders by speaker tag, so vanilla entries and other
-    // mods' leaders are never dragged in.
+    // Add extra starting Dolls from the ordinary Black Market dossier pools. Procurement-only
+    // Dolls enter through Procurement. Filter by speaker tag to keep this option scoped to WOMENACE.
     private void WidenPickPool(StrategyConfig config)
     {
         try
@@ -357,7 +355,7 @@ public sealed class VanillaLeadersSystem : JiangyuSystem
 
             // Counted over the whole pool, not the narrowed one, so the salt does not depend on the
             // option. Every grant from this dossier raises it by one.
-            var acquired = roster == null ? 0 : all.Count(t => IsAcquired(t, roster));
+            var acquired = roster == null ? 0 : all.Count(t => LeaderRecruitment.IsAcquired(t, roster));
             Shuffle(pool, unchecked((state?.GetSeed() ?? 0) * 397 + acquired));
 
             var written = ToArray(pool);
@@ -463,19 +461,7 @@ public sealed class VanillaLeadersSystem : JiangyuSystem
     // A leader still grantable by a dossier: mod-added and never acquired. Shared by the market scrub
     // and the Redeem skip so the two cannot disagree on what "exhausted" means.
     private static bool IsGrantable(UnitLeaderTemplate leader, Roster roster)
-        => leader != null && !IsVanilla(leader) && !IsAcquired(leader, roster);
-
-    // A leader the campaign already holds in some form: any roster status but Unknown (the entry the
-    // game's own redeem would roll), or a form-swap doll wearing her alt form. She reads as Unknown
-    // (the swap stashes her base form out of the roster) but is acquired: her base form is never
-    // grantable while the alt is active.
-    private static bool IsAcquired(UnitLeaderTemplate leader, Roster roster)
-    {
-        if (FormSwapSystem.BaseFormStashed(leader.GetID()))
-            return true;
-        roster.GetLeaderByTemplate(leader, out var status);
-        return status != UnitLeaderStatus.Unknown;
-    }
+        => leader != null && !IsVanilla(leader) && !LeaderRecruitment.IsAcquired(leader, roster);
 
     // Split a leader pool into mod-added entries to keep and vanilla entries to drop, shared by the
     // pick filter and the dossier filter so the two cannot disagree on which leaders count as

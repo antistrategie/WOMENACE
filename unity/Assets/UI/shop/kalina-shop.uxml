@@ -2,17 +2,19 @@
     <Style src="../theme.uss" />
     <Style src="../affinity/affinity.uss" />
     <Style src="kalina-shop.uss" />
-    <ui:Label name="wm-shop-balance" class="wm-shop-balance" />
+    <Style src="procurement.uss" />
+    <ui:VisualElement name="wm-shop-wallet" class="wm-shop-wallet" />
     <ui:VisualElement class="wm-shop-panel">
         <ui:VisualElement name="wm-shop-tabs" class="wm-shop-tabs" />
         <ui:ScrollView name="wm-shop-scroll" mode="Vertical" class="wm-shop-scroll">
             <ui:VisualElement name="wm-shop-grid" class="wm-shop-grid" />
         </ui:ScrollView>
         <ui:VisualElement name="wm-shop-checkout" class="wm-shop-checkout">
+            <ui:Label name="wm-shop-feedback" class="wm-shop-feedback" />
             <ui:Label name="@WOMENACE::ui/kalina/total_label" text="TOTAL" class="wm-shop-total-label" />
-            <ui:Label name="wm-shop-total" class="wm-shop-total" />
+            <ui:VisualElement name="wm-shop-total" class="wm-shop-total" />
         </ui:VisualElement>
-        <ui:Label name="wm-shop-feedback" class="wm-shop-feedback" />
+        <ui:VisualElement name="wm-procurement" class="wm-procurement" />
     </ui:VisualElement>
     <ui:VisualElement name="wm-kalina-portrait" class="wm-kalina-portrait" />
     <ui:Label name="wm-kalina-dialogue" class="wm-kalina-dialogue" picking-mode="Ignore" />

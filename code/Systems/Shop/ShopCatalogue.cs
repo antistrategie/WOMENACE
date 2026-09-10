@@ -11,6 +11,7 @@ public sealed class ShopCatalogue
 
     private static readonly (bool Buy, LocalisedText Name, Func<IEnumerable<Group>> Groups)[] Definitions =
     {
+        (true, new LocalisedText("WOMENACE::ui/procurement/pieces", "Collapse Pieces"), PieceGroups),
         (true, new LocalisedText("WOMENACE::ui/workshop/weapon_parts", "Weapon Parts"), PartGroups),
         (false, new LocalisedText("WOMENACE::ui/kalina/gifts", "Gifts"), GiftGroups),
     };
@@ -32,6 +33,12 @@ public sealed class ShopCatalogue
     public static ShopCatalogue Create(bool buy)
         => new(Definitions.Where(definition => definition.Buy == buy)
             .Select(definition => new Category(definition.Name, definition.Groups().ToList())));
+
+    private static IEnumerable<Group> PieceGroups()
+    {
+        if (Templates.ById<CommodityTemplate>(Procurement.PieceId) is { } template)
+            yield return new Group(null, new[] { new Entry(template, Procurement.PiecePrice) });
+    }
 
     private static IEnumerable<Group> PartGroups()
     {
@@ -56,6 +63,8 @@ public sealed class ShopCatalogue
         long total = 0;
         foreach (var (id, count) in selection)
         {
+            if (count == 0)
+                continue;
             if (count < 0 || !Items.TryGetValue(id, out var entry) || entry.Price <= 0)
                 return -1;
             total += (long)count * entry.Price;

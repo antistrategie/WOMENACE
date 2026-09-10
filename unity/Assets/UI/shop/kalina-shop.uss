@@ -1,4 +1,6 @@
-.wm-shop-panel {
+/* These bundled faces omit CJK glyphs. CJK translations require fallback fonts. */
+#wm-shop-root, #wm-shop-root *, #wm-shop-root .unity-text-element { -unity-font-definition: url("fonts/NotoSans-Condensed.ttf"); -unity-font: url("fonts/NotoSans-Condensed.ttf"); -unity-font-style: normal; }
+#wm-shop-root .wm-shop-panel {
     position: absolute;
     left: 167px;
     right: 20px;
@@ -8,64 +10,85 @@
     border-width: 2px;
     border-color: rgb(30, 30, 30);
 }
-.wm-shop-balance {
-    position: absolute;
-    right: 27px;
-    top: 60px;
-    font-size: 12px;
-    color: rgb(222, 202, 90);
-}
-.wm-shop-tabs { position: absolute; left: 14px; top: 10px; flex-direction: row; }
-.wm-shop-tab { width: 90px; height: 24px; margin-right: 5px; border-color: rgb(72, 70, 63); }
-.wm-shop-tab-active { border-color: rgb(188, 176, 150); }
-.wm-shop-tab-active .text-button-label { color: rgb(231, 217, 169); }
-.wm-shop-scroll { position: absolute; left: 12px; right: 308px; top: 65px; bottom: 91px; }
-.wm-shop-scroll .unity-scroll-view__content-container { padding: 12px 12px 14px 4px; }
-.wm-shop-grid { width: 100%; min-width: 0; flex-direction: row; flex-wrap: wrap; }
-.wm-shop-section { width: 100%; margin: 0 0 18px; padding: 0; font-size: 12px; color: rgb(229, 200, 192); }
-.wm-shop-group { width: 33.333%; margin-bottom: 30px; }
-.wm-shop-sell-group { width: 100%; }
-.wm-shop-category { margin: 0 0 12px 0; padding: 0; font-size: 12px; color: rgb(200, 197, 185); }
-.wm-shop-slots { flex-direction: row; flex-wrap: wrap; }
-.wm-shop-item { width: 48px; height: 48px; margin-right: 7px; margin-bottom: 7px; flex-shrink: 0; }
-.wm-shop-item > MissionResultLootSlot { width: 48px; height: 48px; margin: 0; }
-.wm-shop-item #Pickable { margin: 0; left: 0; right: auto; width: 48px; height: 48px; }
-.wm-shop-price { position: absolute; right: 1px; bottom: 0; margin: 0; padding: 0 2px; font-size: 9px; color: rgb(222, 208, 154); background-color: rgba(0, 0, 0, 0.6); }
-.wm-shop-owned { position: absolute; left: 1px; top: 0; margin: 0; padding: 0 2px; font-size: 9px; color: rgb(222, 208, 154); background-color: rgba(0, 0, 0, 0.6); }
-.wm-shop-checkout { position: absolute; left: 16px; right: 318px; bottom: 26px; border-top-width: 1px; border-top-color: rgb(47, 48, 42); padding-top: 16px; flex-direction: row; align-items: center; justify-content: flex-end; }
-.wm-shop-total-label { font-size: 12px; color: rgb(170, 168, 156); margin-right: 20px; }
-.wm-shop-total { min-width: 97px; font-size: 17px; color: rgb(222, 202, 90); -unity-text-align: middle-right; margin-right: 28px; }
-#wm-shop-checkout-button { width: 180px; height: 28px; }
-.wm-shop-feedback { position: absolute; left: 16px; right: 318px; bottom: 3px; font-size: 10px; color: rgb(215, 192, 116); -unity-text-align: middle-right; }
-.wm-kalina-portrait { position: absolute; right: 18px; bottom: 0; width: 300px; height: 432px; overflow: hidden; }
-.wm-kalina-art { -unity-background-scale-mode: stretch-to-fill; }
-.wm-kalina-dialogue {
+#wm-shop-root .wm-shop-wallet { position: absolute; right: 27px; top: 54px; height: 28px; flex-direction: row; align-items: center; }
+#wm-shop-root .wm-shop-wallet > .wm-shop-currency { margin-left: 20px; }
+#wm-shop-root .wm-shop-currency { flex-direction: row; align-items: center; justify-content: center; flex-shrink: 0; }
+#wm-shop-root .wm-shop-currency-icon { width: 24px; height: 24px; flex-shrink: 0; margin-right: 6px; -unity-background-scale-mode: scale-to-fit; }
+#wm-shop-root .wm-shop-currency-value { margin: 0; padding: 0; font-size: 17px; color: rgb(221, 197, 117); white-space: nowrap; -unity-text-align: middle-center; }
+#wm-shop-root .wm-shop-symbol-button { margin: 0; padding: 0; align-items: center; justify-content: center; flex-shrink: 0; border-width: 1px; border-radius: 0; border-color: rgb(85, 81, 58); background-color: rgb(22, 27, 19); }
+#wm-shop-root .wm-shop-symbol-button:hover { background-color: rgb(42, 46, 28); border-color: rgb(196, 176, 109); }
+#wm-shop-root .wm-shop-symbol-button:focus { border-color: rgb(214, 192, 128); }
+#wm-shop-root .wm-shop-wallet-add { width: 23px; height: 23px; margin-left: 12px; }
+#wm-shop-root .wm-shop-symbol { width: 12px; height: 12px; flex-shrink: 0; }
+#wm-shop-root .wm-shop-symbol-close { rotate: 45deg; }
+#wm-shop-root .wm-shop-symbol-horizontal { position: absolute; left: 0; right: 0; top: 5px; height: 2px; background-color: rgb(216, 206, 167); }
+#wm-shop-root .wm-shop-symbol-vertical { position: absolute; top: 0; bottom: 0; left: 5px; width: 2px; background-color: rgb(216, 206, 167); }
+#wm-shop-root .wm-shop-tabs { position: absolute; left: 14px; top: 10px; flex-direction: row; }
+#wm-shop-root .wm-shop-tab { width: 90px; height: 27px; margin-right: 5px; border-color: rgb(72, 70, 63); }
+#wm-shop-root .wm-shop-tab-active { border-color: rgb(188, 176, 150); }
+#wm-shop-root .wm-shop-tab.wm-shop-tab-active .text-button-label { color: rgb(231, 217, 169); }
+#wm-shop-root .wm-shop-scroll { position: absolute; left: 12px; right: 308px; top: 65px; bottom: 91px; }
+#wm-shop-root .wm-shop-scroll .unity-scroll-view__content-container { padding: 12px 12px 14px 4px; }
+#wm-shop-root .wm-shop-grid { width: 100%; min-width: 0; flex-direction: row; flex-wrap: wrap; }
+#wm-shop-root .wm-shop-section { width: 100%; margin: 0 0 18px; padding: 0; font-size: 12px; color: rgb(229, 200, 192); }
+#wm-shop-root .wm-shop-group { width: 33.333%; margin-bottom: 30px; }
+#wm-shop-root .wm-shop-sell-group { width: 100%; }
+#wm-shop-root .wm-shop-category { margin: 0 0 12px 0; padding: 0; font-size: 12px; color: rgb(200, 197, 185); }
+#wm-shop-root .wm-shop-slots { flex-direction: row; flex-wrap: wrap; }
+#wm-shop-root .wm-shop-item { width: 48px; height: 48px; margin-right: 7px; margin-bottom: 7px; flex-shrink: 0; }
+#wm-shop-root .wm-shop-item > MissionResultLootSlot { width: 48px; height: 48px; margin: 0; }
+#wm-shop-root .wm-shop-item #Pickable { margin: 0; left: 0; right: auto; width: 48px; height: 48px; }
+#wm-shop-root .wm-shop-price { position: absolute; right: 1px; bottom: 0; margin: 0; padding: 0 2px; background-color: rgba(0, 0, 0, 0.6); }
+#wm-shop-root .wm-shop-price .wm-shop-currency-icon { width: 10px; height: 10px; margin-right: 2px; }
+#wm-shop-root .wm-shop-price .wm-shop-currency-value { font-size: 9px; }
+#wm-shop-root .wm-shop-owned { position: absolute; left: 1px; top: 0; margin: 0; padding: 0 2px; font-size: 9px; color: rgb(222, 208, 154); background-color: rgba(0, 0, 0, 0.6); }
+#wm-shop-root .wm-shop-checkout, #wm-shop-root .wm-proc-footer { position: absolute; left: 16px; right: 16px; bottom: 14px; height: 55px; margin: 0; padding: 12px 0 0; border-top-width: 1px; border-top-color: rgb(60, 59, 37); flex-direction: row; align-items: center; justify-content: flex-end; }
+#wm-shop-root .wm-shop-total-label { height: 42px; margin: 0 14px 0 0; padding: 0; font-size: 11px; color: rgb(170, 168, 146); -unity-text-align: middle-right; }
+#wm-shop-root .wm-shop-total { min-width: 76px; height: 42px; align-items: flex-end; justify-content: center; margin-right: 20px; }
+/* The variant also outranks the Procurement button rules in the later stylesheet. */
+#wm-shop-root .wm-shop-primary, #wm-shop-root .wm-proc-button.wm-shop-primary { background-color: rgb(204, 176, 101); border-color: rgb(237, 215, 154); color: rgb(24, 28, 18); }
+#wm-shop-root .wm-shop-primary:hover, #wm-shop-root .wm-proc-button.wm-shop-primary:hover { background-color: rgb(224, 195, 117); }
+#wm-shop-root .wm-shop-primary .wm-proc-text, #wm-shop-root .wm-shop-primary .wm-shop-currency-value, #wm-shop-root .wm-shop-primary .text-button-label { color: rgb(24, 28, 18); }
+#wm-shop-root #wm-shop-checkout-button { width: 190px; height: 42px; margin: 0; padding: 0 12px; align-items: center; justify-content: center; border-width: 1px; border-radius: 0; }
+#wm-shop-root #wm-shop-checkout-button:disabled { opacity: 0.4; }
+#wm-shop-root #wm-shop-checkout-button .text-button-label { margin: 0; padding: 0; font-size: 12px; -unity-text-align: middle-center; }
+#wm-shop-root .wm-shop-feedback { flex-grow: 1; flex-shrink: 1; min-width: 0; margin: 0 16px 0 0; padding: 0; font-size: 10px; color: rgb(215, 192, 116); white-space: normal; }
+#wm-shop-root .wm-kalina-portrait { position: absolute; right: 18px; bottom: 150px; width: 300px; height: 432px; overflow: hidden; }
+#wm-shop-root .wm-kalina-art { -unity-background-scale-mode: stretch-to-fill; }
+#wm-shop-root .wm-kalina-dialogue {
     position: absolute;
     right: 28px;
-    bottom: 26px;
+    bottom: 176px;
     width: 280px;
     margin: 0;
     padding: 12px;
-    font-size: 11px;
-    color: rgb(228, 225, 180);
+    font-size: 12px;
+    color: rgb(217, 211, 182);
     white-space: normal;
     -unity-text-align: upper-left;
-    background-color: rgba(0, 0, 0, 0.9);
+    background-color: rgba(10, 14, 11, 0.94);
     border-width: 1px;
     border-color: rgb(72, 70, 63);
 }
-.wm-kalina-affinity { position: absolute; right: 326px; bottom: 24px; }
-.wm-kalina-outfits { position: absolute; left: 0; right: 0; top: 0; bottom: 0; align-items: center; justify-content: center; }
-.wm-kalina-outfits-blocker { position: absolute; left: 0; right: 0; top: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.72); }
-.wm-kalina-outfit-panel { width: 636px; padding: 10px 12px 12px 12px; background-color: rgb(0, 0, 0); border-width: 1px; border-color: rgb(72, 70, 61); }
-.wm-kalina-outfit-header { height: 30px; flex-direction: row; justify-content: space-between; }
-.wm-kalina-outfit-title { margin: 0; padding: 0; font-size: 12px; color: rgb(229, 200, 192); }
-.wm-kalina-outfits-close { width: 24px; height: 24px; margin: 0; padding: 0; font-size: 10px; border-width: 1px; border-color: rgb(70, 66, 56); background-color: rgb(20, 18, 16); color: rgb(188, 176, 150); }
-.wm-kalina-outfits-close:hover { color: rgb(238, 227, 190); border-color: rgb(188, 176, 150); }
-.wm-kalina-outfit-scroll { height: 436px; }
-.wm-kalina-outfit-grid { width: 100%; min-width: 0; flex-direction: row; flex-wrap: wrap; }
-.wm-kalina-outfit { width: 49%; height: 106px; margin: 0 1% 4px 0; padding: 8px; flex-shrink: 0; align-items: flex-start; justify-content: flex-start; overflow: hidden; border-width: 1px; border-radius: 0; border-color: rgb(62, 65, 57); background-color: rgb(17, 21, 18); }
-.wm-kalina-outfit-selected { border-color: rgb(188, 176, 150); }
-.wm-kalina-outfit:hover { border-color: rgb(231, 217, 169); }
-.wm-kalina-outfit-name { position: absolute; left: 8px; top: 6px; margin: 0; padding: 0; font-size: 10px; -unity-text-align: upper-left; color: rgb(228, 225, 180); }
-.wm-kalina-outfit-status { position: absolute; left: 8px; top: 21px; margin: 0; padding: 0; font-size: 9px; -unity-text-align: upper-left; color: rgb(184, 151, 134); }
+#wm-shop-root .wm-kalina-affinity { position: absolute; }
+#wm-shop-root .wm-kalina-outfits { position: absolute; left: 0; right: 0; top: 0; bottom: 0; align-items: center; justify-content: center; }
+#wm-shop-root .wm-kalina-outfits-blocker { position: absolute; left: 0; right: 0; top: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.72); }
+#wm-shop-root .wm-kalina-outfit-panel { width: 636px; padding: 10px 12px 12px 12px; background-color: rgb(0, 0, 0); border-width: 1px; border-color: rgb(72, 70, 61); }
+#wm-shop-root .wm-kalina-outfit-header { height: 30px; flex-direction: row; justify-content: space-between; }
+#wm-shop-root .wm-kalina-outfit-title { margin: 0; padding: 0; font-size: 12px; color: rgb(229, 200, 192); }
+#wm-shop-root .wm-kalina-outfits-close { width: 24px; height: 24px; margin: 0; padding: 0; font-size: 10px; border-width: 1px; border-color: rgb(70, 66, 56); background-color: rgb(20, 18, 16); color: rgb(188, 176, 150); }
+#wm-shop-root .wm-kalina-outfits-close:hover { color: rgb(238, 227, 190); border-color: rgb(188, 176, 150); }
+#wm-shop-root .wm-kalina-outfit-scroll { height: 436px; }
+#wm-shop-root .wm-kalina-outfit-grid { width: 100%; min-width: 0; flex-direction: row; flex-wrap: wrap; }
+#wm-shop-root .wm-kalina-outfit { width: 49%; height: 106px; margin: 0 1% 4px 0; padding: 8px; flex-shrink: 0; align-items: flex-start; justify-content: flex-start; overflow: hidden; border-width: 1px; border-radius: 0; border-color: rgb(62, 65, 57); background-color: rgb(17, 21, 18); }
+#wm-shop-root .wm-kalina-outfit-selected { border-color: rgb(188, 176, 150); }
+#wm-shop-root .wm-kalina-outfit:hover { border-color: rgb(231, 217, 169); }
+#wm-shop-root .wm-kalina-outfit-name { position: absolute; left: 8px; top: 6px; margin: 0; padding: 0; font-size: 10px; -unity-text-align: upper-left; color: rgb(228, 225, 180); }
+#wm-shop-root .wm-kalina-outfit-status { position: absolute; left: 8px; top: 21px; margin: 0; padding: 0; font-size: 9px; -unity-text-align: upper-left; color: rgb(184, 151, 134); }
+#wm-shop-root .wm-shop-tab .text-button-label { color: rgb(188, 176, 150); margin: 0; padding: 0; font-size: 12px; letter-spacing: 0.7px; -unity-text-align: middle-center; }
+#wm-shop-root .wm-shop-tab { background-color: rgb(25, 23, 25); border-width: 1px; padding: 0; align-items: center; justify-content: center; }
+#wm-shop-root .wm-shop-section { letter-spacing: 1px; -unity-text-align: middle-left; }
+#wm-shop-root .wm-shop-category { letter-spacing: 0.3px; -unity-text-align: middle-left; }
+#wm-shop-root .wm-shop-total-label { letter-spacing: 1px; }
+#wm-shop-root .wm-shop-currency-value { letter-spacing: 0.2px; }
+#wm-shop-root #wm-shop-checkout-button .text-button-label { letter-spacing: 1.2px; }

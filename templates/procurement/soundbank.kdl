@@ -1,0 +1,51 @@
+// GFL2 UI_Gacha.acb subsongs: shipment 23, flip 20, confirm 1, special 2, dossier 6.
+clone "SoundBank" from="ui_soundbank" id="wmgfl_procurement_soundbank" {
+    clear "sounds"
+    clear "busIndices"
+
+    append "sounds" {
+        set "name" "shipment"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="procurement/shipment"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "flip"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="procurement/flip"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "confirm"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="procurement/confirm"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "special"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="procurement/special"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "dossier"
+        set "fixedVolume" 0.7
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="procurement/dossier"
+        }
+    }
+    append "busIndices" 0
+}

@@ -13,10 +13,10 @@ namespace WOMENACE.Code;
 
 public sealed partial class ShopSystem
 {
-    private readonly Dictionary<string, Texture2D> _portraits = new(StringComparer.Ordinal);
     private IVisualElementScheduledItem _affinityHover;
     private readonly System.Random _dialogueRandom = new();
     private Label _dialogue;
+    private VisualElement _affinityContent;
     private KalinaDialogue.Line _currentDialogue;
     private bool _greetingPending;
 
@@ -24,11 +24,18 @@ public sealed partial class ShopSystem
     {
         _dialogue = UI.Find(_root, UiSelector.Name("wm-kalina-dialogue"))?.TryCast<Label>();
         _dialogue?.SetVisible(false);
+        ShopVisuals.Surface(_affinity, ShopSurface.Dialog);
+        _affinityContent = new VisualElement { pickingMode = PickingMode.Ignore };
+        _affinity.Add(_affinityContent);
+        ShopVisuals.Surface(UI.Find(_root, UiSelector.Class("wm-kalina-outfit-panel")), ShopSurface.Dialog);
         ConstrainVerticalScroll(UI.Find(_root, UiSelector.Name("wm-kalina-outfit-scroll"))?.TryCast<ScrollView>());
         _portrait.RegisterCallback<PointerEnterEvent>(DelegateSupport.ConvertDelegate<EventCallback<PointerEnterEvent>>(
             (Action<PointerEnterEvent>)(_ => _affinityHover = HoverDelay.Schedule(_portrait, ShowAffinity))));
         _portrait.RegisterCallback<PointerLeaveEvent>(DelegateSupport.ConvertDelegate<EventCallback<PointerLeaveEvent>>(
             (Action<PointerLeaveEvent>)(_ => { HoverDelay.Cancel(ref _affinityHover); _affinity.SetVisible(false); })));
+        foreach (var element in new[] { _portrait, _affinity })
+            element.RegisterCallback<GeometryChangedEvent>(DelegateSupport.ConvertDelegate<EventCallback<GeometryChangedEvent>>(
+                (Action<GeometryChangedEvent>)(_ => PositionAffinity())));
         _portrait.RegisterCallback<PointerDownEvent>(DelegateSupport.ConvertDelegate<EventCallback<PointerDownEvent>>(
             (Action<PointerDownEvent>)(evt =>
             {
@@ -49,7 +56,7 @@ public sealed partial class ShopSystem
 
     private void BeforeUiUpdate(PatchInfo info)
     {
-        if (!_host.IsOpen || _root?.IsVisible() != true || _outfits?.IsVisible() != true)
+        if (!_host.IsOpen || _root?.IsVisible() != true)
             return;
         var manager = (info.Instance as Il2CppSystem.Object)?.TryCast<UIManager>();
         if (manager == null || manager.GetCurrentDialog() != null
@@ -59,8 +66,13 @@ public sealed partial class ShopSystem
         // UIManager.Update is non-virtual (RVA 0x8214D0). Dismissing this modal consumes
         // one UI update so native Back cannot also close its host. All later updates run
         // normally, and native dialogs above the shop retain their own input handling.
-        HideOutfits();
-        info.Skip = true;
+        if (_outfits?.IsVisible() == true)
+        {
+            HideOutfits();
+            info.Skip = true;
+        }
+        else if (_procurement?.Back() == true)
+            info.Skip = true;
     }
 
     private void RefreshDialogue()
@@ -89,10 +101,23 @@ public sealed partial class ShopSystem
 
     private void RefreshPortrait()
     {
-        var outfit = Kalina.Outfits.FirstOrDefault(outfit => outfit.Id == State.OutfitId && outfit.Level <= State.Level)
-            ?? Kalina.Outfits[0];
+        var outfit = Kalina.Outfits.FirstOrDefault(outfit => outfit.Id == State.OutfitId
+            && outfit.IsUnlocked(State, ProcurementSystem.Instance.State)) ?? Kalina.AffinityOutfits[0];
         _portrait.Clear();
+        ShopVisuals.Draw(_portrait, context =>
+        {
+            var p = context.painter2D;
+            var centre = new Vector2(170, 160);
+            ShopVisuals.Glow(context, centre, 175, new Color(.58f, .44f, .22f, .18f));
+            ShopVisuals.Arc(p, centre, 116, 0, 360, new Color(.54f, .47f, .31f, .12f), 1);
+        });
         _portrait.Add(Art(outfit, 1f));
+        ShopVisuals.Draw(_portrait, context =>
+        {
+            var rect = context.visualElement.contentRect;
+            ShopVisuals.Gradient(context, new Rect(0, rect.height - 65f, rect.width, 65f),
+                new Color(.025f, .035f, .03f, 0), new Color(.025f, .035f, .03f, .9f), true);
+        }, false);
     }
 
     // Crop to visible artwork before scaling. The source canvases range from 672 x 868 to 1920 x
@@ -112,8 +137,7 @@ public sealed partial class ShopSystem
         crop.style.overflow = Overflow.Hidden;
         // The runtime asset registry indexes image additions by their flattened bundle name.
         // Read the full texture canvas because the authored crop coordinates include its margins.
-        if (!_portraits.TryGetValue(outfit.Id, out var texture) || texture == null)
-            _portraits[outfit.Id] = texture = Context.Assets.Load<Texture2D>("kalina__" + outfit.Id);
+        var texture = _artwork.Texture(outfit.Asset);
         var image = new VisualElement { pickingMode = PickingMode.Ignore };
         var imageScale = scale * outfit.Width / (outfit.CropRight - outfit.CropLeft);
         image.style.position = Position.Absolute;
@@ -132,7 +156,7 @@ public sealed partial class ShopSystem
     {
         if (!_host.IsOpen)
             return;
-        _affinity.Clear();
+        _affinityContent.Clear();
         var head = new VisualElement();
         head.AddToClassList("wm-aff-head");
         var title = new Label(Locale.Text("WOMENACE::ui/affinity", "AFFINITY"));
@@ -141,15 +165,33 @@ public sealed partial class ShopSystem
         var level = new Label(Locale.Format("WOMENACE::ui/affinity/level", "LEVEL {0:00}", State.Level));
         level.AddToClassList("wm-aff-level");
         head.Add(level);
-        _affinity.Add(head);
+        _affinityContent.Add(head);
         for (var i = 1; i <= Kalina.MaxLevel; i++)
         {
-            var rewards = Kalina.Outfits.Where(outfit => outfit.Level == i)
+            var rewards = Kalina.AffinityOutfits.Where(outfit => outfit.Level == i)
                 .Select(outfit => new AffinityTooltip.Reward(i, outfit.Name.Resolve(), AffinityTooltip.RewardKind.Outfit)).ToList();
-            _affinity.Add(AffinitySystem.BuildLevelRow(i, State.Level, rewards, Kalina.MaxLevel));
+            _affinityContent.Add(AffinitySystem.BuildLevelRow(i, State.Level, rewards, Kalina.MaxLevel));
         }
-        IgnorePicking(_affinity);
+        UiLayout.IgnorePicking(_affinity);
         _affinity.SetVisible(true);
+        PositionAffinity();
+    }
+
+    private void PositionAffinity()
+    {
+        if (_affinity?.IsVisible() != true || _affinity.parent == null || _portrait?.panel == null)
+            return;
+        var portrait = _portrait.worldBound;
+        var size = _affinity.worldBound;
+        var width = size.width > 1f ? size.width : 330f;
+        var height = size.height > 1f ? size.height : 420f;
+        var bounds = _root.worldBound;
+        var left = Math.Max(bounds.xMin + 12f, portrait.xMin - width - 12f);
+        var top = Math.Clamp(portrait.center.y - height / 2f, bounds.yMin + 12f,
+            Math.Max(bounds.yMin + 12f, bounds.yMax - height - 12f));
+        var local = _affinity.parent.WorldToLocal(new Vector2(left, top));
+        _affinity.style.left = new StyleLength(local.x);
+        _affinity.style.top = new StyleLength(local.y);
     }
 
     public void ShowOutfits()
@@ -168,11 +210,12 @@ public sealed partial class ShopSystem
         var scroll = UI.Find(_root, UiSelector.Name("wm-kalina-outfit-scroll"))?.TryCast<ScrollView>();
         var offset = scroll.scrollOffset;
         _outfitGrid.Clear();
-        foreach (var outfit in Kalina.Outfits)
+        foreach (var outfit in Kalina.VisibleOutfits(ProcurementSystem.Instance.State))
         {
-            var locked = outfit.Level > State.Level;
+            var locked = !outfit.IsUnlocked(State, ProcurementSystem.Instance.State);
             var card = new Button { name = "wm-kalina-" + outfit.Id };
             card.AddToClassList("wm-kalina-outfit");
+            ShopVisuals.Surface(card, ShopSurface.Card);
             card.EnableInClassList("wm-kalina-outfit-selected", outfit.Id == State.OutfitId);
             card.EnableInClassList("wm-locked", locked);
             card.SetEnabled(!locked);
@@ -203,7 +246,7 @@ public sealed partial class ShopSystem
     public bool SelectOutfit(string id)
     {
         var outfit = Kalina.Outfits.FirstOrDefault(outfit => outfit.Id == id);
-        if (!WorkshopAccess.IsUnlocked || outfit == null || outfit.Level > State.Level)
+        if (!WorkshopAccess.IsUnlocked || outfit == null || !outfit.IsUnlocked(State, ProcurementSystem.Instance.State))
             return false;
         State.OutfitId = id;
         if (_portrait != null)
@@ -217,10 +260,4 @@ public sealed partial class ShopSystem
         _holdEpoch++;
     }
 
-    private static void IgnorePicking(VisualElement element)
-    {
-        element.pickingMode = PickingMode.Ignore;
-        for (var i = 0; i < element.childCount; i++)
-            IgnorePicking(element.ElementAt(i));
-    }
 }
