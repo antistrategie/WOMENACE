@@ -192,7 +192,7 @@ Assert(permanentClaims.EquipmentItems.Count == 0 && catalogue.Where(reward => re
 var partsOnly = Procurement.Plan(new ProcurementState(), new[] { catalogue[0] }, 10, 42);
 Assert(partsOnly.Rewards.All(reward => reward.Id == "part"), "All empty section weights must return to parts");
 Assert(Procurement.Sections.Sum(Procurement.Weight) == 10000, "Base probabilities must total 100 percent");
-Assert(Procurement.PiecePrice * Procurement.PiecesPerPull == 25, "A pull must cost the equivalent of 25 Sardis");
+Assert(Procurement.PiecePrice * Procurement.PiecesPerPull == 50, "A pull must cost the equivalent of 50 Sardis");
 var rejected = false;
 try { Procurement.Plan(state, catalogue, 2, 123); } catch (ArgumentOutOfRangeException) { rejected = true; }
 Assert(rejected, "Unsupported batch sizes must be rejected");

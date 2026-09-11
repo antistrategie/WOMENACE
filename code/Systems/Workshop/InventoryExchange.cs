@@ -15,8 +15,7 @@ internal static class InventoryExchange
         var owned = Inventory.Owned;
         if (owned == null)
             return (false, Locale.Text("WOMENACE::ui/workshop/no_inventory", "No campaign inventory."));
-        stock ??= new InventoryStock();
-        if (!stock.ContainsAll(inputs))
+        if (inputs.Count > 0 && !(stock ?? new InventoryStock()).ContainsAll(inputs))
             return (false, Locale.Text("WOMENACE::ui/workshop/stock_unavailable", "Selected stock is no longer available."));
         if (outputs.Any(output => output.Template == null || output.Count < 1))
             return (false, Locale.Text("WOMENACE::ui/workshop/template_unavailable", "Item template unavailable."));

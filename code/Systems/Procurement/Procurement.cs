@@ -9,7 +9,7 @@ public static class Procurement
     public const string PieceId = "commodity.wmgfl_collapse_piece";
     public const string DossierTag = "wmgfl_procurement_dossier";
     public const string SoundBankId = "wmgfl_procurement_soundbank";
-    public const int PiecePrice = 5;
+    public const int PiecePrice = 10;
     public const int PiecesPerPull = 5;
     public static readonly ProcurementSection[] Sections = Enum.GetValues<ProcurementSection>();
 

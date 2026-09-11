@@ -7,7 +7,7 @@ namespace WOMENACE.Code;
 // templates when it is created, so prices need no separate refresh lifecycle.
 public sealed class ShopCatalogue
 {
-    public const int PartPrice = 50;
+    public const int PartPrice = 100;
 
     private static readonly (bool Buy, LocalisedText Name, Func<IEnumerable<Group>> Groups)[] Definitions =
     {
