@@ -9,10 +9,10 @@
 #wm-shop-root .wm-proc-button:focus { border-color: rgb(214, 192, 128); }
 #wm-shop-root .wm-proc-title { font-size: 25px; letter-spacing: -0.3px; color: rgb(235, 230, 214); }
 #wm-shop-root .wm-proc-muted { color: rgb(158, 163, 137); font-size: 9px; margin-top: 5px; }
-#wm-shop-root .wm-proc-content { position: absolute; left: 16px; right: 318px; top: 16px; bottom: 130px; }
-#wm-shop-root .wm-proc-heading { justify-content: space-between; height: 33px; margin-bottom: 10px; }
+#wm-shop-root .wm-proc-content { position: absolute; left: 16px; right: 318px; top: 16px; bottom: 155px; }
+#wm-shop-root .wm-proc-heading { justify-content: space-between; height: 33px; margin-bottom: 10px; flex-shrink: 0; }
 #wm-shop-root .wm-proc-link { padding: 6px 10px; min-height: 28px; border-width: 0; background-color: rgba(0, 0, 0, 0); font-size: 10px; }
-#wm-shop-root .wm-proc-hero { height: 204px; background-color: rgba(27, 31, 23, 0.55); border-width: 0; overflow: hidden; }
+#wm-shop-root .wm-proc-hero { height: 204px; min-height: 180px; flex-shrink: 1; background-color: rgba(27, 31, 23, 0.55); border-width: 0; overflow: hidden; }
 #wm-shop-root .wm-proc-ambient { position: absolute; left: 0; right: 0; top: 0; bottom: 0; }
 #wm-shop-root .wm-proc-roman { position: absolute; left: 20px; top: -38px; font-size: 290px; letter-spacing: 0; color: rgba(193, 179, 120, 0.045); }
 #wm-shop-root .wm-proc-hero-copy { position: absolute; left: 18px; top: 22px; width: 180px; }
@@ -31,12 +31,21 @@
 #wm-shop-root .wm-proc-claimed .wm-proc-item-icon, #wm-shop-root .wm-proc-claimed .wm-proc-pool-art { opacity: 0.35; }
 #wm-shop-root .wm-proc-hero-footer { position: absolute; left: 10px; right: 8px; bottom: 0; height: 29px; justify-content: space-between; }
 #wm-shop-root .wm-proc-page { width: 23px; height: 23px; padding: 0; margin-left: 8px; font-size: 17px; }
-#wm-shop-root .wm-proc-subheading { margin-top: 14px; margin-bottom: 8px; font-size: 9px; letter-spacing: 1.1px; color: rgb(172, 162, 138); }
-#wm-shop-root .wm-proc-specials { flex-wrap: wrap; }
-#wm-shop-root .wm-proc-special-card { width: 220px; height: 52px; margin-right: 8px; padding: 5px 11px; background-color: rgb(17, 21, 18); border-color: rgba(76, 78, 64, 0.36); }
-#wm-shop-root .wm-proc-special-card .wm-proc-item-copy { flex-grow: 1; align-items: flex-start; justify-content: center; }
-#wm-shop-root .wm-proc-special-card .wm-proc-item-name { font-size: 12px; white-space: nowrap; -unity-text-align: middle-left; color: rgb(219, 216, 194); }
+#wm-shop-root .wm-proc-subheading { margin-top: 14px; margin-bottom: 8px; flex-shrink: 0; font-size: 9px; letter-spacing: 1.1px; color: rgb(172, 162, 138); }
+#wm-shop-root .wm-proc-special-scroll { width: 100%; flex-grow: 1; flex-basis: 0; min-height: 128px; }
+#wm-shop-root .wm-proc-special-scroll #unity-content-viewport { min-width: 0; }
+#wm-shop-root .wm-proc-special-scroll #unity-content-container { min-width: 0; padding: 0; align-items: stretch; }
+#wm-shop-root .wm-proc-special-scroll #unity-vertical-scroller { width: 8px; margin-left: 8px; }
+#wm-shop-root .wm-proc-specials { width: 100%; min-width: 0; flex-shrink: 0; flex-direction: column; align-items: stretch; }
+#wm-shop-root .wm-proc-special-row { width: 100%; margin-bottom: 8px; flex-shrink: 0; }
+#wm-shop-root .wm-proc-special-card { flex-grow: 1; flex-basis: 0; min-width: 0; height: 60px; margin-right: 8px; padding: 5px 11px; background-color: rgb(17, 21, 18); border-color: rgba(76, 78, 64, 0.36); }
+#wm-shop-root .wm-proc-special-card .wm-proc-item-copy { flex-grow: 1; flex-shrink: 1; min-width: 0; align-items: flex-start; justify-content: center; }
+#wm-shop-root .wm-proc-special-card .wm-proc-item-name { font-size: 12px; white-space: normal; -unity-text-align: middle-left; color: rgb(219, 216, 194); }
 #wm-shop-root .wm-proc-special-card .wm-proc-muted { font-size: 8px; letter-spacing: 0.6px; margin-top: 3px; -unity-text-align: middle-left; }
+#wm-shop-root .wm-proc-special-card.wm-proc-claimed { background-color: rgb(15, 15, 15); border-color: rgb(48, 48, 48); }
+#wm-shop-root .wm-proc-special-card.wm-proc-claimed:hover, #wm-shop-root .wm-proc-special-card.wm-proc-claimed:focus { background-color: rgb(22, 22, 22); border-color: rgb(75, 75, 75); }
+#wm-shop-root .wm-proc-special-card.wm-proc-claimed .wm-proc-item-name { color: rgb(126, 126, 126); }
+#wm-shop-root .wm-proc-special-card.wm-proc-claimed .wm-proc-muted { color: rgb(145, 145, 145); }
 #wm-shop-root .wm-proc-item-icon { width: 40px; height: 40px; flex-shrink: 0; margin-right: 12px; -unity-background-scale-mode: scale-to-fit; }
 #wm-shop-root .wm-proc-item-copy { flex-grow: 1; flex-shrink: 1; min-width: 0; }
 #wm-shop-root .wm-proc-item-name { font-size: 11px; }
@@ -72,7 +81,7 @@
 #wm-shop-root .wm-proc-pool-art.wm-proc-outfit-art { width: 300px; height: 236px; left: 50%; margin-left: -150px; right: auto; top: -8px; }
 #wm-shop-root .wm-proc-pool-question { position: absolute; left: 0; right: 0; top: 6px; bottom: 27px; font-size: 54px; -unity-text-align: middle-center; }
 #wm-shop-root .wm-proc-pool-dossier .wm-proc-item-copy { position: absolute; left: 0; right: 0; bottom: 0; padding: 7px 10px; background-color: rgba(0, 0, 0, 0); }
-#wm-shop-root .wm-proc-pool-dossier .wm-proc-item-name { -unity-text-align: middle-left; }
+#wm-shop-root .wm-proc-pool-dossier .wm-proc-item-name { -unity-text-align: middle-left; margin-right: 60px; }
 #wm-shop-root .wm-proc-pool-dossier .wm-proc-muted { margin-top: 3px; -unity-text-align: middle-left; }
 #wm-shop-root .wm-proc-pagination { height: 43px; min-height: 43px; flex-shrink: 0; margin-top: auto; padding-top: 12px; border-top-width: 1px; border-top-color: rgba(139, 142, 95, 0.18); }
 #wm-shop-root .wm-proc-pagination .wm-proc-muted { margin-top: 0; }
@@ -145,14 +154,13 @@
 #wm-shop-root .wm-proc-pool-spacer { flex-grow: 1; flex-basis: 0; min-width: 0; margin-right: 10px; }
 #wm-shop-root .wm-proc-pool-item .wm-proc-item-name { font-size: 12px; color: rgb(215, 220, 199); }
 #wm-shop-root .wm-proc-column-end { margin-right: 0; }
-#wm-shop-root .wm-proc-pool-item .wm-proc-claim { top: 6px; right: 7px; padding: 3px 5px; font-size: 7px; border-color: rgba(176, 162, 115, 0.18); background-color: rgba(12, 20, 15, 0.85); color: rgb(189, 179, 140); }
-#wm-shop-root .wm-proc-pool-limited .wm-proc-item-copy { padding-top: 12px; }
+#wm-shop-root .wm-proc-row-end { margin-bottom: 0; }
+#wm-shop-root .wm-proc-pool-item .wm-proc-claim { top: auto; right: 6px; bottom: 4px; padding: 1px 4px; font-size: 7px; letter-spacing: 0.3px; border-color: rgba(176, 162, 115, 0.18); background-color: rgba(12, 20, 15, 0.85); color: rgb(189, 179, 140); }
 #wm-shop-root .wm-proc-pool-item.wm-proc-claimed .wm-proc-item-name { color: rgb(148, 160, 128); }
 #wm-shop-root .wm-proc-filter.wm-proc-selected { background-color: rgba(134, 133, 105, 0.1); border-color: rgba(166, 160, 127, 0.53); }
 #wm-shop-root .wm-proc-results-heading .wm-proc-title { font-size: 28px; }
 #wm-shop-root .wm-proc-transfer-progress { position: absolute; left: 40%; right: 40%; top: 565px; height: 2px; background-color: rgba(159, 164, 114, 0.15); }
 #wm-shop-root .wm-proc-transfer-progress-fill { height: 100%; background-color: rgb(184, 186, 132); }
-#wm-shop-root .wm-proc-pool-dossier.wm-proc-pool-limited .wm-proc-item-copy { padding: 7px 10px; }
 #wm-shop-root .wm-shop-primary .wm-proc-button-caption { color: rgb(34, 35, 23); }
 
 #wm-shop-root .wm-proc-title, #wm-shop-root .wm-proc-generation, #wm-shop-root .wm-proc-section-title { -unity-font-definition: url("fonts/NotoSans-CondensedMedium.ttf"); -unity-font: url("fonts/NotoSans-CondensedMedium.ttf"); }

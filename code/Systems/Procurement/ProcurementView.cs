@@ -1,5 +1,6 @@
 using System.Globalization;
 using Il2CppInterop.Runtime;
+using Il2CppMenace.UI;
 using Jiangyu.Game.Audio;
 using Jiangyu.Game.Ui;
 using Jiangyu.Sdk;
@@ -77,7 +78,21 @@ internal sealed partial class ProcurementView
         controls.Add(_next);
         BuildAmbientParticles(hero);
         Text(ProcurementCatalogue.SectionName(ProcurementSection.Special).ToUpperInvariant(), "wm-proc-subheading", content);
-        _specials = Element("wm-proc-row wm-proc-specials", content);
+        var specialScroll = new ScrollView(ScrollViewMode.Vertical)
+        {
+            name = "wm-proc-special-scroll",
+            verticalScrollerVisibility = ScrollerVisibility.Auto,
+            horizontalScrollerVisibility = ScrollerVisibility.Hidden,
+        };
+        specialScroll.AddToClassList("wm-proc-special-scroll");
+        content.Add(specialScroll);
+        specialScroll.contentViewport.RegisterCallback<GeometryChangedEvent>(
+            DelegateSupport.ConvertDelegate<EventCallback<GeometryChangedEvent>>((Action<GeometryChangedEvent>)(evt =>
+            {
+                if (evt.newRect.width > 0)
+                    specialScroll.contentContainer.style.width = new StyleLength(evt.newRect.width);
+            })));
+        _specials = Element("wm-proc-specials", specialScroll);
         _guarantees = Element("wm-proc-guarantees wm-proc-row", _home);
         var footer = Element("wm-proc-footer wm-proc-row", _home);
         _message = Text("", "wm-proc-feedback", footer);
@@ -135,7 +150,7 @@ internal sealed partial class ProcurementView
         _featured.Clear();
         foreach (var entry in dossiers.Skip(_homePage * 3).Take(3))
         {
-            var card = Button("", () => OpenPool(ProcurementSection.Dossiers), "wm-proc-doll");
+            var card = CreateRewardCard(entry, "wm-proc-doll", () => OpenPool(ProcurementSection.Dossiers));
             card.name = "wm-procurement-featured-" + entry.Reward.Id;
             var art = _artwork.Create(entry.Art, "wm-proc-doll-art", card);
             var claimed = !State.Available(entry.Reward);
@@ -153,17 +168,25 @@ internal sealed partial class ProcurementView
         _previous.SetEnabled(_homePage > 0);
         _next.SetEnabled(_homePage + 1 < pages);
         _specials.Clear();
-        foreach (var entry in Catalogue.Entries.Where(entry => entry.Reward.Section == ProcurementSection.Special))
+        foreach (var entries in Catalogue.Entries.Where(entry => entry.Reward.Section == ProcurementSection.Special)
+            .OrderByDescending(entry => State.Available(entry.Reward)).Chunk(3))
         {
-            var card = Button("", () => OpenPool(ProcurementSection.Special), "wm-proc-special-card wm-proc-row");
-            ShopVisuals.Surface(card, ShopSurface.Card, Colour(ProcurementSection.Special));
-            Icon(entry, card);
-            var copy = Element("wm-proc-item-copy", card);
-            Text(entry.Name, "wm-proc-item-name", copy);
-            Text(Claim(entry), "wm-proc-muted", copy);
-            card.EnableInClassList("wm-proc-claimed", !State.Available(entry.Reward));
-            _specials.Add(card);
+            var row = Element("wm-proc-special-row wm-proc-row", _specials);
+            foreach (var entry in entries)
+            {
+                var card = CreateRewardCard(entry, "wm-proc-special-card wm-proc-row", () => OpenPool(ProcurementSection.Special));
+                ShopVisuals.Surface(card, ShopSurface.Card, Colour(ProcurementSection.Special));
+                Icon(entry, card);
+                var copy = Element("wm-proc-item-copy", card);
+                Text(entry.Name, "wm-proc-item-name", copy);
+                Text(Claim(entry), "wm-proc-muted", copy);
+                card.EnableInClassList("wm-proc-claimed", !State.Available(entry.Reward));
+                row.Add(card);
+            }
+            row.ElementAt(row.childCount - 1).AddToClassList("wm-proc-column-end");
         }
+        if (_specials.childCount > 0)
+            _specials.ElementAt(_specials.childCount - 1).AddToClassList("wm-proc-row-end");
         _guarantees.Clear();
         foreach (var section in Procurement.Sections.Where(section => Procurement.Pity(section) > 0))
         {
@@ -213,6 +236,30 @@ internal sealed partial class ProcurementView
             ShopVisuals.Surface(button, ShopSurface.Button);
         button.clickable.clicked += (Action)(() => { Sound.Click(); action(); });
         return button;
+    }
+
+    private static VisualElement CreateRewardCard(ProcurementCatalogue.Entry entry, string classes, Action action = null)
+    {
+        var card = new EmptyInteractiveElement { pickingMode = PickingMode.Ignore };
+        card.Clear();
+        // JIANGYU-CONTRACT: UIInteractionComponent.GetHoveredElement (RVA 0x52D4D0)
+        // casts only the picked element's parent. Keep a full-size child hit target.
+        var hitArea = Element("", card);
+        hitArea.style.position = Position.Absolute;
+        hitArea.style.left = hitArea.style.right = hitArea.style.top = hitArea.style.bottom = 0;
+        card.m_PickableElement = hitArea;
+        card.SetPickable(true);
+        Classes(card, classes);
+        if (entry?.Template != null)
+            card.SetCreateTooltipFunc(DelegateSupport.ConvertDelegate<Il2CppSystem.Func<TooltipData>>(
+                (Func<TooltipData>)(() => entry.Template.GetSimpleTooltipData(1, 1f, null))));
+        if (action != null)
+        {
+            card.AddToClassList("wm-proc-button");
+            card.SetOnLeftClickedAction(DelegateSupport.ConvertDelegate<Il2CppSystem.Action<InteractiveElement>>(
+                (Action<InteractiveElement>)(_ => { Sound.Click(); action(); })));
+        }
+        return card;
     }
 
     private VisualElement Portrait(ProcurementCatalogue.Entry entry, string classes, VisualElement parent) => entry.Outfit != null

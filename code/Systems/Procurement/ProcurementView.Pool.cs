@@ -111,7 +111,8 @@ internal sealed partial class ProcurementView
                 var entry = rowEntries[column];
                 var hidden = _section == ProcurementSection.Curios && State.Claimed(entry.Reward.Id) == 0;
                 var portrait = entry.IsUnlock || _section == ProcurementSection.Curios;
-                var card = Element("wm-proc-pool-item wm-proc-row", row);
+                var card = CreateRewardCard(hidden ? null : entry, "wm-proc-pool-item wm-proc-row");
+                row.Add(card);
                 card.EnableInClassList("wm-proc-pool-equipment", _section is ProcurementSection.Equipment or ProcurementSection.Special);
                 card.EnableInClassList("wm-proc-column-end", column == columns - 1);
                 card.name = "wm-procurement-item-" + entry.Reward.Id;
@@ -132,7 +133,6 @@ internal sealed partial class ProcurementView
                 if (entry.Reward.Limit > 0)
                 {
                     Text(Claim(entry), "wm-proc-claim", card);
-                    card.AddToClassList("wm-proc-pool-limited");
                     card.EnableInClassList("wm-proc-claimed", !State.Available(entry.Reward));
                 }
                 ShopVisuals.Enter(card, 4, index++ * 12);

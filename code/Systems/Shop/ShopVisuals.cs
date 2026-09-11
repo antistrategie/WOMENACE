@@ -84,11 +84,12 @@ internal static class ShopVisuals
             }
             else if (kind == ShopSurface.Card)
             {
-                Gradient(context, rect, Alpha(accent, claimed ? .025f : active ? .16f : .075f), Alpha(accent, .008f));
-                Line(p, Alpha(accent, active ? .6f : .22f), 1, stackalloc Vector2[] { new(w - 10, 5), new(w - 5, 5), new(w - 5, 10) });
+                var cardAccent = claimed ? new Color(.55f, .55f, .55f) : accent;
+                Gradient(context, rect, Alpha(cardAccent, claimed ? .025f : active ? .16f : .075f), Alpha(cardAccent, .008f));
+                Line(p, Alpha(cardAccent, active ? .6f : .22f), 1, stackalloc Vector2[] { new(w - 10, 5), new(w - 5, 5), new(w - 5, 10) });
                 Line(p, Alpha(Color.white, .035f), 1, new(1, 1), new(w - 1, 1));
                 if (active)
-                    Outline(p, rect, Alpha(accent, .42f));
+                    Outline(p, rect, Alpha(cardAccent, .42f));
             }
             else
             {

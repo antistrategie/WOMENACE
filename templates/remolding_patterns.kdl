@@ -1,0 +1,333 @@
+clone "AccessoryTemplate" from="accessory.binoculars" id="accessory.wmgfl_remolding_support" {
+    set "Title" {
+        set "m_DefaultTranslation" "Remolding Pattern (Support)"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Remolding Pattern (Support)"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Developed by Persica, the \"Collapse Epiphyllum Cultivation and Reverse-Collapse Pattern Remolding Device\" channels Collapse energy to enhance a Doll and her armament."
+        clear "m_Placeholders"
+    }
+    set "Icon" asset="remolding/support"
+    set "IconEquipment" asset="remolding/support"
+    set "IconEquipmentDisabled" asset="remolding/support"
+    set "IconSkillBar" asset="remolding/support"
+    set "IconSkillBarDisabled" asset="remolding/support"
+    set "BlackMarketMaxQuantity" 0
+    set "Rarity" 0
+    set "TradeValue" 100
+    set "DeployCosts" {
+        set "m_Supplies" 20
+    }
+    clear "SkillsGranted"
+    append "SkillsGranted" "passive.wmgfl_remolding_support"
+    append "SkillsGranted" "active.wmgfl_remolding_first_aid"
+}
+
+clone "PerkTemplate" from="perk.fortify" id="passive.wmgfl_remolding_support" {
+    set "Type" enum="SkillType" "Item"
+    set "Title" {
+        set "m_DefaultTranslation" "Remolding Pattern (Support)"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "At the start of battle, the $1 allied units with the highest <link=\"weapon_skill\">Weapon Skill</link> gain $2% increased damage."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="PerkTemplate" "passive.wmgfl_remolding_support" path="EventHandlers[0].Recipients"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_remolding_support" path="EventHandlers[0].AmountMult" format="bonus-percent"
+    }
+    set "Icon" asset="remolding/support"
+    set "PerkIcon" asset="remolding/support"
+    set "IsStacking" #false
+    clear "EventHandlers"
+    append "EventHandlers" type="WOMENACE:SupportPattern" {
+        set "Recipients" 2
+        set "Effect" "effect.wmgfl_remolding_support"
+    }
+}
+
+// JIANGYU-CONTRACT: Skill.OnMissionStarted (RVA 0x712020) initialises Uses.
+// Turn and round callbacks dispatch handlers without refilling the counter.
+clone "PerkTemplate" from="perk.first_aid" id="active.wmgfl_remolding_first_aid" {
+    set "ActionPointCost" 20
+    set "IsLimitedUses" #true
+    set "Uses" 2
+    set "Icon" asset="remolding/support"
+    set "IconDisabled" asset="remolding/support"
+    set "PerkIcon" asset="remolding/support"
+}
+
+clone "SkillTemplate" from="effect.bleeding" id="effect.wmgfl_remolding_support" {
+    set "Title" {
+        set "m_DefaultTranslation" "Remolding Pattern (Support)"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Damage dealt increased by $1%."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_remolding_support" path="EventHandlers[0].AmountMult" format="bonus-percent"
+    }
+    set "Icon" asset="remolding/support"
+    set "IsStacking" #false
+    set "IsRemovedAfterCombat" #true
+    clear "EventHandlers"
+    append "EventHandlers" type="ChangeProperty" {
+        set "Trigger" enum="UpdateEvent" "OnUpdate"
+        set "PropertyType" enum="EntityPropertyType" "DamageMult"
+        set "AmountMult" 1.08
+    }
+}
+
+clone "AccessoryTemplate" from="accessory.wmgfl_remolding_support" id="accessory.wmgfl_remolding_sentinel" {
+    set "Title" {
+        set "m_DefaultTranslation" "Remolding Pattern (Sentinel)"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Remolding Pattern (Sentinel)"
+    }
+    set "Icon" asset="remolding/sentinel"
+    set "IconEquipment" asset="remolding/sentinel"
+    set "IconEquipmentDisabled" asset="remolding/sentinel"
+    set "IconSkillBar" asset="remolding/sentinel"
+    set "IconSkillBarDisabled" asset="remolding/sentinel"
+    clear "SkillsGranted"
+    append "SkillsGranted" "passive.wmgfl_remolding_sentinel"
+    append "SkillsGranted" "active.wmgfl_remolding_mark_target"
+}
+
+clone "PerkTemplate" from="passive.wmgfl_remolding_support" id="passive.wmgfl_remolding_sentinel" {
+    set "Title" {
+        set "m_DefaultTranslation" "Remolding Pattern (Sentinel)"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Damage dealt to distant enemies is increased by $1%."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="PerkTemplate" "passive.wmgfl_remolding_sentinel" path="EventHandlers[0].Properties[0].AmountMult" format="bonus-percent"
+    }
+    set "Icon" asset="remolding/sentinel"
+    set "PerkIcon" asset="remolding/sentinel"
+    clear "EventHandlers"
+    append "EventHandlers" type="ChangePropertyConditional" {
+        set "Event" enum="EventType" "OnBeforeAnySkillUsed"
+        set "Condition" type="DistanceCondition" {
+            set "CheckEntity" enum="CheckTarget" "Target"
+            set "MaxDistance" 5
+            set "Negated" #true
+        }
+        append "Properties" {
+            set "PropertyType" enum="EntityPropertyType" "DamageMult"
+            set "AmountMult" 1.13
+        }
+        set "ShowInTooltipWhenActive" #true
+        set "DefaultText" "Remolding Pattern (Sentinel)"
+    }
+}
+
+clone "SkillTemplate" from="active.use_target_designator" id="active.wmgfl_remolding_mark_target" {
+    set "Title" {
+        set "m_DefaultTranslation" "Mark Target"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Mark an enemy for $1 turns, reducing its defence by $2% and enabling guided attacks. The target remains marked when it moves out of sight."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.designated_target" path="EventHandlers[0].Lifetime"
+        append "m_Placeholders" bind="SkillTemplate" "effect.designated_target" path="EventHandlers[3].AmountMult" format="reduction-percent"
+    }
+    set "ActionPointCost" 20
+    set "IsLimitedUses" #true
+    set "Uses" 2
+    set "IsDeploymentRequired" #false
+    set "Icon" asset="remolding/sentinel"
+    set "IconDisabled" asset="remolding/sentinel"
+}
+
+clone "AccessoryTemplate" from="accessory.wmgfl_remolding_support" id="accessory.wmgfl_remolding_bulwark" {
+    set "Title" {
+        set "m_DefaultTranslation" "Remolding Pattern (Bulwark)"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Remolding Pattern (Bulwark)"
+    }
+    set "Icon" asset="remolding/bulwark"
+    set "IconEquipment" asset="remolding/bulwark"
+    set "IconEquipmentDisabled" asset="remolding/bulwark"
+    set "IconSkillBar" asset="remolding/bulwark"
+    set "IconSkillBarDisabled" asset="remolding/bulwark"
+    clear "SkillsGranted"
+    append "SkillsGranted" "passive.wmgfl_remolding_bulwark"
+    append "SkillsGranted" "active.wmgfl_remolding_hold_the_line"
+}
+
+clone "PerkTemplate" from="passive.wmgfl_remolding_support" id="passive.wmgfl_remolding_bulwark" {
+    set "Title" {
+        set "m_DefaultTranslation" "Remolding Pattern (Bulwark)"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "While the wearer has at least $1 suppression, all other allied units take $2% less damage."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_remolding_bulwark" path="EventHandlers[0].MinimumSuppression"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_remolding_bulwark" path="EventHandlers[0].DamageMultiplier" format="reduction-percent"
+    }
+    set "Icon" asset="remolding/bulwark"
+    set "PerkIcon" asset="remolding/bulwark"
+    clear "EventHandlers"
+    append "EventHandlers" type="EmitAura" {
+        set "SkillToAdd" "effect.wmgfl_remolding_bulwark"
+        set "ExcludeSelf" #true
+    }
+}
+
+clone "SkillTemplate" from="effect.wmgfl_remolding_support" id="effect.wmgfl_remolding_bulwark" {
+    set "Title" {
+        set "m_DefaultTranslation" "Remolding Pattern (Bulwark)"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Damage taken reduced by $1% while the Bulwark wearer has at least $2 suppression."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_remolding_bulwark" path="EventHandlers[0].DamageMultiplier" format="reduction-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_remolding_bulwark" path="EventHandlers[0].MinimumSuppression"
+    }
+    set "Icon" asset="remolding/bulwark"
+    clear "EventHandlers"
+    append "EventHandlers" type="WOMENACE:BulwarkAura" {
+        set "MinimumSuppression" 10.0
+        set "DamageMultiplier" 0.875
+    }
+}
+
+clone "PerkTemplate" from="perk.command_rally" id="active.wmgfl_remolding_hold_the_line" {
+    set "Title" {
+        set "m_DefaultTranslation" "Intervention"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Remove $1 suppression from another ally and grant them $2% damage reduction until the next round. Gain $3 suppression if currently at zero, or $4 if already above zero."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="PerkTemplate" "active.wmgfl_remolding_hold_the_line" path="EventHandlers[0].SuppressionChange" format="magnitude"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_remolding_hold_the_line" path="EventHandlers[0].AmountMult" format="reduction-percent"
+        append "m_Placeholders" bind="PerkTemplate" "active.wmgfl_remolding_hold_the_line" path="EventHandlers[2].SuppressionFromZero"
+        append "m_Placeholders" bind="PerkTemplate" "active.wmgfl_remolding_hold_the_line" path="EventHandlers[2].SuppressionWhilePressured"
+    }
+    set "Icon" asset="remolding/bulwark"
+    set "IconDisabled" asset="remolding/bulwark"
+    set "PerkIcon" asset="remolding/bulwark"
+    set "ActionPointCost" 20
+    set "IsLimitedUses" #true
+    set "Uses" 2
+    set "TargetsAllowed" enum="SkillTarget" "AlliedActor"
+    set "MaxRange" 5
+    clear "EventHandlers"
+    append "EventHandlers" type="ChangeSuppression" {
+        set "Event" enum="EventType" "OnUse"
+        set "SuppressionChange" -80.0
+    }
+    append "EventHandlers" type="AddSkill" {
+        set "Event" enum="AddEvent" "OnUse"
+        set "SkillToAdd" "effect.wmgfl_remolding_hold_the_line"
+        set "ShowHUDText" #true
+    }
+    append "EventHandlers" type="WOMENACE:BulwarkBurden" {
+        set "SuppressionFromZero" 30.0
+        set "SuppressionWhilePressured" 10.0
+    }
+}
+
+clone "SkillTemplate" from="effect.wmgfl_remolding_support" id="effect.wmgfl_remolding_hold_the_line" {
+    set "Title" {
+        set "m_DefaultTranslation" "Intervention"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Damage taken reduced by $1% until the next round."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_remolding_hold_the_line" path="EventHandlers[0].AmountMult" format="reduction-percent"
+    }
+    set "Icon" asset="remolding/bulwark"
+    clear "EventHandlers"
+    append "EventHandlers" type="ChangeProperty" {
+        set "Trigger" enum="UpdateEvent" "OnUpdate"
+        set "PropertyType" enum="EntityPropertyType" "DamageSustainedMult"
+        set "AmountMult" 0.8
+    }
+    append "EventHandlers" type="LifetimeLimit" {
+        set "Event" enum="LifetimeType" "OnRoundStart"
+        set "Lifetime" 1
+        set "ResetLifetimeOnRefresh" #true
+    }
+}
+
+clone "AccessoryTemplate" from="accessory.wmgfl_remolding_support" id="accessory.wmgfl_remolding_vanguard" {
+    set "Title" {
+        set "m_DefaultTranslation" "Remolding Pattern (Vanguard)"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Remolding Pattern (Vanguard)"
+    }
+    set "Icon" asset="remolding/vanguard"
+    set "IconEquipment" asset="remolding/vanguard"
+    set "IconEquipmentDisabled" asset="remolding/vanguard"
+    set "IconSkillBar" asset="remolding/vanguard"
+    set "IconSkillBarDisabled" asset="remolding/vanguard"
+    clear "SkillsGranted"
+    append "SkillsGranted" "passive.wmgfl_remolding_vanguard"
+    append "SkillsGranted" "active.wmgfl_remolding_second_wind"
+}
+
+clone "PerkTemplate" from="passive.wmgfl_remolding_sentinel" id="passive.wmgfl_remolding_vanguard" {
+    set "Title" {
+        set "m_DefaultTranslation" "Remolding Pattern (Vanguard)"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Damage dealt to nearby enemies is increased by $1%."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="PerkTemplate" "passive.wmgfl_remolding_vanguard" path="EventHandlers[0].Properties[0].AmountMult" format="bonus-percent"
+    }
+    set "Icon" asset="remolding/vanguard"
+    set "PerkIcon" asset="remolding/vanguard"
+    set "EventHandlers" index=0 {
+        set "Condition" type="DistanceCondition" {
+            set "CheckEntity" enum="CheckTarget" "Target"
+            set "MaxDistance" 3
+            set "Negated" #false
+        }
+        set "DefaultText" "Remolding Pattern (Vanguard)"
+    }
+}
+
+clone "SkillTemplate" from="active.use_pirate_drugs_protagon" id="active.wmgfl_remolding_second_wind" {
+    set "Title" {
+        set "m_DefaultTranslation" "Overdrive"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Take an extra turn with $1% of maximum AP. Can only be used once per round."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_remolding_second_wind" path="EventHandlers[1].ActionPointsAvailable" format="percent"
+    }
+    set "Icon" asset="remolding/vanguard"
+    set "IconDisabled" asset="remolding/vanguard"
+    clear "Tags"
+    append "Tags" "utility"
+    append "Tags" "accessory"
+    set "ActionPointCost" 20
+    set "IsLimitedUses" #true
+    set "Uses" 2
+    set "EventHandlers" index=0 {
+        set "SkillToAdd" "effect.wmgfl_remolding_second_wind"
+    }
+    set "EventHandlers" index=1 {
+        clear "NotUsableIfActorHasSkill"
+        append "NotUsableIfActorHasSkill" "effect.wmgfl_remolding_second_wind"
+    }
+}
+
+clone "SkillTemplate" from="effect.pirate_drugs_protagon" id="effect.wmgfl_remolding_second_wind" {
+    set "Title" {
+        set "m_DefaultTranslation" "Overdrive"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Granted an extra turn with $1% of maximum AP. Overdrive cannot be used again this round."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_remolding_second_wind" path="EventHandlers[1].ActionPointsAvailable" format="percent"
+    }
+    set "Icon" asset="remolding/vanguard"
+    set "EventHandlers" index=1 {
+        set "ActionPointsAvailable" 0.75
+    }
+}

@@ -16,6 +16,10 @@ public sealed class ProcurementCatalogue
     {
         ("specialweapon.asteria_railgun", 1),
         ("vehicle.koleda_car", 1),
+        ("accessory.wmgfl_remolding_support", 1),
+        ("accessory.wmgfl_remolding_sentinel", 1),
+        ("accessory.wmgfl_remolding_bulwark", 1),
+        ("accessory.wmgfl_remolding_vanguard", 1),
     };
 
     public IReadOnlyList<Entry> Entries { get; }
@@ -172,7 +176,8 @@ public sealed class ProcurementCatalogue
         public Texture2D Art => Leader?.SpeakerTemplate?.StandLookLeftImage;
         public Sprite Icon => Template?.TryCast<ItemTemplate>()?.IconEquipment ?? Template?.Icon;
         public string Type => Template?.TryCast<VehicleItemTemplate>() != null ? TypeVehicle
-            : Template?.TryCast<ArmorTemplate>() != null ? TypeArmour : TypeWeapon;
+            : Template?.TryCast<ArmorTemplate>() != null ? TypeArmour
+            : TypeWeapon;
     }
 
     public static string SectionName(ProcurementSection section) => section switch
