@@ -132,12 +132,6 @@ public sealed partial class PierceAoEShape : Il2CppSystem.Object
     // attacker to the aimed tile (snapped to the compass ray).
     public bool ToTarget;
 
-    // Hit chance lost per row past the aimed tile: victims at row step s
-    // are dropped from the application with probability FalloffPerTile * s,
-    // a miss on top of the native accuracy roll. Only the application pass
-    // rolls, so the preview stays stable.
-    public float FalloffPerTile;
-
     // Not the shape's reach (GetAffectedTiles carries that): the radius only
     // feeds the generic circle indicator drawn around the hovered target,
     // which reads as a ring of red tiles. Zero suppresses it.
@@ -170,7 +164,7 @@ public sealed partial class PierceAoEShape : Il2CppSystem.Object
             // zero-damage application there makes her flinch mid-strike.
             var landing = ToTarget ? Pierce.SnappedEnd(_origin, _target, Tiles) : null;
 
-            void Add(Tile tile, int step)
+            void Add(Tile tile, int _)
             {
                 if (tile == null)
                     return;
@@ -190,15 +184,6 @@ public sealed partial class PierceAoEShape : Il2CppSystem.Object
                     return;
                 if (_skipEmptyTiles && tile.GetEntity() == null)
                     return;
-                // the blade's bite fades with distance: victims deep in the
-                // swathe can slip the application entirely. Rolled only in
-                // the application pass so targeting previews stay stable.
-                if (_skipEmptyTiles && occupant != null && FalloffPerTile > 0f && step > 0
-                    && UnityEngine.Random.value < FalloffPerTile * step)
-                {
-                    Log.Debug($"[PierceShape] falloff miss at row {step} ({tile.GetX()},{tile.GetZ()})");
-                    return;
-                }
                 _into.Add(tile);
             }
 
@@ -221,9 +206,9 @@ public sealed partial class PierceAoEShape : Il2CppSystem.Object
 // UseCustomAoEShape.
 public sealed class SextansPierceShapeSystem : JiangyuSystem
 {
-    // one skill's swathe: tile length, width, thrust falloff, and whether the
+    // One skill's swathe: tile length, width, and whether the
     // aim point is a destination (ult) or a direction (thrust). See ToTarget.
-    internal readonly record struct Shape(int Tiles, int Width, float Falloff, bool ToTarget);
+    internal readonly record struct Shape(int Tiles, int Width, bool ToTarget);
 
     // The native swathe shape per skill, and the single source of truth for
     // its geometry. It lives in code because the CustomAoEShape it feeds cannot
@@ -241,12 +226,12 @@ public sealed class SextansPierceShapeSystem : JiangyuSystem
     // same shape assigned (Assign covers every rank) and lookups strip the rank suffix.
     internal static readonly IReadOnlyDictionary<string, Shape> Shapes = new Dictionary<string, Shape>(StringComparer.Ordinal)
     {
-        ["active.sextans_thrust"] = new Shape(5, 3, 0.025f, false),
+        ["active.sextans_thrust"] = new Shape(5, 3, false),
         // the SSR sword's thrust is the same shape
-        ["active.sextans_ssr_thrust"] = new Shape(5, 3, 0.025f, false),
-        ["active.sextans_ult"] = new Shape(8, 3, 0f, true),
+        ["active.sextans_ssr_thrust"] = new Shape(5, 3, false),
+        ["active.sextans_ult"] = new Shape(8, 3, true),
         // the SSR sword's ult is the same shape
-        ["active.sextans_ssr_ult"] = new Shape(8, 3, 0f, true),
+        ["active.sextans_ssr_ult"] = new Shape(8, 3, true),
     };
 
     private readonly List<string> _pending = new(Shapes.Keys);
@@ -298,7 +283,7 @@ public sealed class SextansPierceShapeSystem : JiangyuSystem
             if (shape.ToTarget)
                 template.TargetsAllowed &= ~SkillTarget.EnemyActor;
 
-            var aoe = new PierceAoEShape { Tiles = shape.Tiles, Width = shape.Width, ToTarget = shape.ToTarget, FalloffPerTile = shape.Falloff };
+            var aoe = new PierceAoEShape { Tiles = shape.Tiles, Width = shape.Width, ToTarget = shape.ToTarget };
             template.CustomAoEShape = aoe.Cast<ICustomAoEShape>();
             template.UseCustomAoEShape = true;
             template.AoEType = SkillAoEType.AllTiles;

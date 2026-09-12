@@ -369,7 +369,7 @@ public sealed class SextansUltSystem : JiangyuSystem
         var id = template?.GetID();
         var geometry = id != null && SextansPierceShapeSystem.Shapes.TryGetValue(BaseSkillId(id), out var g)
             ? g
-            : new SextansPierceShapeSystem.Shape(8, 3, 0f, true);
+            : new SextansPierceShapeSystem.Shape(8, 3, true);
         var tiles = geometry.Tiles;
         var width = geometry.Width;
 
