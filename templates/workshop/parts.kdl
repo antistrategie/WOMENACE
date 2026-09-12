@@ -1,3 +1,7 @@
+patch "CommodityTemplate" "commodity.construct_alloys" {
+    append "Tags" "crafting_material"
+}
+
 clone "CommodityTemplate" from="commodity.construct_weapon_parts" id="commodity.wmgfl_part_ar_barrel" {
     set "Title" {
         set "m_DefaultTranslation" "AR Barrel"
