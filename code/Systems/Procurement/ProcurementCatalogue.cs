@@ -131,7 +131,8 @@ public sealed class ProcurementCatalogue
         // GetTradeValue(), then applies rarity and campaign progress. Procurement covers
         // the full campaign, but never includes templates outside that market catalogue.
         if (item.BlackMarketMaxQuantity <= 0 || item.GetTradeValue() <= 0
-            || item.m_IsGarbage || item.MinCampaignProgress > 100)
+            || item.m_IsGarbage || item.MinCampaignProgress > 100
+            || HasTag(item, Procurement.ExcludedEquipmentTag))
             return false;
         // A market flag alone is insufficient for the named unfinished DMR in the shipped data.
         var comment = item.m_GameDesignComment ?? "";
@@ -154,12 +155,14 @@ public sealed class ProcurementCatalogue
         return Templates.DefaultText(item.GetName());
     }
 
-    public static bool IsProcurementDossier(DossierItemTemplate template)
+    public static bool IsProcurementDossier(DossierItemTemplate template) => HasTag(template, Procurement.DossierTag);
+
+    private static bool HasTag(BaseItemTemplate template, string id)
     {
         var tags = template?.Tags;
         if (tags != null)
             for (var i = 0; i < tags.Count; i++)
-                if (tags[i]?.GetID() == Procurement.DossierTag)
+                if (tags[i]?.GetID() == id)
                     return true;
         return false;
     }

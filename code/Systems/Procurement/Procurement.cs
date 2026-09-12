@@ -8,6 +8,7 @@ public static class Procurement
 {
     public const string PieceId = "commodity.wmgfl_collapse_piece";
     public const string DossierTag = "wmgfl_procurement_dossier";
+    public const string ExcludedEquipmentTag = "wmgfl_procurement_excluded";
     public const string SoundBankId = "wmgfl_procurement_soundbank";
     public const int PiecePrice = 10;
     public const int PiecesPerPull = 5;

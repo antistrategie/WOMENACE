@@ -1,5 +1,28 @@
 clone "TagTemplate" from="unique" id="wmgfl_procurement_dossier"
 
+// Rarity and price do not consistently identify equipment reserved for other reward sources.
+clone "TagTemplate" from="unique" id="wmgfl_procurement_excluded"
+
+patch "ArmorTemplate" "armor.player_class_6_t1_rmc_bash" {
+    append "Tags" "wmgfl_procurement_excluded"
+}
+
+patch "ArmorTemplate" "armor.player_class_6_t2_rmc_bash_mk2" {
+    append "Tags" "wmgfl_procurement_excluded"
+}
+
+patch "WeaponTemplate" "weapon.generic_heavy_assault_rifle_tier2_har" {
+    append "Tags" "wmgfl_procurement_excluded"
+}
+
+patch "VehicleItemTemplate" "vehicle.chassis_mbt_battle_tank" {
+    append "Tags" "wmgfl_procurement_excluded"
+}
+
+patch "ModularVehicleWeaponTemplate" "mod_weapon.heavy.twin_minigun" {
+    append "Tags" "wmgfl_procurement_excluded"
+}
+
 clone "CommodityTemplate" from="commodity.wmgfl_sardis_gold" id="commodity.wmgfl_collapse_piece" {
     set "Title" {
         set "m_DefaultTranslation" "Collapse Piece"
