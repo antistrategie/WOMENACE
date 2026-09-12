@@ -271,8 +271,8 @@ public sealed class WeaponProficiencySystem : JiangyuSystem
 
             var text = string.Format(
                 matches
-                    ? Locale.Text("WOMENACE::ui/proficiency/matched", "Bonus accuracy for wielding her weapon type ({0}).")
-                    : Locale.Text("WOMENACE::ui/proficiency/unmatched", "Wield {0} for bonus accuracy."),
+                    ? Locale.Text("WOMENACE::ui/proficiency/matched", "Bonus <link=\"accuracy\">Accuracy</link> for wielding her weapon type ({0}).")
+                    : Locale.Text("WOMENACE::ui/proficiency/unmatched", "Wield {0} for bonus <link=\"accuracy\">Accuracy</link>."),
                 WeaponClasses.Plural(viewerClass));
             var para = data.AddParagraph(
                 text, matches ? ParagraphStyle.Positive : ParagraphStyle.Default, null, NoIconSize, NoIconColour, true, false);

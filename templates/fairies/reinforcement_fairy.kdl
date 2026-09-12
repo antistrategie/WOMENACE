@@ -10,7 +10,7 @@ clone "ShipUpgradeTemplate" from="oci.wmgfl_fairy_lodge" id="oci.wmgfl_reinforce
         set "m_DefaultTranslation" "Calls for reinforcement T-Dolls. Can be used for communication and sending emergency distress signals on regular days."
     }
     set "ShortDescription" {
-        set "m_DefaultTranslation" "<style=\"Highlight\">• Gain the Offmap Ability \"Reinforcement Fairy\" which reinforces a Doll squad with one dummy and raises its defence by $1% for $2 turns.</style>"
+        set "m_DefaultTranslation" "<style=\"Highlight\">• Gain the Offmap Ability \"Reinforcement Fairy\" which reinforces a Doll squad with one dummy and raises its <link=\"defense\">Defence</link> by $1% for $2 turns.</style>"
         clear "m_Placeholders"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_fairy_reinforcement" path="EventHandlers[1].AmountMult" format="bonus-percent"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_fairy_reinforcement" path="EventHandlers[0].Lifetime"
@@ -104,7 +104,7 @@ clone "ShipUpgradeTemplate" from="oci.wmgfl_reinforcement_fairy" id="oci.wmgfl_e
         set "m_DefaultTranslation" "Calls for reinforcement T-Dolls and shields them with a stronger blessing. Can be used to boost the ship's radio reception on regular days."
     }
     set "ShortDescription" {
-        set "m_DefaultTranslation" "<style=\"Highlight\">• Gain the Offmap Ability \"Enhanced Reinforcement Fairy\" which reinforces a Doll squad with one dummy and raises its defence by $1% for $2 turns.</style>"
+        set "m_DefaultTranslation" "<style=\"Highlight\">• Gain the Offmap Ability \"Enhanced Reinforcement Fairy\" which reinforces a Doll squad with one dummy and raises its <link=\"defense\">Defence</link> by $1% for $2 turns.</style>"
         clear "m_Placeholders"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_fairy_reinforcement" path="EventHandlers[1].AmountMult" format="bonus-percent"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_fairy_reinforcement" path="EventHandlers[0].Lifetime"

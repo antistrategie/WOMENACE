@@ -55,6 +55,13 @@
 #wm-shop-root .wm-shop-feedback { flex-grow: 1; flex-shrink: 1; min-width: 0; margin: 0 16px 0 0; padding: 0; font-size: 10px; color: rgb(215, 192, 116); white-space: normal; }
 #wm-shop-root .wm-kalina-portrait { position: absolute; right: 18px; bottom: 150px; width: 300px; height: 432px; overflow: hidden; }
 #wm-shop-root .wm-kalina-art { -unity-background-scale-mode: stretch-to-fill; }
+#wm-shop-root .wm-kalina-outline { position: absolute; left: 0; right: 0; top: 0; bottom: 0; opacity: 0; transition-property: opacity; transition-duration: 0.16s; }
+#wm-shop-root .wm-kalina-outline .wm-kalina-art { -unity-background-image-tint-color: rgb(244, 208, 126); }
+#wm-shop-root .wm-kalina-portrait:hover .wm-kalina-outline { opacity: 0.6; }
+#wm-shop-root .wm-kalina-outfit-hint { position: absolute; right: 10px; bottom: 0; height: 22px; padding: 0 6px; flex-direction: row; align-items: center; opacity: 0.72; transition-property: opacity; transition-duration: 0.16s; }
+#wm-shop-root .wm-kalina-portrait:hover .wm-kalina-outfit-hint { opacity: 1; }
+#wm-shop-root .wm-kalina-outfit-hint-icon { width: 18px; height: 18px; margin-right: 5px; flex-shrink: 0; }
+#wm-shop-root .wm-kalina-outfit-hint-label { margin: 0; padding: 0; font-size: 12px; color: rgb(214, 184, 112); -unity-text-align: middle-left; white-space: nowrap; }
 #wm-shop-root .wm-kalina-dialogue {
     position: absolute;
     right: 28px;

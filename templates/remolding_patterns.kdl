@@ -127,7 +127,7 @@ clone "SkillTemplate" from="active.use_target_designator" id="active.wmgfl_remol
         set "m_DefaultTranslation" "Mark Target"
     }
     set "Description" {
-        set "m_DefaultTranslation" "Mark an enemy for $1 turns, reducing its defence by $2% and enabling guided attacks. The target remains marked when it moves out of sight."
+        set "m_DefaultTranslation" "Mark an enemy for $1 turns, reducing its <link=\"defense\">Defence</link> by $2% and enabling guided attacks. The target remains marked when it moves out of sight."
         clear "m_Placeholders"
         append "m_Placeholders" bind="SkillTemplate" "effect.designated_target" path="EventHandlers[0].Lifetime"
         append "m_Placeholders" bind="SkillTemplate" "effect.designated_target" path="EventHandlers[3].AmountMult" format="reduction-percent"
@@ -162,7 +162,7 @@ clone "PerkTemplate" from="passive.wmgfl_remolding_support" id="passive.wmgfl_re
         set "m_DefaultTranslation" "Remolding Pattern (Bulwark)"
     }
     set "Description" {
-        set "m_DefaultTranslation" "While the wearer has at least $1 suppression, all other allied units take $2% less damage."
+        set "m_DefaultTranslation" "While the wearer has at least $1 <link=\"suppression\">Suppression</link>, all other allied units gain $2% <link=\"damage_reduction\">Damage Reduction</link>."
         clear "m_Placeholders"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_remolding_bulwark" path="EventHandlers[0].MinimumSuppression"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_remolding_bulwark" path="EventHandlers[0].DamageMultiplier" format="reduction-percent"
@@ -181,7 +181,7 @@ clone "SkillTemplate" from="effect.wmgfl_remolding_support" id="effect.wmgfl_rem
         set "m_DefaultTranslation" "Remolding Pattern (Bulwark)"
     }
     set "Description" {
-        set "m_DefaultTranslation" "Damage taken reduced by $1% while the Bulwark wearer has at least $2 suppression."
+        set "m_DefaultTranslation" "$1% <link=\"damage_reduction\">Damage Reduction</link> while the Bulwark wearer has at least $2 <link=\"suppression\">Suppression</link>."
         clear "m_Placeholders"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_remolding_bulwark" path="EventHandlers[0].DamageMultiplier" format="reduction-percent"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_remolding_bulwark" path="EventHandlers[0].MinimumSuppression"
@@ -199,7 +199,7 @@ clone "PerkTemplate" from="perk.command_rally" id="active.wmgfl_remolding_hold_t
         set "m_DefaultTranslation" "Intervention"
     }
     set "Description" {
-        set "m_DefaultTranslation" "Remove $1 suppression from another ally and grant them $2% damage reduction until the next round. Gain $3 suppression if currently at zero, or $4 if already above zero."
+        set "m_DefaultTranslation" "Remove $1 <link=\"suppression\">Suppression</link> from another ally and grant them $2% <link=\"damage_reduction\">Damage Reduction</link> until the next round. Gain $3 <link=\"suppression\">Suppression</link> if currently at zero, or $4 if already above zero."
         clear "m_Placeholders"
         append "m_Placeholders" bind="PerkTemplate" "active.wmgfl_remolding_hold_the_line" path="EventHandlers[0].SuppressionChange" format="magnitude"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_remolding_hold_the_line" path="EventHandlers[0].AmountMult" format="reduction-percent"
@@ -235,7 +235,7 @@ clone "SkillTemplate" from="effect.wmgfl_remolding_support" id="effect.wmgfl_rem
         set "m_DefaultTranslation" "Intervention"
     }
     set "Description" {
-        set "m_DefaultTranslation" "Damage taken reduced by $1% until the next round."
+        set "m_DefaultTranslation" "$1% <link=\"damage_reduction\">Damage Reduction</link> until the next round."
         clear "m_Placeholders"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_remolding_hold_the_line" path="EventHandlers[0].AmountMult" format="reduction-percent"
     }
@@ -296,7 +296,7 @@ clone "SkillTemplate" from="active.use_pirate_drugs_protagon" id="active.wmgfl_r
         set "m_DefaultTranslation" "Overdrive"
     }
     set "Description" {
-        set "m_DefaultTranslation" "Take an extra turn with $1% of maximum AP. Can only be used once per round."
+        set "m_DefaultTranslation" "Take an extra turn with $1% of maximum <link=\"action_points\">AP</link>. Can only be used once per round."
         clear "m_Placeholders"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_remolding_second_wind" path="EventHandlers[1].ActionPointsAvailable" format="percent"
     }
@@ -322,7 +322,7 @@ clone "SkillTemplate" from="effect.pirate_drugs_protagon" id="effect.wmgfl_remol
         set "m_DefaultTranslation" "Overdrive"
     }
     set "Description" {
-        set "m_DefaultTranslation" "Granted an extra turn with $1% of maximum AP. Overdrive cannot be used again this round."
+        set "m_DefaultTranslation" "Granted an extra turn with $1% of maximum <link=\"action_points\">AP</link>. Overdrive cannot be used again this round."
         clear "m_Placeholders"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_remolding_second_wind" path="EventHandlers[1].ActionPointsAvailable" format="percent"
     }

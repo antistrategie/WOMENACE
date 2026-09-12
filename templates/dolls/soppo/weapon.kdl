@@ -188,7 +188,7 @@ clone "SkillTemplate" from="effect.bleeding" id="effect.soppo_hunter_form" {
         set "m_DefaultTranslation" "Hunter Form"
     }
     set "Description" {
-        set "m_DefaultTranslation" "Accuracy increased by $1%."
+        set "m_DefaultTranslation" "<link=\"accuracy\">Accuracy</link> increased by $1%."
         clear "m_Placeholders"
         append "m_Placeholders" bind="SkillTemplate" "effect.soppo_hunter_form" path="EventHandlers[0].AmountMult" format="bonus-percent"
     }

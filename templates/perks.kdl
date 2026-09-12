@@ -12,7 +12,7 @@ clone "PerkTemplate" from="perk.drive_by" id="perk.wmgfl_drive_by" {
         set "m_DefaultTranslation" "Drive By+"
     }
     set "ShortDescription" {
-        set "m_DefaultTranslation" "-$1 AP for next Standard Attack after moving. Applies to every weapon."
+        set "m_DefaultTranslation" "-$1 <link=\"action_points\">AP</link> for next Standard Attack after moving. Applies to every weapon."
         clear "m_Placeholders"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_drive_by" path="EventHandlers[1].CostDelta" format="magnitude"
     }

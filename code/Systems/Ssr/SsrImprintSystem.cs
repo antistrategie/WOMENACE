@@ -52,7 +52,7 @@ public sealed class SsrImprintSystem : JiangyuSystem
             OwnerTag = "wmgfl_makiatto",
             OwnerName = "Makiatto",
             BonusText = new LocalisedText(
-                "WOMENACE::ui/ssr_imprint/wmgfl_makiatto", "Fires twice, hits harder, and builds Freeze faster."),
+                "WOMENACE::ui/ssr_imprint/wmgfl_makiatto", "Fires twice, hits harder, and builds <link=\"wmgfl_freeze\">Freeze</link> faster."),
             OwnerDamage = 30,
             Skills = new[]
             {
@@ -64,7 +64,7 @@ public sealed class SsrImprintSystem : JiangyuSystem
             OwnerTag = "wmgfl_soppo",
             OwnerName = "Soppo",
             BonusText = new LocalisedText(
-                "WOMENACE::ui/ssr_imprint/wmgfl_soppo", "Hits harder, builds Freeze and Burn faster, and unlocks her stances."),
+                "WOMENACE::ui/ssr_imprint/wmgfl_soppo", "Hits harder, builds <link=\"wmgfl_freeze\">Freeze</link> and <link=\"wmgfl_burn\">Burn</link> faster, and unlocks her stances."),
             OwnerDamage = 15,
             Skills = new[]
             {
@@ -77,7 +77,7 @@ public sealed class SsrImprintSystem : JiangyuSystem
             OwnerTag = "wmgfl_vector",
             OwnerName = "Vector",
             BonusText = new LocalisedText(
-                "WOMENACE::ui/ssr_imprint/wmgfl_vector", "Hits on Burning targets apply Overburn causing Burn to spread to nearby enemies when they die."),
+                "WOMENACE::ui/ssr_imprint/wmgfl_vector", "Hits on <link=\"wmgfl_burn\">Burning</link> targets apply Overburn causing <link=\"wmgfl_burn\">Burn</link> to spread to nearby enemies when they die."),
             Skills = new[]
             {
                 // No stat bonus: the imprint is the Overburn effect (VectorSsrSystem's on-hit
@@ -98,7 +98,7 @@ public sealed class SsrImprintSystem : JiangyuSystem
             OwnerTag = "wmgfl_sextans",
             OwnerName = "Sextans",
             BonusText = new LocalisedText(
-                "WOMENACE::ui/ssr_imprint/wmgfl_sextans", "Builds Shock on every hit."),
+                "WOMENACE::ui/ssr_imprint/wmgfl_sextans", "Builds <link=\"wmgfl_shock\">Shock</link> on every hit."),
         },
         new Entry
         {

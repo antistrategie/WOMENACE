@@ -9,7 +9,7 @@ clone "SkillTemplate" from="effect.bleeding" id="effect.sextans_blood_kiss" {
         set "m_DefaultTranslation" "Blood Kiss"
     }
     set "Description" {
-        set "m_DefaultTranslation" "Marked by Sextans' blade. <link=\"sextans_midnight_vesper\">Midnight Vesper</link> feeds on the marked: they take bonus damage and every one of them restores her vitality."
+        set "m_DefaultTranslation" "Marked by Sextans' blade. <link=\"sextans_midnight_vesper\">Midnight Vesper</link> feeds on the marked: they take bonus damage and every one of them restores her <link=\"hitpoints\">Hitpoints</link>."
     }
 
     // bleeding ticks for 2 turns, the mark lingers for 3
@@ -53,7 +53,7 @@ clone "SkillTemplate" from="effect.bleeding" id="effect.sextans_holy_blood_mark"
         set "m_DefaultTranslation" "Holy Blood Mark"
     }
     set "Description" {
-        set "m_DefaultTranslation" "Consecrated by Sextans' communion. Critical hit chance and critical damage rise while the blessing lasts."
+        set "m_DefaultTranslation" "Consecrated by Sextans' communion. <link=\"critical_chance\">Critical Chance</link> and critical damage rise while the blessing lasts."
     }
 
     clear "EventHandlers"

@@ -3,7 +3,7 @@ clone "PerkTemplate" from="perk.barrage" id="perk.wmgfl_barrage" {
         set "m_DefaultTranslation" "Barrage+"
     }
     set "ShortDescription" {
-        set "m_DefaultTranslation" "-$1 AP cost for Heavy Weapons. Extends to bay ordnance."
+        set "m_DefaultTranslation" "-$1 <link=\"action_points\">AP</link> cost for Heavy Weapons. Extends to bay ordnance."
         clear "m_Placeholders"
         append "m_Placeholders" bind="PerkTemplate" "perk.wmgfl_barrage" path="EventHandlers[0].CostDelta" format="magnitude"
     }

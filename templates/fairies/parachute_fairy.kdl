@@ -10,7 +10,7 @@ clone "ShipUpgradeTemplate" from="oci.wmgfl_fairy_lodge" id="oci.wmgfl_parachute
         set "m_DefaultTranslation" "Controls Heliports. Can be used in decorating event venues on regular days."
     }
     set "ShortDescription" {
-        set "m_DefaultTranslation" "<style=\"Highlight\">• Gain the Offmap Ability \"Parachute Fairy\" which drops a Doll squad on any tile on the map, reducing its Accuracy by $1%, Damage by $2% and Defence by $3% for $4 turns.</style>"
+        set "m_DefaultTranslation" "<style=\"Highlight\">• Gain the Offmap Ability \"Parachute Fairy\" which drops a Doll squad on any tile on the map, reducing its <link=\"accuracy\">Accuracy</link> by $1%, Damage by $2% and <link=\"defense\">Defence</link> by $3% for $4 turns.</style>"
         clear "m_Placeholders"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_drop_shock" path="EventHandlers[1].AmountMult" format="reduction-percent"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_drop_shock" path="EventHandlers[2].AmountMult" format="reduction-percent"
@@ -40,7 +40,7 @@ clone "SkillTemplate" from="offmap.shield_projector" id="offmap.wmgfl_parachute_
         set "m_DefaultTranslation" "Parachute Fairy"
     }
     set "Description" {
-        set "m_DefaultTranslation" "A fairy drops the selected Doll squad anywhere on the map, even into unscouted ground. The landing reduces its Accuracy by $1%, Damage by $2% and Defence by $3% for $4 turns."
+        set "m_DefaultTranslation" "A fairy drops the selected Doll squad anywhere on the map, even into unscouted ground. The landing reduces its <link=\"accuracy\">Accuracy</link> by $1%, Damage by $2% and <link=\"defense\">Defence</link> by $3% for $4 turns."
         clear "m_Placeholders"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_drop_shock" path="EventHandlers[1].AmountMult" format="reduction-percent"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_drop_shock" path="EventHandlers[2].AmountMult" format="reduction-percent"
@@ -48,7 +48,7 @@ clone "SkillTemplate" from="offmap.shield_projector" id="offmap.wmgfl_parachute_
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_drop_shock" path="EventHandlers[0].Lifetime"
     }
     set "ShortDescription" {
-        set "m_DefaultTranslation" "Teleports the selected Doll squad to any tile. Accuracy reduced by $1%, Damage by $2% and Defence by $3% for $4 turns."
+        set "m_DefaultTranslation" "Teleports the selected Doll squad to any tile. <link=\"accuracy\">Accuracy</link> reduced by $1%, Damage by $2% and <link=\"defense\">Defence</link> by $3% for $4 turns."
         clear "m_Placeholders"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_drop_shock" path="EventHandlers[1].AmountMult" format="reduction-percent"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_drop_shock" path="EventHandlers[2].AmountMult" format="reduction-percent"
@@ -69,7 +69,7 @@ clone "SkillTemplate" from="effect.bleeding" id="effect.wmgfl_drop_shock" {
         set "m_DefaultTranslation" "Drop Shock"
     }
     set "Description" {
-        set "m_DefaultTranslation" "Accuracy reduced by $1%, Damage by $2% and Defence by $3% for $4 turns."
+        set "m_DefaultTranslation" "<link=\"accuracy\">Accuracy</link> reduced by $1%, Damage by $2% and <link=\"defense\">Defence</link> by $3% for $4 turns."
         clear "m_Placeholders"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_drop_shock" path="EventHandlers[1].AmountMult" format="reduction-percent"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_drop_shock" path="EventHandlers[2].AmountMult" format="reduction-percent"
@@ -119,7 +119,7 @@ clone "ShipUpgradeTemplate" from="oci.wmgfl_parachute_fairy" id="oci.wmgfl_enhan
         set "m_DefaultTranslation" "Controls Heliports in any weather. Can be used in decorating even the tallest event venues on regular days."
     }
     set "ShortDescription" {
-        set "m_DefaultTranslation" "<style=\"Highlight\">• Gain the Offmap Ability \"Enhanced Parachute Fairy\" which drops a Doll squad on any tile on the map, reducing its Accuracy by $1%, Damage by $2% and Defence by $3% for $4 turns.</style>"
+        set "m_DefaultTranslation" "<style=\"Highlight\">• Gain the Offmap Ability \"Enhanced Parachute Fairy\" which drops a Doll squad on any tile on the map, reducing its <link=\"accuracy\">Accuracy</link> by $1%, Damage by $2% and <link=\"defense\">Defence</link> by $3% for $4 turns.</style>"
         clear "m_Placeholders"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_drop_shock" path="EventHandlers[1].AmountMult" format="reduction-percent"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_drop_shock" path="EventHandlers[2].AmountMult" format="reduction-percent"
@@ -145,7 +145,7 @@ clone "SkillTemplate" from="offmap.wmgfl_parachute_fairy" id="offmap.wmgfl_enhan
         set "m_DefaultTranslation" "Enhanced Parachute Fairy"
     }
     set "Description" {
-        set "m_DefaultTranslation" "A fairy drops the selected Doll squad anywhere on the map, even into unscouted ground. The landing reduces its Accuracy by $1%, Damage by $2% and Defence by $3% for $4 turns."
+        set "m_DefaultTranslation" "A fairy drops the selected Doll squad anywhere on the map, even into unscouted ground. The landing reduces its <link=\"accuracy\">Accuracy</link> by $1%, Damage by $2% and <link=\"defense\">Defence</link> by $3% for $4 turns."
         clear "m_Placeholders"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_drop_shock" path="EventHandlers[1].AmountMult" format="reduction-percent"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_drop_shock" path="EventHandlers[2].AmountMult" format="reduction-percent"
@@ -153,7 +153,7 @@ clone "SkillTemplate" from="offmap.wmgfl_parachute_fairy" id="offmap.wmgfl_enhan
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_drop_shock" path="EventHandlers[0].Lifetime"
     }
     set "ShortDescription" {
-        set "m_DefaultTranslation" "Teleports the selected Doll squad to any tile. Accuracy reduced by $1%, Damage by $2% and Defence by $3% for $4 turns."
+        set "m_DefaultTranslation" "Teleports the selected Doll squad to any tile. <link=\"accuracy\">Accuracy</link> reduced by $1%, Damage by $2% and <link=\"defense\">Defence</link> by $3% for $4 turns."
         clear "m_Placeholders"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_drop_shock" path="EventHandlers[1].AmountMult" format="reduction-percent"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_drop_shock" path="EventHandlers[2].AmountMult" format="reduction-percent"
@@ -168,7 +168,7 @@ clone "SkillTemplate" from="offmap.wmgfl_parachute_fairy" id="offmap.wmgfl_enhan
 
 clone "SkillTemplate" from="effect.wmgfl_drop_shock" id="effect.wmgfl_enhanced_drop_shock" {
     set "Description" {
-        set "m_DefaultTranslation" "Rattled by the drop. Accuracy reduced by $1%, Damage by $2% and Defence by $3% for $4 turns."
+        set "m_DefaultTranslation" "Rattled by the drop. <link=\"accuracy\">Accuracy</link> reduced by $1%, Damage by $2% and <link=\"defense\">Defence</link> by $3% for $4 turns."
         clear "m_Placeholders"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_drop_shock" path="EventHandlers[1].AmountMult" format="reduction-percent"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_drop_shock" path="EventHandlers[2].AmountMult" format="reduction-percent"

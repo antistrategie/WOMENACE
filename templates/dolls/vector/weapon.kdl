@@ -133,7 +133,7 @@ clone "SkillTemplate" from="active.fire_automatic_rifle" id="active.vector_ssr_m
         set "m_DefaultTranslation" "Dead End Meltdown"
     }
     set "Description" {
-        set "m_DefaultTranslation" "Sprays incendiary rounds that build <link=\"wmgfl_burn\">Burn</link>. Deals 20% more damage to Burning targets."
+        set "m_DefaultTranslation" "Sprays incendiary rounds that build <link=\"wmgfl_burn\">Burn</link>. Deals 20% more damage to <link=\"wmgfl_burn\">Burning</link> targets."
     }
     set "MaxRange" 5
     set "Repetitions" 7
@@ -174,7 +174,7 @@ clone "SkillTemplate" from="active.light_mg_suppressive_fire" id="active.vector_
         set "m_DefaultTranslation" "Searing Finale"
     }
     set "Description" {
-        set "m_DefaultTranslation" "Sprays incendiary rounds across $1 contiguous tiles, setting them on fire and building <link=\"wmgfl_burn\">Burn</link>. Deals high suppression and 20% more damage to Burning targets."
+        set "m_DefaultTranslation" "Sprays incendiary rounds across $1 contiguous tiles, setting them on fire and building <link=\"wmgfl_burn\">Burn</link>. Deals high <link=\"suppression\">Suppression</link> and 20% more damage to <link=\"wmgfl_burn\">Burning</link> targets."
         clear "m_Placeholders"
         append "m_Placeholders" bind="SkillTemplate" "active.vector_ssr_searing" path="SelectableTiles"
     }
@@ -244,7 +244,7 @@ clone "SkillTemplate" from="effect.bleeding" id="effect.wmgfl_overburn" {
         set "m_DefaultTranslation" "Overburn"
     }
     set "Description" {
-        set "m_DefaultTranslation" "If the target dies while <link=\"wmgfl_burn\">Burning</link>, the fire and Overburn spread to the healthiest enemy within 2 tiles that is not already Burning. If all of them are, Overburn alone jumps to the healthiest. Lasts as long as the Burn does."
+        set "m_DefaultTranslation" "If the target dies while <link=\"wmgfl_burn\">Burning</link>, the fire and Overburn spread to the healthiest enemy within 2 tiles that is not already <link=\"wmgfl_burn\">Burning</link>. If all of them are, Overburn alone jumps to the healthiest. Lasts as long as the <link=\"wmgfl_burn\">Burn</link> does."
     }
     clear "EventHandlers"
     append "EventHandlers" type="DisplayText" {

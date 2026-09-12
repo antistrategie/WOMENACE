@@ -13,7 +13,7 @@ patch "TextTooltipsConfig" "text_tooltips_config" {
             set "m_DefaultTranslation" "Burn"
         }
         set "TooltipText" {
-            set "m_DefaultTranslation" "Burn Phase damage builds up on the target. Once it reaches 20% of their max Hitpoints they are Burned, losing $1% max Hitpoints per turn for $2 turns. Build-up is ignored while the fire lasts."
+            set "m_DefaultTranslation" "Burn Phase damage builds up on the target. Once it reaches 20% of their max <link=\"hitpoints\">Hitpoints</link> they are Burned, losing $1% max <link=\"hitpoints\">Hitpoints</link> per turn for $2 turns. Build-up is ignored while the fire lasts."
             clear "m_Placeholders"
             append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_burn" path="EventHandlers[1].DamagePctMaxHitpoints" format="percent"
             append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_burn" path="EventHandlers[0].Lifetime"
@@ -25,7 +25,7 @@ patch "TextTooltipsConfig" "text_tooltips_config" {
             set "m_DefaultTranslation" "Electric"
         }
         set "TooltipText" {
-            set "m_DefaultTranslation" "Electric Phase damage builds up on the target. Once it reaches 20% of their max Hitpoints they are Electrified, reducing Accuracy by $1% for $2 turns. Build-up is ignored while the charge lasts."
+            set "m_DefaultTranslation" "Electric Phase damage builds up on the target. Once it reaches 20% of their max <link=\"hitpoints\">Hitpoints</link> they are Electrified, reducing <link=\"accuracy\">Accuracy</link> by $1% for $2 turns. Build-up is ignored while the charge lasts."
             clear "m_Placeholders"
             append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_shock" path="EventHandlers[1].AmountMult" format="reduction-percent"
             append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_shock" path="EventHandlers[0].Lifetime"
@@ -37,7 +37,7 @@ patch "TextTooltipsConfig" "text_tooltips_config" {
             set "m_DefaultTranslation" "Freeze"
         }
         set "TooltipText" {
-            set "m_DefaultTranslation" "Freeze Phase damage builds up on the target. Once it reaches 20% of their max Hitpoints they are Frozen, reducing Action Points by $1% for $2 turns. Build-up is ignored while the frost lasts."
+            set "m_DefaultTranslation" "Freeze Phase damage builds up on the target. Once it reaches 20% of their max <link=\"hitpoints\">Hitpoints</link> they are Frozen, reducing <link=\"action_points\">Action Points</link> by $1% for $2 turns. Build-up is ignored while the frost lasts."
             clear "m_Placeholders"
             append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_freeze" path="EventHandlers[1].AmountMult" format="reduction-percent"
             append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_freeze" path="EventHandlers[0].Lifetime"
@@ -49,7 +49,7 @@ patch "TextTooltipsConfig" "text_tooltips_config" {
             set "m_DefaultTranslation" "Corrosion"
         }
         set "TooltipText" {
-            set "m_DefaultTranslation" "Corrosion Phase damage builds up on the target. Once it reaches 20% of their max Hitpoints they are Corroded, losing $1% of current Armour per turn for $2 turns. Build-up is ignored while the acid lasts."
+            set "m_DefaultTranslation" "Corrosion Phase damage builds up on the target. Once it reaches 20% of their max <link=\"hitpoints\">Hitpoints</link> they are Corroded, losing $1% of current <link=\"armor\">Armour</link> per turn for $2 turns. Build-up is ignored while the acid lasts."
             clear "m_Placeholders"
             append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_corrosion" path="EventHandlers[1].DamageArmorPctOfCurrent" format="percent"
             append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_corrosion" path="EventHandlers[0].Lifetime"
@@ -61,7 +61,7 @@ patch "TextTooltipsConfig" "text_tooltips_config" {
             set "m_DefaultTranslation" "Hydro"
         }
         set "TooltipText" {
-            set "m_DefaultTranslation" "Hydro Phase damage builds up on the target. Once it reaches 20% of their max Hitpoints they are Drenched and their cover counts $1 tier worse for $2 turns. Build-up is ignored while they stay soaked."
+            set "m_DefaultTranslation" "Hydro Phase damage builds up on the target. Once it reaches 20% of their max <link=\"hitpoints\">Hitpoints</link> they are Drenched and their cover counts $1 tier worse for $2 turns. Build-up is ignored while they stay soaked."
             clear "m_Placeholders"
             append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_hydro" path="EventHandlers[1].Amount" format="magnitude"
             append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_hydro" path="EventHandlers[0].Lifetime"
@@ -75,7 +75,7 @@ patch "TextTooltipsConfig" "text_tooltips_config" {
             set "m_DefaultTranslation" "Hunter Form"
         }
         set "TooltipText" {
-            set "m_DefaultTranslation" "Accuracy increased by $1%."
+            set "m_DefaultTranslation" "<link=\"accuracy\">Accuracy</link> increased by $1%."
             clear "m_Placeholders"
             append "m_Placeholders" bind="SkillTemplate" "effect.soppo_hunter_form" path="EventHandlers[0].AmountMult" format="bonus-percent"
         }
@@ -99,7 +99,7 @@ patch "TextTooltipsConfig" "text_tooltips_config" {
             set "m_DefaultTranslation" "Blood Kiss"
         }
         set "TooltipText" {
-            set "m_DefaultTranslation" "Marked by Sextans' blade for $1 turns. <link=\"sextans_midnight_vesper\">Midnight Vesper</link> deals bonus damage to the marked and feeds on them for extra vitality."
+            set "m_DefaultTranslation" "Marked by Sextans' blade for $1 turns. <link=\"sextans_midnight_vesper\">Midnight Vesper</link> deals bonus damage to the marked and feeds on them for extra <link=\"hitpoints\">Hitpoints</link>."
             clear "m_Placeholders"
             append "m_Placeholders" bind="SkillTemplate" "effect.sextans_blood_kiss" path="EventHandlers[0].Lifetime"
         }
@@ -122,7 +122,7 @@ patch "TextTooltipsConfig" "text_tooltips_config" {
             set "m_DefaultTranslation" "Midnight Vesper"
         }
         set "TooltipText" {
-            set "m_DefaultTranslation" "Sextans' ultimate. She dashes to a point of her choosing, cutting through everything on the way. Every victim struck restores her vitality. Marked enemies take extra damage, restore more, and lose their mark. Her allies receive the Holy Blood Mark. Requires $1 charges of Coagulation."
+            set "m_DefaultTranslation" "Sextans' ultimate. She dashes to a point of her choosing, cutting through everything on the way. Every victim struck restores her <link=\"hitpoints\">Hitpoints</link>. Marked enemies take extra damage, restore more, and lose their mark. Her allies receive the <link=\"sextans_holy_blood_mark\">Holy Blood Mark</link>. Requires $1 charges of <link=\"sextans_coagulation\">Coagulation</link>."
             clear "m_Placeholders"
             append "m_Placeholders" bind="SkillTemplate" "active.sextans_ult" path="EventHandlers[1].ChargesNeeded"
         }
@@ -133,7 +133,7 @@ patch "TextTooltipsConfig" "text_tooltips_config" {
             set "m_DefaultTranslation" "Holy Blood Mark"
         }
         set "TooltipText" {
-            set "m_DefaultTranslation" "Critical hit chance and critical damage rise while the blessing lasts. Lasts $1 turns."
+            set "m_DefaultTranslation" "<link=\"critical_chance\">Critical Chance</link> and critical damage rise while the blessing lasts. Lasts $1 turns."
             clear "m_Placeholders"
             append "m_Placeholders" bind="SkillTemplate" "effect.sextans_holy_blood_mark" path="EventHandlers[2].Lifetime"
         }

@@ -111,6 +111,15 @@ public sealed partial class ShopSystem
             ShopVisuals.Glow(context, centre, 175, new Color(.58f, .44f, .22f, .18f));
             ShopVisuals.Arc(p, centre, 116, 0, 360, new Color(.54f, .47f, .31f, .12f), 1);
         });
+        var outline = ShopVisuals.Element("wm-kalina-outline", _portrait, PickingMode.Ignore);
+        foreach (var offset in new[] { new Vector2(-1.5f, 0), new Vector2(1.5f, 0), new Vector2(0, -1.5f), new Vector2(0, 1.5f) })
+        {
+            var edge = Art(outfit, 1f);
+            edge.style.position = Position.Absolute;
+            edge.style.left = offset.x;
+            edge.style.top = offset.y;
+            outline.Add(edge);
+        }
         _portrait.Add(Art(outfit, 1f));
         ShopVisuals.Draw(_portrait, context =>
         {
@@ -118,6 +127,23 @@ public sealed partial class ShopSystem
             ShopVisuals.Gradient(context, new Rect(0, rect.height - 65f, rect.width, 65f),
                 new Color(.025f, .035f, .03f, 0), new Color(.025f, .035f, .03f, .9f), true);
         }, false);
+        var hint = ShopVisuals.Element("wm-kalina-outfit-hint", _portrait, PickingMode.Ignore);
+        var icon = ShopVisuals.Element("wm-kalina-outfit-hint-icon", hint, PickingMode.Ignore);
+        ShopVisuals.Draw(icon, context =>
+        {
+            var p = context.painter2D;
+            var gold = ShopVisuals.Gold;
+            ShopVisuals.Arc(p, new Vector2(9, 5), 2.5f, 180, 360, gold, 1.2f);
+            ShopVisuals.Arc(p, new Vector2(9, 5), 2.5f, 0, 90, gold, 1.2f);
+            ShopVisuals.Line(p, gold, 1.2f, new Vector2(9, 7.5f), new Vector2(9, 9));
+            ShopVisuals.Line(p, gold, 1.2f, stackalloc Vector2[]
+            {
+                new(9, 9), new(16, 13.5f), new(16, 15), new(2, 15), new(2, 13.5f), new(9, 9),
+            });
+        });
+        var label = new Label(Locale.Text("WOMENACE::ui/kalina/outfit", "Outfit")) { pickingMode = PickingMode.Ignore };
+        label.AddToClassList("wm-kalina-outfit-hint-label");
+        hint.Add(label);
     }
 
     // Crop to visible artwork before scaling. The source canvases range from 672 x 868 to 1920 x

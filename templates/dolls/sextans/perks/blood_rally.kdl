@@ -3,7 +3,7 @@ clone "PerkTemplate" from="perk.full_send" id="perk.sextans_rally" {
         set "m_DefaultTranslation" "Blood Rally"
     }
     set "ShortDescription" {
-        set "m_DefaultTranslation" "Damage taken lingers as recoverable vitality. Striking back claws it home."
+        set "m_DefaultTranslation" "Lost <link=\"hitpoints\">Hitpoints</link> can be recovered by striking enemies."
     }
     set "Description" {
         set "m_DefaultTranslation" """
@@ -12,7 +12,7 @@ clone "PerkTemplate" from="perk.full_send" id="perk.sextans_rally" {
               – An Ordinary Doll
 
 
-            <style="Highlight">• Damage taken lingers as recoverable grey health. Every enemy her attacks find restores $1% of the damage dealt, up to $2 health per hit. Whatever is not reclaimed by the end of her next turn is lost.</style>
+            <style="Highlight">• Damage taken lingers as recoverable grey <link="hitpoints">Hitpoints</link>. Every enemy her attacks find restores $1% of the damage dealt, up to $2 <link="hitpoints">Hitpoints</link> per hit. Whatever is not reclaimed by the end of her next turn is lost.</style>
             """
         clear "m_Placeholders"
         append "m_Placeholders" bind="PerkTemplate" "perk.sextans_rally" path="EventHandlers[0].RecoverFraction" format="percent"
