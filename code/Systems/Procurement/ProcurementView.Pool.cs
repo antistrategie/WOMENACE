@@ -99,12 +99,13 @@ internal sealed partial class ProcurementView
         {
             var row = Element("wm-proc-grid-row", grid);
             // Empty cells keep the last row on the same column tracks as full rows.
-            // Equal flex bases include the gaps without percentage rounding at UI scale.
+            // They also need the cards' padding and borders for equal flex widths.
             for (var column = 0; column < columns; column++)
             {
                 if (column >= rowEntries.Length)
                 {
-                    var spacer = Element("wm-proc-pool-spacer", row, PickingMode.Ignore);
+                    var spacer = Element("wm-proc-pool-item wm-proc-pool-spacer", row, PickingMode.Ignore);
+                    spacer.EnableInClassList("wm-proc-pool-dossier", _section is ProcurementSection.Dossiers or ProcurementSection.Curios);
                     spacer.EnableInClassList("wm-proc-column-end", column == columns - 1);
                     continue;
                 }

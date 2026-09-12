@@ -174,7 +174,9 @@ clone "SkillTemplate" from="active.light_mg_suppressive_fire" id="active.vector_
         set "m_DefaultTranslation" "Searing Finale"
     }
     set "Description" {
-        set "m_DefaultTranslation" "Sprays incendiary rounds across 5 contiguous tiles, setting them on fire and building <link=\"wmgfl_burn\">Burn</link>. Deals high suppression and 20% more damage to Burning targets."
+        set "m_DefaultTranslation" "Sprays incendiary rounds across $1 contiguous tiles, setting them on fire and building <link=\"wmgfl_burn\">Burn</link>. Deals high suppression and 20% more damage to Burning targets."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "active.vector_ssr_searing" path="SelectableTiles"
     }
 
     set "AoEType" enum="SkillAoEType" "SelectTilesOnUse"

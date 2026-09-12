@@ -3,7 +3,9 @@ clone "PerkTemplate" from="perk.barrage" id="perk.wmgfl_barrage" {
         set "m_DefaultTranslation" "Barrage+"
     }
     set "ShortDescription" {
-        set "m_DefaultTranslation" "-15 AP cost for Heavy Weapons. Extends to bay ordnance."
+        set "m_DefaultTranslation" "-$1 AP cost for Heavy Weapons. Extends to bay ordnance."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="PerkTemplate" "perk.wmgfl_barrage" path="EventHandlers[0].CostDelta" format="magnitude"
     }
     set "Description" {
         set "m_DefaultTranslation" """
@@ -12,8 +14,10 @@ clone "PerkTemplate" from="perk.barrage" id="perk.wmgfl_barrage" {
               – Planetary Jingwei Combat Manual
 
 
-            <style="Highlight">• <link="action_points">AP</link> costs reduced by -15 for HEAVY vehicle weapons.</style>
+            <style="Highlight">• <link="action_points">AP</link> costs reduced by -$1 for HEAVY vehicle weapons.</style>
             <style="Highlight">• Extends to ordnance in OTs-14's weapons bay: launchers, rockets, mortars, artillery and energy weapons.</style>
             """
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="PerkTemplate" "perk.wmgfl_barrage" path="EventHandlers[0].CostDelta" format="magnitude"
     }
 }

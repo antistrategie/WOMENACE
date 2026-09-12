@@ -11,7 +11,11 @@ clone "SkillTemplate" from="effect.bleeding" id="effect.wmgfl_burn" {
         set "m_DefaultTranslation" "Burning"
     }
     set "Description" {
-        set "m_DefaultTranslation" "Loses 10% max <link=\"hitpoints\">Hitpoints</link> per turn for 3 turns. Can only kill one element per turn."
+        set "m_DefaultTranslation" "Loses $1% max <link=\"hitpoints\">Hitpoints</link> per turn for $2 turns. Per-turn kill limit: $3."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_burn" path="EventHandlers[1].DamagePctMaxHitpoints" format="percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_burn" path="EventHandlers[0].Lifetime"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_burn" path="EventHandlers[1].ElementsHit"
     }
     clear "EventHandlers"
     append "EventHandlers" type="LifetimeLimit" {
@@ -39,7 +43,10 @@ clone "SkillTemplate" from="effect.bleeding" id="effect.wmgfl_shock" {
         set "m_DefaultTranslation" "Electrified"
     }
     set "Description" {
-        set "m_DefaultTranslation" "Nervous systems and optics misfire. <link=\"accuracy\">Accuracy</link> reduced by 15% for 5 turns."
+        set "m_DefaultTranslation" "Nervous systems and optics misfire. <link=\"accuracy\">Accuracy</link> reduced by $1% for $2 turns."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_shock" path="EventHandlers[1].AmountMult" format="reduction-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_shock" path="EventHandlers[0].Lifetime"
     }
     clear "EventHandlers"
     append "EventHandlers" type="LifetimeLimit" {
@@ -66,7 +73,10 @@ clone "SkillTemplate" from="effect.bleeding" id="effect.wmgfl_freeze" {
         set "m_DefaultTranslation" "Frozen"
     }
     set "Description" {
-        set "m_DefaultTranslation" "Frost seizes servos and joints. <link=\"action_points\">Action Points</link> reduced by 25% for 5 turns."
+        set "m_DefaultTranslation" "Frost seizes servos and joints. <link=\"action_points\">Action Points</link> reduced by $1% for $2 turns."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_freeze" path="EventHandlers[1].AmountMult" format="reduction-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_freeze" path="EventHandlers[0].Lifetime"
     }
     clear "EventHandlers"
     append "EventHandlers" type="LifetimeLimit" {
@@ -93,7 +103,10 @@ clone "SkillTemplate" from="effect.bleeding" id="effect.wmgfl_corrosion" {
         set "m_DefaultTranslation" "Corroded"
     }
     set "Description" {
-        set "m_DefaultTranslation" "Corrosive agents dissolve plating. Loses 20% of current <link=\"armor\">Armour</link> per turn for 3 turns."
+        set "m_DefaultTranslation" "Corrosive agents dissolve plating. Loses $1% of current <link=\"armor\">Armour</link> per turn for $2 turns."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_corrosion" path="EventHandlers[1].DamageArmorPctOfCurrent" format="percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_corrosion" path="EventHandlers[0].Lifetime"
     }
     clear "EventHandlers"
     append "EventHandlers" type="LifetimeLimit" {
@@ -122,7 +135,10 @@ clone "SkillTemplate" from="effect.bleeding" id="effect.wmgfl_hydro" {
         set "m_DefaultTranslation" "Drenched"
     }
     set "Description" {
-        set "m_DefaultTranslation" "Waterlogged and exposed. Cover counts one tier worse for 3 turns."
+        set "m_DefaultTranslation" "Waterlogged and exposed. Cover counts $1 tier worse for $2 turns."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_hydro" path="EventHandlers[1].Amount" format="magnitude"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_hydro" path="EventHandlers[0].Lifetime"
     }
     clear "EventHandlers"
     append "EventHandlers" type="LifetimeLimit" {

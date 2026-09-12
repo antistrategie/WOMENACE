@@ -9,9 +9,11 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.asteria_bond" {
         set "m_DefaultTranslation" """
             Always there for a friend in need.
 
-            <style="Highlight">• Grants the skill 'Bond Connextion'. Asteria bonds with a friendly squad and that squad deals 15% more damage for the rest of the battle.</style>
+            <style="Highlight">• Grants the skill 'Bond Connextion'. Asteria bonds with a friendly squad and that squad deals $1% more damage for the rest of the battle.</style>
             <style="Highlight">• The bond holds a single charge per mission.</style>
             """
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.asteria_bond" path="EventHandlers[0].AmountMult" format="bonus-percent"
     }
 
     set "Icon" asset="asteria/perks/bond"
@@ -82,10 +84,14 @@ clone "SkillTemplate" from="offmap.shield_projector" id="active.asteria_bond_con
         set "m_DefaultTranslation" "Bond Connextion"
     }
     set "Description" {
-        set "m_DefaultTranslation" "Bond with a friendly squad. That squad deals 15% more damage for the rest of the battle."
+        set "m_DefaultTranslation" "Bond with a friendly squad. That squad deals $1% more damage for the rest of the battle."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.asteria_bond" path="EventHandlers[0].AmountMult" format="bonus-percent"
     }
     set "ShortDescription" {
-        set "m_DefaultTranslation" "Bonds with a friendly squad, raising its damage by 15% for the rest of the battle."
+        set "m_DefaultTranslation" "Bonds with a friendly squad, raising its damage by $1% for the rest of the battle."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.asteria_bond" path="EventHandlers[0].AmountMult" format="bonus-percent"
     }
     set "Icon" asset="asteria/skills/bond_connextion"
     set "IconDisabled" asset="asteria/skills/bond_connextion_disabled"
@@ -116,7 +122,9 @@ clone "SkillTemplate" from="effect.bleeding" id="effect.asteria_bond" {
         set "m_DefaultTranslation" "Bond"
     }
     set "Description" {
-        set "m_DefaultTranslation" "Asteria is bonded with this squad. Damage dealt increased by 15%."
+        set "m_DefaultTranslation" "Asteria is bonded with this squad. Damage dealt increased by $1%."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.asteria_bond" path="EventHandlers[0].AmountMult" format="bonus-percent"
     }
     clear "EventHandlers"
     append "EventHandlers" type="ChangeProperty" {

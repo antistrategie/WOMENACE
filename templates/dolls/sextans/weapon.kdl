@@ -168,7 +168,9 @@ clone "SkillTemplate" from="active.wetteroth_thats_a_knife" id="active.sextans_u
         set "m_DefaultTranslation" "Midnight Vesper"
     }
     set "Description" {
-        set "m_DefaultTranslation" "Sextans dashes to a point of her choosing, running her blade through everything on the way. Every victim hit restores her vitality. Enemies with <link=\"sextans_blood_kiss\">Blood Kiss</link> take extra damage and restore more, and her allies are given <link=\"sextans_holy_blood_mark\">Holy Blood Mark</link>. Requires 4 stacks of <link=\"sextans_coagulation\">Coagulation</link>."
+        set "m_DefaultTranslation" "Sextans dashes to a point of her choosing, running her blade through everything on the way. Every victim hit restores her vitality. Enemies with <link=\"sextans_blood_kiss\">Blood Kiss</link> take extra damage and restore more, and her allies are given <link=\"sextans_holy_blood_mark\">Holy Blood Mark</link>. Requires $1 stacks of <link=\"sextans_coagulation\">Coagulation</link>."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "active.sextans_ult" path="EventHandlers[1].ChargesNeeded"
     }
 
     set "Icon" asset="sextans/skills/ult"

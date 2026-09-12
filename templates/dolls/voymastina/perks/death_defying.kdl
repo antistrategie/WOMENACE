@@ -35,7 +35,9 @@ clone "PerkTemplate" from="perk.fury" id="perk.voymastina_death_defying" {
     set "ShortDescription" {
         set "m_CategoryName" ""
         set "m_FieldName" ""
-        set "m_DefaultTranslation" "The first lethal hit each mission is survived at 1 HP. Invulnerable and unsuppressable for 3 turns after."
+        set "m_DefaultTranslation" "The first lethal hit each mission is survived at 1 HP. Invulnerable and unsuppressable for $1 turns after."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="PerkTemplate" "perk.voymastina_death_defying" path="EventHandlers[0].InvulnTurns"
     }
     set "Description" {
         set "m_CategoryName" ""
@@ -48,8 +50,10 @@ clone "PerkTemplate" from="perk.fury" id="perk.voymastina_death_defying" {
               – Voymastina, bleeding out
 
 
-            <style="Highlight">• The first lethal hit each mission is survived at 1 Hitpoint. Invulnerable and immune to <link="suppression">Suppression</link> for 3 turns after.</style>
+            <style="Highlight">• The first lethal hit each mission is survived at 1 Hitpoint. Invulnerable and immune to <link="suppression">Suppression</link> for $1 turns after.</style>
             """
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="PerkTemplate" "perk.voymastina_death_defying" path="EventHandlers[0].InvulnTurns"
     }
 
     clear "EventHandlers"

@@ -10,7 +10,9 @@ clone "ShipUpgradeTemplate" from="oci.wmgfl_fairy_lodge" id="oci.wmgfl_rescue_fa
         set "m_DefaultTranslation" "\"Rescues\" loot from defeated enemies. Can be used in assembling everyone for an outing or a meal on regular days."
     }
     set "ShortDescription" {
-        set "m_DefaultTranslation" "<style=\"Highlight\">• All player units gain +8% item drop chance when killing enemies.</style>"
+        set "m_DefaultTranslation" "<style=\"Highlight\">• All player units gain +$1% item drop chance when killing enemies.</style>"
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "passive.wmgfl_rescue_fairy" path="EventHandlers[0].AdditionalDropChance"
     }
     set "UnlockType" enum="ShipUpgradeUnlockType" "EventOnly"
     set "UnlockSelectWeight" 0
@@ -41,9 +43,11 @@ clone "ShipUpgradeTemplate" from="oci.wmgfl_rescue_fairy" id="oci.wmgfl_enhanced
     }
     set "ShortDescription" {
         set "m_DefaultTranslation" """
-            <style="Highlight">• All player units gain +15% item drop chance when killing enemies.
+            <style="Highlight">• All player units gain +$1% item drop chance when killing enemies.
             • +10% affinity gift drop chance.</style>
             """
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "passive.wmgfl_enhanced_rescue_fairy" path="EventHandlers[0].AdditionalDropChance"
     }
     set "OciPointsCosts" 90
     // Ship-upgrade clones share nested effects, so create a separate effect for this tier.

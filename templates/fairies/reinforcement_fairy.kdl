@@ -10,7 +10,10 @@ clone "ShipUpgradeTemplate" from="oci.wmgfl_fairy_lodge" id="oci.wmgfl_reinforce
         set "m_DefaultTranslation" "Calls for reinforcement T-Dolls. Can be used for communication and sending emergency distress signals on regular days."
     }
     set "ShortDescription" {
-        set "m_DefaultTranslation" "<style=\"Highlight\">• Gain the Offmap Ability \"Reinforcement Fairy\" which reinforces a Doll squad with one dummy and raises its defence by 10% for 3 turns.</style>"
+        set "m_DefaultTranslation" "<style=\"Highlight\">• Gain the Offmap Ability \"Reinforcement Fairy\" which reinforces a Doll squad with one dummy and raises its defence by $1% for $2 turns.</style>"
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_fairy_reinforcement" path="EventHandlers[1].AmountMult" format="bonus-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_fairy_reinforcement" path="EventHandlers[0].Lifetime"
     }
     set "UnlockType" enum="ShipUpgradeUnlockType" "EventOnly"
     set "UnlockSelectWeight" 0
@@ -37,10 +40,16 @@ clone "SkillTemplate" from="offmap.shield_projector" id="offmap.wmgfl_reinforcem
         set "m_DefaultTranslation" "Reinforcement Fairy"
     }
     set "Description" {
-        set "m_DefaultTranslation" "A fairy delivers one dummy to a chosen Doll squad and raises its <link=\"defense\">Defence</link> by 10% for 3 turns."
+        set "m_DefaultTranslation" "A fairy delivers one dummy to a chosen Doll squad and raises its <link=\"defense\">Defence</link> by $1% for $2 turns."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_fairy_reinforcement" path="EventHandlers[1].AmountMult" format="bonus-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_fairy_reinforcement" path="EventHandlers[0].Lifetime"
     }
     set "ShortDescription" {
-        set "m_DefaultTranslation" "Reinforces a Doll squad with one dummy and raises its <link=\"defense\">Defence</link> by 10% for 3 turns."
+        set "m_DefaultTranslation" "Reinforces a Doll squad with one dummy and raises its <link=\"defense\">Defence</link> by $1% for $2 turns."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_fairy_reinforcement" path="EventHandlers[1].AmountMult" format="bonus-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_fairy_reinforcement" path="EventHandlers[0].Lifetime"
     }
     set "TargetsAllowed" enum="SkillTarget" "AlliedActor"
     set "Uses" 3
@@ -59,7 +68,10 @@ clone "SkillTemplate" from="effect.bleeding" id="effect.wmgfl_fairy_reinforcemen
         set "m_DefaultTranslation" "Fairy Blessing"
     }
     set "Description" {
-        set "m_DefaultTranslation" "A reinforcement fairy hovers over the squad. <link=\"defense\">Defence</link> increased by 10% for 3 turns."
+        set "m_DefaultTranslation" "A reinforcement fairy hovers over the squad. <link=\"defense\">Defence</link> increased by $1% for $2 turns."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_fairy_reinforcement" path="EventHandlers[1].AmountMult" format="bonus-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_fairy_reinforcement" path="EventHandlers[0].Lifetime"
     }
     clear "EventHandlers"
     append "EventHandlers" type="LifetimeLimit" {
@@ -92,7 +104,10 @@ clone "ShipUpgradeTemplate" from="oci.wmgfl_reinforcement_fairy" id="oci.wmgfl_e
         set "m_DefaultTranslation" "Calls for reinforcement T-Dolls and shields them with a stronger blessing. Can be used to boost the ship's radio reception on regular days."
     }
     set "ShortDescription" {
-        set "m_DefaultTranslation" "<style=\"Highlight\">• Gain the Offmap Ability \"Enhanced Reinforcement Fairy\" which reinforces a Doll squad with one dummy and raises its defence by 20% for 3 turns.</style>"
+        set "m_DefaultTranslation" "<style=\"Highlight\">• Gain the Offmap Ability \"Enhanced Reinforcement Fairy\" which reinforces a Doll squad with one dummy and raises its defence by $1% for $2 turns.</style>"
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_fairy_reinforcement" path="EventHandlers[1].AmountMult" format="bonus-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_fairy_reinforcement" path="EventHandlers[0].Lifetime"
     }
     set "OciPointsCosts" 90
     clear "Effects"
@@ -113,10 +128,16 @@ clone "SkillTemplate" from="offmap.wmgfl_reinforcement_fairy" id="offmap.wmgfl_e
         set "m_DefaultTranslation" "Enhanced Reinforcement Fairy"
     }
     set "Description" {
-        set "m_DefaultTranslation" "A fairy delivers one dummy to a chosen Doll squad and raises its <link=\"defense\">Defence</link> by 20% for 3 turns."
+        set "m_DefaultTranslation" "A fairy delivers one dummy to a chosen Doll squad and raises its <link=\"defense\">Defence</link> by $1% for $2 turns."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_fairy_reinforcement" path="EventHandlers[1].AmountMult" format="bonus-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_fairy_reinforcement" path="EventHandlers[0].Lifetime"
     }
     set "ShortDescription" {
-        set "m_DefaultTranslation" "Reinforces a Doll squad with one dummy and raises its <link=\"defense\">Defence</link> by 20% for 3 turns."
+        set "m_DefaultTranslation" "Reinforces a Doll squad with one dummy and raises its <link=\"defense\">Defence</link> by $1% for $2 turns."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_fairy_reinforcement" path="EventHandlers[1].AmountMult" format="bonus-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_fairy_reinforcement" path="EventHandlers[0].Lifetime"
     }
     set "EventHandlers" index=1 {
         set "SkillToAdd" "effect.wmgfl_enhanced_fairy_reinforcement"
@@ -128,7 +149,10 @@ clone "SkillTemplate" from="effect.wmgfl_fairy_reinforcement" id="effect.wmgfl_e
         set "m_DefaultTranslation" "Enhanced Fairy Blessing"
     }
     set "Description" {
-        set "m_DefaultTranslation" "An enhanced reinforcement fairy hovers over the squad. <link=\"defense\">Defence</link> increased by 20% for 3 turns."
+        set "m_DefaultTranslation" "An enhanced reinforcement fairy hovers over the squad. <link=\"defense\">Defence</link> increased by $1% for $2 turns."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_fairy_reinforcement" path="EventHandlers[1].AmountMult" format="bonus-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_fairy_reinforcement" path="EventHandlers[0].Lifetime"
     }
     set "EventHandlers" index=1 {
         set "AmountMult" 1.2
