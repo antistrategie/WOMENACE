@@ -125,7 +125,7 @@ public sealed class RailgunCarrySystem : JiangyuSystem
                 : null;
             var rifleTemplate = (leader?.GetItems()?.GetItemAtSlot(ItemSlot.InfantryWeapon)?.GetTemplate()
                 as Il2CppObjectBase)?.TryCast<WeaponTemplate>();
-            var model = rifleTemplate?.Model;
+            var model = WeaponSkinSystem.ModelFor(leader?.GetItems(), ItemSlot.InfantryWeapon, rifleTemplate);
             if (model == null || handGun == null || handGun.parent == null)
                 return;
             var rifle = UnityEngine.Object.Instantiate(model, handGun.parent, false);
@@ -193,7 +193,7 @@ public sealed class RailgunCarrySystem : JiangyuSystem
     {
         var rifleTemplate = (items.GetItemAtSlot(ItemSlot.InfantryWeapon)?.GetTemplate()
             as Il2CppObjectBase)?.TryCast<WeaponTemplate>();
-        var model = rifleTemplate?.Model;
+        var model = WeaponSkinSystem.ModelFor(items, ItemSlot.InfantryWeapon, rifleTemplate);
         if (model == null)
             return;
 

@@ -262,13 +262,14 @@ internal sealed partial class ProcurementView
         return card;
     }
 
-    private VisualElement Portrait(ProcurementCatalogue.Entry entry, string classes, VisualElement parent) => entry.Outfit != null
-        ? _artwork.Create(entry.Outfit.Asset, classes + " wm-proc-outfit-art", parent)
+    private VisualElement Portrait(ProcurementCatalogue.Entry entry, string classes, VisualElement parent) => entry.Curio != null
+        ? _artwork.Create(entry.Curio.Asset, classes + (entry.Curio.Kind == ProcurementCatalogue.CurioKind.WeaponSkin
+            ? " wm-proc-skin-art" : " wm-proc-outfit-art"), parent)
         : _artwork.Create(entry.Art, classes, parent);
 
     private VisualElement Icon(ProcurementCatalogue.Entry entry, VisualElement parent)
     {
-        if (entry.Outfit != null)
+        if (entry.Curio != null)
             return Portrait(entry, "wm-proc-item-icon", parent);
         var image = Element("wm-proc-item-icon", parent, PickingMode.Ignore);
         image.style.backgroundImage = new StyleBackground(entry.Icon);

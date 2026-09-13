@@ -1,0 +1,30 @@
+{
+  "materials": [
+    {
+      "name": "lantern_body",
+      "shader": "Womenace/DollToon",
+      "base": "Assets/Authored/weapon/lantern_airship/textures/da.png",
+      "normal": "Assets/Authored/weapon/lantern_airship/textures/normal.png",
+      "mask": "Assets/Authored/weapon/lantern_airship/textures/rmo.png",
+      "extras": [
+        {
+          "property": "_RampMap",
+          "path": "Assets/Authored/shared/ramps/ramp_weapon.png"
+        }
+      ]
+    },
+    {
+      "name": "lantern_glass",
+      "shader": "Womenace/DollToonTrans",
+      "base": "Assets/Authored/weapon/lantern_airship/textures/da.png",
+      "normal": "Assets/Authored/weapon/lantern_airship/textures/normal.png",
+      "mask": "Assets/Authored/weapon/lantern_airship/textures/rmo.png",
+      "extras": [
+        {
+          "property": "_RampMap",
+          "path": "Assets/Authored/shared/ramps/ramp_weapon.png"
+        }
+      ]
+    }
+  ]
+}

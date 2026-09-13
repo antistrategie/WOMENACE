@@ -81,15 +81,16 @@ public static class ProcurementDev
         var system = ProcurementSystem.Instance;
         if (system == null || StrategyState.Get()?.Roster == null)
             return new { error = "campaign unavailable" };
-        var entry = system.Catalogue.Entries.FirstOrDefault(entry => entry.Outfit != null
-            && (entry.Outfit.Id == id || entry.Reward.Id == id));
+        var entry = system.Catalogue.Entries.FirstOrDefault(entry => entry.Curio != null
+            && (entry.Curio.Id == id || entry.Reward.Id == id));
         if (entry == null)
-            return new { error = "unknown curio outfit" };
+            return new { error = "unknown curio" };
         if (unlocked)
             system.State.Claims[entry.Reward.Id] = entry.Reward.Limit;
         else
             system.State.Claims.Remove(entry.Reward.Id);
         ShopSystem.Instance?.RefreshCurios();
+        TransmogPickerSystem.Instance?.RefreshVisible();
         return Status();
     }
 
@@ -167,7 +168,7 @@ internal sealed partial class ProcurementView
         var rewards = Enumerable.Repeat(part, 10).ToArray();
         for (var i = 0; i < dossiers.Length; i++)
             rewards[3 + i * 3] = dossiers[i];
-        if (Catalogue.Entries.FirstOrDefault(entry => entry.Outfit != null) is { } curio)
+        if (Catalogue.Entries.FirstOrDefault(entry => entry.Curio != null) is { } curio)
             rewards[9] = curio;
         _shipment = rewards;
         _busy = true;

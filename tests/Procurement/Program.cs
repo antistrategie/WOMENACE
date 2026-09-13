@@ -112,6 +112,65 @@ var curiositySaved = JsonSerializer.Deserialize<ProcurementState>(JsonSerializer
 Assert(!curiositySaved.Available(catalogue.Single(reward => reward.Section == ProcurementSection.Curios)),
     "The Curio unlock must survive saving without an inventory item");
 
+var branch = WeaponSkins.All.Single(skin => skin.Id == "bang_bang_branch");
+var branchReward = new ProcurementReward(branch.RewardId, ProcurementSection.Curios, 1);
+var withBranch = catalogue.Append(branchReward).ToList();
+var perlicaOwned = new ProcurementState();
+perlicaOwned.Claims["outfit.wmgfl_kalina_perlica"] = 1;
+var branchPull = Procurement.Plan(perlicaOwned, withBranch, 10, 10976);
+Assert(branchPull.Rewards.Count(reward => reward.Id == branch.RewardId) == 1 && branchPull.Rewards.Count == 10,
+    "A new weapon skin must remain drawable after Perlica is unlocked and occupy one normal reward slot");
+branchPull.State.RefreshEquipmentClaims(_ => false);
+var skinUnlocks = JsonSerializer.Deserialize<ProcurementState>(JsonSerializer.Serialize(branchPull.State))!;
+Assert(branch.IsUnlocked(skinUnlocks) && !skinUnlocks.Available(branchReward)
+    && skinUnlocks.Claimed("outfit.wmgfl_kalina_perlica") == 1,
+    "Weapon skins and outfits must retain independent permanent claims without inventory copies");
+Assert(!skinUnlocks.Counters.ContainsKey(ProcurementSection.Curios), "Adding weapon skins must not give Curios pity");
+
+var skinChoices = new WeaponSkinState();
+const string primarySlot = "InfantryWeapon", specialSlot = "InfantrySpecial";
+Assert(!WeaponSkins.Select(skinChoices, new ProcurementState(), 1, primarySlot, WeaponClass.Rifle, branch.Id),
+    "An undiscovered skin must not be selectable");
+Assert(!WeaponSkins.Select(skinChoices, skinUnlocks, 1, primarySlot, WeaponClass.AssaultRifle, branch.Id)
+    && !WeaponSkins.Select(skinChoices, skinUnlocks, 1, primarySlot, WeaponClass.Blade, branch.Id),
+    "Bang Bang Branch must reject AR and blade weapons");
+Assert(WeaponSkins.Select(skinChoices, skinUnlocks, 1, primarySlot, WeaponClass.Rifle, branch.Id),
+    "An unlocked branch must be selectable for an RF weapon");
+Assert(WeaponSkins.SelectionFor(skinChoices, skinUnlocks, 2, primarySlot, WeaponClass.Rifle) == null
+    && WeaponSkins.SelectionFor(skinChoices, skinUnlocks, 1, specialSlot, WeaponClass.Rifle) == null,
+    "Changing a skin must not change another Doll or her other weapon slot");
+Assert(WeaponSkins.SelectionFor(skinChoices, skinUnlocks, 1, primarySlot, WeaponClass.Shotgun) == null
+    && skinChoices.SelectionFor(1, primarySlot) == branch.Id,
+    "Equipping an incompatible weapon must suspend the skin without forgetting the RF choice");
+Assert(WeaponSkins.Select(skinChoices, skinUnlocks, 2, primarySlot, WeaponClass.Rifle, branch.Id)
+    && WeaponSkins.Select(skinChoices, skinUnlocks, 1, specialSlot, WeaponClass.Rifle, branch.Id),
+    "One skin unlock must be reusable across Dolls and compatible weapon slots");
+var skinsReloaded = JsonSerializer.Deserialize<WeaponSkinState>(JsonSerializer.Serialize(skinChoices))!;
+Assert(WeaponSkins.SelectionFor(skinsReloaded, skinUnlocks, 1, primarySlot, WeaponClass.Rifle)?.Id == branch.Id,
+    "The remembered RF appearance must resume after saving and loading");
+Assert(WeaponSkins.Select(skinsReloaded, skinUnlocks, 1, primarySlot, WeaponClass.Rifle, null)
+    && WeaponSkins.SelectionFor(skinsReloaded, skinUnlocks, 1, primarySlot, WeaponClass.Rifle) == null
+    && WeaponSkins.SelectionFor(skinsReloaded, skinUnlocks, 1, specialSlot, WeaponClass.Rifle)?.Id == branch.Id
+    && WeaponSkins.SelectionFor(skinsReloaded, skinUnlocks, 2, primarySlot, WeaponClass.Rifle)?.Id == branch.Id,
+    "Restoring Default must affect only the selected Doll and weapon slot");
+Assert(WeaponSkins.Select(skinsReloaded, skinUnlocks, 1, specialSlot, WeaponClass.Rifle, null)
+    && !skinsReloaded.Selections.ContainsKey(1)
+    && WeaponSkins.Select(skinsReloaded, skinUnlocks, 2, primarySlot, WeaponClass.Rifle, null)
+    && skinsReloaded.Selections.Count == 0,
+    "Restoring every slot to Default must prune empty Doll entries and disable skin processing");
+Assert(WeaponSkins.SelectionFor(skinChoices, new ProcurementState(), 1, primarySlot, WeaponClass.Rifle) == null,
+    "A saved choice must never display a skin that the current campaign has not unlocked");
+
+var lantern = WeaponSkins.All.Single(skin => skin.Id == "lantern_airship");
+Assert(!WeaponSkins.Available(skinUnlocks, WeaponClass.AssaultRifle).Any(),
+    "Owning an RF skin must not expose an undiscovered AR skin");
+skinUnlocks.Claims[lantern.RewardId] = 1;
+Assert(WeaponSkins.Select(skinChoices, skinUnlocks, 1, specialSlot, WeaponClass.AssaultRifle, lantern.Id)
+    && !WeaponSkins.Select(skinChoices, skinUnlocks, 1, primarySlot, WeaponClass.Rifle, lantern.Id)
+    && WeaponSkins.SelectionFor(skinChoices, skinUnlocks, 1, primarySlot, WeaponClass.Rifle)?.Id == branch.Id
+    && WeaponSkins.SelectionFor(skinChoices, skinUnlocks, 1, specialSlot, WeaponClass.AssaultRifle)?.Id == lantern.Id,
+    "An AR skin and an RF skin must coexist on one Doll without crossing weapon classes or slots");
+
 var special = catalogue.Single(reward => reward.Section == ProcurementSection.Special);
 var equipmentState = new ProcurementState();
 equipmentState.Counters[ProcurementSection.Special] = Procurement.Pity(ProcurementSection.Special) - 1;

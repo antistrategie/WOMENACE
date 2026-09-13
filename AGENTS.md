@@ -35,12 +35,13 @@ Use the implementation and its adjacent comments as the authority for current be
 - `Systems/Affinity/` and `Systems/Gifts/` for affinity, gift drops, rewards, and unlock presentation.
 - `Systems/Calibration/` for six-rank Doll weapon progression, affinity-earned components, workshop duplicates, and calibration UI.
 - `Systems/Proficiency/` for affinity-scaled accuracy with a Doll's trained weapon class.
-- `Systems/Transmog/` and `Systems/Dolls/FormSwapSystem.cs` for outfits and infantry, pilot, or mech form changes.
+- `Systems/Transmog/` for outfits and the shared outfit and weapon skin picker. `Systems/Dolls/FormSwapSystem.cs` handles infantry, pilot, or mech form changes.
+- `Systems/Procurement/` for reward pools, pity, limited claims, and permanent Curios unlocks.
 - `Systems/Ssr/` and `Systems/Elements/` for imprint bonuses, elemental build-up, Phase effects, and HUD gauges.
 - `Systems/Dolls/` for bespoke kits such as OTs-14's weapons bay, Sextans' solo melee kit, Cheyanne's aim trainer and ricochet, Soppo's stances, Vector's Overburn, and Voymastina's Sinbreaker form.
 - `Systems/Fairies/` for Fairy Lodge unlocks and off-map abilities.
 - `Systems/NewGame/` for WOMENACE campaign options, Doll roster selection, vanilla leader filtering, and dummy-link limits.
-- `Systems/Vehicles/` and `Systems/Weapons/` for special vehicles and weapon presentation such as The Sinner and Asteria's particle cannon.
+- `Systems/Vehicles/` and `Systems/Weapons/` for special vehicles, weapon skins, and weapon presentation such as The Sinner and Asteria's particle cannon.
 - `Systems/CampaignMap/` for the GFL1-inspired mission-board reskin.
 
 Persisted cross-system state belongs in `Context.State.Get<T>()`. Reusable rules and ID conventions belong in small shared models rather than being copied between systems.

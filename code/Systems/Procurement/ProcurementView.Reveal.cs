@@ -261,16 +261,19 @@ internal sealed partial class ProcurementView
 
     public void ShowUnlock(ProcurementCatalogue.Entry entry)
     {
-        var curio = entry.Outfit != null;
+        var curio = entry.Curio != null;
+        var skin = entry.Curio?.Kind == ProcurementCatalogue.CurioKind.WeaponSkin;
         _reveal.Clear();
         _reveal.EnableInClassList("wm-proc-reveal-curio", curio);
+        _reveal.EnableInClassList("wm-proc-reveal-skin", skin);
         BuildUnlockBackdrop();
         Text(curio ? "?" : "III", "wm-proc-reveal-roman", _reveal);
         var art = Portrait(entry, "wm-proc-reveal-art", _reveal);
         var text = Element("wm-proc-reveal-copy", _reveal);
         Text(curio ? Locale.Text("WOMENACE::ui/procurement/curio_discovered", "CURIO DISCOVERED")
             : Locale.Text("WOMENACE::ui/procurement/new_dossier", "NEW DOSSIER"), "wm-proc-new-dossier", text);
-        Text(curio ? Locale.Text("WOMENACE::ui/procurement/kalina_outfit", "KALINA'S OUTFIT")
+        Text(skin ? Locale.Text("WOMENACE::ui/weapon_skins/title", "WEAPON SKIN")
+            : curio ? Locale.Text("WOMENACE::ui/procurement/kalina_outfit", "KALINA'S OUTFIT")
             : Locale.Text("WOMENACE::ui/procurement/third_generation", "THIRD GENERATION"), "wm-proc-reveal-generation", text);
         Text((curio ? entry.Name : entry.DollName).ToUpperInvariant(), "wm-proc-reveal-name", text);
         if (!curio)
@@ -281,14 +284,15 @@ internal sealed partial class ProcurementView
         var proceed = Button(Continue(), DismissUnlock, "wm-shop-primary wm-proc-reveal-continue");
         proceed.name = curio ? "wm-procurement-curio-continue" : "wm-procurement-dossier-continue";
         text.Add(proceed);
-        Text(curio ? Locale.Text("WOMENACE::ui/procurement/outfit_unlocked", "OUTFIT UNLOCKED")
+        Text(skin ? Locale.Text("WOMENACE::ui/procurement/weapon_skin_unlocked", "WEAPON SKIN UNLOCKED")
+            : curio ? Locale.Text("WOMENACE::ui/procurement/outfit_unlocked", "OUTFIT UNLOCKED")
             : Locale.Text("WOMENACE::ui/procurement/dossier_acquired", "DOSSIER ACQUIRED"), "wm-proc-reveal-caption", _reveal);
         _reveal.SetVisible(true);
         proceed.Focus();
         PlaySound("dossier", true);
         Animate(900, progress =>
         {
-            art.style.left = new StyleLength((curio ? -110f : 52f) - 42f * Mathf.Pow(1f - progress, 3f));
+            art.style.left = new StyleLength((skin ? 15f : curio ? -110f : 52f) - 42f * Mathf.Pow(1f - progress, 3f));
             art.style.opacity = Mathf.Min(1f, progress * 2f);
             text.style.opacity = Mathf.Clamp01((progress - .15f) * 2f);
         });

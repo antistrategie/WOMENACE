@@ -60,7 +60,11 @@ public sealed class ProcurementCatalogue
             AddOptional(entries, EquipmentEntries<VehicleItemTemplate>(), nameof(VehicleItemTemplate), log);
             AddOptional(entries, DossierEntries(log), nameof(DossierItemTemplate), log);
             foreach (var outfit in Kalina.CurioOutfits)
-                entries.Add(new Entry(null, new ProcurementReward(outfit.RewardId, ProcurementSection.Curios, 1), outfit: outfit));
+                entries.Add(new Entry(null, new ProcurementReward(outfit.RewardId, ProcurementSection.Curios, 1),
+                    curio: new Curio(outfit.Id, () => outfit.Name.Resolve(), outfit.Asset, CurioKind.Outfit)));
+            foreach (var skin in WeaponSkins.All)
+                entries.Add(new Entry(null, new ProcurementReward(skin.RewardId, ProcurementSection.Curios, 1),
+                    curio: new Curio(skin.Id, () => skin.Name, skin.IconAsset, CurioKind.WeaponSkin)));
             if (!entries.Any(entry => entry.Reward.Section == ProcurementSection.Parts))
                 throw new InvalidOperationException("Weapon parts are unavailable.");
             var catalogue = new ProcurementCatalogue(entries);
@@ -167,15 +171,24 @@ public sealed class ProcurementCatalogue
         return false;
     }
 
-    public sealed class Entry(BaseItemTemplate template, ProcurementReward reward, UnitLeaderTemplate leader = null, Kalina.Outfit outfit = null)
+    public enum CurioKind { Outfit, WeaponSkin }
+
+    public sealed class Curio(string id, Func<string> name, string asset, CurioKind kind)
+    {
+        public readonly string Id = id, Asset = asset;
+        public string Name => name();
+        public readonly CurioKind Kind = kind;
+    }
+
+    public sealed class Entry(BaseItemTemplate template, ProcurementReward reward, UnitLeaderTemplate leader = null, Curio curio = null)
     {
         public readonly BaseItemTemplate Template = template;
         public readonly ProcurementReward Reward = reward;
         public readonly UnitLeaderTemplate Leader = leader;
-        public readonly Kalina.Outfit Outfit = outfit;
-        public bool IsUnlock => Leader != null || Outfit != null;
-        public string Name => Outfit?.Name.Resolve() ?? DisplayName(Template);
-        public string DollName => Templates.DefaultText(Template.ShortName, Name);
+        public readonly Curio Curio = curio;
+        public bool IsUnlock => Leader != null || Curio != null;
+        public string Name => Curio?.Name ?? DisplayName(Template);
+        public string DollName => Templates.DefaultText(Template?.ShortName, Name);
         public Texture2D Art => Leader?.SpeakerTemplate?.StandLookLeftImage;
         public Sprite Icon => Template?.TryCast<ItemTemplate>()?.IconEquipment ?? Template?.Icon;
         public string Type => Template?.TryCast<VehicleItemTemplate>() != null ? TypeVehicle

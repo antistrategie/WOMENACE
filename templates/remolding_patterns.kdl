@@ -84,11 +84,11 @@ clone "AccessoryTemplate" from="accessory.wmgfl_remolding_support" id="accessory
     set "ShortName" {
         set "m_DefaultTranslation" "Remolding Pattern (Sentinel)"
     }
-    set "Icon" asset="remolding/sentinel"
-    set "IconEquipment" asset="remolding/sentinel"
-    set "IconEquipmentDisabled" asset="remolding/sentinel"
-    set "IconSkillBar" asset="remolding/sentinel"
-    set "IconSkillBarDisabled" asset="remolding/sentinel"
+    set "Icon" asset="remolding/device_sentinel"
+    set "IconEquipment" asset="remolding/device_sentinel"
+    set "IconEquipmentDisabled" asset="remolding/device_sentinel"
+    set "IconSkillBar" asset="remolding/device_sentinel"
+    set "IconSkillBarDisabled" asset="remolding/device_sentinel"
     clear "SkillsGranted"
     append "SkillsGranted" "passive.wmgfl_remolding_sentinel"
     append "SkillsGranted" "active.wmgfl_remolding_mark_target"

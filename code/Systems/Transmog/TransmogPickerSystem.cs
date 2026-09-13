@@ -10,52 +10,40 @@ using UnityEngine.UIElements;
 
 namespace WOMENACE.Code;
 
-// The transmog picker on a doll's unit window: a small IconSkillBar tile overlaying the armour
-// slot's bottom-right corner, opening a modal (the transmog/outfit-modal UXML, styled by
-// transmog.uss like the armour alternatives window) that lists the character's outfits: the
-// default plus each affinity skin. Clicking an unlocked outfit makes it the rendered transmog,
-// while locked ones sit greyed with their unlock level on hover. The modal is injected once per
-// UnitWindow on the armoury and mission-prep screens. The tile and the modal's cards ride
-// UnitWindow.SetLeader/Refresh (the equipment column is rebuilt there), so they self-heal when
-// the column is rebuilt. The tile stays code-built: it anchors to the armour slot's live
-// layout, outside any template subtree.
+// Outfits and weapon skins share one picker per UnitWindow. Their choices and eligibility
+// come from their own models, while tiles, cards, dismissal and preview refresh are common.
 public sealed class TransmogPickerSystem : JiangyuSystem
 {
-    private const string TileName = "transmog-tile";
-    private const string ModalName = "TransmogAlternatives";
-
-    // The tile matches the IconSkillBar sprite ratio (261x117) and floats inside the armour
-    // slot with a little padding off its bottom-right corner (more on the right, so it clears
-    // the slot's border art).
-    private const float TileWidth = 80f;
-    private const float TileHeight = 36f;
-    private const float TilePaddingRight = 8f;
-    private const float TilePaddingBottom = 6f;
-
-    // The equipment boxes show their item's rarity colour as a resting border. The common band's
-    // olive (UIConfig.ColorCommonRarity, #746C4B) is the military green those boxes use.
-    private static readonly Color TileBorderColour = new(116f / 255f, 108f / 255f, 75f / 255f);
-
+    private const string ModalName = "AppearanceAlternatives";
     private readonly Dictionary<string, ArmorTemplate> _armorCache = new(StringComparer.Ordinal);
     private Action<VisualElement> _onAffinityChanged;
-
-    // Dev seam: lets the bridge verbs drive the picker's Select path without a mouse.
     internal static TransmogPickerSystem Instance { get; private set; }
+
+    private sealed class Choice(string id, string name, string subtitle, StyleBackground art,
+        bool unlocked = true, string description = null, string lockedMessage = null)
+    {
+        public readonly string Id = id, Name = name, Subtitle = subtitle;
+        public readonly StyleBackground Art = art;
+        public readonly bool Unlocked = unlocked;
+        public readonly string Description = description, LockedMessage = lockedMessage;
+    }
+
+    private sealed class Appearance(string title, string heading, string selection, StyleBackground tileArt,
+        string imageClass, IReadOnlyList<Choice> choices)
+    {
+        public readonly string Title = title, Heading = heading, Selection = selection, ImageClass = imageClass;
+        public readonly StyleBackground TileArt = tileArt;
+        public readonly IReadOnlyList<Choice> Choices = choices;
+    }
 
     public override void OnInit()
     {
         Instance = this;
-
-        // The outfit modal, one per UnitWindow, beside the armour alternatives window it
-        // mimics. Both screens host the same window, like the affinity injections.
         RegisterScreen<ArmoryUIScreen>();
         RegisterScreen<MissionPrepUIScreen>();
-
         Context.Patches.Postfix("Il2CppMenace.UI.Strategy.UnitWindow", "SetLeader", OnWindowChanged);
         Context.Patches.Postfix("Il2CppMenace.UI.Strategy.UnitWindow", "Refresh", OnWindowChanged);
-
-        // A gift can unlock a skin while the modal is on screen: rebuild it so the card ungreys.
-        _onAffinityChanged = window => EnsureUi(window);
+        _onAffinityChanged = window => EnsureUi(window, close: false);
         Affinity.Changed += _onAffinityChanged;
     }
 
@@ -63,67 +51,26 @@ public sealed class TransmogPickerSystem : JiangyuSystem
     {
         Instance = null;
         Affinity.Changed -= _onAffinityChanged;
-        _onAffinityChanged = null;
     }
 
     private void RegisterScreen<TScreen>() where TScreen : Il2CppMenace.UI.UIScreen
     {
-        UI.InjectEach(
-            UiTarget.Screen<TScreen>()
-                .Each(UiSelector.TypeName("UnitWindow"))
-                .Before(UiSelector.Name("EquipmentAlternatives")),
-            "transmog/outfit-modal",
-            WireModal);
-    }
-
-    // Start hidden and wire the outside-click dismiss. The injection binds once, and the panel
-    // may not be attached yet at bind time, so the actual hookup is EnsureDismissHooked, which
-    // EnsureUi retries on later passes once the modal is on a panel.
-    //
-    // Also build the tile here: on the first squad-menu open the window's SetLeader can run
-    // before this injection lands, so that OnWindowChanged pass bails at modal == null and no
-    // tile appears until a later SetLeader (e.g. selecting another doll). Running EnsureUi once
-    // the modal is in the tree heals that first-open case; the leader is already set by then.
-    private void WireModal(VisualElement root, VisualElement window)
-    {
-        root.SetVisible(false);
-        EnsureDismissHooked(root, window);
-        EnsureUi(window);
-    }
-
-    // Hook the modal's outside-click dismiss once it is on a panel, guarded so it runs a single
-    // time per modal (the marker is only set on the success path, so a bind before the modal is
-    // laid out heals on the next EnsureUi). The tile is kept open-on-click since it toggles.
-    private void EnsureDismissHooked(VisualElement modal, VisualElement window)
-    {
-        if (modal == null || modal.panel == null || modal.ClassListContains("wm-dismiss-hooked"))
-            return;
-        modal.AddToClassList("wm-dismiss-hooked");
-        var dismissable = modal;
-        var dismissWindow = window;
-        UI.CloseOnOutsideClick(dismissable, () =>
+        UI.InjectEach(UiTarget.Screen<TScreen>().Each(UiSelector.TypeName("UnitWindow"))
+            .Before(UiSelector.Name("EquipmentAlternatives")), "transmog/appearance-modal", (root, window) =>
         {
-            dismissable.SetVisible(false);
-            SyncTileHighlight(dismissWindow);
-        }, TileName);
+            root.SetVisible(false);
+            EnsureUi(window);
+        });
     }
 
-    // Run the exact path an outfit-card click runs, against the UnitWindow bound to this
-    // character (not merely the first on screen: mission prep hosts several).
-    internal bool DevSelect(string characterTag, string armorId)
+    private static VisualElement ModalRoot(VisualElement window)
     {
-        var root = Il2CppMenace.UI.UIManager.Get()?.GetActiveScreen()?.GetRootElement();
-        if (root == null)
-            return false;
-        foreach (var window in UI.FindAll(root, UiSelector.TypeName("UnitWindow")))
-        {
-            if (Affinity.CharacterTag(Affinity.LeaderOf(window)) != characterTag)
-                continue;
-            Select(window, characterTag, armorId);
-            return true;
-        }
-        return false;
+        var inner = UI.Find(window, UiSelector.Name(ModalName));
+        return inner?.parent ?? inner;
     }
+
+    private static string TileName(ItemSlot slot)
+        => slot == ItemSlot.InfantryArmor ? "transmog-tile" : "wm-weapon-skin-" + slot;
 
     private void OnWindowChanged(PatchInfo info)
     {
@@ -131,334 +78,244 @@ public sealed class TransmogPickerSystem : JiangyuSystem
             EnsureUi(window);
     }
 
-    // The injected modal's toggle target: the injection's wrapper around the UXML root, the
-    // same element WireModal binds (showing only the inner root would leave a hidden wrapper).
-    private static VisualElement ModalRoot(VisualElement window)
+    private void EnsureUi(VisualElement window, bool close = true)
     {
-        var inner = UI.Find(window, UiSelector.Name(ModalName));
-        return inner?.parent ?? inner;
+        try
+        {
+            if (close)
+                AppearanceSlotUi.ClosePickers(window);
+            foreach (var tile in UI.FindAll(window, UiSelector.Class("wm-appearance-tile")))
+                tile.SetVisible(false);
+            var modal = ModalRoot(window);
+            var leader = Affinity.LeaderOf(window);
+            if (modal == null || Affinity.KeyFor(leader) == 0)
+                return;
+
+            // Slot names are known even when a compatible weapon is not equipped yet.
+            // The outside-click handler must keep future tiles clickable as toggles too.
+            if (modal.panel != null && !modal.ClassListContains("wm-dismiss-hooked"))
+            {
+                modal.AddToClassList("wm-dismiss-hooked");
+                UI.CloseOnOutsideClick(modal, () => AppearanceSlotUi.ClosePickers(window),
+                    WeaponSkinSystem.Slots.Prepend(ItemSlot.InfantryArmor).Select(TileName).ToArray());
+            }
+            foreach (var element in UI.FindAll(window, UiSelector.TypeName("EquipmentSlot")))
+            {
+                var slot = element.TryCast<EquipmentSlot>();
+                if (slot == null || AppearanceSlotUi.InsideAlternatives(element, window))
+                    continue;
+                var itemSlot = slot.GetItemSlotType();
+                var appearance = ChoicesFor(window, itemSlot);
+                if (appearance == null)
+                    continue;
+                var tileName = TileName(itemSlot);
+                var tile = UI.Find(window, UiSelector.Name(tileName));
+                if (tile == null || tile.parent != element.parent)
+                {
+                    tile?.RemoveFromHierarchy();
+                    tile = AppearanceSlotUi.Tile(tileName, () => Toggle(window, itemSlot, tileName));
+                    tile.EnableInClassList("wm-weapon-skin-tile", itemSlot != ItemSlot.InfantryArmor);
+                    element.parent.Add(tile);
+                    Tooltip.OnHover(tile, () =>
+                    {
+                        var current = ChoicesFor(window, itemSlot);
+                        var selected = current?.Choices.FirstOrDefault(choice => choice.Id == current.Selection);
+                        return current == null || selected == null ? null : ChoiceTooltip(selected, current.Heading);
+                    });
+                }
+                AppearanceSlotUi.Artwork(tile, appearance.TileArt, itemSlot != ItemSlot.InfantryArmor && appearance.Selection == null);
+                AppearanceSlotUi.Position(tile, element, "wm-appearance-anchor");
+                tile.SetVisible(true);
+                if (modal.IsVisible() && UI.Find(tile, UiSelector.Name("Selected"))?.IsVisible() == true)
+                    FillModal(window, itemSlot, appearance);
+            }
+        }
+        catch (Exception ex) { Context.Log.Warn($"appearance picker: refresh failed: {ex.Message}"); }
     }
 
-    private void EnsureUi(VisualElement window)
+    private Appearance ChoicesFor(VisualElement window, ItemSlot slot)
+    {
+        var leader = Affinity.LeaderOf(window);
+        var tag = Affinity.CharacterTag(leader);
+        if (tag == null)
+            return null;
+        if (slot == ItemSlot.InfantryArmor)
+        {
+            var selection = Transmog.SelectionFor(Context, tag);
+            if (selection == null)
+                return null;
+            var level = Affinity.LevelFor(Context, leader);
+            var choices = new List<Choice>();
+            foreach (var option in Transmog.OptionsFor(tag))
+            {
+                var template = OutfitTemplate(option.ArmorId);
+                if (template == null)
+                    continue;
+                choices.Add(new Choice(option.ArmorId, Templates.DefaultText(template.Title),
+                    Templates.DefaultText(template.ShortName), new StyleBackground(template.IconEquipment),
+                    option.UnlockLevel <= level, Templates.DefaultText(template.Description),
+                    Locale.Format("WOMENACE::ui/transmog_locked", "Unlocks at affinity level {0}", option.UnlockLevel)));
+            }
+            return new Appearance(Locale.Text("WOMENACE::ui/select_outfit", "Select Outfit"),
+                Locale.Text("WOMENACE::ui/transmog", "OUTFIT"), selection,
+                new StyleBackground(OutfitTemplate(selection)?.IconSkillBar), "wm-fill", choices);
+        }
+        if (!WeaponSkinSystem.Slots.Contains(slot) || WeaponSkinSystem.Instance is not { } system)
+            return null;
+        var items = leader.GetItems();
+        var weapon = WeaponSkinSystem.WeaponAt(items, slot);
+        var skins = system.Available(weapon);
+        if (skins.Count == 0)
+            return null;
+        var selectedSkin = system.SelectionFor(items, slot, weapon);
+        var code = WeaponClasses.Code(WeaponClasses.Classify(weapon));
+        var defaultArt = new StyleBackground(Context.Assets.Load<Texture2D>("weapon_skins__default_" + code.ToLowerInvariant()));
+        var weaponChoices = new List<Choice>
+        {
+            new(null, Locale.Text("WOMENACE::ui/weapon_skins/default", "Default"), code, defaultArt),
+        };
+        foreach (var skin in skins)
+            weaponChoices.Add(new Choice(skin.Id, skin.Name, code, SkinArt(skin)));
+        return new Appearance(Locale.Text("WOMENACE::ui/weapon_skins/select", "Select Weapon Skin"),
+            Locale.Text("WOMENACE::ui/weapon_skins/title", "WEAPON SKIN"), selectedSkin?.Id,
+            selectedSkin == null ? defaultArt : SkinArt(selectedSkin),
+            "wm-weapon-skin-art", weaponChoices);
+    }
+
+    private void Toggle(VisualElement window, ItemSlot slot, string tileName)
+    {
+        try
+        {
+            Sound.Click();
+            var modal = ModalRoot(window);
+            var tile = UI.Find(window, UiSelector.Name(tileName));
+            var highlight = UI.Find(tile, UiSelector.Name("Selected"));
+            var close = modal?.IsVisible() == true && highlight?.IsVisible() == true;
+            AppearanceSlotUi.ClosePickers(window);
+            if (close || modal == null || ChoicesFor(window, slot) is not { } appearance)
+                return;
+            FillModal(window, slot, appearance);
+            modal.SetVisible(true);
+            highlight?.SetVisible(true);
+        }
+        catch (Exception ex) { Context.Log.Warn($"appearance picker: open failed: {ex.Message}"); }
+    }
+
+    private void FillModal(VisualElement window, ItemSlot slot, Appearance appearance)
+    {
+        var modal = ModalRoot(window);
+        if (UI.Find(modal, UiSelector.Name("appearance-title"))?.TryCast<Label>() is { } heading)
+            heading.text = appearance.Title;
+        var list = UI.Find(modal, UiSelector.Name("appearance-list"));
+        list.Clear();
+        foreach (var choice in appearance.Choices)
+        {
+            var card = new Button { name = "appearance-option-" + (choice.Id ?? "default"), focusable = false };
+            card.AddToClassList("unit-equipment-slot");
+            card.AddToClassList("wm-outfit-card");
+            card.EnableInClassList("wm-outfit-card-locked", !choice.Unlocked);
+            var image = new VisualElement { name = "Image", pickingMode = PickingMode.Ignore };
+            image.AddToClassList(appearance.ImageClass);
+            AppearanceSlotUi.Artwork(image, choice.Art, slot != ItemSlot.InfantryArmor && choice.Id == null);
+            card.Add(image);
+            AppearanceSlotUi.Overlay(card, "Border", "unit-equipment-slot-border");
+            AppearanceSlotUi.Overlay(card, "Selected", "slot-selected-border").SetVisible(choice.Id == appearance.Selection);
+            var title = new Label(choice.Name) { name = "ItemName", pickingMode = PickingMode.Ignore };
+            title.AddToClassList("wm-outfit-card-name");
+            card.Add(title);
+            var subtitle = new Label(choice.Subtitle) { name = "ShortItemName", pickingMode = PickingMode.Ignore };
+            subtitle.AddToClassList("wm-outfit-card-shortname");
+            card.Add(subtitle);
+            card.clickable.clicked += (Action)(() =>
+            {
+                if (!choice.Unlocked)
+                {
+                    Sound.RightClick();
+                    return;
+                }
+                Sound.Click();
+                Select(window, slot, choice.Id);
+            });
+            Tooltip.OnHover(card, () => ChoiceTooltip(choice));
+            list.Add(card);
+        }
+    }
+
+    private static Tooltip ChoiceTooltip(Choice choice, string heading = null)
+    {
+        var tooltip = new Tooltip("wm-appearance", 230).Subheading(heading ?? choice.Name);
+        if (heading != null)
+            tooltip.Line().Paragraph(choice.Name);
+        if (!string.IsNullOrEmpty(choice.Description))
+            tooltip.Line().Paragraph(choice.Description);
+        if (!choice.Unlocked)
+            tooltip.Line().Paragraph(choice.LockedMessage, Tooltip.Style.Disabled);
+        return tooltip;
+    }
+
+    private bool Select(VisualElement window, ItemSlot slot, string id)
     {
         try
         {
             var leader = Affinity.LeaderOf(window);
-            var characterTag = Affinity.CharacterTag(leader);
-
-            var slot = FindArmourSlot(window);
-            var modal = ModalRoot(window);
-            var tile = UI.Find(window, UiSelector.Name(TileName));
-
-            // Not a doll (or nothing to anchor on / no modal on this screen): nothing to show.
-            if (characterTag == null || Transmog.DefaultFor(characterTag) == null || slot == null || modal == null)
-            {
-                tile?.SetVisible(false);
-                modal?.SetVisible(false);
-                return;
-            }
-
-            // The equipment column is rebuilt across refreshes, so (re)create the tile in
-            // place. It is a SIBLING of the armour slot, floated over its bottom-right corner:
-            // a child of the slot would re-trigger the slot's own click handling (the game
-            // resolves the clicked InteractiveElement from ancestry), opening the armour
-            // dropdown too.
-            if (tile == null || tile.parent != slot.parent)
-            {
-                tile?.RemoveFromHierarchy();
-                tile = BuildTile(window);
-                slot.parent.Add(tile);
-            }
-            PositionTile(tile, slot);
-            EnsureDismissHooked(modal, window);
-
-            tile.SetVisible(true);
-            UpdateTile(tile, characterTag);
-            RebuildCards(window, characterTag);
-            SyncTileHighlight(window);
+            if (ChoicesFor(window, slot)?.Choices.Any(choice => choice.Id == id && choice.Unlocked) != true)
+                return false;
+            if (slot == ItemSlot.InfantryArmor)
+                Transmog.SetSelection(Context, Affinity.CharacterTag(leader), id);
+            else if (WeaponSkinSystem.Instance?.Select(leader, slot, id) != true)
+                return false;
+            AppearanceSlotUi.ClosePickers(window);
+            Context.Coroutines.Start(RefreshNextFrame(window, slot, leader.Pointer));
+            return true;
         }
-        catch (Exception ex) { Context.Log.Warn($"transmog picker: ui update failed: {ex.Message}"); }
-    }
-
-    // The equipped-armour EquipmentSlot in the window's loadout column. The alternatives list
-    // reuses the same element type for its entries, so anything under EquipmentAlternatives is
-    // skipped.
-    private static VisualElement FindArmourSlot(VisualElement window)
-    {
-        foreach (var element in UI.FindAll(window, UiSelector.TypeName("EquipmentSlot")))
+        catch (Exception ex)
         {
-            var slot = element.TryCast<EquipmentSlot>();
-            if (slot == null || slot.GetItemSlotType() != ItemSlot.InfantryArmor)
-                continue;
-            if (!InsideAlternatives(element, window))
-                return element;
-        }
-        return null;
-    }
-
-    private static bool InsideAlternatives(VisualElement element, VisualElement window)
-    {
-        for (var parent = element.parent; parent != null && parent != window; parent = parent.parent)
-            if (parent.name == "EquipmentAlternatives")
-                return true;
-        return false;
-    }
-
-    // Absolute fill, matching how the vanilla slots layer their Border/Selected overlays.
-    private static void Fill(VisualElement element)
-    {
-        element.style.position = new StyleEnum<Position>(Position.Absolute);
-        element.style.left = new StyleLength(0f);
-        element.style.top = new StyleLength(0f);
-        element.style.right = new StyleLength(0f);
-        element.style.bottom = new StyleLength(0f);
-    }
-
-    // Float the tile over the slot's bottom-right corner (both share a parent, so the slot's
-    // layout rect is in the tile's coordinate space). The slot's layout is unresolved right
-    // after a rebuild, so a geometry callback on the slot re-anchors once it lands.
-    private void PositionTile(VisualElement tile, VisualElement slot)
-    {
-        Reposition(tile, slot);
-        if (slot.ClassListContains("wm-transmog-anchor"))
-            return;
-        slot.AddToClassList("wm-transmog-anchor");
-        var host = slot.parent;
-        slot.RegisterCallback(
-            Il2CppInterop.Runtime.DelegateSupport.ConvertDelegate<EventCallback<GeometryChangedEvent>>(
-                (Action<GeometryChangedEvent>)(_ =>
-                {
-                    var current = host != null ? UI.Find(host, UiSelector.Name(TileName)) : null;
-                    if (current != null)
-                        Reposition(current, slot);
-                })));
-    }
-
-    private static void Reposition(VisualElement tile, VisualElement slot)
-    {
-        var rect = slot.layout;
-        if (float.IsNaN(rect.x) || float.IsNaN(rect.width))
-            return;
-        tile.style.left = new StyleLength(rect.xMax - TileWidth - TilePaddingRight);
-        tile.style.top = new StyleLength(rect.yMax - TileHeight - TilePaddingBottom);
-    }
-
-    // The tile wears the gold selected border (like the armour slot does for its own dropdown)
-    // exactly while the outfit modal is open.
-    private void SyncTileHighlight(VisualElement window)
-    {
-        try
-        {
-            var tile = UI.Find(window, UiSelector.Name(TileName));
-            if (tile == null)
-                return;
-            var open = ModalRoot(window)?.IsVisible() ?? false;
-            UI.Find(tile, UiSelector.Name("Selected"))?.SetVisible(open);
-        }
-        catch { }
-    }
-
-    // The corner tile: the current outfit's skill-bar art on a translucent black card with the
-    // equipment boxes' resting military-green border. Code-built (its anchor and sprite are
-    // dynamic), so its few styles live here rather than in transmog.uss.
-    private VisualElement BuildTile(VisualElement window)
-    {
-        var button = new Button { name = TileName, focusable = false };
-        button.style.position = new StyleEnum<Position>(Position.Absolute);
-        button.style.width = new StyleLength(TileWidth);
-        button.style.height = new StyleLength(TileHeight);
-        button.style.backgroundColor = new StyleColor(new Color(0f, 0f, 0f, 0.94f));
-        var borderColour = new StyleColor(TileBorderColour);
-        button.style.borderLeftColor = borderColour;
-        button.style.borderRightColor = borderColour;
-        button.style.borderTopColor = borderColour;
-        button.style.borderBottomColor = borderColour;
-        var borderWidth = new StyleFloat(1f);
-        button.style.borderLeftWidth = borderWidth;
-        button.style.borderRightWidth = borderWidth;
-        button.style.borderTopWidth = borderWidth;
-        button.style.borderBottomWidth = borderWidth;
-
-        // The gold highlight the armour slot shows while its own dropdown is open, shown here
-        // while the outfit modal is open.
-        var selected = new VisualElement { name = "Selected", pickingMode = PickingMode.Ignore };
-        selected.AddToClassList("slot-selected-border");
-        Fill(selected);
-        selected.SetVisible(false);
-        button.Add(selected);
-
-        button.clickable.clicked += (Action)(() =>
-        {
-            try
-            {
-                Sound.Click();
-                var modal = ModalRoot(window);
-                if (modal == null)
-                    return;
-                modal.SetVisible(!modal.IsVisible());
-                SyncTileHighlight(window);
-            }
-            catch (Exception ex) { Context.Log.Warn($"transmog picker: toggle failed: {ex.Message}"); }
-        });
-
-        Tooltip.OnHover(button, () =>
-        {
-            var characterTag = Affinity.CharacterTag(Affinity.LeaderOf(window));
-            if (characterTag == null)
-                return null;
-            var template = OutfitTemplate(Transmog.SelectionFor(Context, characterTag));
-            var tooltip = new Tooltip("wm-transmog", 230)
-                .Subheading(Locale.Text("WOMENACE::ui/transmog", "OUTFIT"))
-                .Line()
-                .Paragraph(OutfitName(template));
-            var description = OutfitDescription(template);
-            if (!string.IsNullOrEmpty(description))
-                tooltip.Paragraph(description, Tooltip.Style.Disabled);
-            return tooltip;
-        });
-        return button;
-    }
-
-    private void UpdateTile(VisualElement tile, string characterTag)
-    {
-        var icon = OutfitTemplate(Transmog.SelectionFor(Context, characterTag))?.IconSkillBar;
-        if (icon != null)
-            tile.style.backgroundImage = new StyleBackground(icon);
-    }
-
-    // One card per outfit into the modal's list, in the armour alternatives' card style: item
-    // art, slot border, the selected border on the current choice, name and short name. Cards
-    // are per character, so they are built here, but all their styling lives in transmog.uss.
-    private void RebuildCards(VisualElement window, string characterTag)
-    {
-        var list = UI.Find(window, UiSelector.Name("outfit-list"));
-        if (list == null)
-            return;
-        list.Clear();
-
-        var level = Affinity.LevelFor(Context, Affinity.KeyForTag(characterTag));
-        var selection = Transmog.SelectionFor(Context, characterTag);
-
-        foreach (var option in Transmog.OptionsFor(characterTag))
-        {
-            var template = OutfitTemplate(option.ArmorId);
-            if (template == null)
-                continue;
-            var unlocked = option.UnlockLevel <= level;
-            list.Add(BuildCard(window, characterTag, template, option, unlocked, option.ArmorId == selection));
+            Context.Log.Warn($"appearance picker: selection failed: {ex.Message}");
+            return false;
         }
     }
 
-    private VisualElement BuildCard(
-        VisualElement window, string characterTag, ArmorTemplate template, Transmog.Option option, bool unlocked, bool selected)
-    {
-        var card = new Button { name = "transmog-option", focusable = false };
-        card.AddToClassList("unit-equipment-slot");
-        card.AddToClassList("wm-outfit-card");
-        if (!unlocked)
-            card.AddToClassList("wm-outfit-card-locked");
-
-        var image = new VisualElement { name = "Image", pickingMode = PickingMode.Ignore };
-        image.AddToClassList("wm-fill");
-        var art = template.IconEquipment;
-        if (art != null)
-            image.style.backgroundImage = new StyleBackground(art);
-        card.Add(image);
-
-        var border = new VisualElement { name = "Border", pickingMode = PickingMode.Ignore };
-        border.AddToClassList("unit-equipment-slot-border");
-        border.AddToClassList("wm-fill");
-        card.Add(border);
-
-        var selectedBorder = new VisualElement { name = "Selected", pickingMode = PickingMode.Ignore };
-        selectedBorder.AddToClassList("slot-selected-border");
-        selectedBorder.AddToClassList("wm-fill");
-        selectedBorder.SetVisible(selected);
-        card.Add(selectedBorder);
-
-        var name = new Label(OutfitName(template)) { name = "ItemName", pickingMode = PickingMode.Ignore };
-        name.AddToClassList("wm-outfit-card-name");
-        card.Add(name);
-
-        var shortName = new Label(OutfitShortName(template)) { name = "ShortItemName", pickingMode = PickingMode.Ignore };
-        shortName.AddToClassList("wm-outfit-card-shortname");
-        card.Add(shortName);
-
-        var armorId = option.ArmorId;
-        var unlockLevel = option.UnlockLevel;
-        card.clickable.clicked += (Action)(() =>
-        {
-            if (!unlocked)
-            {
-                Sound.RightClick();
-                return;
-            }
-            Sound.Click();
-            Select(window, characterTag, armorId);
-        });
-
-        Tooltip.OnHover(card, () =>
-        {
-            var tooltip = new Tooltip("wm-transmog", 230)
-                .Subheading(OutfitName(template));
-            var description = OutfitDescription(template);
-            if (!string.IsNullOrEmpty(description))
-                tooltip.Line().Paragraph(description);
-            if (!unlocked)
-                tooltip.Line().Paragraph(
-                    Locale.Format("WOMENACE::ui/transmog_locked", "Unlocks at affinity level {0}", unlockLevel),
-                    Tooltip.Style.Disabled);
-            return tooltip;
-        });
-
-        return card;
-    }
-
-    // Apply a selection and re-run SetLeader on the window: the equipment column, the tile, and
-    // the modal's cards all rebuild off it. The rebuild is deferred a frame: it would destroy
-    // the card whose click event is still being dispatched.
-    private void Select(VisualElement window, string characterTag, string armorId)
-    {
-        try
-        {
-            Transmog.SetSelection(Context, characterTag, armorId);
-            Context.Log.Info($"transmog: '{characterTag}' now renders '{armorId}'");
-            Context.Coroutines.Start(RefreshWindowNextFrame(window));
-        }
-        catch (Exception ex) { Context.Log.Warn($"transmog picker: select failed: {ex.Message}"); }
-    }
-
-    private System.Collections.IEnumerator RefreshWindowNextFrame(VisualElement window)
+    // Delay rebuilding until the card's click has finished dispatching. The native visual
+    // alteration event also rebuilds the armoury's 3D stage, which SetLeader alone does not.
+    private System.Collections.IEnumerator RefreshNextFrame(VisualElement window, ItemSlot slot, IntPtr leaderPointer)
     {
         yield return null;
         var unitWindow = window.TryCast<UnitWindow>();
         var leader = unitWindow?.m_CurrentLeader;
-        if (unitWindow == null || leader == null || !leader.IsAlive())
+        if (leader == null || !leader.IsAlive() || leader.Pointer != leaderPointer)
             yield break;
-        unitWindow.SetLeader(leader);
-        // Picking an outfit closes the modal. SetLeader re-wires it hidden anyway; keep it that
-        // way and clear the tile's open highlight.
-        ModalRoot(window)?.SetVisible(false);
-        SyncTileHighlight(window);
-        // The armoury's 3D squad preview does not rebuild off the window. Equipping armour
-        // rebuilds it through the item container's visual-alteration event (the armoury's unit
-        // selector subscribes to the selected unit's container), so raise the same event for
-        // the equipped armour item and let the vanilla handler respawn the stage.
         try
         {
-            var container = leader.GetItems();
-            var item = container?.GetItemAtSlot(ItemSlot.InfantryArmor);
-            container?.OnVisualAlterationChanged?.Invoke(container.GetOwner(), item);
+            unitWindow.SetLeader(leader);
+            var items = leader.GetItems();
+            items?.OnVisualAlterationChanged?.Invoke(items.GetOwner(), items.GetItemAtSlot(slot));
         }
-        catch (Exception ex) { Context.Log.Warn($"transmog picker: preview refresh failed: {ex.Message}"); }
+        catch (Exception ex) { Context.Log.Warn($"appearance picker: preview refresh failed: {ex.Message}"); }
     }
 
-    private ArmorTemplate OutfitTemplate(string armorId)
-        => Templates.Resolve<ArmorTemplate>(armorId, _armorCache, msg => Context.Log.Warn($"transmog picker: {msg}"));
+    internal bool DevSelect(string characterTag, string armorId) => DevSelect(characterTag, ItemSlot.InfantryArmor, armorId);
 
-    private static string OutfitName(ArmorTemplate template) => Templates.DefaultText(template?.Title, template?.name ?? "?");
+    internal void RefreshVisible()
+    {
+        var root = Il2CppMenace.UI.UIManager.Get()?.GetActiveScreen()?.GetRootElement();
+        if (root != null)
+            foreach (var window in UI.FindAll(root, UiSelector.TypeName("UnitWindow")))
+                EnsureUi(window);
+    }
 
-    private static string OutfitShortName(ArmorTemplate template) => Templates.DefaultText(template?.ShortName);
+    internal bool DevSelect(string characterTag, ItemSlot slot, string id)
+    {
+        var root = Il2CppMenace.UI.UIManager.Get()?.GetActiveScreen()?.GetRootElement();
+        if (root == null)
+            return false;
+        foreach (var window in UI.FindAll(root, UiSelector.TypeName("UnitWindow")))
+            if (Affinity.CharacterTag(Affinity.LeaderOf(window)) == characterTag)
+                return Select(window, slot, id);
+        return false;
+    }
 
-    private static string OutfitDescription(ArmorTemplate template) => Templates.DefaultText(template?.Description);
+    private ArmorTemplate OutfitTemplate(string id)
+        => Templates.Resolve<ArmorTemplate>(id, _armorCache, msg => Context.Log.Warn($"appearance picker: {msg}"));
+
+    private StyleBackground SkinArt(WeaponSkin skin) => new(Context.Assets.Load<Texture2D>(skin.IconAsset));
 }
