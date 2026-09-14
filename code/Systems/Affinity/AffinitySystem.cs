@@ -480,17 +480,24 @@ public sealed class AffinitySystem : JiangyuSystem
             }
 
             var grantedVehicles = Context.State.Get<AffinityState>().ForLeader(key).GrantedVehicleIds;
-            foreach (var id in Unlocks.UnlockedItems(characterTag, level))
+            foreach (var (id, replaceWhenLost) in Unlocks.UnlockedItems(characterTag, level))
             {
-                if (grantedVehicles.Contains(id))
+                var alreadyGranted = grantedVehicles.Contains(id);
+                if (alreadyGranted && !replaceWhenLost)
                     continue;
                 var template = Templates.Resolve<VehicleItemTemplate>(id, _vehicleCache, msg => Context.Log.Warn($"affinity: {msg}"));
                 if (template == null)
                     continue;
-                if (owned.AddItem(template, false, false) == null)
-                    continue;
-                grantedVehicles.Add(id);
-                Context.Log.Info($"affinity: granted vehicle '{id}' (level {level})");
+                // Check registered items directly, including chassis held by live or stashed pilots.
+                if (!replaceWhenLost || !owned.GetRawInstances().TryGetValue(template, out var instances)
+                    || instances.Count == 0)
+                {
+                    if (owned.AddItem(template, false, false) == null)
+                        continue;
+                    Context.Log.Info($"affinity: {(alreadyGranted ? "replaced" : "granted")} vehicle '{id}' (level {level})");
+                }
+                if (!alreadyGranted)
+                    grantedVehicles.Add(id);
             }
         }
         catch (Exception ex) { Context.Log.Warn($"affinity: unlock failed: {ex.Message}"); }

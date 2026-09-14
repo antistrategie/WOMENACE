@@ -20,7 +20,7 @@ public static class Unlocks
         // transmog picker greys them out until the level is reached.
         Skins,
         // A deployable mech form (gated in FormSwapSystem). Items lists the chassis vehicle ids
-        // the form can wear, granted to the shared inventory the same way a Vehicle entry's are.
+        // the form can wear. Missing chassis are replaced in the shared inventory after unlocking.
         Mech,
         // An SSR special weapon granted to the shared inventory at this level. The weapon id is not
         // authored: it is weapon.<doll>_ssr by the Calibration convention. Equippable by anyone, but
@@ -141,14 +141,13 @@ public static class Unlocks
                 yield return Calibration.SsrWeaponIdFor(characterTag);
     }
 
-    // The vehicle item ids a character has unlocked at this level (every Vehicle and Mech entry at
-    // or below it). Each affinity grant is recorded even after a chassis is lost.
-    public static IEnumerable<string> UnlockedItems(string characterTag, int level)
+    // Vehicle rewards are one-time grants. Mech forms keep one of each unlocked chassis available.
+    public static IEnumerable<(string Id, bool ReplaceWhenLost)> UnlockedItems(string characterTag, int level)
     {
         foreach (var entry in EntriesFor(characterTag))
             if (entry.Feature is Feature.Vehicle or Feature.Mech && level >= entry.Level)
                 foreach (var id in entry.Items)
-                    yield return id;
+                    yield return (id, entry.Feature == Feature.Mech);
     }
 
     // The named weapon ids a character has unlocked at this level (every SpecialWeapon entry at or

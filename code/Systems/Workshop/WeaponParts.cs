@@ -31,8 +31,10 @@ public static class WeaponParts
         return separator > 0 ? WeaponClasses.FromCode(part.Substring(0, separator)) : WeaponClass.None;
     }
 
+    // Keep the standard-issue Crowbar from becoming a renewable source of rifle parts.
     public static WeaponClass DisassemblyClass(WeaponTemplate weapon)
         => BaseGameWeapons.Contains(weapon)
+            && weapon.GetID() != "weapon.generic_battle_rifle_tier1_crowbar"
             ? WeaponClasses.ClassifyByShortName(weapon)
             : WeaponClass.None;
 
