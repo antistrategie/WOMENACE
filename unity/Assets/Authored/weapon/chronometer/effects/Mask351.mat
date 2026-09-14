@@ -1,0 +1,81 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Mask351
+  m_Shader: {fileID: 4800000, guid: feae337aa3e158160b72ad6e88ccdb38, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords:
+  - _USEDISSOLVE_ON
+  - _USEMASK_ON
+  - _USETURBULENCE_ON
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 1
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _DissolveTex:
+        m_Texture: {fileID: 2800000, guid: cd992fa7d6524bd2acc42677c5bc3237, type: 3}
+        m_Scale: {x: 3, y: 0.5}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 2800000, guid: 927d2096a55246a19f1c25712593966f, type: 3}
+        m_Scale: {x: 5, y: 0.2}
+        m_Offset: {x: 0, y: 0.45}
+    - _MaskTex:
+        m_Texture: {fileID: 2800000, guid: 9a6165a4c4124071a6c49400e9356a99, type: 3}
+        m_Scale: {x: 1, y: -0.2}
+        m_Offset: {x: 0, y: -0.78}
+    - _MaskTex2:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _TurbulenceTex:
+        m_Texture: {fileID: 2800000, guid: 178dd7996390449dad1ce275fce3e03f, type: 3}
+        m_Scale: {x: 2, y: 0.5}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _Alpha: 1
+    - _AlphaFromRed: 0
+    - _Brightness: 1
+    - _Contrast: 1
+    - _DestinationBlend: 1
+    - _Dissolve: 0.02
+    - _DissolveHardness: 0.99
+    - _DissolvePanX: 0
+    - _DissolvePanY: 0.75
+    - _ExposureWeight: 0
+    - _FresnelPower: 0
+    - _GlitchSpeed: 1
+    - _GlitchStrength: 0
+    - _MaskPanX: 0
+    - _MaskPanX2: 0
+    - _MaskPanY: 0
+    - _MaskPanY2: 0
+    - _PanX: 0
+    - _PanY: 0
+    - _SourceBlend: 5
+    - _TurbulencePanX: 0
+    - _TurbulencePanY: 0.3
+    - _TurbulencePower: 0.1
+    - _UseDissolve: 1
+    - _UseMask: 1
+    - _UseMask2: 0
+    - _UseTurbulence: 1
+    m_Colors:
+    - _MainColor: {r: 23.968628, g: 23.968628, b: 23.968628, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

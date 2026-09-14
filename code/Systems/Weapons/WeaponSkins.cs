@@ -24,6 +24,14 @@ public static class WeaponSkins
         new WeaponSkin("lantern_airship", WeaponClass.AssaultRifle,
             () => Locale.Text("WOMENACE::ui/weapon_skins/lantern_airship", "Lantern Airship"),
             "weapon/lantern_airship/muzzle"),
+        new WeaponSkin("spiral_commandment", WeaponClass.Smg,
+            () => Locale.Text("WOMENACE::ui/weapon_skins/spiral_commandment", "Spiral Commandment")),
+        new WeaponSkin("chronometer", WeaponClass.Shotgun,
+            () => Locale.Text("WOMENACE::ui/weapon_skins/chronometer", "Chronometer")),
+        new WeaponSkin("clockwork_guard", WeaponClass.Blade,
+            () => Locale.Text("WOMENACE::ui/weapon_skins/clockwork_guard", "Clockwork Guard")),
+        new WeaponSkin("black_mask", WeaponClass.MachineGun,
+            () => Locale.Text("WOMENACE::ui/weapon_skins/black_mask", "Black Mask")),
     };
 
     public static IEnumerable<WeaponSkin> Available(ProcurementState unlocks, WeaponClass weaponClass)
