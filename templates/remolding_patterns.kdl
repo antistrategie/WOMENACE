@@ -9,11 +9,11 @@ clone "AccessoryTemplate" from="accessory.binoculars" id="accessory.wmgfl_remold
         set "m_DefaultTranslation" "Developed by Persica, the \"Collapse Epiphyllum Cultivation and Reverse-Collapse Pattern Remolding Device\" channels Collapse energy to enhance a Doll and her armament."
         clear "m_Placeholders"
     }
-    set "Icon" asset="remolding/support"
-    set "IconEquipment" asset="remolding/support"
-    set "IconEquipmentDisabled" asset="remolding/support"
-    set "IconSkillBar" asset="remolding/support"
-    set "IconSkillBarDisabled" asset="remolding/support"
+    set "Icon" asset="remolding/device_support"
+    set "IconEquipment" asset="remolding/device_support"
+    set "IconEquipmentDisabled" asset="remolding/device_support"
+    set "IconSkillBar" asset="remolding/device_support"
+    set "IconSkillBarDisabled" asset="remolding/device_support"
     set "BlackMarketMaxQuantity" 0
     set "Rarity" 0
     set "TradeValue" 100
@@ -49,12 +49,16 @@ clone "PerkTemplate" from="perk.fortify" id="passive.wmgfl_remolding_support" {
 // JIANGYU-CONTRACT: Skill.OnMissionStarted (RVA 0x712020) initialises Uses.
 // Turn and round callbacks dispatch handlers without refilling the counter.
 clone "PerkTemplate" from="perk.first_aid" id="active.wmgfl_remolding_first_aid" {
+    set "Description" {
+        set "m_DefaultTranslation" "Heal a wounded Element and sets the target units <link=\"morale\">morale</link> to neutral. Can heal allied SL's."
+        clear "m_Placeholders"
+    }
     set "ActionPointCost" 20
     set "IsLimitedUses" #true
     set "Uses" 2
-    set "Icon" asset="remolding/support"
-    set "IconDisabled" asset="remolding/support"
-    set "PerkIcon" asset="remolding/support"
+    set "Icon" asset="remolding/skill_support"
+    set "IconDisabled" asset="remolding/skill_support_disabled"
+    set "PerkIcon" asset="remolding/skill_support"
 }
 
 clone "SkillTemplate" from="effect.bleeding" id="effect.wmgfl_remolding_support" {
@@ -136,8 +140,8 @@ clone "SkillTemplate" from="active.use_target_designator" id="active.wmgfl_remol
     set "IsLimitedUses" #true
     set "Uses" 2
     set "IsDeploymentRequired" #false
-    set "Icon" asset="remolding/sentinel"
-    set "IconDisabled" asset="remolding/sentinel"
+    set "Icon" asset="remolding/skill_sentinel"
+    set "IconDisabled" asset="remolding/skill_sentinel_disabled"
 }
 
 clone "AccessoryTemplate" from="accessory.wmgfl_remolding_support" id="accessory.wmgfl_remolding_bulwark" {
@@ -147,11 +151,11 @@ clone "AccessoryTemplate" from="accessory.wmgfl_remolding_support" id="accessory
     set "ShortName" {
         set "m_DefaultTranslation" "Remolding Pattern (Bulwark)"
     }
-    set "Icon" asset="remolding/bulwark"
-    set "IconEquipment" asset="remolding/bulwark"
-    set "IconEquipmentDisabled" asset="remolding/bulwark"
-    set "IconSkillBar" asset="remolding/bulwark"
-    set "IconSkillBarDisabled" asset="remolding/bulwark"
+    set "Icon" asset="remolding/device_bulwark"
+    set "IconEquipment" asset="remolding/device_bulwark"
+    set "IconEquipmentDisabled" asset="remolding/device_bulwark"
+    set "IconSkillBar" asset="remolding/device_bulwark"
+    set "IconSkillBarDisabled" asset="remolding/device_bulwark"
     clear "SkillsGranted"
     append "SkillsGranted" "passive.wmgfl_remolding_bulwark"
     append "SkillsGranted" "active.wmgfl_remolding_hold_the_line"
@@ -206,9 +210,9 @@ clone "PerkTemplate" from="perk.command_rally" id="active.wmgfl_remolding_hold_t
         append "m_Placeholders" bind="PerkTemplate" "active.wmgfl_remolding_hold_the_line" path="EventHandlers[2].SuppressionFromZero"
         append "m_Placeholders" bind="PerkTemplate" "active.wmgfl_remolding_hold_the_line" path="EventHandlers[2].SuppressionWhilePressured"
     }
-    set "Icon" asset="remolding/bulwark"
-    set "IconDisabled" asset="remolding/bulwark"
-    set "PerkIcon" asset="remolding/bulwark"
+    set "Icon" asset="remolding/skill_bulwark"
+    set "IconDisabled" asset="remolding/skill_bulwark_disabled"
+    set "PerkIcon" asset="remolding/skill_bulwark"
     set "ActionPointCost" 20
     set "IsLimitedUses" #true
     set "Uses" 2
@@ -260,11 +264,11 @@ clone "AccessoryTemplate" from="accessory.wmgfl_remolding_support" id="accessory
     set "ShortName" {
         set "m_DefaultTranslation" "Remolding Pattern (Vanguard)"
     }
-    set "Icon" asset="remolding/vanguard"
-    set "IconEquipment" asset="remolding/vanguard"
-    set "IconEquipmentDisabled" asset="remolding/vanguard"
-    set "IconSkillBar" asset="remolding/vanguard"
-    set "IconSkillBarDisabled" asset="remolding/vanguard"
+    set "Icon" asset="remolding/device_vanguard"
+    set "IconEquipment" asset="remolding/device_vanguard"
+    set "IconEquipmentDisabled" asset="remolding/device_vanguard"
+    set "IconSkillBar" asset="remolding/device_vanguard"
+    set "IconSkillBarDisabled" asset="remolding/device_vanguard"
     clear "SkillsGranted"
     append "SkillsGranted" "passive.wmgfl_remolding_vanguard"
     append "SkillsGranted" "active.wmgfl_remolding_second_wind"
@@ -300,8 +304,8 @@ clone "SkillTemplate" from="active.use_pirate_drugs_protagon" id="active.wmgfl_r
         clear "m_Placeholders"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_remolding_second_wind" path="EventHandlers[1].ActionPointsAvailable" format="percent"
     }
-    set "Icon" asset="remolding/vanguard"
-    set "IconDisabled" asset="remolding/vanguard"
+    set "Icon" asset="remolding/skill_vanguard"
+    set "IconDisabled" asset="remolding/skill_vanguard_disabled"
     clear "Tags"
     append "Tags" "utility"
     append "Tags" "accessory"
