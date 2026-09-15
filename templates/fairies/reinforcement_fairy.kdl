@@ -52,7 +52,7 @@ clone "SkillTemplate" from="offmap.shield_projector" id="offmap.wmgfl_reinforcem
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_fairy_reinforcement" path="EventHandlers[0].Lifetime"
     }
     set "TargetsAllowed" enum="SkillTarget" "AlliedActor"
-    set "Uses" 3
+    set "Uses" 1
     clear "EventHandlers"
     append "EventHandlers" type="WOMENACE:ReinforceSquaddie" {}
     append "EventHandlers" type="AddSkill" {
@@ -127,6 +127,7 @@ clone "SkillTemplate" from="offmap.wmgfl_reinforcement_fairy" id="offmap.wmgfl_e
     set "Title" {
         set "m_DefaultTranslation" "Enhanced Reinforcement Fairy"
     }
+    set "Uses" 2
     set "Description" {
         set "m_DefaultTranslation" "A fairy delivers one dummy to a chosen Doll squad and raises its <link=\"defense\">Defence</link> by $1% for $2 turns."
         clear "m_Placeholders"

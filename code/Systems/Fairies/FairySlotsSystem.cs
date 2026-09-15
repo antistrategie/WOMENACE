@@ -77,6 +77,13 @@ public sealed class FairySlotsSystem : JiangyuSystem
         if (upgrade == null || !_upgrades.TryAdd(upgrade.GetID(), upgrade))
             return;
         upgrade.UpgradeType = FairyType;
+        // The abilities a fairy grants carry the same type. The Arsenal's
+        // ChangeOffmapAbilityUsesEffect matches on the ability's UpgradeType, so fairy uses stay
+        // exactly the skill's Uses.
+        var effects = upgrade.Effects;
+        for (var i = 0; i < (effects?.Length ?? 0); i++)
+            if (effects[i]?.TryCast<GrantOffmapAbilityEffect>()?.OffmapAbility is { } ability)
+                ability.UpgradeType = FairyType;
         if (upgrade.ChildUpgrades != null)
             foreach (var child in upgrade.ChildUpgrades)
                 RegisterTree(child);
