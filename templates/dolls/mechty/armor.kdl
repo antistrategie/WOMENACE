@@ -1,0 +1,20 @@
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.mechty_default" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
+    set "Title" {
+        set "m_DefaultTranslation" "Dreamland War"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Field Outfit"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Mechty's usual outfit. The weatherproof coat becomes a nice sleeping bag if you just wrap it around you..."
+    }
+    set "Icon" asset="mechty/armor/default/Icon"
+    set "IconEquipment" asset="mechty/armor/default/IconEquipment"
+    set "IconSkillBar" asset="mechty/armor/default/IconSkillBar"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_transmog"
+    append "Tags" "jy_no_sell"
+}

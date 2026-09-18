@@ -76,6 +76,23 @@ public static class Templates
         return null;
     }
 
+    // Whether a template with this id exists, without asking the game loader. DataTemplateLoader.TryGet
+    // writes a Debug.LogError for every miss, so a speculative probe (does a doll tag exist for this
+    // weapon name?) must go through the registry scan alone or it litters Player.log per candidate.
+    public static bool Exists<T>(string id) where T : DataTemplate
+    {
+        if (id == null)
+            return false;
+        try
+        {
+            foreach (var t in All<T>())
+                if (t.GetID() == id)
+                    return true;
+        }
+        catch { }
+        return false;
+    }
+
     // A template by id, memoised in the caller's cache. Cache a HIT ONLY: caching a miss would pin the
     // id as unresolvable for the whole session if the lookup ran before the template was registered, so
     // the thing that id gates (a skin/weapon unlock, an imprint boost) would then never resolve.

@@ -1,0 +1,109 @@
+clone "PerkTemplate" from="perk.gostepriimstvo_babushki" id="perk.mechty_sleep_aid_kit" {
+    // Sleep Aid Kit, Mechty's tier 3 active. Gostepriimstvo Babushki's shape (a no-AP,
+    // pinned-usable self-buff that heals a squaddie and relieves suppression) with the ammo
+    // refill swapped for a defence buff and a forced end of turn. The turn ends through the
+    // vanilla ChangeActionPoints handler on a hidden one-turn effect: it drains the AP and
+    // raises the turn-end flag when it is added, and its lifetime runs out at that same turn
+    // end, so it never fires again at the next round start.
+    set "Title" {
+        set "m_DefaultTranslation" "Sleep Aid Kit"
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "Remove Suppression, heal a Squaddie, +$1% DEF. Ends the turn."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.mechty_sleep_aid" path="EventHandlers[0].AmountMult" format="bonus-percent"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            Field medicine, as practised by a Doll whose answer to most problems is a nap: painkillers, a sleep mask and a note on the helmet reading “wake me if it gets worse”.
+
+
+            <style="Highlight">• ACTIVATE:
+              - Removes all <link="suppression">Suppression</link>.
+              - Heals one <link="squaddies">Squaddie</link>.
+              - +$1% <link="defense">Defense</link> until the end of the SL's next turn.
+              - Ends the SL's turn.
+
+            • Can be used while PINNED DOWN.</style>
+            """
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.mechty_sleep_aid" path="EventHandlers[0].AmountMult" format="bonus-percent"
+    }
+
+    clear "SoundsOnUse"
+    append "SoundsOnUse" {
+        set "bankId" "wmgfl_tactical_barks_mechty_va"
+        set "itemId" "Series_Tone_Positive_004"
+    }
+
+    set "Icon" asset="mechty/perks/sleep_aid_kit"
+    set "IconDisabled" asset="mechty/perks/sleep_aid_kit_inactive"
+    set "PerkIcon" asset="mechty/perks/sleep_aid_kit"
+
+    set "Uses" 2
+
+    clear "EventHandlers"
+    append "EventHandlers" type="DisplayText" {
+        set "Event" enum="DisplayEvent" "OnUse"
+        set "LocaKey" "mechty_sleep_aid"
+        set "DefaultText" "Sleep aid"
+    }
+    // Not ChangeSuppression -100: the engine does not clamp at zero, so a flat change would
+    // leave her below zero with enemy fire paying that debt back before it suppresses.
+    append "EventHandlers" type="WOMENACE:ClearSuppression" {}
+    // On use rather than Regeneration's OnApply: the forced turn end below dispatches the
+    // turn-end events synchronously inside the use, before the apply phase runs, and a bleeding
+    // squaddie would tick to death before an OnApply heal reached it.
+    append "EventHandlers" type="WOMENACE:HealOneSquaddie" {}
+    append "EventHandlers" type="AddSkill" {
+        set "Event" enum="AddEvent" "OnUse"
+        set "SkillToAdd" "effect.mechty_sleep_aid"
+        set "ShowHUDText" #true
+    }
+    // Last, so the heal and the buff land before the turn is closed.
+    append "EventHandlers" type="AddSkill" {
+        set "Event" enum="AddEvent" "OnUse"
+        set "SkillToAdd" "effect.mechty_lights_out"
+    }
+}
+
+// The defence buff. Added during her turn, so a lifetime of two turn ends carries it
+// through the enemy phase and her whole next turn.
+clone "SkillTemplate" from="effect.bleeding" id="effect.mechty_sleep_aid" {
+    set "Icon" asset="mechty/effects/sleep_aid_kit"
+    set "Title" {
+        set "m_DefaultTranslation" "Sleep Aid"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "This unit is rested and has $1% increased <link=\"defense\">Defense</link>."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.mechty_sleep_aid" path="EventHandlers[0].AmountMult" format="bonus-percent"
+    }
+    clear "EventHandlers"
+    append "EventHandlers" type="ChangeProperty" {
+        set "Trigger" enum="UpdateEvent" "OnUpdate"
+        set "PropertyType" enum="EntityPropertyType" "DefenseMult"
+        set "Amount" 0
+        set "AmountMult" 1.2
+    }
+    append "EventHandlers" type="LifetimeLimit" {
+        set "Event" enum="LifetimeType" "OnTurnEnd"
+        set "Lifetime" 2
+        set "ResetLifetimeOnRefresh" #true
+    }
+}
+
+// Closes the turn. Hidden, one turn end long, AP drained to nothing with the turn-end
+// flag raised the moment it is added.
+clone "SkillTemplate" from="effect.reduced_ap_after_transport" id="effect.mechty_lights_out" {
+    set "Title" {
+        set "m_DefaultTranslation" "Lights Out"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "This unit has turned in for the turn."
+    }
+    set "EventHandlers" index=1 {
+        set "ActionPoints" -1000
+        set "ForceTurnToEnd" #true
+    }
+}

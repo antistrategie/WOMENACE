@@ -78,7 +78,9 @@ public static class Calibration
     {
         if (DollNames.TryGetValue(dollName, out var known))
             return known;
-        var isDoll = Templates.ById<Il2CppMenace.Tags.TagTemplate>(Affinity.Tag + "_" + dollName) != null;
+        // Exists, not ById: this runs for every weapon name in the game and a vanilla name misses every
+        // time, and the loader-backed lookup logs an error per miss.
+        var isDoll = Templates.Exists<Il2CppMenace.Tags.TagTemplate>(Affinity.Tag + "_" + dollName);
         DollNames[dollName] = isDoll;
         return isDoll;
     }

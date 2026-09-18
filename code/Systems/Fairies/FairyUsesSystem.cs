@@ -29,7 +29,13 @@ public sealed class FairyUsesSystem : JiangyuSystem
     public override void OnInit()
     {
         Context.Patches.Postfix("Il2CppMenace.Strategy.Operation", "EndMission", OnMissionEnded);
-        Context.Patches.Postfix("Il2CppMenace.Tactical.Skills.SkillTemplate", "AppendUsageInfoTooltipData", OnUsageTooltip);
+        // Hooked on AppendTooltipData, the builder that appends the usage lines (it calls
+        // AppendUsageInfoTooltipData, and OffmapAbilityTemplate.AppendTooltipData routes through
+        // it). AppendUsageInfoTooltipData itself cannot be patched: its last parameter is a
+        // Nullable<ItemType> struct that perk tooltips pass as null, and the Il2Cpp detour
+        // trampoline throws while marshalling that null before any handler runs, which drops
+        // the whole usage section from every perk tooltip.
+        Context.Patches.Postfix("Il2CppMenace.Tactical.Skills.SkillTemplate", "AppendTooltipData", OnUsageTooltip);
     }
 
     public override void OnTemplatesApplied()
@@ -103,7 +109,9 @@ public sealed class FairyUsesSystem : JiangyuSystem
     {
         try
         {
-            if (info.Args.Count < 7 || info.Args[6] is not true)
+            // AppendTooltipData(tooltip, itemTemplate, showIcon, isInfantrySpecialEquipped,
+            // executingElementsCount, isOffmapAbility, entityProperties, remainingUses)
+            if (info.Args.Count < 8 || info.Args[5] is not true)
                 return;
             var skill = As<SkillTemplate>(info.Instance);
             var tooltip = As<TooltipData>(info.Args[0]);

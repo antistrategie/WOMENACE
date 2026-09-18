@@ -1,0 +1,78 @@
+clone "TagTemplate" from="unique" id="wmgfl_alva"
+
+clone "WeaponTemplate" from="weapon.koleda" id="weapon.alva_ssr" {
+    set "Title" {
+        set "m_DefaultTranslation" "6P33"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Alva's signature assault rifle."
+    }
+    set "SlotType" enum="ItemSlot" "InfantrySpecial"
+    set "VisualAlterationSlot" enum="VisualAlterationSlot" "Hand_R_Special"
+
+    clear "SkillsGranted"
+    append "SkillsGranted" "active.alva_ssr_burst"
+    append "SkillsGranted" "active.alva_ssr_sustained"
+    append "SkillsGranted" "active.alva_ssr_frost_echo"
+}
+
+clone "SkillTemplate" from="active.fire_koleda_ak12" id="active.alva_ssr_burst" {
+    set "ExecutingElement" enum="ExecutingElementType" "SpecialOnly"
+}
+
+clone "SkillTemplate" from="active.fire_koleda_ak12_sustained" id="active.alva_ssr_sustained" {
+    set "ExecutingElement" enum="ExecutingElementType" "SpecialOnly"
+}
+
+clone "SkillTemplate" from="active.deploy_explosive_charge" id="active.alva_ssr_frost_echo" {
+    set "Title" {
+        set "m_DefaultTranslation" "Frost Echo"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Summons an ice shard for $1 rounds."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SpawnObjectTileEffect" "tile_effect.alva_frost_echo" path="RemoveAfterRounds"
+    }
+    set "Icon" asset="elements/freeze"
+    set "IconDisabled" asset="elements/freeze_bw"
+    clear "Tags"
+    append "Tags" "deployable"
+
+    set "ActionPointCost" 20
+    set "IsLimitedUses" #false
+    set "ExecutingElement" enum="ExecutingElementType" "SpecialOnly"
+    set "AnimationType" enum="AnimationType" "ShootSingle"
+    set "DelayAfterAnimationTrigger" 0.2
+    set "TargetsAllowed" enum="SkillTarget" "EmptyTile"
+    set "CanHitAnotherTile" #false
+    set "SelectableTiles" 1
+    set "AoEChanceToHitCenter" 100
+    set "MinRange" 1
+    set "IdealRange" 8
+    set "MaxRange" 8
+    set "ProjectileData" #null
+    set "SecondaryProjectileData" #null
+    clear "SoundsOnUse"
+
+    clear "EventHandlers"
+    append "EventHandlers" type="SpawnTileEffect" {
+        set "Event" enum="ApplyOnEvent" "OnUse"
+        set "EffectToSpawn" "tile_effect.alva_frost_echo"
+        set "ChanceAtCenter" 100
+        set "ChancePerTileFromCenter" 0
+        set "CanHitStructures" #false
+    }
+}
+
+clone "SpawnObjectTileEffect" from="tile_effect.explosive_charge" id="tile_effect.alva_frost_echo" {
+    set "Title" {
+        set "m_DefaultTranslation" "Ice Shard"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "An ice shard suspended in a cloud of frost."
+    }
+    set "SpawnObjectOrEffect" asset="effects/frost_echo/main"
+    set "HasTimeLimit" #true
+    set "RemoveAfterRounds" 3
+    set "ObjectOrEffectDestroyDelay" 0.0
+}

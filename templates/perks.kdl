@@ -34,3 +34,57 @@ clone "PerkTemplate" from="perk.drive_by" id="perk.wmgfl_drive_by" {
         set "Effect" "effect.wmgfl_drive_by"
     }
 }
+
+// Focus Fire, Solid Grouping's damage counterpart. The vanilla ChangePropertyConsecutive
+// handler feeds AmountMult x stacks to the property (x2.2 at two stacks on a multiplier), so
+// the tracking lives in the mod's ConsecutiveDamage handler (code/Perks/FocusFire.cs), which
+// scales the attack by 1 + BonusPerStack x stacks and shows the count on the icon.
+clone "SkillTemplate" from="effect.solid_grouping" id="effect.wmgfl_focus_fire" {
+    set "Icon" asset="effects/focus_fire"
+    set "Title" {
+        set "m_DefaultTranslation" "Focus Fire"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "+$1% damage (if attacking the same target). Stacks cap at $2."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_focus_fire" path="EventHandlers[0].BonusPerStack" format="percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_focus_fire" path="EventHandlers[0].MaxStacks"
+    }
+    clear "EventHandlers"
+    append "EventHandlers" type="WOMENACE:ConsecutiveDamage" {
+        set "BonusPerStack" 0.1
+        set "MaxStacks" 5
+    }
+}
+
+clone "PerkTemplate" from="perk.solid_grouping" id="perk.wmgfl_focus_fire" {
+    set "Title" {
+        set "m_DefaultTranslation" "Focus Fire"
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "+$1% DMG for each consecutive attack vs. the SAME target."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_focus_fire" path="EventHandlers[0].BonusPerStack" format="percent"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            Range instructors will tell you that marksmanship is a matter of grouping. The rest of the platoon will tell you that what matters is how many rounds end up in the same body before it stops moving.
+
+
+            <style="Highlight">• +$1% damage for each consecutive attack against the SAME target. The bonus can stack between rounds, but will reset upon attacking a different target.
+
+            ** Damage stacks cap at $2. **</style>
+            """
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_focus_fire" path="EventHandlers[0].BonusPerStack" format="percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_focus_fire" path="EventHandlers[0].MaxStacks"
+    }
+
+    set "Icon" asset="perks/focus_fire"
+    set "IconDisabled" asset="perks/focus_fire_inactive"
+    set "PerkIcon" asset="perks/focus_fire"
+
+    set "EventHandlers" index=0 {
+        set "SkillToAdd" "effect.wmgfl_focus_fire"
+    }
+}

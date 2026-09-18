@@ -17,7 +17,9 @@ namespace WOMENACE.Code;
 //   Sortie.Where   -> where we are (scene, active screen, prep readiness, in-mission)
 //   Sortie.Open    -> open mission prep for the current operation's mission
 //   Sortie.Launch  -> launch the prepped mission, once its preview has landed
-//   Sortie.Skills  -> the active actor's skills as the engine judges them
+//   Sortie.Skills  -> an actor's skills as the engine judges them, with lifetime and cooldown counters
+//   Sortie.Use     -> use one of the active actor's skills on a tile through its own Use
+//   Sortie.EndRound -> end the player's round and let the enemy phase run
 //
 // Named Sortie, not Mission: the verb runner matches class short names
 // case-insensitively and the SDK's own Mission class would shadow it.
@@ -103,12 +105,14 @@ public static class Sortie
         };
     }
 
-    // The active actor's skill list as the engine judges it, for checking a once-per-mission
-    // gate without reading the skill bar: whether each skill is usable right now, and which
-    // status effects (a spent marker among them) the actor carries.
-    public static object Skills()
+    // An actor's skill list as the engine judges it (the active actor unless one is given),
+    // for checking a once-per-mission gate or an effect's remaining life without reading the
+    // skill bar: whether each skill is usable right now, which status effects (a spent marker
+    // among them) the actor carries, and the counters the timed handlers keep, a lifetime's
+    // turns left and a cooldown's rounds left.
+    public static object Skills(Actor actor = null)
     {
-        var actor = TacticalManager.Get()?.GetActiveActor();
+        actor ??= TacticalManager.Get()?.GetActiveActor();
         var skills = actor?.GetSkills()?.GetAllSkills();
         if (skills == null)
             return new { error = "no active actor" };
@@ -122,13 +126,63 @@ public static class Sortie
             var handlers = active?.GetSkillEventHandlers();
             var kinds = new List<string>();
             for (var h = 0; handlers != null && h < handlers.Length; h++)
-                kinds.Add(handlers[h]?.GetIl2CppType().Name ?? "null");
+                kinds.Add(Describe(handlers[h]));
+            var stacks = active != null && active.StackCount > 0 ? $" stacks={active.StackCount}" : "";
             rows.Add(active != null
-                ? $"{skill.GetID()} usable={active.IsUsable()} enabled={skill.IsEnabled()} hidden={skill.IsHidden()} uses={active.GetUses()}/{active.GetMaxUses()} handlers=[{string.Join(",", kinds)}]"
+                ? $"{skill.GetID()} usable={active.IsUsable()} enabled={skill.IsEnabled()} hidden={skill.IsHidden()} uses={active.GetUses()}/{active.GetMaxUses()}{stacks} handlers=[{string.Join(",", kinds)}]"
                 : $"{skill.GetID()} enabled={skill.IsEnabled()} hidden={skill.IsHidden()}");
         }
         // Joined into one string: the verb runner's JSON layer renders arrays as their type name.
         return new { actor = actor.GetTemplate()?.GetID(), count = rows.Count, skills = string.Join("\n", rows) };
+    }
+
+    // End the player's round, what the End Turn button does, so a bridge-driven test can
+    // let the enemy phase run and reach the next round without a hand on the mouse.
+    [MutatingVerb]
+    public static object EndRound()
+    {
+        var state = Il2CppMenace.States.TacticalState.Get();
+        if (state == null || !TacticalManager.IsMissionRunning())
+            return new { error = "not in a mission" };
+        state.EndTurn();
+        return new { ok = true, round = TacticalManager.Get()?.GetRound() ?? -1 };
+    }
+
+    // Use one of the active actor's skills on a tile, through the skill's own Use so every
+    // handler fires as it would from the skill bar. The tile defaults to the actor's own for
+    // self-buffs; an attack takes the target's tile.
+    [MutatingVerb]
+    public static object Use(string skillId, Tile target = null)
+    {
+        var actor = TacticalManager.Get()?.GetActiveActor();
+        var skills = actor?.GetSkills()?.GetAllSkills();
+        if (skills == null)
+            return new { error = "no active actor" };
+        for (var i = 0; i < skills.Count; i++)
+        {
+            var skill = skills[i]?.TryCast<Il2CppMenace.Tactical.Skills.Skill>();
+            if (skill == null || skill.GetID() != skillId)
+                continue;
+            var tile = target ?? actor.GetTile();
+            var usable = skill.IsUsable();
+            var used = skill.Use(tile, Il2CppMenace.Tactical.Skills.UsageParameter.Default);
+            return new { actor = actor.GetTemplate()?.GetID(), skill = skillId, wasUsable = usable, used, tile = tile == null ? "none" : $"{tile.GetX()},{tile.GetZ()}" };
+        }
+        return new { error = $"active actor has no skill '{skillId}'" };
+    }
+
+    private static string Describe(Il2CppMenace.Tactical.Skills.SkillEventHandler handler)
+    {
+        if (handler == null)
+            return "null";
+        var name = handler.GetIl2CppType().Name;
+        var lifetime = handler.TryCast<Il2CppMenace.Tactical.Skills.Effects.LifetimeLimitHandler>();
+        if (lifetime != null)
+            return $"{name}:{lifetime.m_TurnsLeft}";
+        var cooldown = handler.TryCast<Il2CppMenace.Tactical.Skills.Effects.CooldownEffectHandler>();
+        if (cooldown != null)
+            return $"{name}:{cooldown.m_Cooldown}";
+        return name;
     }
 
     private static UIScreen ActiveScreen()

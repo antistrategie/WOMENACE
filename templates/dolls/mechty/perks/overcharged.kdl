@@ -1,0 +1,104 @@
+clone "PerkTemplate" from="perk.overload_vehicle" id="perk.mechty_overcharged" {
+    // Overcharged, Mechty's tier 4 active: one energy drink, two turns of frantic energy,
+    // then the crash. Overload's shape (a burst of AP followed by a stun) stretched over two
+    // turns with a movement discount, on a longer cooldown. The effect keeps Overload's
+    // stun-on-removal, so the crash lands the turn after it ends. A LifetimeLimit counted in
+    // turn ends ticks at the end of the turn it is added in, so Lifetime 2 covers the use turn
+    // and the next, while one added BY a turn-end pass (the crash) skips that pass and covers
+    // the next Lifetime turns (verified live). Cooldown 4 makes it usable again four rounds
+    // after use: drink, second AP turn, crash, one normal turn, drink.
+    set "Title" {
+        set "m_DefaultTranslation" "Overcharged"
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "+$1 AP and -$2 AP move cost this turn and the next on ACTIVATION, but stunned afterwards."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.mechty_overcharged" path="EventHandlers[2].ActionPoints"
+        append "m_Placeholders" bind="SkillTemplate" "effect.mechty_overcharged" path="EventHandlers[4].Amount" format="magnitude"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            Understanding energy drinks is all about threading this immutable truth: you are not borrowing energy from the can, you are borrowing it from tomorrow.
+
+
+            <style="Highlight">• +$1 <link="action_points">AP</link> and -$2 <link="action_points">AP</link> movement cost per tile this turn and the next on ACTIVATION. The SL will be stunned the turn after it wears off.</style>
+            """
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.mechty_overcharged" path="EventHandlers[2].ActionPoints"
+        append "m_Placeholders" bind="SkillTemplate" "effect.mechty_overcharged" path="EventHandlers[4].Amount" format="magnitude"
+    }
+
+    clear "SoundsOnUse"
+    append "SoundsOnUse" {
+        set "bankId" "wmgfl_tactical_barks_mechty_va"
+        set "itemId" "Series_Up_008"
+    }
+
+    set "Icon" asset="mechty/perks/overcharged"
+    set "IconDisabled" asset="mechty/perks/overcharged_inactive"
+    set "PerkIcon" asset="mechty/perks/overcharged"
+
+    set "EventHandlers" index=0 {
+        set "RoundsToCoolDown" 4
+    }
+    set "EventHandlers" index=1 {
+        set "SkillToAdd" "effect.mechty_overcharged"
+    }
+}
+
+clone "SkillTemplate" from="effect.overload" id="effect.mechty_overcharged" {
+    set "Icon" asset="mechty/effects/overcharged"
+    set "Title" {
+        set "m_DefaultTranslation" "Overcharged"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "This unit is running on an energy drink. +$1 <link=\"action_points\">AP</link> and -$2 <link=\"action_points\">AP</link> movement cost per tile. It will be stunned when the effect wears off."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.mechty_overcharged" path="EventHandlers[2].ActionPoints"
+        append "m_Placeholders" bind="SkillTemplate" "effect.mechty_overcharged" path="EventHandlers[4].Amount" format="magnitude"
+    }
+    // The turn it is drunk in and the next: the AP burst on use and one raised refill.
+    set "EventHandlers" index=0 {
+        set "Lifetime" 2
+    }
+    set "EventHandlers" index=1 {
+        set "LocaKey" "mechty_overcharged"
+        set "DefaultText" "Overcharged!"
+    }
+    // The burst on activation lifts the cap too, so the AP is granted even at full AP, and the
+    // handler keeps raising the pool on every update while the effect lives (native OnUpdate),
+    // which is what carries the +50 into the second turn's refill.
+    set "EventHandlers" index=2 {
+        set "AlwaysIncreaseMaxActionPoints" #true
+    }
+    // The crash. The mod's own stun rather than effect.stunned, so its lifetime is counted in
+    // her turn ends: this AddSkill fires from the removal at her turn end, and the effect then
+    // covers exactly her next turn.
+    set "EventHandlers" index=3 {
+        set "SkillToAdd" "effect.mechty_crash"
+    }
+    append "EventHandlers" type="ChangeProperty" {
+        set "Trigger" enum="UpdateEvent" "OnUpdate"
+        set "PropertyType" enum="EntityPropertyType" "AdditionalMovementCost"
+        set "Amount" -5
+        set "AmountMult" 1.0
+    }
+}
+
+clone "SkillTemplate" from="effect.stunned" id="effect.mechty_crash" {
+    set "Title" {
+        set "m_DefaultTranslation" "Crash"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "The energy drink wore off. The unit is stunned for a turn."
+        clear "m_Placeholders"
+    }
+    // The AP drain closes the stunned turn the moment it starts, and that forced turn end is
+    // the one turn end this spends, so the effect is gone before the turn after. A second point
+    // of lifetime is a second stunned turn (verified live).
+    set "EventHandlers" index=0 type="LifetimeLimit" {
+        set "Event" enum="LifetimeType" "OnTurnEnd"
+        set "Lifetime" 1
+        set "ResetLifetimeOnRefresh" #false
+    }
+}

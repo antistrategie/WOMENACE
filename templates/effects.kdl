@@ -1,11 +1,11 @@
-// The Phase damage status effects. Phase damage is exclusive to SSR weapons:
-// their skills carry a WOMENACE:ElementalDamage handler naming an element and
-// a per-hit amount. Hits accumulate build-up on the victim (tracked by the
-// ElementsSystem), shown as a greyscale icon that fills with colour from the
-// bottom. Once build-up reaches 20% of the unit's max hitpoints the victim
-// gains the element's real effect below and the gauge resets. Reapplication
-// is ignored while the effect is live, so nothing stacks.
 clone "SkillTemplate" from="effect.bleeding" id="effect.wmgfl_burn" {
+    // The Phase damage status effects. Phase damage is exclusive to SSR weapons:
+    // their skills carry a WOMENACE:ElementalDamage handler naming an element and
+    // a per-hit amount. Hits accumulate build-up on the victim (tracked by the
+    // ElementsSystem), shown as a greyscale icon that fills with colour from the
+    // bottom. Once build-up reaches 20% of the unit's max hitpoints the victim
+    // gains the element's real effect below and the gauge resets. Reapplication
+    // is ignored while the effect is live, so nothing stacks.
     set "Icon" asset="elements/burn"
     set "Title" {
         set "m_DefaultTranslation" "Burning"

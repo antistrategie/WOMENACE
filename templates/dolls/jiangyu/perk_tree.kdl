@@ -1,6 +1,6 @@
-// perk.fragmentation replaces perk.athletic at tier 1 because athletic is the starting perk.
-// perk.thats_a_knife is a placeholder until her own melee kit lands.
 clone "PerkTreeTemplate" from="perk_tree.sy" id="perk_tree.jiangyu" {
+    // perk.fragmentation replaces perk.athletic at tier 1 because athletic is the starting perk.
+    // perk.thats_a_knife is a placeholder until her own melee kit lands.
     clear "Perks"
     append "Perks" {
         set "Skill" "perk.fragmentation"

@@ -1,9 +1,9 @@
-// The mod's keyword tooltips, all in one place: Jiangyu permits a single
-// patch block per template target across the mod, so every <link="id">
-// registered with the game's TextTooltipsConfig lives here. A skill
-// description writes <link="wmgfl_burn">Burn</link> and hovering the word
-// opens the matching entry as a nested tooltip.
 patch "TextTooltipsConfig" "text_tooltips_config" {
+    // The mod's keyword tooltips, all in one place: Jiangyu permits a single
+    // patch block per template target across the mod, so every <link="id">
+    // registered with the game's TextTooltipsConfig lives here. A skill
+    // description writes <link="wmgfl_burn">Burn</link> and hovering the word
+    // opens the matching entry as a nested tooltip.
     // The elements. Phase damage is exclusive to SSR weapons: hits build the
     // element on the victim and at 20% of the unit's max hitpoints the effect
     // (templates/elements/) procs.

@@ -9,6 +9,7 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.asteria_bond" {
         set "m_DefaultTranslation" """
             Always there for a friend in need.
 
+
             <style="Highlight">• Grants the skill 'Bond Connextion'. Asteria bonds with a friendly squad and that squad deals $1% more damage for the rest of the battle.</style>
             <style="Highlight">• The bond holds a single charge per mission.</style>
             """
@@ -104,6 +105,7 @@ clone "SkillTemplate" from="offmap.shield_projector" id="active.asteria_bond_con
     set "IsLimitedUses" #false
     set "IsStacking" #false
     set "IsRemovedAfterCombat" #true
+    clear "Tags"
     append "Tags" "asteria_bond"
     clear "EventHandlers"
     append "EventHandlers" type="AddSkill" {

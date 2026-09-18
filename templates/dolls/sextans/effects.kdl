@@ -1,9 +1,9 @@
-// Sextans' status effects: the mark her blades leave, the charge her strikes
-// build, and the blessing her ultimate confers on the squad.
-// Blood Kiss: applied by the slash and the thrust to everything they hit.
-// Cloned from bleeding so the marked keep the blood-drip visual and the apply
-// sound, but the mark itself draws no blood.
 clone "SkillTemplate" from="effect.bleeding" id="effect.sextans_blood_kiss" {
+    // Sextans' status effects: the mark her blades leave, the charge her strikes
+    // build, and the blessing her ultimate confers on the squad.
+    // Blood Kiss: applied by the slash and the thrust to everything they hit.
+    // Cloned from bleeding so the marked keep the blood-drip visual and the apply
+    // sound, but the mark itself draws no blood.
     set "Icon" asset="sextans/buff_blood_kiss"
     set "Title" {
         set "m_DefaultTranslation" "Blood Kiss"

@@ -1,0 +1,88 @@
+clone "PerkTemplate" from="perk.steady_gun" id="perk.mechty_let_me_sleep" {
+    // Let Me Sleep, Mechty's starting perk. A turn spent in one spot earns a stack of
+    // damage and accuracy at the cost of detection, and moving throws every stack away.
+    // The counting and the property changes live in the StationaryStacks handler
+    // (code/Perks/LetMeSleep.cs): no vanilla handler scales a property by turns spent
+    // stationary. The two effects below are what the player sees, the stack badge and
+    // the penalty for getting up.
+    set "Title" {
+        set "m_DefaultTranslation" "Let Me Sleep"
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "+$1% DMG / ACC and -$2 Detection for each turn spent WITHOUT moving, up to $3 stacks. Moving resets them."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="PerkTemplate" "perk.mechty_let_me_sleep" path="EventHandlers[0].BonusPerStack" format="percent"
+        append "m_Placeholders" bind="PerkTemplate" "perk.mechty_let_me_sleep" path="EventHandlers[0].DetectionPerStack"
+        append "m_Placeholders" bind="PerkTemplate" "perk.mechty_let_me_sleep" path="EventHandlers[0].MaxStacks"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            “Five more minutes. Ten, if nobody is shooting at us.”
+
+              – Mechty, on being ordered to hold position
+
+
+            <style="Highlight">• +$1% damage, +$1% <link="accuracy">Accuracy</link> and -$2 <link="detection">Detection</link> for each turn the SL ends WITHOUT moving.
+
+            • Moving resets the stacks and leaves the SL Slacking Off: -$4% <link="accuracy">Accuracy</link> for the rest of the turn.
+
+            ** Stacks cap at $3. **</style>
+            """
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="PerkTemplate" "perk.mechty_let_me_sleep" path="EventHandlers[0].BonusPerStack" format="percent"
+        append "m_Placeholders" bind="PerkTemplate" "perk.mechty_let_me_sleep" path="EventHandlers[0].DetectionPerStack"
+        append "m_Placeholders" bind="PerkTemplate" "perk.mechty_let_me_sleep" path="EventHandlers[0].MaxStacks"
+        append "m_Placeholders" bind="SkillTemplate" "effect.mechty_slack_off" path="EventHandlers[1].AmountMult" format="reduction-percent"
+    }
+
+    set "Icon" asset="mechty/perks/let_me_sleep"
+    set "IconDisabled" asset="mechty/perks/let_me_sleep_inactive"
+    set "PerkIcon" asset="mechty/perks/let_me_sleep"
+
+    clear "EventHandlers"
+    append "EventHandlers" type="WOMENACE:StationaryStacks" {
+        set "MaxStacks" 3
+        set "BonusPerStack" 0.1
+        set "DetectionPerStack" 1
+        set "StackEffect" ref="SkillTemplate" "effect.mechty_let_me_sleep"
+        set "MoveEffect" ref="SkillTemplate" "effect.mechty_slack_off"
+    }
+}
+
+// The visible stack count. Carries no behaviour: the perk handler writes its StackCount
+// and the StackBadge handler makes the status icon draw the number.
+clone "SkillTemplate" from="effect.bleeding" id="effect.mechty_let_me_sleep" {
+    set "Icon" asset="mechty/effects/let_me_sleep"
+    set "Title" {
+        set "m_DefaultTranslation" "Let Me Sleep"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "This unit has settled in. +$1% damage, +$1% <link=\"accuracy\">Accuracy</link> and -$2 <link=\"detection\">Detection</link> per stack."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="PerkTemplate" "perk.mechty_let_me_sleep" path="EventHandlers[0].BonusPerStack" format="percent"
+        append "m_Placeholders" bind="PerkTemplate" "perk.mechty_let_me_sleep" path="EventHandlers[0].DetectionPerStack"
+    }
+    clear "EventHandlers"
+    append "EventHandlers" type="WOMENACE:StackBadge" {}
+}
+
+// What moving costs her. Off-Balance without the movement surcharge: the sheet asks for
+// the accuracy penalty alone.
+clone "SkillTemplate" from="effect.off_balance" id="effect.mechty_slack_off" {
+    set "Icon" asset="mechty/effects/slack_off"
+    set "Title" {
+        set "m_DefaultTranslation" "Slacking Off"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "This unit had to get up and has lost its rhythm. It has $1% reduced <link=\"accuracy\">Accuracy</link> until the end of the turn."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.mechty_slack_off" path="EventHandlers[1].AmountMult" format="reduction-percent"
+    }
+    set "EventHandlers" index=2 {
+        set "LocaKey" "mechty_slack_off"
+        set "DefaultText" "Slacking off"
+    }
+    set "EventHandlers" index=3 {
+        set "CostPerTile" 0
+    }
+}
