@@ -131,19 +131,15 @@ public sealed class SoppoFormsSystem : JiangyuSystem
             if (actor == null)
                 return;
 
-            var strippedOther = 0;
-            while (container.Remove(leaving))
-                strippedOther++;
-            // collapse to a single instance: remove pairs until one is left.
-            // Count includes the add queue, so the fresh instance is seen.
-            var strippedDupes = 0;
-            while (SkillEffects.CountInstances(container, entering) > 1 && container.Remove(entering))
-                strippedDupes++;
+            var strippedOther = SkillEffects.RemoveInstances(container, leaving);
+            // collapse to a single instance: the one just added stays (or, when this Add
+            // only refreshed a live form, that live one does) and every other copy goes
+            var strippedDupes = SkillEffects.RemoveInstances(container, entering, keep: added);
             if (strippedOther > 0 || strippedDupes > 0)
             {
                 Context.Log.Debug($"soppo forms: entered '{entering.GetID()}', stripped {strippedOther} other / {strippedDupes} duplicate");
-                // Remove(SkillTemplate) is overloaded and unpatchable, so the
-                // icon mirror cannot see these strips on its own
+                // The strips may be deferred inside a dispatch, so the icon
+                // mirror is told explicitly rather than left to see the change
                 EffectHudIconSystem.Resync(actor);
             }
         }

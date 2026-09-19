@@ -126,14 +126,11 @@ public sealed class BlanketWindowSystem : JiangyuSystem
                         touched++;
                     return;
                 }
-                var stripped = false;
-                while (skills.Remove(effect))
-                    stripped = true;
-                if (!stripped)
+                if (SkillEffects.RemoveInstances(skills, effect) == 0)
                     return;
                 touched++;
-                // Remove(SkillTemplate) is overloaded and unpatchable, so the overhead icon
-                // mirror cannot see this path on its own.
+                // The strip may be deferred inside a dispatch, so the overhead icon mirror is
+                // told explicitly rather than left to see the container change.
                 EffectHudIconSystem.Resync(actor);
             }
             catch

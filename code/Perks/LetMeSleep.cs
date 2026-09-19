@@ -159,11 +159,9 @@ public sealed partial class StationaryStacksHandler : SkillEventHandler
                 return;
             if (_stacks <= 0)
             {
-                var skills = actor.GetSkills();
-                var removed = 0;
-                while (skills != null && skills.Remove(StackEffect))
-                    removed++;
-                if (removed > 0)
+                // Bounded removal: this runs inside the container's OnMovementFinished dispatch,
+                // where Remove(SkillTemplate) only flags and would report success forever.
+                if (SkillEffects.RemoveInstances(actor.GetSkills(), StackEffect) > 0)
                     EffectHudIconSystem.Resync(actor);
                 return;
             }

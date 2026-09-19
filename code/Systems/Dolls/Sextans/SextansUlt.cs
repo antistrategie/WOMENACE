@@ -750,14 +750,12 @@ public sealed class SextansUltSystem : JiangyuSystem
         var skills = actor?.GetSkills();
         if (skills == null || effect == null)
             return;
-        var removed = 0;
-        while (skills.Remove(effect))
-            removed++;
+        var removed = SkillEffects.RemoveInstances(skills, effect);
         if (removed == 0)
             return;
         Context.Log.Debug($"ult: stripped {removed} of '{effect.GetID()}'");
-        // Remove(SkillTemplate) is overloaded and unpatchable, so the icon
-        // mirror cannot see this path on its own
+        // The strip may be deferred inside a dispatch, so the icon mirror is
+        // told explicitly rather than left to see the container change
         EffectHudIconSystem.Resync(actor);
     }
 }
