@@ -111,12 +111,12 @@ clone "WeaponTemplate" from="weapon.alva" id="weapon.alva_ssr" {
     append "SkillsGranted" "active.alva_ssr_frost_echo"
 }
 
-// Both firing modes build Freeze: 16 per use (4 x 4 on the burst, 8 x 2 on sustained fire), the
-// same pace as Soppo's SSR bursts, so a standard squad procs in about one use.
 clone "SkillTemplate" from="active.fire_alva_an94" id="active.alva_ssr_burst" {
     set "Description" {
         set "m_DefaultTranslation" "A burst of several cryo rounds dealing <link=\"wmgfl_freeze\">Freeze</link> damage. Effective on short to medium distance in suppressing and eliminating soft targets."
     }
+    set "Repetitions" 6
+    set "RepetitionDelay" 0.3
     set "ExecutingElement" enum="ExecutingElementType" "SpecialOnly"
     append "EventHandlers" type="WOMENACE:ElementalDamage" {
         set "Element" "Freeze"
@@ -303,7 +303,7 @@ clone "SkillTemplate" from="active.fire_alva_an94_sustained" id="active.alva_ssr
     append "EventHandlers" type="WOMENACE:FrostEchoZone" {
         set "Radius" 2
         set "Rounds" 4
-        set "FreezePerTurn" 100.0
+        set "FreezePerTurn" 20.0
     }
     // The shard, on the aimed tile alone (the chance falls by this much per tile from the centre).
     // Spawned LAST: a tile holds one such effect, and the frost field's spawn above also lands on
