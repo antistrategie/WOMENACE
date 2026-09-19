@@ -112,6 +112,23 @@ public sealed class ElementsSystem : JiangyuSystem
     internal static void AddBuildUp(Actor victim, int element, float amount)
         => _instance?.Accumulate(victim, element, amount);
 
+    // Multipliers on the damage a victim takes from a skill that builds a
+    // given element (Alva's Hypothermia mark registers one). The hit path and
+    // ElementalDamageHandler's hover-preview contributor both read this, so
+    // the previewed and the landed number agree.
+    private static readonly List<Func<Actor, int, float>> VictimDamageMults = new();
+
+    internal static void RegisterVictimDamageMult(Func<Actor, int, float> mult)
+        => VictimDamageMults.Add(mult);
+
+    internal static float VictimDamageMult(Actor victim, int element)
+    {
+        var mult = 1f;
+        foreach (var f in VictimDamageMults)
+            mult *= f(victim, element);
+        return mult;
+    }
+
     // The victim's gauges, or null when every gauge is empty. The HUD reads
     // this to draw fill icons.
     internal static float[] GaugesFor(Actor actor)

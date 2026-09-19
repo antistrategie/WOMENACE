@@ -1,14 +1,109 @@
-clone "TagTemplate" from="unique" id="wmgfl_alva"
+clone "WeaponTemplate" from="weapon.generic_assault_rifle_tier1_kpac" id="weapon.alva" {
+    append "Tags" "jy_no_sell"
+    append "Tags" "wmgfl_class_ar"
+    set "Title" {
+        set "m_DefaultTranslation" "Nikonova 94"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Assault Rifle"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "A firearm highly compatible with Alva. Modified based on her combat preferences. Its recoil has been greatly reduced, producing a visible improvement to shooting accuracy."
+    }
 
-clone "WeaponTemplate" from="weapon.koleda" id="weapon.alva_ssr" {
+    set "Model" asset="weapon/alva/main"
+    set "Icon" asset="weapon/alva/Icon"
+    set "IconEquipment" asset="weapon/alva/IconEquipment"
+    set "IconEquipmentDisabled" asset="weapon/alva/IconEquipmentDisabled"
+    set "IconSkillBar" asset="weapon/alva/IconSkillBar"
+    set "IconSkillBarDisabled" asset="weapon/alva/IconSkillBarDisabled"
+
+    set "AccuracyBonus" 0.0
+    set "AccuracyDropoff" -5.0
+    set "ArmorPenetration" 28.0
+    set "ArmorPenetrationDropoff" -1.56
+
+    set "Damage" 9.0
+    set "DamageDropoff" -0.69
+    set "DamageToArmorDurability" 8.0
+    set "DamageToArmorDurabilityDropoff" -0.52
+
+    set "MaxRange" 8
+    set "IdealRange" 4
+    set "Suppression" 3.0
+
+    set "DeployCosts" {
+        set "m_Supplies" 13
+    }
+
+    set "BlackMarketMaxQuantity" 0
+
+    set "SkillsGranted" index=0 "active.fire_alva_an94"
+    set "SkillsGranted" index=1 "active.fire_alva_an94_sustained"
+}
+
+// The Abakan's two-round hyperburst: one more repetition per burst than the AK-12.
+clone "SkillTemplate" from="active.fire_assault_rifle_tier1_556" id="active.fire_alva_an94" {
+    set "Repetitions" 4
+    set "Uses" 16
+    clear "SoundsOnAttack"
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "weapons_soundbank"
+        set "itemId" "small_caliber_brass_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_burst_distant"
+    }
+    clear "SoundsOnAttackFar"
+    append "SoundsOnAttackFar" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_burst_distant"
+    }
+}
+
+clone "SkillTemplate" from="active.fire_assault_rifle_sustained_fire_tier1_556" id="active.fire_alva_an94_sustained" {
+    set "Uses" 16
+    clear "SoundsOnAttack"
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_single"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "weapons_soundbank"
+        set "itemId" "small_caliber_brass_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_single_distant"
+    }
+    clear "SoundsOnAttackFar"
+    append "SoundsOnAttackFar" {
+        set "bankId" "wmgfl_weapons_ar_addition_bank"
+        set "itemId" "ar_single_distant"
+    }
+}
+
+clone "WeaponTemplate" from="weapon.alva" id="weapon.alva_ssr" {
     set "Title" {
         set "m_DefaultTranslation" "6P33"
     }
     set "Description" {
-        set "m_DefaultTranslation" "Alva's signature assault rifle."
+        set "m_DefaultTranslation" "A high-performance assault rifle assigned to Alva. Based on the Nikonova 94. A set of targeted modifications has produced a frightening increase in its effective range and killing power. Release all limiters and hit them with everything you've got!"
     }
     set "SlotType" enum="ItemSlot" "InfantrySpecial"
     set "VisualAlterationSlot" enum="VisualAlterationSlot" "Hand_R_Special"
+
+    set "Model" asset="weapon/alva_ssr/main"
+    set "Icon" asset="weapon/alva_ssr/Icon"
+    set "IconEquipment" asset="weapon/alva_ssr/IconEquipment"
+    set "IconEquipmentDisabled" asset="weapon/alva_ssr/IconEquipmentDisabled"
+    set "IconSkillBar" asset="weapon/alva_ssr/IconSkillBar"
+    set "IconSkillBarDisabled" asset="weapon/alva_ssr/IconSkillBarDisabled"
 
     clear "SkillsGranted"
     append "SkillsGranted" "active.alva_ssr_burst"
@@ -16,52 +111,225 @@ clone "WeaponTemplate" from="weapon.koleda" id="weapon.alva_ssr" {
     append "SkillsGranted" "active.alva_ssr_frost_echo"
 }
 
-clone "SkillTemplate" from="active.fire_koleda_ak12" id="active.alva_ssr_burst" {
+// Both firing modes build Freeze: 16 per use (4 x 4 on the burst, 8 x 2 on sustained fire), the
+// same pace as Soppo's SSR bursts, so a standard squad procs in about one use.
+clone "SkillTemplate" from="active.fire_alva_an94" id="active.alva_ssr_burst" {
+    set "Description" {
+        set "m_DefaultTranslation" "A burst of several cryo rounds dealing <link=\"wmgfl_freeze\">Freeze</link> damage. Effective on short to medium distance in suppressing and eliminating soft targets."
+    }
     set "ExecutingElement" enum="ExecutingElementType" "SpecialOnly"
+    append "EventHandlers" type="WOMENACE:ElementalDamage" {
+        set "Element" "Freeze"
+        set "AmountPerHit" 4.0
+    }
 }
 
-clone "SkillTemplate" from="active.fire_koleda_ak12_sustained" id="active.alva_ssr_sustained" {
+clone "SkillTemplate" from="active.fire_alva_an94_sustained" id="active.alva_ssr_sustained" {
+    set "Description" {
+        set "m_DefaultTranslation" "Sustained semi-automatic cryo fire dealing <link=\"wmgfl_freeze\">Freeze</link> damage over an extended period of time, with the goal to suppress an enemy unit and keep it suppressed."
+    }
     set "ExecutingElement" enum="ExecutingElementType" "SpecialOnly"
+    append "EventHandlers" type="WOMENACE:ElementalDamage" {
+        set "Element" "Freeze"
+        set "AmountPerHit" 2.0
+    }
 }
 
-clone "SkillTemplate" from="active.deploy_explosive_charge" id="active.alva_ssr_frost_echo" {
+// Frost Echo: one AN-94 round plants the ice shard, and the field around it lives for a few
+// rounds. The zone itself is code: AlvaSsrSystem records the field when the skill is used
+// (centre, the affected tiles, rounds and the per-turn Freeze from the FrostEchoZone handler
+// below) and feeds Freeze build-up to every enemy that ends a turn inside it. In Alva's hands the
+// same tick also applies the Frost Echo mark (her imprint). The square footprint comes from
+// FrostFieldAoEShape, which the system puts on this template (CustomAoEShape is Odin-routed and
+// not KDL-authorable), so the parent is her own rifle's shot for the muzzle flash, the tracer and
+// the report.
+clone "SkillTemplate" from="active.fire_alva_an94_sustained" id="active.alva_ssr_frost_echo" {
     set "Title" {
         set "m_DefaultTranslation" "Frost Echo"
     }
-    set "Description" {
-        set "m_DefaultTranslation" "Summons an ice shard for $1 rounds."
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "Plants a $1 round frost field that builds $2 <link=\"wmgfl_freeze\">Freeze</link> damage on landing and per turn."
         clear "m_Placeholders"
-        append "m_Placeholders" bind="SpawnObjectTileEffect" "tile_effect.alva_frost_echo" path="RemoveAfterRounds"
+        append "m_Placeholders" bind="SkillTemplate" "active.alva_ssr_frost_echo" path="EventHandlers[1].Rounds"
+        append "m_Placeholders" bind="SkillTemplate" "active.alva_ssr_frost_echo" path="EventHandlers[1].FreezePerTurn"
     }
-    set "Icon" asset="elements/freeze"
-    set "IconDisabled" asset="elements/freeze_bw"
+    set "Description" {
+        set "m_DefaultTranslation" "Fire an ice shard at a tile. Enemies within $2 tiles of it build $3 <link=\"wmgfl_freeze\">Freeze</link> damage when it lands, and again at the end of each of their turns for $1 rounds."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "active.alva_ssr_frost_echo" path="EventHandlers[1].Rounds"
+        append "m_Placeholders" bind="SkillTemplate" "active.alva_ssr_frost_echo" path="EventHandlers[1].Radius"
+        append "m_Placeholders" bind="SkillTemplate" "active.alva_ssr_frost_echo" path="EventHandlers[1].FreezePerTurn"
+    }
+    set "Icon" asset="alva/skills/frost_echo"
+    set "IconDisabled" asset="alva/skills/frost_echo_disabled"
     clear "Tags"
+    append "Tags" "area_of_effect"
     append "Tags" "deployable"
 
     set "ActionPointCost" 20
-    set "IsLimitedUses" #false
+    set "IsLimitedUses" #true
+    set "Uses" 2
+    // A deployable, not an attack: the rifle parent's Attack handler is cleared below, and the flag
+    // would still make the cast roll to hit and count as an attack for return fire.
+    set "IsAttack" #false
+    set "IsAlwaysHitting" #true
     set "ExecutingElement" enum="ExecutingElementType" "SpecialOnly"
+    // One shot, not the parent's eight-round string.
     set "AnimationType" enum="AnimationType" "ShootSingle"
+    set "Repetitions" 1
     set "DelayAfterAnimationTrigger" 0.2
-    set "TargetsAllowed" enum="SkillTarget" "EmptyTile"
-    set "CanHitAnotherTile" #false
-    set "SelectableTiles" 1
-    set "AoEChanceToHitCenter" 100
+    set "IsOverridingRanges" #true
     set "MinRange" 1
     set "IdealRange" 8
     set "MaxRange" 8
-    set "ProjectileData" #null
-    set "SecondaryProjectileData" #null
+
     clear "SoundsOnUse"
+    append "SoundsOnUse" {
+        set "bankId" "wmgfl_alva_sfx"
+        set "itemId" "Skill02_Satk"
+    }
+    set "DefaultSoundOnImpact" {
+        set "bankId" "wmgfl_alva_sfx"
+        set "itemId" "Skill02"
+    }
+    set "ImpactOnSurface" index=0 {
+        set "RicochetChance" 0
+        set "SoundOnImpact" {
+            set "bankId" "wmgfl_alva_sfx"
+            set "itemId" "Skill02"
+        }
+    }
+    set "ImpactOnSurface" index=1 {
+        set "RicochetChance" 0
+        set "SoundOnImpact" {
+            set "bankId" "wmgfl_alva_sfx"
+            set "itemId" "Skill02"
+        }
+    }
+    set "ImpactOnSurface" index=2 {
+        set "RicochetChance" 0
+        set "SoundOnImpact" {
+            set "bankId" "wmgfl_alva_sfx"
+            set "itemId" "Skill02"
+        }
+    }
+    set "ImpactOnSurface" index=3 {
+        set "RicochetChance" 0
+        set "SoundOnImpact" {
+            set "bankId" "wmgfl_alva_sfx"
+            set "itemId" "Skill02"
+        }
+    }
+    set "ImpactOnSurface" index=4 {
+        set "RicochetChance" 0
+        set "SoundOnImpact" {
+            set "bankId" "wmgfl_alva_sfx"
+            set "itemId" "Skill02"
+        }
+    }
+    set "ImpactOnSurface" index=5 {
+        set "RicochetChance" 0
+        set "SoundOnImpact" {
+            set "bankId" "wmgfl_alva_sfx"
+            set "itemId" "Skill02"
+        }
+    }
+    set "ImpactOnSurface" index=6 {
+        set "RicochetChance" 0
+        set "SoundOnImpact" {
+            set "bankId" "wmgfl_alva_sfx"
+            set "itemId" "Skill02"
+        }
+    }
+    set "ImpactOnSurface" index=7 {
+        set "RicochetChance" 0
+        set "SoundOnImpact" {
+            set "bankId" "wmgfl_alva_sfx"
+            set "itemId" "Skill02"
+        }
+    }
+    set "ImpactOnSurface" index=8 {
+        set "RicochetChance" 0
+        set "SoundOnImpact" {
+            set "bankId" "wmgfl_alva_sfx"
+            set "itemId" "Skill02"
+        }
+    }
+    set "ImpactOnSurface" index=9 {
+        set "RicochetChance" 0
+        set "SoundOnImpact" {
+            set "bankId" "wmgfl_alva_sfx"
+            set "itemId" "Skill02"
+        }
+    }
+    set "ImpactOnSurface" index=10 {
+        set "RicochetChance" 0
+        set "SoundOnImpact" {
+            set "bankId" "wmgfl_alva_sfx"
+            set "itemId" "Skill02"
+        }
+    }
+    set "ImpactOnSurface" index=11 {
+        set "RicochetChance" 0
+        set "SoundOnImpact" {
+            set "bankId" "wmgfl_alva_sfx"
+            set "itemId" "Skill02"
+        }
+    }
+    set "ImpactOnSurface" index=12 {
+        set "RicochetChance" 0
+        set "SoundOnImpact" {
+            set "bankId" "wmgfl_alva_sfx"
+            set "itemId" "Skill02"
+        }
+    }
+    set "ImpactOnSurface" index=13 {
+        set "RicochetChance" 0
+        set "SoundOnImpact" {
+            set "bankId" "wmgfl_alva_sfx"
+            set "itemId" "Skill02"
+        }
+    }
 
     clear "EventHandlers"
+    // The frost on the ground, on every tile of the field (flat chance, no falloff).
     append "EventHandlers" type="SpawnTileEffect" {
         set "Event" enum="ApplyOnEvent" "OnUse"
-        set "EffectToSpawn" "tile_effect.alva_frost_echo"
+        set "EffectToSpawn" "tile_effect.alva_frost_field"
         set "ChanceAtCenter" 100
         set "ChancePerTileFromCenter" 0
         set "CanHitStructures" #false
     }
+    append "EventHandlers" type="WOMENACE:FrostEchoZone" {
+        set "Radius" 2
+        set "Rounds" 4
+        set "FreezePerTurn" 100.0
+    }
+    // The shard, on the aimed tile alone (the chance falls by this much per tile from the centre).
+    // Spawned LAST: a tile holds one such effect, and the frost field's spawn above also lands on
+    // the centre tile, so whichever spawns later owns it.
+    append "EventHandlers" type="SpawnTileEffect" {
+        set "Event" enum="ApplyOnEvent" "OnUse"
+        set "EffectToSpawn" "tile_effect.alva_frost_echo"
+        set "ChanceAtCenter" 100
+        set "ChancePerTileFromCenter" -100
+        set "CanHitStructures" #false
+    }
+}
+
+// The frost ground particles of the shard prefab, split out by ExtractPrefabSubtree
+// (unity/Assets/Editor) so each tile of the field carries them without a second shard.
+clone "SpawnObjectTileEffect" from="tile_effect.explosive_charge" id="tile_effect.alva_frost_field" {
+    set "Title" {
+        set "m_DefaultTranslation" "Frost"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Ground caught in Frost Echo's field. Enemies that end their turn here build Freeze damage."
+    }
+    set "SpawnObjectOrEffect" asset="effects/frost_echo_ground/main"
+    set "HasTimeLimit" #true
+    set "RemoveAfterRounds" 4
+    set "ObjectOrEffectDestroyDelay" 0.0
 }
 
 clone "SpawnObjectTileEffect" from="tile_effect.explosive_charge" id="tile_effect.alva_frost_echo" {
@@ -69,10 +337,41 @@ clone "SpawnObjectTileEffect" from="tile_effect.explosive_charge" id="tile_effec
         set "m_DefaultTranslation" "Ice Shard"
     }
     set "Description" {
-        set "m_DefaultTranslation" "An ice shard suspended in a cloud of frost."
+        set "m_DefaultTranslation" "An ice shard suspended in a cloud of frost. Enemies that end their turn near it build Freeze damage."
     }
     set "SpawnObjectOrEffect" asset="effects/frost_echo/main"
     set "HasTimeLimit" #true
-    set "RemoveAfterRounds" 3
+    set "RemoveAfterRounds" 4
     set "ObjectOrEffectDestroyDelay" 0.0
+}
+
+// The imprint's mark, Hypothermia. Only fields Alva fires apply it, refreshed at every turn end inside the
+// field, and it outlives the field by two of the bearer's turn ends. The damage bonus is applied
+// by AlvaSsrSystem's damage prefix, reading DamageMult off the FrostEchoMark handler here.
+clone "SkillTemplate" from="effect.bleeding" id="effect.alva_frost_echo" {
+    set "Icon" asset="alva/effects/frost_echo"
+    set "Title" {
+        set "m_DefaultTranslation" "Hypothermia"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "This unit takes $1% more damage from <link=\"wmgfl_freeze\">Freeze</link> skills. Renewed each turn it ends inside a Frost Echo field, and lasts $2 turns after it leaves."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.alva_frost_echo" path="EventHandlers[1].DamageMult" format="bonus-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.alva_frost_echo" path="EventHandlers[0].Lifetime"
+    }
+    set "IsStacking" #false
+    clear "EventHandlers"
+    append "EventHandlers" type="LifetimeLimit" {
+        set "Event" enum="LifetimeType" "OnTurnEnd"
+        set "Lifetime" 2
+        set "ResetLifetimeOnRefresh" #true
+    }
+    append "EventHandlers" type="WOMENACE:FrostEchoMark" {
+        set "DamageMult" 1.4
+    }
+    append "EventHandlers" type="DisplayText" {
+        set "Event" enum="DisplayEvent" "OnAdded"
+        set "LocaKey" "alva_hypothermia"
+        set "DefaultText" "Hypothermia!"
+    }
 }

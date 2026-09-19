@@ -31,6 +31,7 @@ public sealed class EffectHudIconSystem : JiangyuSystem
         "effect.sextans_blood_kiss",
         "effect.wmgfl_overburn",
         "effect.wmgfl_peace",
+        "effect.alva_frost_echo",
     };
 
     private static EffectHudIconSystem _instance;

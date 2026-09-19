@@ -138,4 +138,16 @@ patch "TextTooltipsConfig" "text_tooltips_config" {
             append "m_Placeholders" bind="SkillTemplate" "effect.sextans_holy_blood_mark" path="EventHandlers[2].Lifetime"
         }
     }
+    append "Tooltips" {
+        set "LinkId" "alva_hypothermia"
+        set "TooltipHeading" {
+            set "m_DefaultTranslation" "Hypothermia"
+        }
+        set "TooltipText" {
+            set "m_DefaultTranslation" "Enemies in Frost Echo take $1% more damage from <link=\"wmgfl_freeze\">Freeze</link> skills. Refreshed each turn they end inside the field, and lasts $2 turns after they leave it."
+            clear "m_Placeholders"
+            append "m_Placeholders" bind="SkillTemplate" "effect.alva_frost_echo" path="EventHandlers[1].DamageMult" format="bonus-percent"
+            append "m_Placeholders" bind="SkillTemplate" "effect.alva_frost_echo" path="EventHandlers[0].Lifetime"
+        }
+    }
 }

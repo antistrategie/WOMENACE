@@ -1,0 +1,68 @@
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.alva_default" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
+    set "Title" {
+        set "m_DefaultTranslation" "Hyper Trigger"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Field Outfit"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Alva's usual outfit. It's a highly professional special forces battle dress uniform that has next to no ornamentation or personalization, affording mobility and the ability to execute highly-demanding maneuvers in just about any environment."
+    }
+    set "Icon" asset="alva/armor/default/Icon"
+    set "IconEquipment" asset="alva/armor/default/IconEquipment"
+    set "IconSkillBar" asset="alva/armor/default/IconSkillBar"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_transmog"
+    append "Tags" "jy_no_sell"
+}
+
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.alva_wisteria_tidings" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
+    set "Title" {
+        set "m_DefaultTranslation" "Wisteria Tidings"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "School Uniform"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            "If a day comes where we no longer need to fight... I believe I would like to go to school with you."
+            She smooths her wind-tossed skirt, your face reflected in her gentle eyes.
+            """
+    }
+    set "Icon" asset="alva/armor/wisteria_tidings/Icon"
+    set "IconEquipment" asset="alva/armor/wisteria_tidings/IconEquipment"
+    set "IconSkillBar" asset="alva/armor/wisteria_tidings/IconSkillBar"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_transmog"
+    append "Tags" "jy_no_sell"
+}
+
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.alva_antje" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
+    set "Title" {
+        set "m_DefaultTranslation" "Antje"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Formal Wear"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            "Commander, I'm not picking up any abnormalities in our surroundings. Currently, I am your assistant Antje... That's a name I didn't expect to be using again."
+            Due to the demands of providing undercover close protection, she follows you closely, sticking much closer to you than usual.
+            """
+    }
+    set "Icon" asset="alva/armor/antje/Icon"
+    set "IconEquipment" asset="alva/armor/antje/IconEquipment"
+    set "IconSkillBar" asset="alva/armor/antje/IconSkillBar"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_transmog"
+    append "Tags" "jy_no_sell"
+}

@@ -1,0 +1,24 @@
+clone "ConversationTemplate" from="Carda_Early/response_taking_fire_anyone" id="Alva/response_taking_fire_anyone_alva" {
+    set "Active" #true
+    set "Roles" index=2 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_alva"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_alva_va"
+                        set "itemId" "Series_Tone_Negative_003"
+                    }
+                    set "RoleGuid" "SL"
+                    set "Text" "It's not over yet!"
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}

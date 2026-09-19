@@ -1,0 +1,67 @@
+clone "PerkTemplate" from="perk.steady_gun" id="perk.wmgfl_electronic_warfare" {
+    // Electronic Warfare, the Bridge's Hacker Attack carried by a Doll. The perk hands the leader an
+    // on-map copy of the offmap skill: same disable, same machine-only target filter, but paid for in
+    // AP with a line of fire and a fixed reach instead of one free use per operation.
+    set "Title" {
+        set "m_DefaultTranslation" "Electronic Warfare"
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "Grants a hacking attack that disables a machine for $1 turn."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.disabled" path="EventHandlers[0].Lifetime"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            Every network has a back door. Most of them were left open on purpose.
+
+
+            <style="Highlight">• Grants the skill 'Electronic Warfare'. Initiate a hacker attack that disables a vehicle or other machine for $1 turn.</style>
+            <style="Highlight">• Costs $2 <link="action_points">AP</link>, needs a line of fire and reaches $3 tiles.</style>
+            """
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.disabled" path="EventHandlers[0].Lifetime"
+        append "m_Placeholders" bind="SkillTemplate" "active.wmgfl_electronic_warfare" path="ActionPointCost"
+        append "m_Placeholders" bind="SkillTemplate" "active.wmgfl_electronic_warfare" path="MaxRange"
+    }
+
+    set "Icon" asset="perks/electronic_warfare"
+    set "IconDisabled" asset="perks/electronic_warfare_inactive"
+    set "PerkIcon" asset="perks/electronic_warfare"
+
+    clear "EventHandlers"
+    append "EventHandlers" type="AddSkill" {
+        set "Event" enum="AddEvent" "OnMissionStart"
+        set "SkillToAdd" "active.wmgfl_electronic_warfare"
+    }
+}
+
+clone "SkillTemplate" from="offmap.hacker_attack" id="active.wmgfl_electronic_warfare" {
+    // The offmap Hacker Attack as a unit skill. The parent is already Type Active with the machine-only
+    // AddSkill of effect.disabled, so only the delivery changes: the leader pays AP for it, it needs a
+    // line of fire, and the reach is the skill's own rather than the weapon's.
+    set "Title" {
+        set "m_DefaultTranslation" "Electronic Warfare"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            Initiate a hacker attack that disables the target's data transfer ability.
+
+            Disables a vehicle or other machine for $1 turn.
+            """
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.disabled" path="EventHandlers[0].Lifetime"
+    }
+    set "Icon" asset="skills/electronic_warfare"
+    set "IconDisabled" asset="skills/electronic_warfare_disabled"
+    set "ActionPointCost" 50
+    set "HideApCosts" #false
+    set "ExecutingElement" enum="ExecutingElementType" "SpecialOnly"
+    set "IsLineOfFireNeeded" #true
+    set "IsOverridingRanges" #true
+    set "MinRange" 1
+    set "IdealRange" 10
+    set "MaxRange" 10
+    set "ShowAllTilesInRangeOnHover" #true
+    set "IsStacking" #false
+    set "IsRemovedAfterCombat" #true
+}

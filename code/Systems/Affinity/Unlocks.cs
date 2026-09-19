@@ -125,6 +125,12 @@ public static class Unlocks
         {
             new Entry { Level = 4, Feature = Feature.SpecialWeapon, Items = new[] { "specialweapon.asteria_railgun" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_asteria/lv4", "Special Weapon: Particle Cannon") },
         },
+        ["wmgfl_alva"] = new[]
+        {
+            new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.alva_antje" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_alva/lv2", "Outfit: Antje") },
+            new Entry { Level = 3, Feature = Feature.Weapon, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_alva/lv3", "SSR Weapon: 6P33") },
+            new Entry { Level = 4, Feature = Feature.Skins, Armors = new[] { "armor.alva_wisteria_tidings" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_alva/lv4", "Outfit: Wisteria Tidings") },
+        },
     };
 
     public static IReadOnlyList<Entry> EntriesFor(string characterTag)

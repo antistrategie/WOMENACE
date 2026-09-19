@@ -53,7 +53,7 @@ public sealed class SsrImprintSystem : JiangyuSystem
             OwnerName = "Makiatto",
             BonusText = new LocalisedText(
                 "WOMENACE::ui/ssr_imprint/wmgfl_makiatto", "Fires twice, hits harder, and builds <link=\"wmgfl_freeze\">Freeze</link> faster."),
-            OwnerDamage = 30,
+            OwnerDamage = 35,
             Skills = new[]
             {
                 new SkillImprint { SkillId = "active.makiatto_ssr_freeze", OwnerRepetitions = 2, OwnerElementalMult = 1.5f },
@@ -116,6 +116,20 @@ public sealed class SsrImprintSystem : JiangyuSystem
             Skills = new[]
             {
                 new SkillImprint { SkillId = "active.cheyanne_ssr_ricochet" },
+            },
+        },
+        new Entry
+        {
+            // Alva's SSR rifle. No stat lever: the imprint is Frost Echo's Hypothermia mark (AlvaSsrSystem), which
+            // only fields she fires apply. The entry keys IsOwnerWielding for that gate and carries
+            // the tooltip line.
+            OwnerTag = "wmgfl_alva",
+            OwnerName = "Alva",
+            BonusText = new LocalisedText(
+                "WOMENACE::ui/ssr_imprint/wmgfl_alva", "Enemies caught in Frost Echo's field suffer <link=\"alva_hypothermia\">Hypothermia</link>."),
+            Skills = new[]
+            {
+                new SkillImprint { SkillId = "active.alva_ssr_frost_echo" },
             },
         },
     };

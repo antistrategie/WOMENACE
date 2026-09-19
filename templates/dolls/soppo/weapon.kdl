@@ -2,13 +2,13 @@ clone "WeaponTemplate" from="weapon.generic_assault_rifle_tier1_ARC_762" id="wea
     append "Tags" "jy_no_sell"
     append "Tags" "wmgfl_class_ar"
     set "Title" {
-        set "m_DefaultTranslation" "M4 SOPMOD II"
+        set "m_DefaultTranslation" "SOPMOD II"
     }
     set "ShortName" {
         set "m_DefaultTranslation" "Assault Rifle"
     }
     set "Description" {
-        set "m_DefaultTranslation" "[PLACEHOLDER] A firearm highly compatible with Soppo. Based on the M4 Carbine with SOPMOD II special operation package."
+        set "m_DefaultTranslation" "A firearm highly compatible with Soppo. Modified based on her combat preferences. Features a modified feed mechanism and sights, markedly improving its rate of fire and effective range."
     }
     set "Model" asset="weapon/soppo/main"
     set "SkillsGranted" index=0 "active.fire_soppo_m4"
@@ -85,13 +85,13 @@ clone "SkillTemplate" from="active.fire_assault_rifle_sustained_fire_tier1_762" 
 clone "WeaponTemplate" from="specialweapon.infantry_automatic_rifle_tier2" id="weapon.soppo_ssr" {
     append "Tags" "jy_no_sell"
     set "Title" {
-        set "m_DefaultTranslation" "Skysunderer's Howl"
+        set "m_DefaultTranslation" "Sky-Shattering Howl"
     }
     set "ShortName" {
         set "m_DefaultTranslation" "Assault Rifle"
     }
     set "Description" {
-        set "m_DefaultTranslation" "[PLACEHOLDER] Gun shooty shooty bang bang."
+        set "m_DefaultTranslation" "A high-performance assault rifle assigned to Soppo. Based on the SOPMOD II, its structural resliience and killing power have been greatly improved. The mad dog races through the ruins at lightning speed, her howl rending the sky asunder."
     }
 
     set "Model" asset="weapon/soppo_ssr/main"

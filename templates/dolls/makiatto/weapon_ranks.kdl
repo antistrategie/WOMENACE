@@ -99,40 +99,52 @@ clone "BlueprintTemplate" from="blueprint.squad_weapon_electro_magnetic_enhanced
 
 // --- SSR: ranks, component, duplicate blueprint --------------------------------------
 clone "WeaponTemplate" from="weapon.makiatto_ssr" id="weapon.makiatto_ssr_r1" {
-    set "Damage" 32.0
+    set "Damage" 34.0
+    set "AccuracyBonus" 21.0
+    set "AccuracyDropoff" -3.0
     set "ArmorPenetration" 52.0
     set "Suppression" 15.0
 }
 
 clone "WeaponTemplate" from="weapon.makiatto_ssr" id="weapon.makiatto_ssr_r2" {
-    set "Damage" 34.0
+    set "Damage" 36.0
+    set "AccuracyBonus" 22.0
+    set "AccuracyDropoff" -3.0
     set "ArmorPenetration" 54.0
     set "Suppression" 16.0
 }
 
 clone "WeaponTemplate" from="weapon.makiatto_ssr" id="weapon.makiatto_ssr_r3" {
-    set "Damage" 36.0
+    set "Damage" 38.0
+    set "AccuracyBonus" 24.0
+    set "AccuracyDropoff" -3.0
     set "ArmorPenetration" 57.0
     set "Suppression" 16.0
     set "MaxRange" 12
 }
 
 clone "WeaponTemplate" from="weapon.makiatto_ssr" id="weapon.makiatto_ssr_r4" {
-    set "Damage" 39.0
+    set "Damage" 41.0
+    set "AccuracyBonus" 26.0
+    set "AccuracyDropoff" -2.0
     set "ArmorPenetration" 60.0
     set "Suppression" 17.0
     set "MaxRange" 12
 }
 
 clone "WeaponTemplate" from="weapon.makiatto_ssr" id="weapon.makiatto_ssr_r5" {
-    set "Damage" 42.0
+    set "Damage" 44.0
+    set "AccuracyBonus" 28.0
+    set "AccuracyDropoff" -2.0
     set "ArmorPenetration" 64.0
     set "Suppression" 18.0
     set "MaxRange" 12
 }
 
 clone "WeaponTemplate" from="weapon.makiatto_ssr" id="weapon.makiatto_ssr_r6" {
-    set "Damage" 45.0
+    set "Damage" 47.0
+    set "AccuracyBonus" 30.0
+    set "AccuracyDropoff" -2.0
     set "ArmorPenetration" 68.0
     set "Suppression" 20.0
     set "MaxRange" 13

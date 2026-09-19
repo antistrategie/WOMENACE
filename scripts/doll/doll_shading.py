@@ -57,6 +57,10 @@ TRANSLUCENT_OVERRIDES = {
     # names (c_OTs14SSR01_slg_cloth3_trans_lod0 / cloth4_trans_lod0); the
     # DesmondChan repack names the sheets Cth3/Cth4 with no marker.
     "ots14/default": {"Cth3-Hat", "Cth4-Hat", "Cth4-TopCloth"},
+    # Antje's spectacles: the lens material is "Glasses" on the SSR0101 cloth2
+    # alpha sheet, which the repack names c_AlvaSSR0101_slg_cloth2_da with no
+    # marker. The frame stays opaque on Cloth2-GlassesFrame.
+    "alva/antje": {"Glasses"},
     # The wedding dress. The cn client draws cloth1_trans + cloth1_trans1
     # (the sheer cape and the sash), cloth2_trans (the under-skirt) and
     # cloth3_trans (over-skirt, sheer sleeves and the glass slippers in one
@@ -162,6 +166,13 @@ PART_SHADERS = {
     "eyehighlight": "Womenace/DollEyeHighlight",
     "outline": "Womenace/DollOutline",
 }
+
+
+def hair_reference_for(doll_dir):
+    """The game-hair reference this outfit bakes from, mirroring transfer_hair_uv."""
+    doll_dir = Path(doll_dir)
+    own = doll_dir / "hair_uv1_ref.npz"
+    return own if own.is_file() else doll_dir.parent / "hair_uv1_ref.npz"
 
 
 def part_for(material_name):
@@ -328,11 +339,12 @@ def resolve(doll_dir):
             texture_triples.append(f"{name}:_SdfMap={sdf}")
             float_triples.append(f"{name}:_UseBlendTex=1")
 
-        # The hair specular path, gated on the character's game-hair reference:
-        # transfer_hair_uv writes the strip UV into TEXCOORD_1 when that dump
-        # exists, and only then does driving the streak from it mean anything.
-        # A non-zero intensity is also what routes hair off GGX.
-        if part == "hair" and (doll_dir.parent / "hair_uv1_ref.npz").is_file():
+        # The hair specular path, gated on the game-hair reference transfer_hair_uv
+        # resolves for this outfit (its own dump, else the character's): it writes
+        # the strip UV into TEXCOORD_1 when that dump exists, and only then does
+        # driving the streak from it mean anything. A non-zero intensity is also
+        # what routes hair off GGX.
+        if part == "hair" and hair_reference_for(doll_dir).is_file():
             float_triples.append(f"{name}:_MatCapIntensity=1")
 
 

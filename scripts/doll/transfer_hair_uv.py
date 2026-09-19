@@ -39,8 +39,16 @@ NEIGHBOURS = 6
 
 
 def reference_for(doll_dir):
-    """The character's game-hair reference, sitting beside the outfit folders."""
-    return Path(doll_dir).parent / "hair_uv1_ref.npz"
+    """The game-hair reference for this outfit.
+
+    An outfit that carries its own hairstyle (Alva's Antje suit wears the SSR0101
+    hair, not the SSR01 one) keeps its own reference inside the outfit folder,
+    dumped from that outfit's game hair mesh. Every other outfit shares the
+    character's reference, sitting beside the outfit folders.
+    """
+    doll_dir = Path(doll_dir)
+    own = doll_dir / "hair_uv1_ref.npz"
+    return own if own.is_file() else doll_dir.parent / "hair_uv1_ref.npz"
 
 
 def bake(doll):

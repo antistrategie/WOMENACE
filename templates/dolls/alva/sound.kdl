@@ -1,0 +1,23 @@
+clone "SoundBank" from="weapons_soundbank" id="wmgfl_alva_sfx" {
+    clear "sounds"
+    clear "busIndices"
+
+    append "sounds" {
+        set "name" "Skill02_Satk"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="alva/sfx/Skill02_Satk"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "Skill02"
+        set "fixedVolume" 0.5
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="alva/sfx/Skill02"
+        }
+    }
+    append "busIndices" 0
+}
