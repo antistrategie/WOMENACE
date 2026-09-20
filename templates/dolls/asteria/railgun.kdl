@@ -116,7 +116,7 @@ clone "SkillTemplate" from="active.launch_rocket" id="active.asteria_railgun_sho
         set "ElementsHit" 4
     }
 
-    append "EventHandlers" type="Il2CppMenace.Tactical.Skills.Effects.SetAnimatorTrigger" {
+    append "EventHandlers" type="SetAnimatorTrigger" {
         set "Parameter" "TriggerCustomSkillEffect"
         set "Delay" 0.0
     }
