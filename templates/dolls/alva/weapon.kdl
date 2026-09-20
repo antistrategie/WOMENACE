@@ -192,6 +192,8 @@ clone "SkillTemplate" from="active.fire_alva_an94_sustained" id="active.alva_ssr
         set "bankId" "wmgfl_alva_sfx"
         set "itemId" "Skill02"
     }
+    // The 14 surface entries are overridden in place, never cleared: TacticalPreloader.PreloadSkill
+    // indexes the full table during map generation and an empty one leaves the mission loading forever.
     set "ImpactOnSurface" index=0 {
         set "RicochetChance" 0
         set "SoundOnImpact" {

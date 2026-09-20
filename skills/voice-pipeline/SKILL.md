@@ -53,11 +53,11 @@ Source rips are usually ~10–12 dB louder than vanilla MENACE barks. Run:
 
 ```bash
 uv run --script scripts/voice/normalize_audio.py \
-  --reference assets/additions/audio/voymastina \
+  --reference assets/additions/audio/<reference_char> \
   --target assets/additions/audio/<char>
 ```
 
-Voymastina's audio is already normalised to vanilla (the original mod's reference). Median LUFS ≈ −28. `--dry-run` to preview deltas without writing.
+The reference is a character whose audio is already normalised to vanilla. Median LUFS ≈ −28. `--dry-run` to preview deltas without writing.
 
 ## 3. Transcribe + translate
 
@@ -112,7 +112,7 @@ Cloning from a Speaker-specific bank (e.g. `tactical_barks_carda_va_full_mid`) i
 
 ## 5. ConversationTemplate clones
 
-The 7-file split that voymastina follows (arrivals/clicks/enemy/misc/movement/objectives/responses) is just organisational — the engine doesn't care which file a clone lives in.
+The 7-file split (arrivals/clicks/enemy/misc/movement/objectives/responses) is just organisational — the engine doesn't care which file a clone lives in.
 
 Each clone shape:
 
@@ -145,7 +145,7 @@ clone "ConversationTemplate" from="<Parent_Namespace>/<event_name>" id="<Charact
 
 **`Active #true`** is non-negotiable. Most base ConversationTemplates (e.g. `Carda_Early/arrival_carda`, `JeanSy/click_bark`) ship with `Active=False` — they're prototypes. Clones inherit the field, the bark dispatcher filters out Active=False entries, and the lines silently never fire. Set `Active #true` on every voice-clone block or you'll hear nothing in-game.
 
-**Parent namespace** — JeanSy templates live at `JeanSy/<event>` (sy's barks). Carda's at `Carda_Early/<event>` (her early-game progression bank). Pick the parent that matches your character's source archetype. Voymastina (cloned from sy) uses JeanSy parents; cheyanne (cloned from carda) uses Carda_Early parents.
+**Parent namespace** — JeanSy templates live at `JeanSy/<event>` (sy's barks). Carda's at `Carda_Early/<event>` (her early-game progression bank). Pick the parent that matches your character's source archetype. A character cloned from sy uses JeanSy parents; one cloned from carda uses Carda_Early parents.
 
 **Speaker role index** — the index of the role in the parent template that gets the character's tag-override. Find it via:
 
@@ -183,7 +183,7 @@ The `set "Nodes" { ... }` block fully replaces the parent's Nodes — your `appe
 
 - Hand-correcting `english` cells in the CSV when the model garbled a translation
 - Picking which `itemId` to wire into a specific conversation event (you can hear the line first)
-- Spot-checking loudness vs voymastina's reference (eyes on the audio bar)
+- Spot-checking loudness against the reference character (eyes on the audio bar)
 
 ```bash
 python3 scripts/voice/serve.py
@@ -191,20 +191,18 @@ python3 scripts/voice/serve.py
 
 Stdlib-only (no extra deps); auto-opens `http://127.0.0.1:8765/`.
 
-## Auto-converter for cheyanne-style derivatives
+## Bootstrapping a new character's voice KDL from an existing one
 
-`/tmp/gen_cheyanne_voice_v2.py` (kept out of the repo intentionally — it's a one-shot bootstrap) takes voymastina's KDLs and rewrites them for a new character cloned from a different speaker. Substitutions:
+A one-shot script kept outside the repo takes an existing character's voice KDLs and rewrites them for a new character cloned from a different speaker. Substitutions:
 
-- `JeanSy/<event>` → `<Carda_Early_or_X>/<carda_event>` via a survey-built map
-- `Voymastina/X` → `<Cheyanne>/<carda_event>`
-- `voymastina` tag → `<character>` tag
-- `wmgfl_tactical_barks_voymastina_va` → `wmgfl_tactical_barks_<character>_va`
-- `RoleGuid "JeanSy"` → role name at the matching index in the carda parent
+- `<OldParent>/<event>` → `<NewParent>/<event>` via a survey-built map
+- `<OldCharacter>/<event>` → `<NewCharacter>/<event>`
+- the old character's tag → `<character>` tag
+- `wmgfl_tactical_barks_<old>_va` → `wmgfl_tactical_barks_<character>_va` (the bank id does not contain the tag, so it needs its own substitution)
+- `RoleGuid "<old role>"` → role name at the matching index in the new parent
 - `Text` body → looked up by itemId from the new character's `.trans.csv`
 
-Used twice: once for cheyanne's initial conversion (Carda_Early), once after the OpenAI re-transcribe to refresh translations.
-
-When adding a third+ character, rename the script and update the survey-map paths.
+It is a first write only. Once the files exist they are hand-edited in place (bark choice, subtitles), and a second run destroys those edits.
 
 ## Cross-references
 

@@ -21,10 +21,10 @@ Use the pipeline skill that matches the work:
 ## Repository map
 
 - `templates/dolls/<name>/` contains each Doll's leader, entity, armour, perk tree, weapon, calibration ranks, voice, and any Doll-specific KDL.
-- `templates/fairies/`, `templates/gifts/`, `templates/vehicles/`, and the root KDL files contain shared or non-Doll content.
+- `templates/perks/` contains perks shared by several Dolls, one file per perk. `templates/fairies/`, `templates/gifts/`, `templates/vehicles/`, and the root KDL files contain other shared or non-Doll content.
 - `code/Systems/` contains runtime systems grouped by feature. `code/Perks/` contains custom perk behaviour. `code/Dev/` contains development-only verbs excluded from release builds.
 - `assets/additions/` contains added sprites, textures, and audio. Logical asset names preserve the path below the asset-type directory.
-- `unity/Assets/Authored/` contains source assets. `unity/Assets/Prefabs/` contains bundle-ready prefabs. `unity/Assets/Shaders/` contains the mod's `Womenace/` shaders.
+- `unity/Assets/Authored/` contains source assets. `unity/Assets/Prefabs/` contains bundle-ready prefabs. `unity/Assets/Shaders/` contains the mod's `Womenace/` shaders. `unity/Assets/Editor/` holds the mod's own batch-mode tools (asset checks, clip extraction, prefab splitting) next to the Jiangyu-managed scripts.
 - `scripts/` contains the Blender, asset-preparation, shading, voice, and weapon pipelines. Local pipeline configuration under `scripts/.config/` is gitignored.
 - `compiled/`, `.jiangyu/`, and exported game data are generated or local working state and are not source.
 
@@ -37,11 +37,11 @@ Use the implementation and its adjacent comments as the authority for current be
 - `Systems/Proficiency/` for affinity-scaled accuracy with a Doll's trained weapon class.
 - `Systems/Transmog/` for outfits and the shared outfit and weapon skin picker. `Systems/Dolls/FormSwapSystem.cs` handles infantry, pilot, or mech form changes.
 - `Systems/Procurement/` for reward pools, pity, limited claims, and permanent Curios unlocks.
-- `Systems/Ssr/` and `Systems/Elements/` for imprint bonuses, elemental build-up, Phase effects, and HUD gauges.
-- `Systems/Dolls/` for bespoke kits such as OTs-14's weapons bay, Sextans' solo melee kit, Cheyanne's aim trainer and ricochet, Soppo's stances, Vector's Overburn, and Voymastina's Sinbreaker form.
+- `Systems/Ssr/` and `Systems/Elements/` for imprint bonuses, elemental build-up, Phase effects, and HUD gauges. A kit that makes a victim take more damage from an element registers the multiplier with `ElementsSystem.RegisterVictimDamageMult`, which both the hit path and the hover preview read.
+- `Systems/Dolls/` for bespoke per-Doll kits, one folder per Doll, plus the form-swap system they share.
 - `Systems/Fairies/` for Fairy Lodge unlocks and off-map abilities.
 - `Systems/NewGame/` for WOMENACE campaign options, Doll roster selection, vanilla leader filtering, and dummy-link limits.
-- `Systems/Vehicles/` and `Systems/Weapons/` for special vehicles, weapon skins, and weapon presentation such as The Sinner and Asteria's particle cannon.
+- `Systems/Vehicles/` and `Systems/Weapons/` for signature vehicles, weapon skins, and weapon presentation.
 - `Systems/CampaignMap/` for the GFL1-inspired mission-board reskin.
 
 Persisted cross-system state belongs in `Context.State.Get<T>()`. Reusable rules and ID conventions belong in small shared models rather than being copied between systems.
@@ -51,12 +51,15 @@ Persisted cross-system state belongs in `Context.State.Get<T>()`. Reusable rules
 - WOMENACE adds content instead of replacing vanilla assets. Additions belong under `assets/additions/` or in mod-owned Unity bundles, then templates point to them.
 - Character prefabs use `unity/Assets/Prefabs/<character>/<variant>/main.prefab` and KDL asset names such as `<character>/<variant>/main`. Outfit templates (`armor.<character>_<variant>`) carry no body: `TransmogSystem` loads `<character>/<variant>/main` the first time a doll wears the outfit, so a doll nobody fields costs no memory.
 - Weapon prefabs use `unity/Assets/Prefabs/weapon/<name>/main.prefab` and KDL asset names such as `weapon/<name>/main`.
-- `VehicleModelSystem` loads The Sinner and both Sinbreaker bodies on first preview or tactical spawn. Their entity templates inherit a fallback prefab and carry no eager bundle reference.
+- `VehicleModelSystem` loads the signature vehicle bodies on first preview or tactical spawn. Their entity templates inherit a fallback prefab and carry no eager bundle reference.
 - Asset references preserve nested paths. For example, `assets/additions/audio/weapons/rf/rf_shot_01.wav` is `asset="weapons/rf/rf_shot_01"`.
+- The camouflage `media/promotion_unique.png` template is for a Doll's starting `UnitLeaderTemplate.InitialPerk`. Perks learned through promotion use `media/promotion.png`, including unique and active perks. Vanilla Command: Rally's tapered tan backing is an artwork exception.
 - Audio under `assets/additions/audio/` compiles to Vorbis held compressed in memory. Clips above 48 kHz keep PCM, which is how the 96 kHz weapon effects stay uncompressed without a per-asset setting. Portraits compile to DXT5 and sprites to BC7 when their dimensions divide by four.
 - Run `scripts/pmx_to_menace.py` before the scripts under `scripts/doll/`. The PMX conversion regenerates the mesh and discards later doll-preparation work.
 - Doll squads normally pin `EntityTemplate.Scale` to `(1, 1)` and disable the squad-leader scale override. Every element uses the same Doll body, so vanilla random scale variation looks like inconsistent character height.
 - Collision-prone IDs use the `wmgfl_` prefix. IDs already namespaced by a Doll or Jiangyu's cross-mod contract tags do not need another prefix.
+- A KDL file never starts with a comment. The formatter drops the first node of such a file and everything after it, and format and compile both pass. Put the comment inside the first block.
+- Generated KDL (voice conversations, a spine from a CSV) is generated once. After that it is hand-edited in place, never regenerated.
 
 ## Commands
 
@@ -93,6 +96,12 @@ Record expensive findings next to the code they constrain. Add a short repositor
 - Bundles target `StandaloneWindows64` with D3D11 shader variants for MENACE under Proton and DXVK. After installing missing Windows build support or correcting the target, run one clean compile so bad cached bundles are replaced.
 - Extracted `Menace/*` shader stubs may render magenta in the Editor but are rebound to the game's shaders by name at runtime. Mod-owned shaders live under `Womenace/` and must retain needed runtime keyword variants with `multi_compile`.
 - `BakeVehicle -targetLength` scales from measured renderer bounds. Check the logged measured length because a stray or double-transformed renderer silently rescales the whole vehicle.
+- `SkillContainer` defers removals while it is dispatching to handlers (`m_UpdateStack` is raised for every OnMovementFinished, OnTurnEnd and OnUpdate). In that state `Remove(SkillTemplate)` only flags the first match as garbage and returns true, and the next call finds the same flagged skill again, so `while (container.Remove(template))` hangs the game with a clean log. Remove through `SkillEffects.RemoveInstances`, never in a loop on the return value.
+- `TacticalManager.InvokeOnTurnEnd` fires from `Actor.SetTurnDone`, before the actor's `SkillContainer.OnTurnEnd` runs the `LifetimeLimit` countdown. An effect refreshed from an `InvokeOnTurnEnd` postfix is counted down straight after and expires a turn early. Refresh from an `Actor.OnTurnEnd` postfix instead.
+- `TacticalPreloader.PreloadSkill` indexes the 14-entry `ImpactOnSurface` table of every fire skill during map generation. `clear "ImpactOnSurface"` on a weapon-fire clone leaves the mission stuck loading. Override the entries by index.
+- `SkillTemplate.CustomAoEShape` and `AOETiles` are Odin-serialised and cannot be authored in KDL. A footprint other than a radius needs an `ICustomAoEShape` assigned by a system, with `GetAoERadius` returning 0 or the generic radius ring is drawn too. A handler template's fields read through a fresh interop wrapper come back as their initialisers, so read authored numbers off the handler instance the skill carries.
+- `SpawnTileEffect.ChancePerTileFromCenter` is a per-tile falloff (-100 spawns on the aimed tile only, 0 spawns on every tile). A tile holds one spawned object effect, so when two handlers spawn on the same tile the later handler wins.
+- `IsLimitedUses` with `Uses N` is a per-turn budget, on a perk-granted skill too. A per-mission charge is a hidden marker effect added on first use with `LimitUsability` on the skill.
 
 ## Writing conventions
 

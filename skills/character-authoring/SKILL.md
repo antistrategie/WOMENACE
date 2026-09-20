@@ -30,15 +30,18 @@ For an existing-archetype clone (e.g. another sniper from carda), pick the vanil
 Per character:
 
 ```
-templates/<character>/
+templates/dolls/<character>/
 ├── squad_leader.kdl   tag + speaker + entity + unit-leader templates
 ├── armor.kdl           one ArmorTemplate per visual variant
 ├── perk_tree.kdl       PerkTreeTemplate clone with the character's perk grid
+├── perks/              the character's own perks, one file each (optional)
 └── voice/              (sound + conversation, see voice-pipeline skill)
     ├── soundbank.kdl
     ├── arrivals.kdl
     └── ...
 ```
+
+A perk that several characters share lives in `templates/perks/<perk>.kdl` instead. Every KDL file starts with its first `clone` or `patch` node, never with a comment: the formatter drops the first node of a comment-led file.
 
 Sprite/texture assets live separately under `assets/additions/sprites/<character>/` and `assets/additions/textures/<character>/`. KDL refs use `asset="<character>/<basename>"` regardless of source category.
 
@@ -91,7 +94,7 @@ The five clones depend on each other by ID:
 Tags gate which items each unit can equip.
 
 - **`wmgfl_<character>`** — unique per character. The character's `EntityTemplate.Tags` adds it; their weapon `OnlyEquipableBy` references it, so the weapon shows only in that character's dropdown (vanilla `OnlyEquipableBy` filtering hides it from everyone else).
-- **`jy_weapon_restricted` / `jy_special_restricted`** — slot-restriction tags on the EntityTemplate for a doll locked TO her own gear (Sextans carries both: melee only). When the unit has one, Jiangyu's `InventoryFilterPatch` Harmony hook filters that slot's loadout-UI dropdown to items with a matching `OnlyEquipableBy`. Without it the character equips vanilla items in that slot too.
+- **`jy_weapon_restricted` / `jy_special_restricted`** — slot-restriction tags on the EntityTemplate for a doll locked TO her own gear (a melee-only doll carries both). When the unit has one, Jiangyu's `InventoryFilterPatch` Harmony hook filters that slot's loadout-UI dropdown to items with a matching `OnlyEquipableBy`. Without it the character equips vanilla items in that slot too.
 - **`wmgfl_transmog`** — carried by no unit. An outfit `ArmorTemplate` whose `OnlyEquipableBy` names only this tag never appears in any equip dropdown: outfits are cosmetic carriers for the transmog picker, never equippable armour. Dolls equip vanilla armour for stats.
 
 **The `InventoryFilterPatch` filter only runs in the strategy-mode loadout dropdown** (`UnitWindowEquipment.UpdateEquipmentAlternatives` → `SortedFilteredItemList.GetSortedAndFilteredItems`). Other UI paths (blackmarket, debug menus) bypass it; `OnlyEquipableBy` is documentation-only there.
@@ -165,14 +168,14 @@ dotnet ../jiangyu/src/Jiangyu.Cli/bin/Debug/net10.0/jiangyu.dll templates search
 - **No em dashes**, **no semicolons** in prose / Title / Description / KDL string literals. Periods, commas, colons only.
 - **`mise run format`** before committing. Rewrites KDL through Jiangyu's parse → validate → normalise → serialise pipeline so diffs only show real authoring changes. `mise run format --check` exits non-zero in CI when files would change.
 - **KDL composite-over-dotted** — never `set "Type.field" v`. Always `set "Type" composite="X" { set "field" v }` or the bare-child-block form for monomorphic destinations.
-- **`wmgfl_` prefix** on collision-prone clone IDs: SoundBank names, character Tags (`wmgfl_cheyanne`), SpeakerTemplate IDs (`wmgfl_cheyanne_speaker`). Already-namespaced IDs like `armor.cheyanne_default` skip it. See `AGENTS.md` for the full rule and rationale.
+- **`wmgfl_` prefix** on collision-prone clone IDs: SoundBank names, character Tags (`wmgfl_<character>`), SpeakerTemplate IDs (`wmgfl_<character>_speaker`). Already-namespaced IDs like `armor.<character>_default` skip it. See `AGENTS.md` for the full rule and rationale.
 
 ## What inherits, what you override
 
 A `clone` deep-copies the parent's typed state, then applies the patches in your block. Anything you don't `set` keeps the parent's value. This matters because:
 
 - `Triggers`, `Condition`, `EventSettings`, `Priority`, `PlayChance`, `Repeatable`, `Repetitions` on cloned ConversationTemplates flow through. You almost never need to set these.
-- The parent's other Roles (the ones whose `m_SerializedRequirements` you don't patch) flow through. Voymastina's KDL pattern of `set "Roles" index=N` modifies one role; the others stay parent-defined.
+- The parent's other Roles (the ones whose `m_SerializedRequirements` you don't patch) flow through. `set "Roles" index=N` modifies one role; the others stay parent-defined.
 - The parent's `Nodes` (m_SerializedNodes) get REPLACED if you do `set "Nodes" { ... }` (not `append`). The voice-pipeline skill explains the implication.
 
 ## Common shape mistakes
@@ -181,7 +184,7 @@ A `clone` deep-copies the parent's typed state, then applies the patches in your
 - **Forgetting `append "Tags" "wmgfl_<character>"`** on the EntityTemplate. The transmog swap never matches (the character renders her equipped vanilla armour as a vanilla soldier body) and weapon `OnlyEquipableBy` gating fails.
 - **Naming the default outfit off-convention** — `Transmog.DefaultFor` derives `armor.<character>_default` from the character tag, so an id like `armor.<character>_base` means the picker tile never appears and nothing renders the outfits.
 - **Wrong RoleGuid in cloned ConversationTemplates** — must match the role NAME in the actual parent template, which differs per-template (see [voice-pipeline](../voice-pipeline/SKILL.md)).
-- **Two UnitLeaderTemplates sharing an id segment** — the game's `GameConditionVars` static ctor builds a `LEADER_STATUS_<SEGMENT>` conversation var per leader template from the id segment after the dot. `pilot.papasha` plus `squad_leader.papasha` both yield `LEADER_STATUS_PAPASHA`, which throws a duplicate-key `TypeInitializationException` and crashes new-game creation. A character with two forms needs a unique segment per form (`pilot.papasha` + `squad_leader.papasha_foot`, `squad_leader.voymastina` + `pilot.voymastina_mech`).
+- **Two UnitLeaderTemplates sharing an id segment** — the game's `GameConditionVars` static ctor builds a `LEADER_STATUS_<SEGMENT>` conversation var per leader template from the id segment after the dot. `pilot.<character>` plus `squad_leader.<character>` both yield `LEADER_STATUS_<CHARACTER>`, which throws a duplicate-key `TypeInitializationException` and crashes new-game creation. A character with two forms needs a unique segment per form (`squad_leader.<character>` plus `pilot.<character>_mech`, or `pilot.<character>` plus `squad_leader.<character>_foot`).
 
 ## Cross-references
 

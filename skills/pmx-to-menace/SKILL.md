@@ -48,8 +48,12 @@ One JSON per character in `scripts/.config/`. Fields:
 - `ignore_bones`. PMX bones to drop entirely (typically MMD IK control bones).
 - `target_height_metres`. Absolute character height in metres (Foot to Head bone span). Optional. Defaults to matching the reference soldier's height. Policy: GFL2 canon span x1.2, where canon span is the raw PMX's own Foot to Head distance at the standard 0.08 import scale. `scripts/doll/measure_pmx_height.py` prints the config-ready number for a PMX.
 - `height_scale_override`. Explicit multiplicative scale, overrides `target_height_metres` if set.
-- `skip_palm_calibration`. Disables the right-hand palm-down mesh roll. Only for rigs whose combat animations are their own captured clips rather than retargeted vanilla holds (Sextans): the clips are self-consistent with the rig, so recalibrating the palm would break the grips they were captured with. The LEFT hand is never palm-calibrated for anyone, it is IK-slaved to each weapon's `weapon_hand_l` empty.
+- `skip_palm_calibration`. Disables the right-hand palm-down mesh roll. Only for rigs whose combat animations are their own captured clips rather than retargeted vanilla holds: the clips are self-consistent with the rig, so recalibrating the palm would break the grips they were captured with. The LEFT hand is never palm-calibrated for anyone, it is IK-slaved to each weapon's `weapon_hand_l` empty.
 - `hip_leg_weight_blend`. Fraction of crotch-vert weight moved from Hips onto UpperLeg_L/R. `0.3` is a good default for MMD rigs that weight the whole pelvis pure-Hips.
+- `dress_leg_prefixes`. Vertex-group prefixes of a physics skirt, cape or coat grid. Their weights are rewritten onto the humanoid rig before the bone rename: pelvis at the waistband, the legs below the crotch, split left and right by the vertex's X. Without this the grid folds into one torso bone and the legs animate through the cloth. List only the rows that hang over the thighs: a cape's back rows stay on the pelvis or they drag forward with the leg swing.
+- `dress_leg_blend_top` and `dress_leg_blend_depth`. The pelvis-to-leg ramp in metres, top relative to the crotch and depth measured down from the top (defaults 0.02 and 0.22). A long skirt clearing the thigh takes the default. Cloth sitting on the thigh needs a shallow ramp, around 0.05 and 0.06, or the half-weighted panel rotates half as far as the leg under it.
+- `dress_leg_split_width`. Half-width in metres of the centreline strip that blends between the two legs. Defaults to the hip half-width, which averages both legs across the whole front. Narrow it, around 0.03, so each panel welds to the thigh it covers.
+- `dress_leg_front_band` and `dress_leg_front_pivot`. Half-width in metres of the front-to-back band that follows the legs, centred at the pivot offset from the hip joint (negative is in front). Vanilla locomotion only swings a leg forward, so only the front of a skirt should follow. Unset keeps the whole grid leg-following. A pleated skirt takes around 0.03 at 0.09.
 - `lod_decimate_ratios`. Polygon ratio per LOD. Default `[1.0, 0.5, 0.25, 0.1]`.
 - `lod_mesh_basename`. Prefix for output LOD mesh names. `BakeHumanoid` auto-detects this from mesh naming, so the value only matters for glTF inspection.
 
@@ -62,7 +66,7 @@ One JSON per character in `scripts/.config/`. Fields:
 5. Remap vertex groups, drop unmapped, rebind meshes to the armature.
 6. Pose arm and foot chains to the reference avatar's T-pose (rotations from the avatar's `m_SkeletonPose`). Bake the mesh so the rest pose is T-pose. Foot bones get edit-mode head/tail changes only (no mesh bake) to preserve the PMX visual against Unity's toe-anchor convention.
 7. Graft reference attachment bones (sockets) onto the PMX armature for weapons and equipment.
-8. Blend hip-to-leg weights for crotch verts (optional, controlled by `hip_leg_weight_blend`).
+8. Blend hip-to-leg weights for crotch verts (optional, controlled by `hip_leg_weight_blend`), and rewrite the `dress_leg_prefixes` groups onto pelvis and legs. Check the result with the thigh raised in the prep blend before `--stage finish`.
 9. Conform mesh names to `{lod_mesh_basename}_LOD0..LODN`.
 10. Per-LOD Decimate at the configured ratios.
 11. Export glTF. Source PMX textures pass through unchanged, one Principled BSDF material per source texture.

@@ -33,9 +33,9 @@ mutating steps are idempotent, so re-running is safe.
 ## A bake drops every post-pass on that prefab
 
 `BakeHumanoid` rewrites `main.prefab` whole. Anything an Editor pass attached to it
-afterwards is gone, and nothing warns: re-baking Sextans for the shading rollout
-reverted both her outfits to the vanilla soldier animator, which surfaced only because
-someone watched her move.
+afterwards is gone, and nothing warns: re-baking a doll that carries her own animator
+controller reverted both her outfits to the vanilla soldier animator, which surfaced
+only because someone watched her move.
 
 So `prepare_doll.py` carries a `POST_PASSES` table, re-runs the passes that own the
 prefab it just baked, and then checks that they took, by looking for the guid of an
@@ -44,10 +44,10 @@ entry:
 
 ```python
 {
-    "outfits": ("sextans/default", "sextans/nocte"),
-    "method": "Womenace.EditorTools.BuildSextansController.Build",
-    "describes": "Sextans' animator controller and its GFL2 clip swaps",
-    "expects": "Assets/Prefabs/sextans/_bake/sextans.controller",
+    "outfits": ("<doll>/default", "<doll>/<variant>"),
+    "method": "Womenace.EditorTools.<Tool>.Build",
+    "describes": "what the pass attaches to the prefab",
+    "expects": "Assets/Prefabs/<doll>/_bake/<asset the pass must leave referenced>",
 }
 ```
 
@@ -55,8 +55,8 @@ The `expects` check is the point. A pass that silently no-ops leaves exactly the
 failure it exists to prevent, so running it is not evidence that it worked.
 
 This covers passes over prefabs `prepare_doll.py` bakes. Two others sit outside it and
-are re-run by hand: `VehicleOutlineHulls` after `BakeVehicle`, and
-`BuildVoymastinaMech`, which owns the mech's prefabs end to end.
+are re-run by hand: `VehicleOutlineHulls` after `BakeVehicle`, and a mech form's own
+build method, which owns its prefabs end to end.
 
 ## Never convert after preparing
 
@@ -76,7 +76,7 @@ unexported Blender edits about to be baked over.
 |---|---|---|
 | `prepare_doll.py` | — | orchestrates the four below, then bakes |
 | `bake_face_sdf_uv.py` | rest positions, `data/face_sdf_uv_ref.npz` | `TEXCOORD_2` in `model.bin` |
-| `transfer_hair_uv.py` | rest positions, `<doll>/hair_uv1_ref.npz` | `TEXCOORD_1` in `model.bin` |
+| `transfer_hair_uv.py` | rest positions, `<doll>/<outfit>/hair_uv1_ref.npz` when the outfit wears its own hairstyle, else `<doll>/hair_uv1_ref.npz` | `TEXCOORD_1` in `model.bin` |
 | `add_outline_submesh.py` | `doll_shading` part rules | an `Outline` material + primitives |
 | `doll_shading.py` | `model.gltf`, texture folder | nothing — prints bake arguments |
 
@@ -133,8 +133,8 @@ lenses and lace all measure partial alpha across most of their footprint, some
 of them at a flat 60% over 100% of it, and the game draws every one of them
 opaque. Routing the car's wheels from an alpha histogram put solid geometry on a
 blended shader. Across this project's dolls exactly one costume trips the real
-test: Soppo's Redline sticker sheet, on
-`c_SoppoSSR0101_slg_cloth_trans_ubertrans_da`.
+test: a costume's sticker sheet, whose client material name carries
+`_trans_ubertrans`.
 
 A translucent material also drops out of the outline submesh, because the game
 draws no contour through transparency and a hull around a decal sheet is a rim
@@ -152,7 +152,7 @@ One command writes every weapon's manifest and bakes it:
 
 ```bash
 python3 scripts/weapon/shade_weapons.py --bake            # all of them
-python3 scripts/weapon/shade_weapons.py --bake makiatto   # or some of them
+python3 scripts/weapon/shade_weapons.py --bake <weapon>   # or some of them
 ```
 
 It reads the manifest key from `raw.glb`, finds the three maps by suffix in the
@@ -192,8 +192,8 @@ per slot.
 
 Ramps live in two places, split the way the game splits them. `Authored/<doll>/ramps/`
 carries hair, cloth and silkstock, which ship as per-character gradient assets and
-genuinely differ per character: Groza's hair floor is a warm brown where Makiatto's is
-deep maroon. `Authored/shared/ramps/` carries skin and weapon, which no character
+genuinely differ per character: one doll's hair floor is a warm brown where another's
+is deep maroon. `Authored/shared/ramps/` carries skin and weapon, which no character
 ships a gradient asset for: those atlases are global, dumped from the capture.
 `doll_shading` looks in the doll's own ramps first, then shared, so a doll overrides a
 shared ramp by shipping its own.
@@ -203,20 +203,20 @@ by `extract_character_refs.py`, with `scripts/doll/data/<doll>_ramp_gradients.js
 keeping the dump they were built from. Three things to know when adding a
 character:
 
-- **The part is not always in the name.** Cheyanne's and Sextans' costumes name
-  their main gradient `body_ramp`, and Sextans ships a `cloth_ramp` beside a
-  `cloth3_Baoshi_ramp` for its gemstones. The extractor ranks an unqualified
+- **The part is not always in the name.** Some costumes name their main gradient
+  `body_ramp`, and one ships a `cloth_ramp` beside a `cloth3_Baoshi_ramp` for its
+  gemstones. The extractor ranks an unqualified
   name over a qualified one and the base costume over an alternate, which is a
   ranking, not a fact: check what it picked before believing it.
 - **One set per character serves every outfit.** Alternate costumes ship their
   own ramps, split across `P1`/`P2`/`P3` parts and several cloth atlases that a
   single `ramp_cloth_main` cannot express, so an outfit takes its character's
   base-costume set.
-- **Not every character ships every part.** Leva and Voymastina ship no
-  silkstock gradient at all, so their stockings fall back to the character's own
+- **Not every character ships every part.** Some characters ship no silkstock
+  gradient at all, so their stockings fall back to the character's own
   cloth atlas rather than to a global one: the game's silkstock gradients sit
   close to their character's cloth and nowhere near each other.
-- **A character can be missing from a client.** Lenna is in the global client
+- **A character can be missing from a client.** One can be in the global client
   and not in CN, which is what `--client` is for.
 
 A ramp is a 256x16 atlas of four bands, and **binding it upside down is silent**. The

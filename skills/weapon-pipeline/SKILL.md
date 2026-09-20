@@ -26,6 +26,10 @@ dotnet ../jiangyu/src/Jiangyu.Cli/bin/Debug/net10.0/jiangyu.dll templates inspec
 
 Inspect `Model` (the reference 3D prefab the parent uses), `SkillsGranted[]` (the fire skills), and `Icon`/`IconEquipment`/`IconSkillBar` to know what you'll be overriding.
 
+## Source meshes from the GFL2 client
+
+Pull a Doll's guns from the CN client with AssetStudio.CLI (Mesh as OBJ, Texture2D as PNG) rather than from community rips. The naming in the client: `cw_<Doll>SR01_WL` is the standard gun, `cw_<Doll>SSR01_WL` is the signature SSR weapon, shipped as a body plus Grip, Light, Sight and Silencer part meshes that a merge script seats by their socket offsets before the bake, and `cw_AR_SSR_Cla_<Doll>_WL` is a cosmetic weapon skin of the standard gun, not the SSR. The two rifles share a receiver, so after a nudge session check the mesh name and vertex count in each `raw.glb` before baking: the empties do not reveal a scene exported over the wrong file.
+
 ## 1. Blender preprocessor
 
 `scripts/bake_weapon.py` driven by `scripts/.config/<weapon>.json`:
@@ -227,7 +231,7 @@ A weapon whose parts move (rails that unfold, a rocket that shows and hides) shi
 - `Stance` (Int): `ActorStance` Default 0, Deployed 1, PinnedDown 2. A skill with `IsDeploymentRequired` fires from stance 1, so an unfold driven by `Stance == 1` opens the weapon as the soldier deploys.
 - `AmmoCount` (Int): from a `ReportAmmoToAnimator` handler on the skill. `CustomSkillEffect` (Trigger): from a `SetAnimatorTrigger { Parameter = TriggerCustomSkillEffect }` handler, for a clip one particular skill should play.
 
-Authoring, worked in `scripts/weapon/build_asteria_railgun.py`:
+Authoring, done by the weapon's own build script under `scripts/weapon/`:
 
 1. Build the rig in Blender with the same object layout as a rigid weapon: `<name>_root` empty holding the armature, the skinned mesh (armature modifier) and the `muzzle` / `weapon_hand_l` empties as siblings. One action per clip, each on its own muted NLA track named after the clip (the exporter writes one glTF animation per track). Every clip keys the full pose.
 2. Export with `export_animation_mode="NLA_TRACKS"`, `export_skins=True`, `export_force_sampling=True`. The exporter can flip the sign of x and w on an empty's rotation, so pin `weapon_hand_l` to its intended glTF quaternion after export (`pin_node_rotation` there does this with `fix_hand_grip.py`'s GLB reader).
@@ -238,7 +242,7 @@ The bake tool is generic: the parameter names, the state graph and the clips all
 
 ## Laser and beam visuals
 
-A skill's visuals are plain prefab references on the SkillTemplate, so a beam weapon is data: `ProjectileData` set with `type="LaserProjectileData"` (a `Prefab` the engine stretches from muzzle to impact with `LaserProjectile`, fading over 0.5 s), `SecondaryProjectileData` for sparks, `MuzzleEffect`, and the surface-indexed `ImpactOnSurface` table. `asset="<vanilla prefab name>"` resolves a vanilla prefab by name. `active.tripod.fire_laser_lance` is the red large-beam reference set (`LaserTracerCapsule`, `laser_sparks`, `laser_muzzle_flash_large_01`, `impact_laser_large_*`); `templates/dolls/asteria/railgun.kdl` carries it onto a rocket-launcher skill. `DecalCollection` references have no `asset=` route, so a clone keeps its parent's decals.
+A skill's visuals are plain prefab references on the SkillTemplate, so a beam weapon is data: `ProjectileData` set with `type="LaserProjectileData"` (a `Prefab` the engine stretches from muzzle to impact with `LaserProjectile`, fading over 0.5 s), `SecondaryProjectileData` for sparks, `MuzzleEffect`, and the surface-indexed `ImpactOnSurface` table. `asset="<vanilla prefab name>"` resolves a vanilla prefab by name. `active.tripod.fire_laser_lance` is the red large-beam reference set (`LaserTracerCapsule`, `laser_sparks`, `laser_muzzle_flash_large_01`, `impact_laser_large_*`) and transfers onto a rocket-launcher skill clone. `DecalCollection` references have no `asset=` route, so a clone keeps its parent's decals.
 
 ## File layout
 
@@ -268,6 +272,8 @@ templates/weapon/
 - **Skipping `set "fixedPitch" 1.0`** on SoundBank sound entries — the engine may treat `fixedPitch=0` as muted. Vanilla weapons set it explicitly.
 - **Bank/skill name mismatch** — the SkillTemplate's `bankId` string must match the SoundBank's clone-ID exactly. The loader hashes (FNV-1a) the string at runtime; a typo silently misroutes.
 - **`SoundsOnAttack` populated, but `SoundsOnAttackFar` left empty** after a `clear` — distant observers hear nothing. Always populate both, or skip both clears.
+- **`clear "ImpactOnSurface"` on a fire-skill clone.** `TacticalPreloader.PreloadSkill` indexes the 14-entry table during map generation and the mission never finishes loading. Override the entries by index (`set "ImpactOnSurface" index=0..13 { ... }`, one block per surface) and set `DefaultSoundOnImpact` alongside.
+- **A rifle shot repurposed as a deployable.** It keeps the muzzle flash, tracer and report from the fire-skill parent: set `IsAttack #false`, `IsAlwaysHitting #true`, `Repetitions 1`, `AnimationType ShootSingle`, clear `EventHandlers` and add the `SpawnTileEffect` handlers. The footprint comes from an `ICustomAoEShape` in code, the KDL cannot author it.
 
 ## Cross-references
 
