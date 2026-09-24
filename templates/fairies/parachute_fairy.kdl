@@ -10,7 +10,10 @@ clone "ShipUpgradeTemplate" from="oci.wmgfl_fairy_lodge" id="oci.wmgfl_parachute
         set "m_DefaultTranslation" "Controls Heliports. Can be used in decorating event venues on regular days."
     }
     set "ShortDescription" {
-        set "m_DefaultTranslation" "<style=\"Highlight\">• Gain the Offmap Ability \"Parachute Fairy\" which drops a Doll squad on any tile on the map, reducing its <link=\"accuracy\">Accuracy</link> by $1%, Damage by $2% and <link=\"defense\">Defence</link> by $3% for $4 turns.</style>"
+        set "m_DefaultTranslation" """
+            <style="Highlight">• Deployed Dolls gain +20 Affinity after each mission for each module installed in the Fairies slots.
+            • Gain the Offmap Ability "Parachute Fairy" which drops a Doll squad on any tile on the map, reducing its <link="accuracy">Accuracy</link> by $1%, Damage by $2% and <link="defense">Defence</link> by $3% for $4 turns.</style>
+            """
         clear "m_Placeholders"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_drop_shock" path="EventHandlers[1].AmountMult" format="reduction-percent"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_drop_shock" path="EventHandlers[2].AmountMult" format="reduction-percent"
@@ -119,7 +122,10 @@ clone "ShipUpgradeTemplate" from="oci.wmgfl_parachute_fairy" id="oci.wmgfl_enhan
         set "m_DefaultTranslation" "Controls Heliports in any weather. Can be used in decorating even the tallest event venues on regular days."
     }
     set "ShortDescription" {
-        set "m_DefaultTranslation" "<style=\"Highlight\">• Gain the Offmap Ability \"Enhanced Parachute Fairy\" which drops a Doll squad on any tile on the map, reducing its <link=\"accuracy\">Accuracy</link> by $1%, Damage by $2% and <link=\"defense\">Defence</link> by $3% for $4 turns.</style>"
+        set "m_DefaultTranslation" """
+            <style="Highlight">• Deployed Dolls gain +20 Affinity after each mission for each module installed in the Fairies slots.
+            • Gain the Offmap Ability "Enhanced Parachute Fairy" which drops a Doll squad on any tile on the map, reducing its <link="accuracy">Accuracy</link> by $1%, Damage by $2% and <link="defense">Defence</link> by $3% for $4 turns.</style>
+            """
         clear "m_Placeholders"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_drop_shock" path="EventHandlers[1].AmountMult" format="reduction-percent"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_drop_shock" path="EventHandlers[2].AmountMult" format="reduction-percent"

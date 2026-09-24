@@ -10,7 +10,10 @@ clone "ShipUpgradeTemplate" from="oci.wmgfl_fairy_lodge" id="oci.wmgfl_rescue_fa
         set "m_DefaultTranslation" "\"Rescues\" loot from defeated enemies. Can be used in assembling everyone for an outing or a meal on regular days."
     }
     set "ShortDescription" {
-        set "m_DefaultTranslation" "<style=\"Highlight\">• All player units gain +$1% item drop chance when killing enemies.</style>"
+        set "m_DefaultTranslation" """
+            <style="Highlight">• Deployed Dolls gain +20 Affinity after each mission for each module installed in the Fairies slots.
+            • All player units gain +$1% item drop chance when killing enemies.</style>
+            """
         clear "m_Placeholders"
         append "m_Placeholders" bind="SkillTemplate" "passive.wmgfl_rescue_fairy" path="EventHandlers[0].AdditionalDropChance"
     }
@@ -43,7 +46,8 @@ clone "ShipUpgradeTemplate" from="oci.wmgfl_rescue_fairy" id="oci.wmgfl_enhanced
     }
     set "ShortDescription" {
         set "m_DefaultTranslation" """
-            <style="Highlight">• All player units gain +$1% item drop chance when killing enemies.
+            <style="Highlight">• Deployed Dolls gain +20 Affinity after each mission for each module installed in the Fairies slots.
+            • All player units gain +$1% item drop chance when killing enemies.
             • +10% affinity gift drop chance.</style>
             """
         clear "m_Placeholders"

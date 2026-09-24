@@ -8,14 +8,14 @@ using Jiangyu.Sdk;
 namespace WOMENACE.Code;
 
 // The Fairy Lodge's own passive. The vanilla tree roots all do something by themselves (the
-// Garage repairs, the Quarters house), so the lodge keeps the Dolls company: while it is
-// installed, every deployed Doll gains a little affinity after each mission, one legendary gift's
-// worth. Granted through the same AffinityState the gift modal writes, so levels, unlock
-// reconciliation and the badge all read the new total the next time they look.
+// Garage repairs, the Quarters house), so the lodge keeps the Dolls company: every module in the
+// Fairies slots gives each deployed Doll a little affinity after each mission, one legendary
+// gift's worth per module. Granted through the same AffinityState the gift modal writes, so
+// levels, unlock reconciliation and the badge all read the new total the next time they look.
 public sealed class FairyLodgeSystem : JiangyuSystem
 {
     internal const string LodgeId = "oci.wmgfl_fairy_lodge";
-    private const int AffinityPerMission = 20;
+    private const int AffinityPerModule = 20;
 
     private ShipUpgradeTemplate _lodge;
     private IntPtr _lastGrantedResult;
@@ -43,11 +43,16 @@ public sealed class FairyLodgeSystem : JiangyuSystem
             // keys on the result object it rebuilds around
             if (result.Pointer == _lastGrantedResult)
                 return;
-            // a slot holds one module, so a fairy in a slot IS the lodge aboard: the whole
-            // tree counts, not just the lodge's own tile
-            if (_lodge == null || state.ShipUpgrades == null || !InstalledInTree(state.ShipUpgrades, _lodge, 0))
+            if (_lodge == null || state.ShipUpgrades == null)
                 return;
+            // a slot holds one module, so a fairy in a slot IS the lodge aboard: every installed
+            // module in the tree is one step of the trickle, not just the lodge's own tile
+            var modules = CountInstalledInTree(state.ShipUpgrades, _lodge);
+            // latch before the empty check too: a result seen with no modules aboard is still
+            // processed, so installing one later cannot grant for a mission flown without it
             _lastGrantedResult = result.Pointer;
+            if (modules == 0)
+                return;
 
             var deployed = state.BattlePlan?.m_EntitiesToDeploy;
             if (deployed == null || deployed.Count == 0)
@@ -56,6 +61,7 @@ public sealed class FairyLodgeSystem : JiangyuSystem
                 return;
             }
             var affinity = Context.State.Get<AffinityState>();
+            var perDoll = AffinityPerModule * modules;
             var granted = 0;
             for (var i = 0; i < deployed.Count; i++)
             {
@@ -63,12 +69,12 @@ public sealed class FairyLodgeSystem : JiangyuSystem
                 var tag = Affinity.CharacterTag(leader);
                 if (tag == null)
                     continue;
-                affinity.ForLeader(Affinity.KeyFor(leader)).Affinity += AffinityPerMission;
+                affinity.ForLeader(Affinity.KeyFor(leader)).Affinity += perDoll;
                 granted++;
-                Context.Log.Debug($"fairy lodge: +{AffinityPerMission} affinity for {tag}");
+                Context.Log.Debug($"fairy lodge: +{perDoll} affinity for {tag}");
             }
             if (granted > 0)
-                Context.Log.Info($"fairy lodge: {granted} deployed Doll(s) gained +{AffinityPerMission} affinity");
+                Context.Log.Info($"fairy lodge: {granted} deployed Doll(s) gained +{perDoll} affinity from {modules} installed module(s)");
         }
         catch (Exception ex)
         {
@@ -76,19 +82,22 @@ public sealed class FairyLodgeSystem : JiangyuSystem
         }
     }
 
-    // Is the node or any descendant of its ChildUpgrades tree installed in a slot? The
-    // depth cap is a cycle guard, the tree is two levels deep today.
-    internal static bool InstalledInTree(ShipUpgrades ships, ShipUpgradeTemplate node, int depth)
+    // Installed slot count across the node and its ChildUpgrades tree. A slot holds one module,
+    // so this is also the number of modules the tree has aboard. Each node is counted once even
+    // if the tree is revisited: clone inheritance can close a ChildUpgrades cycle, and a revisit
+    // would inflate the trickle.
+    internal static int CountInstalledInTree(ShipUpgrades ships, ShipUpgradeTemplate node)
+        => CountInstalledInTree(ships, node, new HashSet<IntPtr>());
+
+    private static int CountInstalledInTree(ShipUpgrades ships, ShipUpgradeTemplate node, HashSet<IntPtr> visited)
     {
-        if (node == null || depth > 4)
-            return false;
-        if (ships.GetInstallsCount(node) > 0)
-            return true;
+        if (node == null || !visited.Add(node.Pointer))
+            return 0;
+        var count = ships.GetInstallsCount(node);
         var children = node.ChildUpgrades;
         for (var i = 0; i < (children?.Length ?? 0); i++)
-            if (InstalledInTree(ships, children[i], depth + 1))
-                return true;
-        return false;
+            count += CountInstalledInTree(ships, children[i], visited);
+        return count;
     }
 }
 
@@ -197,7 +206,7 @@ public sealed class FairyUnlockGateSystem : JiangyuSystem
             if (ships == null)
                 return;
             if (isFairy)
-                info.Result = FairyLodgeSystem.InstalledInTree(ships, _lodge, 0);
+                info.Result = FairyLodgeSystem.CountInstalledInTree(ships, _lodge) > 0;
             else if (_enhancedParents.TryGetValue(template.Pointer, out var fairy))
                 info.Result = ships.GetInstallsCount(fairy) > 0 || ships.GetInstallsCount(template) > 0;
         }
