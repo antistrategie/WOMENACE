@@ -1,0 +1,149 @@
+#!/usr/bin/env python3
+"""Seed a Delta checkout from local build state without running any builds."""
+
+import json
+import os
+from pathlib import Path
+import subprocess
+import tempfile
+import time
+from urllib.parse import unquote, urlparse
+
+
+# Jiangyu checks content fingerprints and the presence of the recorded outputs.
+# Keep each stamp with its outputs, never attach a copied stamp to existing data.
+CACHE_GROUPS = (
+    ("unity/Assets/Imported",),
+    (".jiangyu/unity_build", ".jiangyu/build-state.json"),
+    (".jiangyu/restored_bundles",),
+    ("code/local.props",),
+    ("code/bin/Release", ".jiangyu/code_build_state"),
+)
+
+
+def local_source(root):
+    override = os.environ.get("WOMENACE_PREPARE_SOURCE")
+    if override:
+        source = Path(override).expanduser()
+    else:
+        remote = subprocess.run(
+            ["git", "remote", "get-url", "local"],
+            cwd=root, capture_output=True, text=True, check=False,
+        )
+        if remote.returncode:
+            return None
+        location = remote.stdout.strip()
+        if location.startswith("file://"):
+            url = urlparse(location)
+            if url.netloc not in ("", "localhost"):
+                return None
+            location = unquote(url.path)
+        source = Path(location).expanduser()
+    if not source.is_absolute():
+        source = root / source
+    if source.name == ".git":
+        source = source.parent
+    source = source.resolve()
+    if source == root or not (source / "jiangyu.json").is_file():
+        return None
+    return source
+
+
+def destination_available(root, relative):
+    destination = root / relative
+    if destination.exists() or destination.is_symlink():
+        return False
+    if any(path.is_symlink() for path in destination.parents if path != root):
+        raise RuntimeError(f"prepare: refusing to write through a symlink at {relative}")
+    return True
+
+
+def seed(source, root, relatives, copy_command):
+    for relative in relatives:
+        original = source / relative
+        if not destination_available(root, relative) or not original.exists():
+            return
+        if original.is_symlink():
+            print(f"prepare: skipping linked cache {relative}", flush=True)
+            return
+
+    # Copy the whole group before publishing, with the validating stamp last.
+    staging = root / ".jiangyu"
+    if staging.is_symlink():
+        raise RuntimeError("prepare: .jiangyu must not be a shared symlink")
+    staging.mkdir(exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix="prepare-", dir=staging) as temporary:
+        for index, relative in enumerate(relatives):
+            subprocess.run(
+                [*copy_command, str(source / relative), str(Path(temporary) / str(index))],
+                check=True,
+            )
+        if not all(destination_available(root, relative) for relative in relatives):
+            return
+        for index, relative in enumerate(relatives):
+            destination = root / relative
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            (Path(temporary) / str(index)).rename(destination)
+    label = ", ".join(relatives) if len(relatives) <= 2 else f"{len(relatives)} ignored Unity inputs"
+    print(f"prepare: copied {label}", flush=True)
+
+
+def seed_ignored_inputs(source, root, copy_command):
+    # PrefabInputsFingerprint hashes these too, despite Git ignoring them.
+    patterns = (
+        "unity/Assets/Authored/**/*.blend1",
+        "unity/Assets/Authored/**/*.blend1.meta",
+        "unity/Assets/Authored/*/_donor/*.fbx",
+        "unity/Assets/Authored/*/_donor/*.fbx.meta",
+    )
+    missing = sorted({
+        str(path.relative_to(source))
+        for pattern in patterns
+        for path in source.glob(pattern)
+        if path.is_file() and not os.path.lexists(root / path.relative_to(source))
+    })
+    if missing:
+        seed(source, root, missing, copy_command)
+
+
+def configure_jiangyu(source, root):
+    config = root / "mise.local.toml"
+    if config.exists() or config.is_symlink() or os.environ.get("JIANGYU_DIR"):
+        return
+    # The normal ../jiangyu default points inside Delta's nested checkout folder.
+    jiangyu = source.parent / "jiangyu"
+    if (root.parent / "jiangyu").is_dir() or not (jiangyu / "src/Jiangyu.Cli").is_dir():
+        return
+    with config.open("x") as output:
+        output.write(
+            "# Machine-local Jiangyu path, written by .agents/prepare.\n"
+            f"[env]\nJIANGYU_DIR = {json.dumps(str(jiangyu), ensure_ascii=False)}\n"
+        )
+    print("prepare: configured the local Jiangyu checkout for mise", flush=True)
+
+
+def main():
+    started = time.monotonic()
+    root = Path.cwd().resolve()
+    if not (root / "jiangyu.json").is_file():
+        raise SystemExit("prepare: run from the WOMENACE checkout root")
+    source = local_source(root)
+    if source is None:
+        print("prepare: no local WOMENACE checkout to seed from, skipping")
+        return
+
+    # Reflinks are independent copy-on-write files, unlike hard links or symlinks.
+    help_result = subprocess.run(["cp", "--help"], capture_output=True, check=False)
+    copy_command = (
+        ["cp", "-aL", "--reflink=auto"]
+        if b"--reflink" in help_result.stdout else ["cp", "-pRL"]
+    )
+    for group in CACHE_GROUPS:
+        seed(source, root, group, copy_command)
+    seed_ignored_inputs(source, root, copy_command)
+    configure_jiangyu(source, root)
+    print(f"prepare: ready in {time.monotonic() - started:.2f}s", flush=True)
+
+
+if __name__ == "__main__":
+    main()
