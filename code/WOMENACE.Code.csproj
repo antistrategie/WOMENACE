@@ -6,6 +6,11 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Procurement.Tests" />
+    <!-- The SDK exposes no finalizer hook for exception-safe damage scopes. -->
+    <Reference Include="0Harmony">
+      <HintPath>$(MelonLoaderDir)/0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
     <Reference Include="UnityEngine.AnimationModule">
       <HintPath>$(GameAssembliesDir)/UnityEngine.AnimationModule.dll</HintPath>
       <Private>false</Private>
