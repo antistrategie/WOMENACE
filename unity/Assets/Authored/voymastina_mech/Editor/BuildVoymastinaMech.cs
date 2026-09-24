@@ -34,16 +34,9 @@ namespace WOMENACE.Editor
         private const string SharedFaceSdf = "Assets/Authored/shared/face_sdf.png";
         private const string FaceSdfSidecars = SrcDir + "/face_sdf";
 
-        private const string ThrusterVfxDir = "Assets/Imported/vfx_jetpack_walker_thruster_animated";
-        private const string ThrusterVfxPrefab = ThrusterVfxDir + "/GameObject/vfx_jetpack_walker_thruster_animated.prefab";
-        private const string ThrusterLoopClip = ThrusterVfxDir + "/AnimationClip/ac_vfx_jetpack_thruster_loop.anim";
-        private const string ThrusterLoopCtrlPath = AnimDir + "/voymastina_thruster_loop.controller";
-
-        private const float ThrusterVfxScale = 1f;
-        private static readonly Vector3 ThrusterVfxEuler = new Vector3(90f, 0f, 0f);
-
         public static void Build()
         {
+            SinbreakerThrusters.BuildResources();
             bool ok = BuildController();     // the shared controller + clips, from the erwin FBX
             if (ok) ok = BuildErwin();       // the erwin (SSR0101) skin prefab
             if (ok) ok = BuildDefault();     // the default (SSR01) skin prefab
@@ -524,7 +517,7 @@ namespace WOMENACE.Editor
                 else Debug.LogWarning("gun mesh not found at Assets/Source/voymastina_weapon.obj");
 
                 AddMuzzleAnchors(inst);
-                AttachThrusterVfx(inst);
+                SinbreakerThrusters.Attach(inst, ModelScale * FbxFileScale);
 
                 // Match native units' rendering layer mask (1) on the body meshes. The character import
                 // leaves some at 257 (bit 8 = an HDRP decal layer), which projects road and other ground
@@ -562,112 +555,6 @@ namespace WOMENACE.Editor
             Anchor("lgp_muzzle", "muzzle");
             Anchor("VM_WL02_Node", "muzzle2");
             Anchor("VM_WL01_Node", "muzzle3");
-        }
-
-        // Attach MENACE's own jetpack-walker thruster jet at each thruster mesh (G1, G2). Every
-        // ParticleSystem is set to loop + play-on-awake so it emits continuously (she hovers on
-        // her jets), and the MENACE JetpackPrefabController (a script this project can't author)
-        // is stripped, leaving plain Unity ParticleSystems whose HDRP shaders rebind at load.
-        private static void AttachThrusterVfx(GameObject inst)
-        {
-            var vfx = AssetDatabase.LoadAssetAtPath<GameObject>(ThrusterVfxPrefab);
-            if (vfx == null) { Debug.LogWarning("thruster vfx prefab missing at " + ThrusterVfxPrefab); return; }
-            // The jet's emission is keyed by the effect's Animator, which idles at zero. Build a
-            // controller that plays the loop clip continuously so the thrust stays on.
-            var loopCtrl = BuildThrusterLoopController();
-            // Her GFL2 rig has dedicated jet bones grouped per nozzle (VM_BackJet_up/down,
-            // VM_LegJet_L/R, VM_WaistJet_L/R), each a main "_Node" plus Child* animation sub-nodes.
-            // Attach one jet at each main nozzle node (the six "_Node" roots, excluding the Child
-            // sub-nodes). Case-sensitive "Jet" avoids catching the lowercase "jetpack" effect nodes.
-            var thrusters = inst.GetComponentsInChildren<Transform>(true)
-                .Where(t => t.name.Contains("Jet") && t.name.EndsWith("_Node") && !t.name.Contains("Child"))
-                .ToList();
-            foreach (var b in thrusters) Debug.Log($"JET NOZZLE {b.name} worldPos={b.position}");
-            if (thrusters.Count == 0) { Debug.LogWarning("thruster vfx: no *Jet*_Node nozzles found in rig"); return; }
-            var jetRoots = new List<Transform>();
-            int n2 = 0;
-            foreach (var t in thrusters)
-            {
-                var fx = (GameObject)PrefabUtility.InstantiatePrefab(vfx);
-                PrefabUtility.UnpackPrefabInstance(fx, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
-                fx.transform.SetParent(t, false);
-                fx.transform.localPosition = Vector3.zero;
-                fx.transform.localRotation = Quaternion.Euler(ThrusterVfxEuler);
-                // Jet world size is fixed (ThrusterVfxScale); divide by the nozzle's actual world
-                // scale so it holds whether the 125x is on an ancestor transform or baked into the rig.
-                fx.transform.localScale = Vector3.one * (ThrusterVfxScale / Mathf.Max(0.0001f, t.lossyScale.x));
-                // Keep the effect's animator on the loop clip so its (animation-keyed) emission runs
-                // whenever the effect is active.
-                if (loopCtrl != null)
-                    foreach (var anim in fx.GetComponentsInChildren<Animator>(true))
-                        anim.runtimeAnimatorController = loopCtrl;
-                var dust = new List<GameObject>();
-                foreach (var ps in fx.GetComponentsInChildren<ParticleSystem>(true))
-                {
-                    // Drop the ground-dust burst: it reads as noise on a hovering mech.
-                    if (ps.name.IndexOf("dust", StringComparison.OrdinalIgnoreCase) >= 0) { dust.Add(ps.gameObject); continue; }
-                    var main = ps.main;
-                    main.playOnAwake = true; // plays when the effect is switched on by the clip
-                    main.loop = true;
-                    main.simulationSpace = ParticleSystemSimulationSpace.Local;
-                }
-                foreach (var go in dust) UnityEngine.Object.DestroyImmediate(go);
-                foreach (var tr in fx.GetComponentsInChildren<Transform>(true))
-                    GameObjectUtility.RemoveMonoBehavioursWithMissingScript(tr.gameObject);
-                // Whole effect off by default; her locomotion clips switch it on so it loops the
-                // entire jump-up -> hover -> landing, off in Idle.
-                fx.SetActive(false);
-                jetRoots.Add(fx.transform);
-                n2++;
-            }
-            DriveJetsFromClips(inst, jetRoots);
-            Debug.Log($"thruster vfx: {n2} nozzle(s); jetRoots={jetRoots.Count}; euler={ThrusterVfxEuler}");
-        }
-
-        // Switch the whole jet effect on for the entire locomotion (RunStart, Run, RunStop), so it
-        // loops continuously from the jump-up through the landing. Idle has no curve, so the states'
-        // Write Defaults return the effect to its off (inactive) default there.
-        private static void DriveJetsFromClips(GameObject inst, List<Transform> jetRoots)
-        {
-            var run = AssetDatabase.LoadAssetAtPath<AnimationClip>(AnimDir + "/voymastina_run_inplace.anim");
-            var runStart = AssetDatabase.LoadAssetAtPath<AnimationClip>(AnimDir + "/voymastina_runstart_inplace.anim");
-            var runStop = AssetDatabase.LoadAssetAtPath<AnimationClip>(AnimDir + "/voymastina_runstop_inplace.anim");
-            // The drill reuses the locomotion jets: switch them on for the windup clip, so she spins
-            // up thrust as she plants for the drill. Write Defaults turns them back off once the
-            // drill exits to Aim.
-            var ultra = AssetDatabase.LoadAssetAtPath<AnimationClip>(AnimDir + "/voymastina_ultraskill_inplace.anim");
-            foreach (var root in jetRoots)
-            {
-                var path = AnimationUtility.CalculateTransformPath(root, inst.transform);
-                SetActiveCurve(run, path);
-                SetActiveCurve(runStart, path);
-                SetActiveCurve(runStop, path);
-                SetActiveCurve(ultra, path);
-            }
-            Debug.Log($"jets-from-clips: run={(run != null)} runStart={(runStart != null)} runStop={(runStop != null)} ultra={(ultra != null)}");
-        }
-
-        // Add a constant "GameObject active = 1" curve for a transform path to a clip. Uses
-        // clip.SetCurve (writes the runtime float curve) rather than SetEditorCurve with a
-        // DiscreteCurve binding, which wrote an empty runtime curve that never applied in-game.
-        private static void SetActiveCurve(AnimationClip clip, string path)
-        {
-            if (clip == null) return;
-            float len = Mathf.Max(1f / 60f, clip.length);
-            clip.SetCurve(path, typeof(GameObject), "m_IsActive", new AnimationCurve(new Keyframe(0f, 1f), new Keyframe(len, 1f)));
-        }
-
-        // A one-state controller that plays the thruster loop clip on a loop, so a standalone copy
-        // of the effect keeps its jet emission running (no jump trigger needed).
-        private static UnityEditor.Animations.AnimatorController BuildThrusterLoopController()
-        {
-            var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(ThrusterLoopClip);
-            if (clip == null) { Debug.LogWarning("thruster loop clip missing at " + ThrusterLoopClip); return null; }
-            var settings = AnimationUtility.GetAnimationClipSettings(clip);
-            if (!settings.loopTime) { settings.loopTime = true; AnimationUtility.SetAnimationClipSettings(clip, settings); }
-            if (AssetDatabase.LoadAssetAtPath<UnityEditor.Animations.AnimatorController>(ThrusterLoopCtrlPath) != null)
-                AssetDatabase.DeleteAsset(ThrusterLoopCtrlPath);
-            return UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPathWithClip(ThrusterLoopCtrlPath, clip);
         }
 
         // The default FBX export collapses the logo decal's skin to one bone (Root_M), so it
@@ -907,7 +794,7 @@ namespace WOMENACE.Editor
                 }
 
                 AddMuzzleAnchors(inst);
-                AttachThrusterVfx(inst);
+                SinbreakerThrusters.Attach(inst, ModelScale * FbxFileScale);
 
                 // Match native units' rendering layer mask (1) on the body meshes. The character import
                 // leaves some at 257 (bit 8 = an HDRP decal layer), which projects road and other ground
