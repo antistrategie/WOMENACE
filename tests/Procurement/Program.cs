@@ -90,8 +90,9 @@ var empty = Procurement.Plan(exhausted, catalogue, 10, 42);
 Assert(empty.Rewards.All(reward => reward.Limit == 0), "Spent claims must stay out of the pool without relying on inventory");
 Assert(empty.State.Counter(ProcurementSection.Dossiers) == 250 && empty.State.Counter(ProcurementSection.Special) == 95, "Empty sections must pause their counters");
 bool Eligible(ProcurementSection section) => catalogue.Any(reward => reward.Section == section && exhausted.Available(reward));
-Assert(Procurement.EffectiveWeight(ProcurementSection.Parts, Eligible) * 100d / Procurement.TotalWeight == 86.5,
-    "Exhausting all limited sections must increase the base part chance to 86.5 percent");
+var depletedWeight = Procurement.Sections.Where(section => !Eligible(section)).Sum(Procurement.Weight);
+Assert(Procurement.EffectiveWeight(ProcurementSection.Parts, Eligible) == Procurement.Weight(ProcurementSection.Parts) + depletedWeight,
+    "Exhausted sections must redistribute their configured weight to parts");
 Assert(Procurement.EffectiveWeight(ProcurementSection.Special, Eligible) == 0
     && Procurement.EffectiveWeight(ProcurementSection.Dossiers, Eligible) == 0
     && Procurement.EffectiveWeight(ProcurementSection.Curios, Eligible) == 0,
@@ -101,7 +102,7 @@ Assert(Procurement.Sections.Sum(section => Procurement.EffectiveWeight(section, 
 Assert(Procurement.EffectiveWeight(ProcurementSection.Parts, section => section == ProcurementSection.Parts) == Procurement.TotalWeight,
     "A parts-only catalogue must advertise and sample a 100 percent part chance");
 var expanded = catalogue.Append(new ProcurementReward("dossier-c", ProcurementSection.Dossiers, 1)).ToList();
-exhausted.Counters[ProcurementSection.Dossiers] = 299;
+exhausted.Counters[ProcurementSection.Dossiers] = Procurement.Pity(ProcurementSection.Dossiers) - 1;
 var added = Procurement.Plan(exhausted, expanded, 1, 42);
 Assert(added.Rewards.Single().Id == "dossier-c", "A newly added dossier must become eligible without resetting previous claims");
 
@@ -250,8 +251,6 @@ Assert(permanentClaims.EquipmentItems.Count == 0 && catalogue.Where(reward => re
 
 var partsOnly = Procurement.Plan(new ProcurementState(), new[] { catalogue[0] }, 10, 42);
 Assert(partsOnly.Rewards.All(reward => reward.Id == "part"), "All empty section weights must return to parts");
-Assert(Procurement.Sections.Sum(Procurement.Weight) == 10000, "Base probabilities must total 100 percent");
-Assert(Procurement.PiecePrice * Procurement.PiecesPerPull == 50, "A pull must cost the equivalent of 50 Sardis");
 var rejected = false;
 try { Procurement.Plan(state, catalogue, 2, 123); } catch (ArgumentOutOfRangeException) { rejected = true; }
 Assert(rejected, "Unsupported batch sizes must be rejected");

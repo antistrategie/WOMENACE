@@ -49,6 +49,10 @@ public sealed class MeleeVsFliersSystem : JiangyuSystem
             if (info.Instance is not Actor victim || !IsAirborne(victim))
                 return;
             var skill = (info.Args is { Count: > 1 } ? info.Args[1] : null) as Skill;
+            // Pile Bunker permits airborne damage through its native Attack
+            // handler. Its legitimate zeroes must retain normal mitigation.
+            if (skill?.GetID() == SinbreakerCombatState.BunkerId)
+                return;
             // Damage can also be zero because another system spared the target.
             // Restrict restoration to our melee skills so blasts and ranged attacks
             // retain their own damage rules.

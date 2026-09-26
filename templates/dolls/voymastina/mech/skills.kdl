@@ -2,8 +2,13 @@ clone "SkillTemplate" from="active.fire_assault_rifle_tier1_762" id="active.voym
     set "Title" {
         set "m_DefaultTranslation" "Dread Ultimatum"
     }
+    set "Description" {
+        set "m_DefaultTranslation" "Fire a <link=\"rate_of_fire\">$1-round burst</link>, applying <link=\"voymastina_target_lock\">Target Lock</link> on hit."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "active.voymastina_mech_gun" path="Repetitions"
+    }
 
-    set "ActionPointCost" 22
+    set "ActionPointCost" 40
     set "Uses" 24
 
     // The mech grants this skill itself, so no weapon item backs it: the tag is what
@@ -21,11 +26,12 @@ clone "SkillTemplate" from="active.fire_assault_rifle_tier1_762" id="active.voym
     set "DelayAfterAnimationTrigger" 1.35
 
     set "EventHandlers" index=0 {
-        set "Damage" 7.0
-        set "ArmorPenetration" 20.0
+        set "Damage" 37.0
+        set "ArmorPenetration" 30.0
         set "Suppression" 3.0
         set "DamageToArmorDurability" 7.0
     }
+    append "EventHandlers" type="WOMENACE:SinbreakerWeapon" {}
 
     set "IsSoundOnAttackPerElementPlayingAfterAnimationDelay" #true
     set "IsSoundOnAttackPerElementFarPlayingAfterAnimationDelay" #true
@@ -53,6 +59,10 @@ clone "SkillTemplate" from="active.launch_construct_rocket" id="active.voymastin
     set "Title" {
         set "m_DefaultTranslation" "Sirius Fall"
     }
+    set "Description" {
+        set "m_DefaultTranslation" "Launch a high-explosive rocket at the target."
+        clear "m_Placeholders"
+    }
 
     set "ActionPointCost" 50
     set "Uses" 11
@@ -67,10 +77,11 @@ clone "SkillTemplate" from="active.launch_construct_rocket" id="active.voymastin
     set "DelayAfterAnimationTrigger" 1.333
 
     set "EventHandlers" index=0 {
-        set "Damage" 100.0
+        set "Damage" 130.0
         set "ArmorPenetration" 80.0
         set "Suppression" 50.0
         set "DamageToArmorDurability" 50.0
+        set "ElementsHit" 3
     }
 }
 
@@ -78,13 +89,17 @@ clone "SkillTemplate" from="active.wetteroth_thats_a_knife" id="active.voymastin
     set "Title" {
         set "m_DefaultTranslation" "Pile Bunker"
     }
+    set "Description" {
+        set "m_DefaultTranslation" "Close in for a guaranteed melee strike that ignores cover. Consumes <link=\"voymastina_target_lock\">Target Lock</link> for bonus <link=\"hitpoint_damage\">Hitpoint damage</link>. Executions activate <link=\"voymastina_energy_thief\">Energy Thief</link>."
+        clear "m_Placeholders"
+    }
 
     // The knife base is culled after combat and the per-mission grant does not
     // reliably restore it, so a granted clone goes missing on later missions.
     // This is permanent kit: keep it out of the cull.
     set "IsRemovedAfterCombat" #false
 
-    set "ActionPointCost" 90
+    set "ActionPointCost" 60
 
     set "MuzzleType" enum="MuzzleType" "Muzzle3"
     set "AnimationType" enum="AnimationType" "SpecialAttack2"
@@ -98,12 +113,18 @@ clone "SkillTemplate" from="active.wetteroth_thats_a_knife" id="active.voymastin
     set "IdealRange" 1
     set "MaxRange" 6
 
+    // The knife's sole exclusion is hovering. OnBeforeAnySkillUsed
+    // (0x748DA0) zeroes its damage multiplier in hits and previews alike.
+    // OnVerifyTarget (0x749050) reads EntityFlagsRequired only, so clearing
+    // this damage exclusion preserves the existing targeting permissions.
     set "EventHandlers" index=0 {
-        set "Damage" 70.0
-        set "ArmorPenetration" 120.0
+        set "Damage" 150.0
+        set "ArmorPenetration" 160.0
         set "Suppression" 80.0
-        set "DamageToArmorDurability" 80.0
+        set "DamageToArmorDurability" 160.0
+        clear "TargetCannotHaveOneOfTheseTags"
     }
+    append "EventHandlers" type="WOMENACE:SinbreakerWeapon" {}
 
     clear "SoundsOnUse"
     clear "SoundsOnHit"
@@ -119,5 +140,6 @@ clone "SkillTemplate" from="active.wetteroth_thats_a_knife" id="active.voymastin
 
     append "Tags" "armor_piercing"
     append "Tags" "armor_damaging"
+    append "Tags" "wmgfl_entity_weapon"
     append "Tags" "wmgfl_melee"
 }

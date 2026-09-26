@@ -32,6 +32,7 @@ public sealed class EffectHudIconSystem : JiangyuSystem
         "effect.wmgfl_overburn",
         "effect.wmgfl_peace",
         "effect.alva_frost_echo",
+        "effect.voymastina_target_lock",
     };
 
     private static EffectHudIconSystem _instance;

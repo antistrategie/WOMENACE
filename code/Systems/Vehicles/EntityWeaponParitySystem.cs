@@ -8,22 +8,22 @@ using Jiangyu.Sdk;
 
 namespace WOMENACE.Code;
 
-// Makes an entity-granted vehicle gun count as a real weapon skill for the vanilla
+// Makes an entity-granted vehicle weapon count as a real weapon skill for the vanilla
 // ammo and weapon-skill mechanics.
 //
-// Our vehicles carry their guns on the EntityTemplate's Skills list rather than as
+// Our vehicles carry their weapons on the EntityTemplate's Skills list rather than as
 // equipped weapon items (the modular weapon slots are cleared, so there is nothing to
 // equip a turret into). Every vanilla mechanic that identifies a vehicle weapon skill
 // through its granting item therefore rejects them:
 //   - Vehicle Ammo Cases' AmmoPouch requires the granting item's type to be Weapon,
 //   - the dropship supply drop refills through an IsItemSkillFilter ("is an item behind
 //     this skill"),
-//   - Drive By's AP discount and effect consumption gate on an ItemSlotFilter of the
-//     vehicle weapon slots.
+//   - Full Send's activation and AP discount, plus native Drive By's discount and
+//     consumption, gate on an ItemSlotFilter of the vehicle weapon slots.
 // (The scavenger drop needs no help: its filter matches tags.)
 //
-// Scope is the wmgfl_entity_weapon tag, so a vehicle opts its guns in from KDL and no
-// skill id lives here. Currently the Sinner's salvo and the mech's gun and rocket.
+// Scope is the wmgfl_entity_weapon tag, so a vehicle opts its weapons in from KDL and
+// no skill id lives here. Unlimited weapons still obey the native ammo exclusions.
 public sealed class EntityWeaponParitySystem : JiangyuSystem
 {
     private const string EntityWeaponTag = "wmgfl_entity_weapon";
@@ -55,6 +55,7 @@ public sealed class EntityWeaponParitySystem : JiangyuSystem
         Context.Patches.Postfix("Il2CppMenace.Tactical.Actor", "RefillAmmo", 3, OnRefillEnd);
         Context.Patches.Postfix("Il2CppMenace.Tactical.Skills.Effects.AmmoPouchHandler", "OnMissionStarted", OnAmmoPouchMissionStarted);
         Context.Patches.Postfix("Il2CppMenace.Tactical.Skills.Effects.AmmoPouchHandler", "OnAnySkillAdded", OnAmmoPouchSkillAdded);
+        Context.Patches.Postfix("Il2CppMenace.Tactical.Skills.Skill", "OnMissionStarted", 0, OnWeaponMissionStarted);
     }
 
     // A template rebuild invalidates every cached pointer, so the verdicts are re-derived
@@ -81,7 +82,7 @@ public sealed class EntityWeaponParitySystem : JiangyuSystem
         _inRefill = false;
     }
 
-    // Whether a skill is one of our entity-granted vehicle guns. Shared by the filter
+    // Whether a skill is one of our entity-granted vehicle weapons. Shared by the filter
     // overrides and the ammo pouch mirror so they cannot disagree.
     private bool IsEntityWeapon(Skill skill)
     {
@@ -102,7 +103,7 @@ public sealed class EntityWeaponParitySystem : JiangyuSystem
         catch { return false; }
     }
 
-    // Our guns pass an ItemSlotFilter whenever the filter targets the ModularVehicleLight
+    // Our weapons pass an ItemSlotFilter whenever the filter targets the ModularVehicleLight
     // slot, exactly as if a turret item still backed them. Filters aimed at other slots
     // (infantry ammo bags, heavy turret perks) stay rejected.
     private void OnItemSlotFilterMatches(PatchInfo info)
@@ -157,9 +158,42 @@ public sealed class EntityWeaponParitySystem : JiangyuSystem
     private static bool IsAmmoCases(AmmoPouchHandler handler)
         => handler?.ParentSkill?.GetTemplate()?.GetID() == AmmoCasesPassiveId;
 
-    // The mission-start sweep: this pouch owes a bonus to every tagged gun on the entity
-    // carrying it. All of them, not the first one found, so the mech's gun and rocket are
-    // both raised.
+    // Skill.OnMissionStarted (0x712020) resets max and current uses before its handlers.
+    // An earlier OnAnySkillAdded or pouch callback can already have claimed the bonus,
+    // so that skill's ledger must follow its native reset, not just the scene lifetime.
+    private void OnWeaponMissionStarted(PatchInfo info)
+    {
+        try
+        {
+            var skill = (info.Instance as Il2CppObjectBase)?.TryCast<Skill>();
+            if (!IsEntityWeapon(skill))
+                return;
+            var pointer = skill.Pointer;
+            _boosted.RemoveWhere(pair => pair.Skill == pointer);
+
+            var skills = skill.GetEntity()?.GetSkills()?.GetAllSkills();
+            for (var i = 0; skills != null && i < skills.Count; i++)
+            {
+                var passive = skills[i]?.TryCast<Skill>();
+                if (passive?.GetTemplate()?.GetID() != AmmoCasesPassiveId)
+                    continue;
+                var handlers = passive.GetSkillEventHandlers();
+                for (var j = 0; handlers != null && j < handlers.Length; j++)
+                {
+                    var pouch = handlers[j]?.TryCast<AmmoPouchHandler>();
+                    if (pouch != null)
+                        BoostUses(skill, pouch);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Context.Log.Warn($"entity weapon: ammo bonus after weapon reset failed: {ex.Message}");
+        }
+    }
+
+    // The mission-start sweep visits every tagged weapon on the carrier, so a pouch
+    // boosts all eligible weapons rather than only the first one found.
     private void OnAmmoPouchMissionStarted(PatchInfo info)
     {
         try

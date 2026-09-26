@@ -19,9 +19,13 @@ clone "EntityTemplate" from="player_vehicle.generic_heavy_attack_walker" id="pla
     set "ModularVehicle" "modular_vehicle.voymastina_mech"
 
     set "Properties" {
-        set "AdditionalMovementCost" -12
+        set "AdditionalMovementCost" 0
         set "Vision" 11
-        set "Damage" 30.0
+        set "Damage" 0.0
+        set "HitpointsPerElement" 320
+        set "Armor" 170
+        set "ArmorSide" 170
+        set "ArmorBack" 170
         set "SoundOnMovementStart" {
             set "bankId" "wmgfl_voymastina_mech_sfx"
             set "itemId" "Run_Start"
@@ -70,9 +74,13 @@ clone "EntityTemplate" from="player_vehicle.generic_heavy_attack_walker" id="pla
     set "ModularVehicle" "modular_vehicle.voymastina_mech"
 
     set "Properties" {
-        set "AdditionalMovementCost" -12
+        set "AdditionalMovementCost" 0
         set "Vision" 11
-        set "Damage" 30.0
+        set "Damage" 0.0
+        set "HitpointsPerElement" 320
+        set "Armor" 170
+        set "ArmorSide" 170
+        set "ArmorBack" 170
         set "SoundOnMovementStart" {
             set "bankId" "wmgfl_voymastina_mech_sfx"
             set "itemId" "Run_Start"

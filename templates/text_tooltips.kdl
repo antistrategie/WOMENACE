@@ -150,4 +150,28 @@ patch "TextTooltipsConfig" "text_tooltips_config" {
             append "m_Placeholders" bind="SkillTemplate" "effect.alva_frost_echo" path="EventHandlers[0].Lifetime"
         }
     }
+
+    // Sinbreaker's Monarch kit keywords.
+    append "Tooltips" {
+        set "LinkId" "voymastina_target_lock"
+        set "TooltipHeading" {
+            set "m_DefaultTranslation" "Target Lock"
+        }
+        set "TooltipText" {
+            set "m_DefaultTranslation" "Applied by Dread Ultimatum hits. Sinbreaker's next Pile Bunker against the marked enemy consumes the mark for +$1% <link=\"hitpoint_damage\">Hitpoint damage</link>. Lasts until the end of her next turn."
+            clear "m_Placeholders"
+            append "m_Placeholders" bind="PerkTemplate" "perk.voymastina_monarch" path="EventHandlers[0].TargetLockBonus" format="percent"
+        }
+    }
+    append "Tooltips" {
+        set "LinkId" "voymastina_energy_thief"
+        set "TooltipHeading" {
+            set "m_DefaultTranslation" "Energy Thief"
+        }
+        set "TooltipText" {
+            set "m_DefaultTranslation" "Sinbreaker's first Pile Bunker execution each turn restores $1% of her maximum <link=\"armor_durability\">armour durability</link>, or all durability if the destroyed unit is a vehicle."
+            clear "m_Placeholders"
+            append "m_Placeholders" bind="PerkTemplate" "perk.voymastina_monarch" path="EventHandlers[0].RepairFraction" format="percent"
+        }
+    }
 }

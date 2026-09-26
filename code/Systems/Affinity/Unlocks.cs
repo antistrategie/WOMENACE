@@ -59,7 +59,7 @@ public static class Unlocks
         ["wmgfl_voymastina"] = new[]
         {
             new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.voymastina_erwin" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_voymastina/lv2", "Outfit: Erwin") },
-            new Entry { Level = 4, Feature = Feature.Mech, Items = new[] { "vehicle.voymastina_mech", "vehicle.voymastina_mech_erwin" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_voymastina/lv4", "Alternate form: Sinbreaker") },
+            new Entry { Level = 10, Feature = Feature.Mech, Items = new[] { "vehicle.voymastina_mech", "vehicle.voymastina_mech_erwin" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_voymastina/lv10", "Alternate form: Sinbreaker") },
         },
         ["wmgfl_leva"] = new[]
         {
