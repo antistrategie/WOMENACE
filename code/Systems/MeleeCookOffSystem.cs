@@ -1,8 +1,11 @@
+using HarmonyLib;
 using Il2CppInterop.Runtime.InteropTypes;
 using Il2CppMenace.Tactical;
 using Il2CppMenace.Tactical.Skills;
 using Il2CppMenace.Tactical.Skills.Effects;
 using Jiangyu.Sdk;
+using DamageHarmony = HarmonyLib.Harmony;
+using PatchInfo = Jiangyu.Sdk.PatchInfo;
 
 namespace WOMENACE.Code;
 
@@ -12,6 +15,10 @@ namespace WOMENACE.Code;
 // Non-attack deathrattles, such as the worker drone's morale scream, are unaffected.
 public sealed class MeleeCookOffSystem : JiangyuSystem
 {
+    internal static MeleeCookOffSystem Instance { get; private set; }
+    internal int SceneGeneration { get; private set; }
+    private DamageHarmony _damagePatch;
+
 #if JIANGYU_DEV
     // Gate counters distinguish missing kill attribution from unmatched blast damage.
     internal sealed class Counters
@@ -26,13 +33,15 @@ public sealed class MeleeCookOffSystem : JiangyuSystem
         public int BlastsLaunched, SourceMisses;
         public string LastSparedSource = "none";
         public string LastBlastSource = "none";
+        public int InheritedDefectHits;
+        public int DamageEffectHits;
+        public string LastDamageEffectHit = "none";
+        public string LastMeleeHit = "none";
     }
 
-    internal static MeleeCookOffSystem Instance { get; private set; }
     internal readonly Counters Diagnostics = new();
     internal int LedgerSize => _meleeStruck.Count;
     internal int SparedSize => _sparedFrom.Count;
-    internal int SceneGeneration { get; private set; }
 #endif
 
     // Cache the tag verdict per skill template to avoid marshalling tags on every hit.
@@ -62,7 +71,7 @@ public sealed class MeleeCookOffSystem : JiangyuSystem
 
     // A deathrattle can run before Killer and GetLastAttackedBySkill are populated.
     // Record the attacker before damage resolves and clear the entry on a later
-    // non-melee hit. Retaining the actor wrappers prevents native pointer reuse.
+    // independent non-melee hit. Retaining the actor wrappers prevents pointer reuse.
     private sealed class MeleeHit
     {
         public Actor Victim;
@@ -70,30 +79,94 @@ public sealed class MeleeCookOffSystem : JiangyuSystem
     }
 
     private readonly Dictionary<IntPtr, MeleeHit> _meleeStruck = new();
+    private readonly Dictionary<IntPtr, int> _damageDepth = new();
 
-    public override void OnSceneLoaded(int buildIndex, string sceneName)
+    public override void OnSceneLoaded(int buildIndex, string sceneName) => ResetSceneState();
+
+    private void ResetSceneState()
     {
         _deathrattles.Clear();
         _sparedFrom.Clear();
         _meleeStruck.Clear();
+        _damageDepth.Clear();
         _isMelee.Clear();
-#if JIANGYU_DEV
         SceneGeneration++;
-#endif
     }
 
     public override void OnInit()
     {
-#if JIANGYU_DEV
         Instance = this;
-#endif
         // Both DeathrattleHandler.OnDeath and OnElementDeath funnel through this
         // private helper, so one hook covers the actor-wide and per-element forms.
         Context.Patches.Prefix("Il2CppMenace.Tactical.Skills.Effects.DeathrattleHandler", "TriggerSkill", OnDeathrattle);
         Context.Patches.Prefix("Il2CppMenace.Tactical.Skills.Skill", "Use", 2, OnBlastUse);
-        // The 3-arg overload is the concrete Actor override (a 4-arg form also
-        // exists), the same binding MeleeVsFliersSystem uses.
-        Context.Patches.Prefix("Il2CppMenace.Tactical.Actor", "OnDamageReceived", 3, OnDamageReceived);
+        // The SDK has no finalizer hook. Own this pair so exceptions cannot leave
+        // damage nesting behind, and remove both patches when the system unloads.
+        var receive = AccessTools.DeclaredMethod(typeof(Actor), nameof(Actor.OnDamageReceived),
+            new[] { typeof(Entity), typeof(Skill), typeof(DamageInfo) })
+            ?? throw new MissingMethodException(typeof(Actor).FullName, nameof(Actor.OnDamageReceived));
+        _damagePatch = new DamageHarmony("WOMENACE.MeleeCookOffSystem");
+        _damagePatch.Patch(receive,
+            prefix: new HarmonyMethod(typeof(MeleeCookOffSystem), nameof(OnDamagePrefix)),
+            finalizer: new HarmonyMethod(typeof(MeleeCookOffSystem), nameof(OnDamageFinalizer)));
+    }
+
+    public override void OnUnload()
+    {
+        try
+        {
+            _damagePatch?.UnpatchSelf();
+        }
+        finally
+        {
+            _damagePatch = null;
+            ResetSceneState();
+            if (Instance == this)
+                Instance = null;
+        }
+    }
+
+    private sealed class DamageCall
+    {
+        public MeleeCookOffSystem System;
+        public Actor Victim;
+        public int Generation;
+        public bool Completed;
+    }
+
+    private static void OnDamagePrefix(Actor __instance, Entity __0, Skill __1, DamageInfo __2, out object __state)
+    {
+        __state = null;
+        var system = Instance;
+        if (system == null || __instance == null)
+            return;
+        system._damageDepth.TryGetValue(__instance.Pointer, out var depth);
+        var call = new DamageCall { System = system, Victim = __instance, Generation = system.SceneGeneration };
+        system._damageDepth[__instance.Pointer] = depth + 1;
+        __state = call;
+        system.OnDamageReceived(__instance, __0, __1, __2, depth);
+    }
+
+    private static Exception OnDamageFinalizer(Exception __exception, object __state)
+    {
+        // A call whose prefix never ran must not pop an outer call's depth.
+        if (__state is not DamageCall call || call.Completed)
+            return __exception;
+        call.Completed = true;
+        var system = call.System;
+        if (call.Generation != system.SceneGeneration)
+            return __exception;
+        var pointer = call.Victim.Pointer;
+        if (__exception != null)
+            system._meleeStruck.Remove(pointer);
+        if (system._damageDepth.TryGetValue(pointer, out var depth))
+        {
+            if (depth > 1)
+                system._damageDepth[pointer] = depth - 1;
+            else
+                system._damageDepth.Remove(pointer);
+        }
+        return __exception;
     }
 
     // A wreck is about to detonate. If a melee attack of ours is what killed it, note
@@ -186,32 +259,56 @@ public sealed class MeleeCookOffSystem : JiangyuSystem
 
     // The blast resolves over the following frames and arrives here once per target.
     // Zero it for the attacker being passed over and leave every other target alone.
-    private void OnDamageReceived(PatchInfo info)
+    private void OnDamageReceived(Actor victim, Entity source, Skill skill, DamageInfo damageInfo, int depth)
     {
         try
         {
-            if (info.Instance is not Actor victim)
-                return;
-            var skill = (info.Args is { Count: > 1 } ? info.Args[1] : null) as Skill;
             var payload = skill?.GetTemplate();
+            var attacker = source?.TryCast<Actor>();
+#if JIANGYU_DEV
+            if (payload != null && (payload.Type & SkillType.DamageEffect) != 0)
+            {
+                _meleeStruck.TryGetValue(victim.Pointer, out var recorded);
+                Diagnostics.DamageEffectHits++;
+                Diagnostics.LastDamageEffectHit = $"{payload.GetID()} depth={depth} victim={victim.Pointer.ToInt64():X}"
+                    + $" attacker={attacker?.Pointer.ToInt64():X} source={skill?.Source?.Pointer.ToInt64():X}"
+                    + $" recordedAttacker={recorded?.Attacker?.Pointer.ToInt64():X} flags={payload.Type}";
+                Context.Log.Debug($"melee cook-off: defect hit {Diagnostics.LastDamageEffectHit}");
+            }
+#endif
 
-            // Remember what last hit this actor. Every hit overwrites the verdict, so a
-            // vehicle softened up in melee and then finished with gunfire still cooks
-            // off on its killer: only the last blow counts.
+            // ApplyRandomDamageEffect (RVA 0x5E9080) adds a defect inside damage
+            // resolution. damage_effect.critical_hit grants its deathrattle, then
+            // DamageHandler.OnAdded (0x7526E0) kills the vehicle with a nested hit.
+            // DamageHandler.ApplyDamage passes a null attacker at 0x752582. The
+            // defect retains provenance in Source, not SourceSkill or that argument.
+            // Only a synchronous defect with the same source inherits the blow.
+            // An explicit different attacker, later gunfire and delayed damage do not.
+            var inheritsMelee = depth > 0 && payload != null
+                && (payload.Type & SkillType.DamageEffect) != 0
+                && _meleeStruck.TryGetValue(victim.Pointer, out var previous)
+                && previous.Attacker != null && skill.Source?.Pointer == previous.Attacker.Pointer
+                && (attacker == null || attacker.Pointer == previous.Attacker.Pointer);
             if (IsMelee(payload))
             {
 #if JIANGYU_DEV
                 Diagnostics.MeleeHitsSeen++;
+                Diagnostics.LastMeleeHit = $"{payload.GetID()} victim={victim.Pointer.ToInt64():X} attacker={attacker?.Pointer.ToInt64():X}";
                 if (!_meleeStruck.ContainsKey(victim.Pointer))
                     Diagnostics.LedgerAdds++;
 #endif
-                var attacker = ((info.Args is { Count: > 0 } ? info.Args[0] : null) as Il2CppObjectBase)?.TryCast<Actor>();
                 _meleeStruck[victim.Pointer] = new MeleeHit { Victim = victim, Attacker = attacker };
             }
-            else
+            else if (!inheritsMelee)
             {
                 _meleeStruck.Remove(victim.Pointer);
             }
+#if JIANGYU_DEV
+            else
+            {
+                Diagnostics.InheritedDefectHits++;
+            }
+#endif
 
             // Nothing is being spared almost all of the time, so the blast-sparing half
             // costs one dictionary count check per damage event in the game.
@@ -219,7 +316,6 @@ public sealed class MeleeCookOffSystem : JiangyuSystem
                 return;
             if (!_sparedFrom.TryGetValue(victim.Pointer, out var waiver))
                 return;
-            var damageInfo = (info.Args is { Count: > 2 } ? info.Args[2] : null) as DamageInfo;
 #if JIANGYU_DEV
             // Record before matching so a rejected source is visible in Melee.Probe.
             Diagnostics.DamageAtSpared++;
@@ -249,6 +345,7 @@ public sealed class MeleeCookOffSystem : JiangyuSystem
         }
         catch (Exception ex)
         {
+            _meleeStruck.Remove(victim.Pointer);
             Context.Log.Warn($"melee cook-off: sparing the attacker failed: {ex.GetType().Name}: {ex.Message}");
         }
     }

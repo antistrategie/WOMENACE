@@ -25,10 +25,13 @@ description = "Deploy the compiled mod into the MENACE Mods directory (clean: re
 run = "dotnet ${JIANGYU_DIR:-../jiangyu}/src/Jiangyu.Cli/bin/${JIANGYU_BUILD:-Debug}/net10.0/jiangyu.dll deploy"
 
 [tasks.test]
-description = "Compile and check Procurement behaviour, probabilities and native rendering API compatibility"
+description = "Compile and check melee cook-off, probe cleanup, Procurement behaviour, probabilities and native rendering API compatibility"
 depends = ["compile"]
 run = '''
 set -eu
+dotnet run --project tests/MeleeCookOff
+dotnet run --project tests/MeleeCookOff -p:JiangyuDev=false
+dotnet run --project tests/MeleeCookOffProbe
 dotnet run --project tests/Procurement -- --rates
 procurement_game_assemblies=$(dotnet msbuild code/WOMENACE.Code.csproj -getProperty:GameAssembliesDir)
 dotnet run --project tests/ShopRendering -- compiled/code/WOMENACE.Code.dll "$procurement_game_assemblies/UnityEngine.UIElementsModule.dll"

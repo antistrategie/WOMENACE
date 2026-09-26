@@ -2,12 +2,12 @@ using Il2CppMenace.Tactical;
 using Il2CppMenace.Tactical.Skills;
 using Jiangyu.Game.Tactical;
 using Jiangyu.Sdk;
+using UnityEngine;
 
 namespace WOMENACE.Code;
 
-// Dev verbs for exercising MeleeCookOffSystem in a live mission, since the bridge
-// cannot drive combat directly (no move-and-attack command) and vehicle deathrattles
-// are often chance gated.
+// Dev verbs for exercising MeleeCookOffSystem in a disposable mission. Deathrattles
+// and vehicle defects are often chance gated, and a control blast can kill its witness.
 //
 // CookOff runs one half of an A/B: it spawns a target next to a player unit, grants
 // it racial.critical_hit_explosion (Chance 100, IsAttack payload) so the blast is
@@ -26,6 +26,7 @@ public static class Melee
 {
     private const string BlastId = "racial.critical_hit_explosion";
     private const string MeleeSkillId = "active.sextans_slash";
+    private const string PileBunkerSkillId = "active.voymastina_mech_drill";
     private const string ControlSkillId = "active.voymastina_mech_gun";
     private const string DefaultTargetId = "enemy.pirate_vehicle.chaingun_guntruck";
 
@@ -33,6 +34,7 @@ public static class Melee
     // next to, and its hitpoints at the moment the killing blow landed.
     private static Actor _witness;
     private static int _witnessHpAtKill;
+    private static int _witnessArmourAtKill;
     private static int _witnessSceneGeneration;
     private static string _lastRun = "none";
 
@@ -90,6 +92,10 @@ public static class Melee
             sourceMisses = d.SourceMisses,
             lastSparedSource = d.LastSparedSource,
             lastBlastSource = d.LastBlastSource,
+            inheritedDefectHits = d.InheritedDefectHits,
+            damageEffectHits = d.DamageEffectHits,
+            lastDamageEffectHit = d.LastDamageEffectHit,
+            lastMeleeHit = d.LastMeleeHit,
             airborneDamageRestored = MeleeVsFliersSystem.Instance?.DamageRestored ?? 0,
             lastAirborneHit = MeleeVsFliersSystem.Instance?.LastRestoredHit ?? "none",
         };
@@ -129,35 +135,38 @@ public static class Melee
         // non-lead element does not move Actor.GetHitpoints. Sum the elements, the
         // same way BloodRally asks how hurt an actor is.
         var hp = alive ? RallyBarsSystem.SumHitpoints(_witness) : 0;
+        var armour = alive ? Units.ArmorDurability(_witness) : 0;
         return new
         {
             run = _lastRun,
             witnessAlive = alive,
             witnessHpAtKill = _witnessHpAtKill,
             witnessHpNow = hp,
-            blastLanded = !alive || hp < _witnessHpAtKill,
+            witnessArmourAtKill = _witnessArmourAtKill,
+            witnessArmourNow = armour,
+            blastLanded = !alive || hp < _witnessHpAtKill || armour < _witnessArmourAtKill,
         };
     }
 
-    // Leave a guaranteed exploder alive for the player to kill with a normal attack.
-    // An explicit witness and optional tile keep the comparison beside the intended
-    // squad. Removing armour avoids a melee test stalling on vehicle armour.
+    // Leave a target alive for the player to kill with a normal attack. A native
+    // walker with grantBlast=false exercises its own explosion rather than replacing
+    // that path with the guaranteed test blast. Removing armour keeps melee viable.
     [MutatingVerb]
-    public static object Spawn(Actor witness, Tile tile = null)
+    public static object Spawn(Actor witness, Tile tile = null, string targetId = DefaultTargetId, bool grantBlast = true)
     {
         if (!Mission.InMission || witness == null || !InCurrentMission(witness) || !witness.IsAlive())
             return new { error = "select a living witness in the current mission" };
         var origin = witness.GetTile();
-        var target = Templates.ById<EntityTemplate>(DefaultTargetId);
-        var blast = Templates.ById<SkillTemplate>(BlastId);
-        if (origin == null || target == null || blast == null)
+        var target = Templates.ById<EntityTemplate>(targetId);
+        var blast = grantBlast ? Templates.ById<SkillTemplate>(BlastId) : null;
+        if (origin == null || target == null || (grantBlast && blast == null))
             return new { error = "unresolved target, blast or witness tile" };
 
         var victim = tile == null ? SpawnAdjacent(target, origin) : Units.Spawn(target, HostileFaction(), tile);
         if (victim == null)
             return new { error = "could not spawn the target on a free tile" };
         string refusal = null;
-        if (!SkillEffects.TryAddEffect(victim, blast, msg => refusal = msg))
+        if (grantBlast && !SkillEffects.TryAddEffect(victim, blast, msg => refusal = msg))
         {
             Units.Despawn(victim);
             return new { error = $"could not grant '{BlastId}': {refusal ?? "unknown"}" };
@@ -166,9 +175,10 @@ public static class Melee
         victim.SetArmorDurability(0);
         _witness = witness;
         _witnessHpAtKill = RallyBarsSystem.SumHitpoints(witness);
+        _witnessArmourAtKill = Units.ArmorDurability(witness);
         _witnessSceneGeneration = MeleeCookOffSystem.Instance.SceneGeneration;
         _lastRun = "manual melee";
-        return new { target = victim, blast = BlastId, armour = 0, next = "kill the target with melee, then call Melee.Report and Melee.Probe" };
+        return new { target = victim, blast = grantBlast ? BlastId : "native", armour = 0, next = "kill the target with melee, then call Melee.Report and Melee.Probe" };
     }
 
     // Spawn an exploding target beside a player unit and kill it, attributing the kill
@@ -197,15 +207,14 @@ public static class Melee
         // the witness for the duration and taken back below, because these skill
         // clones set IsRemovedAfterCombat #false and would otherwise ride a random
         // rifle squad's skill bar into the campaign save.
-        var granted = SkillEffects.FindInstance(witness.GetSkills(), skillTemplate) == null;
-        var weapon = GrantAndFind(witness, skillTemplate);
+        using var cleanup = new ProbeCleanup(message => Debug.LogWarning(message));
+        var weapon = BorrowSkill(cleanup, witness, skillTemplate);
         if (weapon == null)
             return new { error = $"could not grant '{skillTemplate.GetID()}' to the witness" };
 
         var victim = SpawnAdjacent(target, witnessTile);
         if (victim == null)
         {
-            Revoke(witness, skillTemplate, granted);
             return new { error = "no free tile beside the witness to spawn the target on" };
         }
 
@@ -216,16 +225,14 @@ public static class Melee
         {
             // Leave no live hostile behind next to the player's squad.
             Units.Despawn(victim);
-            Revoke(witness, skillTemplate, granted);
             return new { error = $"could not grant '{BlastId}' to the target: {refusal ?? "unknown"}" };
         }
 
-        // Heal first: the arms run back to back in one mission, and a witness left
-        // gutted by the previous blast dies to this one, ending the mission before the
-        // verdict can be read.
-        Combat.Heal(witness, RallyBarsSystem.SumHitpointsMax(witness));
+        // A control blast can kill the witness. Negative OnDamageReceived damage
+        // does not heal this vehicle path, so tests require a disposable mission.
         _witness = witness;
         _witnessHpAtKill = RallyBarsSystem.SumHitpoints(witness);
+        _witnessArmourAtKill = Units.ArmorDurability(witness);
         _witnessSceneGeneration = MeleeCookOffSystem.Instance.SceneGeneration;
         _lastRun = melee ? "melee" : "control";
 
@@ -238,7 +245,6 @@ public static class Melee
         // whether the suppression logic simply did not fire.
         var lastSkill = SafeId(victim.GetLastAttackedBySkill());
         var killerSet = SafeKiller(victim);
-        Revoke(witness, skillTemplate, granted);
         return new
         {
             run = _lastRun,
@@ -250,6 +256,72 @@ public static class Melee
             killer = killerSet,
             witnessHpAtKill = _witnessHpAtKill,
             next = "call Melee.Report in a second or two",
+        };
+    }
+
+    // Exercise the native defect path rather than attaching a deathrattle directly.
+    // Only the synchronous damage call sees forced weights. Use a fresh test vehicle
+    // and a disposable witness, not the mission's only player actor.
+    [MutatingVerb]
+    public static object CriticalHit(Actor witness, Actor target, bool melee = true)
+    {
+        if (!Mission.InMission || witness == null || target == null
+            || !InCurrentMission(witness) || !InCurrentMission(target)
+            || !witness.IsAlive() || !target.IsAlive() || witness.Pointer == target.Pointer)
+            return new { error = "select a living witness and a separate test vehicle in this mission" };
+        if (target.GetHitpoints() != Units.MaxHitpoints(target))
+            return new { error = "use a fresh test vehicle at full hitpoints" };
+        var skillTemplate = Templates.ById<SkillTemplate>(melee ? PileBunkerSkillId : ControlSkillId);
+        var weights = Resources.FindObjectsOfTypeAll<DefectTemplate>()
+            .Where(template => template != null)
+            .Select(template => (Template: template, Chance: template.Chance))
+            .ToList();
+        var critical = weights.FirstOrDefault(entry => entry.Template.name == "defect.critical_hit").Template;
+        if (critical == null || skillTemplate == null)
+            return new { error = "unresolved critical defect or attack skill" };
+
+        using var cleanup = new ProbeCleanup(message => Debug.LogWarning(message));
+        var weapon = BorrowSkill(cleanup, witness, skillTemplate);
+        if (weapon == null)
+            return new { error = $"could not grant '{skillTemplate.GetID()}'" };
+        _witness = witness;
+        _witnessHpAtKill = RallyBarsSystem.SumHitpoints(witness);
+        _witnessArmourAtKill = Units.ArmorDurability(witness);
+        _witnessSceneGeneration = MeleeCookOffSystem.Instance.SceneGeneration;
+        _lastRun = melee ? "critical defect melee" : "critical defect ranged control";
+
+        var diagnostics = MeleeCookOffSystem.Instance.Diagnostics;
+        var defectHitsBefore = diagnostics.DamageEffectHits;
+        DamageInfo resolved;
+        using (var weightCleanup = new ProbeCleanup(message => Debug.LogWarning(message)))
+        {
+            // Each restoration is independent, including when forcing a weight fails.
+            foreach (var entry in weights)
+                weightCleanup.Defer($"defect '{entry.Template.name}' Chance",
+                    () => entry.Template.Chance = entry.Chance);
+            foreach (var entry in weights)
+                entry.Template.Chance = entry.Template.Pointer == critical.Pointer ? 100 : 0;
+            target.SetArmorDurability(0);
+            // A nonlethal hit crosses the heavy-defect threshold. Unlike the debug
+            // kill or a bare Combat.Damage call, this explicitly permits defects.
+            resolved = target.OnDamageReceived(witness, weapon, new DamageInfo
+            {
+                Damage = target.GetHitpoints() * 4 / 5,
+                ArmorPenetration = 1000,
+                IsAbleToInflictDefects = true,
+            });
+        }
+        // Death can remove the effect before this call returns. Count its actual
+        // damage callback instead of looking for a status on the dead vehicle.
+        var defectDamageHits = diagnostics.DamageEffectHits - defectHitsBefore;
+        return new
+        {
+            run = _lastRun,
+            dealt = resolved?.Damage ?? 0,
+            targetAlive = target.IsAlive(),
+            defectDamageHits,
+            defectDamageTrace = defectDamageHits > 0 ? diagnostics.LastDamageEffectHit : "none",
+            next = "call Melee.Report and Melee.Probe after the blast resolves",
         };
     }
 
@@ -294,15 +366,14 @@ public static class Melee
         var rifle = Templates.ById<SkillTemplate>(ControlSkillId);
         if (rifle == null)
             return new { error = $"unresolved template '{ControlSkillId}'" };
-        var granted = SkillEffects.FindInstance(_witness.GetSkills(), rifle) == null;
-        var weapon = GrantAndFind(_witness, rifle);
+        using var cleanup = new ProbeCleanup(message => Debug.LogWarning(message));
+        var weapon = BorrowSkill(cleanup, _witness, rifle);
         if (weapon == null)
             return new { error = $"could not grant '{ControlSkillId}'" };
 
         var before = RallyBarsSystem.SumHitpoints(_witness);
         var resolved = _witness.OnDamageReceived(_witness, weapon, new DamageInfo { Damage = amount, ArmorPenetration = 200 });
         var after = RallyBarsSystem.SumHitpoints(_witness);
-        Revoke(_witness, rifle, granted);
         return new
         {
             requested = amount,
@@ -359,24 +430,18 @@ public static class Melee
         return FactionType.Pirates;
     }
 
-    // Add the template to the actor's container and hand back the live instance.
-    private static Skill GrantAndFind(Actor actor, SkillTemplate template)
+    private static Skill BorrowSkill(ProbeCleanup cleanup, Actor actor, SkillTemplate template)
     {
         var skills = actor?.GetSkills();
         if (skills == null)
             return null;
-        var existing = SkillEffects.FindInstance(skills, template);
-        if (existing != null)
-            return existing;
-        return SkillEffects.TryAddEffect(actor, template, null) ? SkillEffects.FindInstance(skills, template) : null;
-    }
-
-    // Take the loaned skill back, but only when this run is what added it.
-    private static void Revoke(Actor actor, SkillTemplate template, bool granted)
-    {
-        if (!granted)
-            return;
-        try { actor?.GetSkills()?.Remove(template); }
-        catch { }
+        var description = $"actor 0x{actor.Pointer.ToInt64():X}, skill '{template.GetID()}'";
+        return cleanup.Borrow(description,
+            () => SkillEffects.CountInstances(skills, template) > 0,
+            () => SkillEffects.FindInstance(skills, template),
+            () => SkillEffects.TryAddEffect(actor, template, message => Debug.LogWarning($"{description}: {message}")),
+            () => ProbeCleanup.RemoveBorrowed(
+                () => SkillEffects.CountInstances(skills, template),
+                () => SkillEffects.RemoveInstances(skills, template)));
     }
 }
