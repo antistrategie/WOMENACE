@@ -19,16 +19,17 @@ public static class Attr
         var inputs = new[] { 0f, 25f, 50f, 75f, 100f, 150f, 200f, 300f, 500f };
         var rows = new List<object>();
         foreach (var v in inputs)
-        {
-            rows.Add(
-                $"in={v:0} ap={UnitLeaderAttributes.GetActionPointsAsFloat(v):0.##}/{UnitLeaderAttributes.GetActionPoints(v)}"
-                + $" dmg={UnitLeaderAttributes.GetDamageSustainedMultAsFloat(v):0.###}/{UnitLeaderAttributes.GetDamageSustainedMult(v)}"
-                + $" dmgDec={UnitLeaderAttributes.GetDamageSustainedMultDecimals(v):0.###}"
-                + $" acc={UnitLeaderAttributes.GetAccuracyAsFloat(v):0.##}"
-                + $" crit={UnitLeaderAttributes.GetCriticalChanceAsFloat(v):0.##}"
-                + $" def={UnitLeaderAttributes.GetDefenseMultAsFloat(v):0.##}"
-                + $" hp={UnitLeaderAttributes.GetHitpointsPerElement(v)}");
-        }
+            rows.Add(At(v));
         return rows;
     }
+
+    // Exact inputs expose rounding boundaries that the broad curve samples miss.
+    public static string At(float value) =>
+        $"in={value:0.##} ap={UnitLeaderAttributes.GetActionPointsAsFloat(value):0.##}/{UnitLeaderAttributes.GetActionPoints(value)}"
+        + $" dmg={UnitLeaderAttributes.GetDamageSustainedMultAsFloat(value):0.###}/{UnitLeaderAttributes.GetDamageSustainedMult(value)}"
+        + $" dmgDec={UnitLeaderAttributes.GetDamageSustainedMultDecimals(value):0.###}"
+        + $" acc={UnitLeaderAttributes.GetAccuracyAsFloat(value):0.##}"
+        + $" crit={UnitLeaderAttributes.GetCriticalChanceAsFloat(value):0.##}"
+        + $" def={UnitLeaderAttributes.GetDefenseMultAsFloat(value):0.##}"
+        + $" hp={UnitLeaderAttributes.GetHitpointsPerElement(value)}";
 }

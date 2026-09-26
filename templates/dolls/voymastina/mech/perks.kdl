@@ -1,0 +1,122 @@
+clone "PerkTemplate" from="perk.unique_rewa_revel_in_slaughter" id="perk.voymastina_monarch" {
+    set "Title" {
+        set "m_DefaultTranslation" "Monarch"
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "Gun hits apply Target Lock for +$1% Pile Bunker Hitpoint damage. Executions restore armour durability."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="PerkTemplate" "perk.voymastina_monarch" path="EventHandlers[0].TargetLockBonus" format="percent"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            “Protocol one: link to Pilot. Protocol two: uphold the mission. Protocol three: protect the Pilot.”
+
+              – BT-7274
+
+
+            <style="Highlight">• <link="voymastina_target_lock">Target Lock</link>: Dread Ultimatum hits mark enemies. Her next Pile Bunker against a marked enemy consumes the mark for +$1% <link="hitpoint_damage">Hitpoint damage</link>.</style>
+            <style="Highlight">  • Marks last until the end of Sinbreaker's next turn.</style>
+            <style="Highlight">• <link="voymastina_energy_thief">Energy Thief</link>: her first Pile Bunker execution each turn restores $2% of maximum <link="armor_durability">armour durability</link>, or all durability if the destroyed unit is a vehicle.</style>
+            """
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="PerkTemplate" "perk.voymastina_monarch" path="EventHandlers[0].TargetLockBonus" format="percent"
+        append "m_Placeholders" bind="PerkTemplate" "perk.voymastina_monarch" path="EventHandlers[0].RepairFraction" format="percent"
+    }
+    set "Icon" asset="voymastina/mech/effects/monarch"
+    set "PerkIcon" asset="voymastina/mech/perks/monarch"
+    set "IconDisabled" asset="voymastina/mech/perks/monarch_inactive"
+    clear "EventHandlers"
+    append "EventHandlers" type="WOMENACE:SinbreakerMonarch" {
+        set "TargetLockBonus" 0.25
+        set "RepairFraction" 0.3
+    }
+}
+
+clone "PerkTemplate" from="perk.tankbuster" id="perk.voymastina_arc_rounds" {
+    set "Title" {
+        set "m_DefaultTranslation" "Arc Rounds"
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "Dread Ultimatum gains +$1 PEN and $2x armour-durability DMG."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="PerkTemplate" "perk.voymastina_arc_rounds" path="EventHandlers[0].Penetration"
+        append "m_Placeholders" bind="PerkTemplate" "perk.voymastina_arc_rounds" path="EventHandlers[0].ArmourDamageMultiplier"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            The first round tests the plating. The second finds the seam. The third makes room for something less subtle.
+
+
+            <style="Highlight">• Dread Ultimatum gains +$1 <link="armor_penetration">armour penetration</link> and deals $2x <link="armor_damage">armour-durability damage</link> with every round.</style>
+            """
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="PerkTemplate" "perk.voymastina_arc_rounds" path="EventHandlers[0].Penetration"
+        append "m_Placeholders" bind="PerkTemplate" "perk.voymastina_arc_rounds" path="EventHandlers[0].ArmourDamageMultiplier"
+    }
+    set "Icon" asset="voymastina/mech/effects/arc_rounds"
+    set "PerkIcon" asset="voymastina/mech/perks/arc_rounds"
+    set "IconDisabled" asset="voymastina/mech/perks/arc_rounds_inactive"
+    clear "EventHandlers"
+    append "EventHandlers" type="WOMENACE:SinbreakerArcRounds" {
+        set "Penetration" 20.0
+        set "ArmourDamageMultiplier" 2.0
+    }
+}
+
+clone "PerkTemplate" from="perk.shieldwall" id="perk.voymastina_breach_guard" {
+    set "Title" {
+        set "m_DefaultTranslation" "Breach Guard"
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "-$1% hull DMG taken after using Pile Bunker, until her next turn."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="PerkTemplate" "perk.voymastina_breach_guard" path="EventHandlers[0].DamageMultiplier" format="reduction-percent"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            Getting close is the easy part. Staying there is a matter of bracing the frame, locking the joints, and letting the enemy discover what did not break.
+
+
+            <style="Highlight">• Using Pile Bunker against an enemy reduces incoming hull <link="hitpoint_damage">Hitpoint damage</link> by $1% until the start of Sinbreaker's next turn.</style>
+            """
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="PerkTemplate" "perk.voymastina_breach_guard" path="EventHandlers[0].DamageMultiplier" format="reduction-percent"
+    }
+    set "Icon" asset="voymastina/mech/effects/breach_guard"
+    set "PerkIcon" asset="voymastina/mech/perks/breach_guard"
+    set "IconDisabled" asset="voymastina/mech/perks/breach_guard_inactive"
+    clear "EventHandlers"
+    append "EventHandlers" type="WOMENACE:SinbreakerBreachGuard" {
+        set "DamageMultiplier" 0.75
+    }
+}
+
+clone "SkillTemplate" from="effect.bleeding" id="effect.voymastina_target_lock" {
+    set "Title" {
+        set "m_DefaultTranslation" "Target Lock"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Sinbreaker's next Pile Bunker against this unit consumes the mark for +$1% <link=\"hitpoint_damage\">Hitpoint damage</link>. Lasts until the end of her next turn."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="PerkTemplate" "perk.voymastina_monarch" path="EventHandlers[0].TargetLockBonus" format="percent"
+    }
+    set "Icon" asset="voymastina/mech/effects/target_lock"
+    set "IsStacking" #false
+    clear "EventHandlers"
+    append "EventHandlers" type="WOMENACE:StackBadge" {}
+}
+
+clone "SkillTemplate" from="effect.bleeding" id="effect.voymastina_breach_guard" {
+    set "Title" {
+        set "m_DefaultTranslation" "Breach Guard"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Taking $1% less hull <link=\"hitpoint_damage\">Hitpoint damage</link> until the start of Sinbreaker's next turn."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="PerkTemplate" "perk.voymastina_breach_guard" path="EventHandlers[0].DamageMultiplier" format="reduction-percent"
+    }
+    set "Icon" asset="voymastina/mech/effects/breach_guard"
+    set "IsStacking" #false
+    clear "EventHandlers"
+    append "EventHandlers" type="WOMENACE:StackBadge" {}
+}

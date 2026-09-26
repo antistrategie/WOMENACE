@@ -12,7 +12,8 @@ clone "UnitLeaderTemplate" from="pilot.rewa" id="pilot.voymastina_mech" {
             """
     }
 
-    set "InitialAttributes" index=0 100
+    // The shared over-cap conversion rounds 40 + 0.8 * 113 to 130 AP.
+    set "InitialAttributes" index=0 113
     set "InitialAttributes" index=1 85
     set "InitialAttributes" index=2 85
     set "InitialAttributes" index=3 50
@@ -20,7 +21,7 @@ clone "UnitLeaderTemplate" from="pilot.rewa" id="pilot.voymastina_mech" {
     set "InitialAttributes" index=5 20
     set "InitialAttributes" index=6 50
 
-    set "InitialPerk" "perk.unique_rewa_revel_in_slaughter"
+    set "InitialPerk" "perk.voymastina_monarch"
     set "PerkTrees" index=0 "perk_tree.voymastina_mech"
 
     set "QualityLevel" 4

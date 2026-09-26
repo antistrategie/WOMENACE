@@ -27,6 +27,8 @@ namespace WOMENACE.Code;
 // and on every validation pass (which no flow can skip and which always
 // precedes a deploy, so hitpoints are derived from repaired values). Values
 // a growth roll pushed ABOVE the template are left alone.
+// Sinbreaker's pilot uses the same repair for authored agility only, without
+// solo squad rules, vitality overrides or extended attribute growth.
 public sealed class SoloSquadSystem : JiangyuSystem
 {
 
@@ -94,6 +96,10 @@ public sealed class SoloSquadSystem : JiangyuSystem
         Context.Patches.Prefix("Il2CppMenace.UI.Strategy.UnitStatsAndAttributesPanel", "ShowPanel", OnSelectSlotInit);
         Context.Patches.Prefix("Il2CppMenace.UI.Strategy.HiringUnitInfo", "Init", OnSelectSlotInit);
 
+        // Pilots recompute on creation, load and per-form snapshot restore.
+        // Repair before that calculation without recursively rebuilding it.
+        Context.Patches.Prefix("Il2CppMenace.Strategy.Pilot", "UpdatePropertiesBasedOnAttributes", OnPilotPropertiesUpdating);
+
         // Growth cap raise for solo dolls: the native TryIncrease refuses any
         // increase at value >= 100 (ATTRIBUTE_MAX_VALUE) and clamps results to
         // it, so a repaired 100+ attribute never grows. The prefix replaces it
@@ -119,7 +125,7 @@ public sealed class SoloSquadSystem : JiangyuSystem
         // The int variants inline the maths rather than calling the float
         // twins (IL2CPP inlining), so each is patched separately; the
         // AsFraction helpers call these and need nothing. Global patches,
-        // but inputs above 100 exist only on solo dolls.
+        // shared by solo dolls and authored over-cap pilot agility.
         // GetDamageSustainedMultDecimals is deliberately NOT extended: its
         // shape past the clamp is unverified (it may be the fractional part
         // of the mult, which no line models) and it only feeds display
@@ -240,7 +246,7 @@ public sealed class SoloSquadSystem : JiangyuSystem
             for (var i = 0; leaders != null && i < leaders.Count; i++)
             {
                 var leader = leaders[i];
-                if (leader != null && IsSolo(leader))
+                if (leader != null)
                     ReconcileAttributes(leader);
             }
         }
@@ -250,11 +256,21 @@ public sealed class SoloSquadSystem : JiangyuSystem
         }
     }
 
-    private void ReconcileAttributes(BaseUnitLeader leader)
+    private void OnPilotPropertiesUpdating(PatchInfo info)
+    {
+        var leader = (info.Instance as Il2CppObjectBase)?.TryCast<BaseUnitLeader>();
+        if (leader != null)
+            ReconcileAttributes(leader, rebuildProperties: false);
+    }
+
+    private void ReconcileAttributes(BaseUnitLeader leader, bool rebuildProperties = true)
     {
         try
         {
             var template = leader.LeaderTemplate;
+            var solo = IsSolo(leader);
+            if (!solo && template?.GetID() != "pilot.voymastina_mech")
+                return;
             var initial = template?.InitialAttributes;
             var attributes = leader.GetAttributes();
             var values = attributes?.m_Values;
@@ -271,9 +287,13 @@ public sealed class SoloSquadSystem : JiangyuSystem
             var count = Math.Min(initial.Length, values.Length);
             for (var i = 0; i < count; i++)
             {
-                var cap = CapFor(i);
+                // Only authored agility is repaired for the pilot. Native
+                // growth stays capped at 100, so her over-cap base is fixed.
+                if (!solo && i != AgilityIndex)
+                    continue;
+                var cap = solo ? CapFor(i) : float.MaxValue;
                 var target = (float)initial[i];
-                if (overrides != null && overrides.TryGetValue(i, out var overridden) && overridden > target)
+                if (solo && overrides != null && overrides.TryGetValue(i, out var overridden) && overridden > target)
                     target = overridden;
                 if (target > cap)
                     target = cap;
@@ -292,6 +312,9 @@ public sealed class SoloSquadSystem : JiangyuSystem
                 repaired++;
             }
 
+            if (!rebuildProperties)
+                return;
+
             // Attribute-derived stats (hitpoints, accuracy, ...) are CACHED
             // on the leader's properties and only refreshed by the game's own
             // recompute, so a raw value repair alone leaves them stale.
@@ -301,7 +324,8 @@ public sealed class SoloSquadSystem : JiangyuSystem
             // steady state neither holds, so the hot-path callers (panel
             // refresh, squaddie validation) skip the recompute.
             var needsRebuild = repaired > 0;
-            if (!needsRebuild && count > VitalityIndex)
+            // Pilot hitpoints belong to the chassis, not to her vitality.
+            if (!needsRebuild && solo && count > VitalityIndex)
             {
                 var expectedHp = UnitLeaderAttributes.GetHitpointsPerElement(values[VitalityIndex]);
                 var cachedHp = (int)leader.GetEntityProperty(Il2CppMenace.Tactical.EntityPropertyType.HitpointsPerElement);
@@ -359,7 +383,7 @@ public sealed class SoloSquadSystem : JiangyuSystem
         try
         {
             var leader = (info.Args is { Count: > 0 } ? info.Args[0] : null) as BaseUnitLeader;
-            if (leader != null && IsSolo(leader))
+            if (leader != null)
                 ReconcileAttributes(leader);
         }
         catch (Exception ex)
@@ -376,11 +400,12 @@ public sealed class SoloSquadSystem : JiangyuSystem
         {
             if (info.Instance is not VisualElement window)
                 return;
-            var squaddies = UI.Find(window, UiSelector.Name("Squaddies"));
-            if (squaddies == null)
-                return;
             var leader = Affinity.LeaderOf(window);
             if (leader == null)
+                return;
+            ReconcileAttributes(leader);
+            var squaddies = UI.Find(window, UiSelector.Name("Squaddies"));
+            if (squaddies == null)
                 return;
             var solo = IsSolo(leader);
             squaddies.style.display = solo ? DisplayStyle.None : DisplayStyle.Flex;
@@ -388,9 +413,6 @@ public sealed class SoloSquadSystem : JiangyuSystem
             {
                 Context.Log.Debug($"solo squad: window shows {leader.GetTemplate()?.GetID()}, minValid={leader.GetMinValidSquaddies()}, maxValid={leader.GetMaxValidSquaddies()}, assigned={leader.m_SquaddieIds?.Count ?? -1}");
                 StripSquaddies(leader);
-                // hiring screens show leaders that never went through
-                // squaddie validation: repair when the window draws them
-                ReconcileAttributes(leader);
             }
         }
         catch (Exception ex)

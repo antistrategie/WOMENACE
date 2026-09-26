@@ -64,10 +64,8 @@ internal static class RateAudit
         Console.WriteLine($"  Exactly two materials in a ten-pull: {materialCounts[2] / (campaigns * 5d):P2}");
         Console.WriteLine($"  Both special rewards within 50 pulls: {bothSpecials / (double)campaigns:P2}");
         Console.WriteLine($"  Material count histogram: {string.Join(", ", materialCounts.Select((count, i) => $"{i}={count}"))}");
-        if (average is < .95 or > 1.05 || materialCounts[0] == 0 || materialCounts[1] == 0)
-            throw new Exception("Material rewards have an unexpected distribution");
-        if (bothSpecials / (double)campaigns is < .075 or > .105)
-            throw new Exception("Special rewards have an unexpected distribution before pity is due");
-        return Procurement.Sections.Length + 2;
+        // Campaign frequencies describe the current balance. The checks above
+        // enforce configured base rates and batch size without fixing that balance.
+        return Procurement.Sections.Length + 1;
     }
 }

@@ -55,6 +55,7 @@ public sealed class EntityWeaponParitySystem : JiangyuSystem
         Context.Patches.Postfix("Il2CppMenace.Tactical.Actor", "RefillAmmo", 3, OnRefillEnd);
         Context.Patches.Postfix("Il2CppMenace.Tactical.Skills.Effects.AmmoPouchHandler", "OnMissionStarted", OnAmmoPouchMissionStarted);
         Context.Patches.Postfix("Il2CppMenace.Tactical.Skills.Effects.AmmoPouchHandler", "OnAnySkillAdded", OnAmmoPouchSkillAdded);
+        Context.Patches.Postfix("Il2CppMenace.Tactical.Skills.Skill", "OnMissionStarted", 0, OnWeaponMissionStarted);
     }
 
     // A template rebuild invalidates every cached pointer, so the verdicts are re-derived
@@ -156,6 +157,40 @@ public sealed class EntityWeaponParitySystem : JiangyuSystem
 
     private static bool IsAmmoCases(AmmoPouchHandler handler)
         => handler?.ParentSkill?.GetTemplate()?.GetID() == AmmoCasesPassiveId;
+
+    // Skill.OnMissionStarted (0x712020) resets max and current uses before its handlers.
+    // An earlier OnAnySkillAdded or pouch callback can already have claimed the bonus,
+    // so that skill's ledger must follow its native reset, not just the scene lifetime.
+    private void OnWeaponMissionStarted(PatchInfo info)
+    {
+        try
+        {
+            var skill = (info.Instance as Il2CppObjectBase)?.TryCast<Skill>();
+            if (!IsEntityWeapon(skill))
+                return;
+            var pointer = skill.Pointer;
+            _boosted.RemoveWhere(pair => pair.Skill == pointer);
+
+            var skills = skill.GetEntity()?.GetSkills()?.GetAllSkills();
+            for (var i = 0; skills != null && i < skills.Count; i++)
+            {
+                var passive = skills[i]?.TryCast<Skill>();
+                if (passive?.GetTemplate()?.GetID() != AmmoCasesPassiveId)
+                    continue;
+                var handlers = passive.GetSkillEventHandlers();
+                for (var j = 0; handlers != null && j < handlers.Length; j++)
+                {
+                    var pouch = handlers[j]?.TryCast<AmmoPouchHandler>();
+                    if (pouch != null)
+                        BoostUses(skill, pouch);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Context.Log.Warn($"entity weapon: ammo bonus after weapon reset failed: {ex.Message}");
+        }
+    }
 
     // The mission-start sweep: this pouch owes a bonus to every tagged gun on the entity
     // carrying it. All of them, not the first one found, so the mech's gun and rocket are
