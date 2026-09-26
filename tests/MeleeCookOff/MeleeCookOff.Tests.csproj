@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <JiangyuDev Condition="'$(JiangyuDev)' == ''">true</JiangyuDev>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(JiangyuDev)' == 'true'">
+    <DefineConstants>$(DefineConstants);JIANGYU_DEV</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../code/Systems/MeleeCookOffSystem.cs" Link="MeleeCookOffSystem.cs" />
+    <Compile Include="../../code/Systems/Skills/MeleeSkills.cs" Link="MeleeSkills.cs" />
+  </ItemGroup>
+</Project>
