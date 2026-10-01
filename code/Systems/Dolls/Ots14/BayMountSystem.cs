@@ -99,12 +99,13 @@ public sealed class BayMountSystem : JiangyuSystem
         // fresh unconcealed arms with no mounts: re-mount after every spawn
         // event too (idempotent, and the guard skips non-arm events).
         Context.Patches.Postfix("Il2CppUI.PrefabControllers.ArmoryElement", "OnSpawnAttachment", OnArmoryElement);
-        // An equip's stage rebuild goes through the unit selector's
-        // subscriber and replaces attachments through internal paths none of
-        // the hooks above see: watch for a while after it fires and re-mount
-        // any preview whose recorded arms died (replaced arms leave dead
-        // transforms behind in the registry).
-        Context.Patches.Postfix("Il2CppMenace.UI.Strategy.ArmoryUnitSelector", "OnVisualAlterationChanged", OnStageRefreshed);
+        // An equip's stage rebuild goes through the unit selector (its
+        // OnUpdate polls the container's VisualAlterationsDirty flag) and
+        // replaces attachments through internal paths none of the hooks above
+        // see: watch for a while after it fires and re-mount any preview whose
+        // recorded arms died (replaced arms leave dead transforms behind in
+        // the registry).
+        Context.Patches.Postfix("Il2CppMenace.UI.Strategy.ArmoryUnitSelector", "OnUpdateSelectedUnit", OnStageRefreshed);
     }
 
     private readonly List<Il2CppUI.PrefabControllers.ArmoryElement> _previews = new();

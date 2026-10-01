@@ -1,5 +1,6 @@
 using Il2CppInterop.Runtime.InteropTypes;
 using Il2CppMenace.Items;
+using Il2CppMenace.Strategy;
 using Il2CppMenace.Tactical;
 using Il2CppMenace.Tactical.Skills;
 using Il2CppMenace.Tactical.Skills.Effects;
@@ -28,6 +29,9 @@ public sealed class EntityWeaponParitySystem : JiangyuSystem
 {
     private const string EntityWeaponTag = "wmgfl_entity_weapon";
     private const string AmmoCasesPassiveId = "passive.ammo_case";
+    // The pouch judges a skill through the item that would grant it. An entity gun has
+    // none, so a vanilla vehicle weapon stands in for the turret it plays.
+    private const string StandInVehicleWeaponId = "mod_weapon.medium.heavy_mg";
 
     // Which skill templates carry the tag, memoised by template pointer. These hooks run
     // for every skill filter check in the game and a tag walk marshals a managed string
@@ -204,8 +208,8 @@ public sealed class EntityWeaponParitySystem : JiangyuSystem
     // that method truncates where a re-derivation is tempted to round, it enforces the
     // pouch's own gates (limited uses, ApplyToType, SkillFilter), and it reads the CURRENT
     // max, so a second pouch compounds off the first one's result the same way it would on
-    // an item-backed gun. The item type it is handed is Weapon, matching how the game
-    // would present a real vehicle turret.
+    // an item-backed gun. The item template it is handed is a vanilla vehicle weapon,
+    // matching how the game would present a real vehicle turret.
     //
     // The (skill, pouch) ledger is the only idempotence guard, and it is claimed only once
     // the bonus actually lands: a sweep that arrives before the skill exists leaves the
@@ -223,7 +227,10 @@ public sealed class EntityWeaponParitySystem : JiangyuSystem
         if (max <= 0)
             return;
 
-        var raised = handler.GetNewSkillUses(max, template, new Il2CppSystem.Nullable<ItemType>(ItemType.Weapon));
+        var standIn = Templates.ById<ModularVehicleWeaponTemplate>(StandInVehicleWeaponId);
+        if (standIn == null)
+            return;
+        var raised = handler.GetNewSkillUses(max, template, standIn);
         var bonus = raised - max;
         if (bonus <= 0)
             return;

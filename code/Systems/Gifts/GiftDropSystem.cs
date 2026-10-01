@@ -88,7 +88,7 @@ public sealed class GiftDropSystem : JiangyuSystem
             if (target == null || killer == null)
                 return;
             // An enemy (not player-controlled) finished off by a player unit (or its allied AI).
-            if (!killer.IsPlayerControlled(true) || target.IsPlayerControlled(true))
+            if (!killer.IsPlayerOrPlayerAI() || target.IsPlayerOrPlayerAI())
                 return;
 
             var template = target.GetTemplate();

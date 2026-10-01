@@ -62,7 +62,7 @@ public sealed partial class ParachuteJumpHandler : SkillEventHandler
             }
             doll.SetTile(_targetTile);
             doll.UpdateAveragePosition();
-            doll.VisionDirty = true;
+            doll.SetPropertyDirty(PropertyDirtyFlag.Vision);
             if (_effect != null)
                 SkillEffects.TryAddEffect(doll, _effect, msg => Log.Warn($"parachute: {msg}"));
             Log.Debug($"parachute: dropped '{doll.GetTemplate()?.GetID()}' at ({_targetTile.GetX()},{_targetTile.GetZ()})");

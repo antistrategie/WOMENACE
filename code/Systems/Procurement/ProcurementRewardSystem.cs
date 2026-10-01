@@ -1,3 +1,4 @@
+using Il2CppInterop.Runtime.InteropTypes;
 using Il2CppMenace.Items;
 using Il2CppMenace.States;
 using Il2CppMenace.Strategy;
@@ -16,25 +17,34 @@ namespace WOMENACE.Code;
 public sealed class ProcurementRewardSystem : JiangyuSystem
 {
     private const string MissionRewardId = "wmgfl_collapse_piece_reward";
+    private const int MissionRewardPieces = 25;
     private const int OfferChance = 20;
     private bool _initialising;
+    private IntPtr _missionRewardEffect;
 
     public override void OnInit()
     {
         Context.Patches.Prefix("Il2CppMenace.UI.Strategy.RewardSelection", "Init", OnRewardSelection);
-        Context.Patches.Postfix("Il2CppMenace.UI.RewardSlot", "Init", 1, OnMissionRewardSlot);
+        Context.Patches.Postfix("Il2CppMenace.UI.OperationAssetRewardSlot", "Init", OnMissionRewardSlot);
         Context.Patches.Prefix("Il2CppMenace.Strategy.OwnedItems", "AddItem", 3, OnAddItem);
+        Context.Patches.Postfix("Il2CppMenace.Strategy.AddItemEffect", "OnAdd", OnAddItemEffect);
     }
 
     public override void OnTemplatesApplied()
     {
         var reward = Templates.ById<StrategicAssetTemplate>(MissionRewardId);
+        _missionRewardEffect = IntPtr.Zero;
         if (reward == null)
             return;
+        // The reward carries a single native item effect, because the asset tooltip lists a row
+        // per item effect. That effect grants one piece and OnAddItemEffect grants the rest.
+        var effects = reward.Effects;
+        if (effects != null && effects.Length > 0 && effects[0] != null)
+            _missionRewardEffect = effects[0].Pointer;
 
-        // JIANGYU-CONTRACT: Operation.GenerateMissions (RVA 0x5982F0) assigns fixed
-        // operation assets first, then draws from each remaining mission's difficulty-filtered
-        // PotentialStrategicAssets. Adding here preserves fixed and story rewards.
+        // JIANGYU-CONTRACT: Operation.GenerateMission (RVA 0x5BF930) draws each mission's
+        // reward from its enemy-difficulty-filtered PotentialStrategicAssets. Adding here
+        // preserves fixed and story rewards.
         foreach (var mission in Templates.All<MissionTemplate>())
         {
             var existing = mission.PotentialStrategicAssets;
@@ -42,17 +52,17 @@ public sealed class ProcurementRewardSystem : JiangyuSystem
                 continue;
             var options = existing.Where(option => option?.StrategicAsset?.GetID() != MissionRewardId).ToList();
             var additions = new List<MissionStrategicAssetTemplate>();
-            foreach (var difficulty in Enum.GetValues<MissionDifficultyFlag>())
+            foreach (var difficulty in Enum.GetValues<MissionEnemyDifficultyFlag>())
             {
                 var totalWeight = options.Where(option => option?.StrategicAsset != null
-                    && (option.ReqMissionDifficulty & difficulty) != 0)
+                    && (option.ReqMissionEnemyDifficulty & difficulty) != 0)
                     .Sum(option => (long)Math.Max(0, option.Weight));
                 if (totalWeight == 0)
                     continue;
                 additions.Add(new MissionStrategicAssetTemplate
                 {
                     StrategicAsset = reward,
-                    ReqMissionDifficulty = difficulty,
+                    ReqMissionEnemyDifficulty = difficulty,
                     Weight = (int)Math.Clamp((totalWeight * OfferChance + (100 - OfferChance) / 2)
                         / (100 - OfferChance), 1, int.MaxValue),
                 });
@@ -120,10 +130,10 @@ public sealed class ProcurementRewardSystem : JiangyuSystem
 
     private static void OnMissionRewardSlot(PatchInfo info)
     {
-        // JIANGYU-CONTRACT: RewardSlot.Init(OperationAssetTemplate) shows both icons
-        // on every initialisation. Keep Icon for other screens, but hide the duplicate
-        // overlay on this reward card.
-        if (info.Instance is RewardSlot slot && info.Args[0] is OperationAssetTemplate asset
+        // JIANGYU-CONTRACT: OperationAssetRewardSlot.Init shows both icons on every
+        // initialisation. Keep Icon for other screens, but hide the duplicate overlay on
+        // this reward card.
+        if (info.Instance is OperationAssetRewardSlot slot && info.Args[0] is OperationAssetTemplate asset
             && asset.GetID() == MissionRewardId)
             slot.m_SmallIcon.SetVisible(false);
     }
@@ -151,7 +161,7 @@ public sealed class ProcurementRewardSystem : JiangyuSystem
     }
 
     private static int OperationAmount(Operation operation)
-        => operation.GetDuration().GetLength() switch
+        => operation.GetDuration().IdealPlayedMissions switch
         {
             <= 3 => 50,
             4 => 75,
@@ -167,6 +177,16 @@ public sealed class ProcurementRewardSystem : JiangyuSystem
             return;
         info.Skip = true;
         info.Result = owned.AddItem(item, false, (bool)info.Args[2]);
+    }
+
+    private void OnAddItemEffect(PatchInfo info)
+    {
+        if (_missionRewardEffect == IntPtr.Zero || info.Instance is not Il2CppObjectBase effect
+            || effect.Pointer != _missionRewardEffect)
+            return;
+        var pieces = Templates.ById<CommodityTemplate>(Procurement.PieceId);
+        if (pieces != null && Grant(pieces, MissionRewardPieces - 1))
+            Context.Log.Debug($"procurement: mission reward granted {MissionRewardPieces} Collapse Pieces");
     }
 
     private bool Grant(CommodityTemplate pieces, int amount)

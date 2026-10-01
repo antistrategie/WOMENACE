@@ -819,12 +819,12 @@ public sealed class BayEquipUISystem : JiangyuSystem
                 yield break;
             unitWindow.SetLeader(leader);
             // The armoury's 3D squad preview does not rebuild off the
-            // window: raise the container's visual-alteration event (the
-            // vanilla respawn trigger, the transmog route) so the mounts
+            // window: flag the container's visual alterations dirty (the
+            // ArmoryUnitSelector polls it, the transmog route) so the mounts
             // rebuild with the new loadout.
             var container = leader.GetItems();
-            var item = container?.GetItemAtSlot(ItemSlot.InfantryWeapon);
-            container?.OnVisualAlterationChanged?.Invoke(container.GetOwner(), item);
+            if (container != null)
+                container.VisualAlterationsDirty = true;
             // The mission-prep supplies bar recomputes off its dirty flags,
             // which a bay equip does not raise on its own.
             var prep = (Il2CppMenace.UI.UIManager.Get()?.GetActiveScreen() as Il2CppObjectBase)
