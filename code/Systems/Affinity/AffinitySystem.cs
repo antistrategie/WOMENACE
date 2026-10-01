@@ -561,7 +561,12 @@ public sealed class AffinitySystem : JiangyuSystem
     {
         var button = new IconButton();
         button.Root.name = "gift-open";
-        button.SetSize(22f, 22f);
+        // Sits between the Add to Mission button (which carries a 5px right margin) and the
+        // statistics button, so the matching right margin keeps the gaps even.
+        button.Root.style.marginRight = 5;
+        // The vanilla statistics glyph carries its own transparent padding, the gift texture
+        // does not, so inset it to read at the same size.
+        button.Icon.style.left = button.Icon.style.top = button.Icon.style.right = button.Icon.style.bottom = 4;
 
         var icon = Context.Assets.Load<UnityEngine.Texture2D>("gift_icon");
         if (icon != null)

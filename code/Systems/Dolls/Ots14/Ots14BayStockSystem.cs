@@ -14,8 +14,10 @@ namespace WOMENACE.Code;
 //
 // - The black market's sell list drops bay items. The draw path is the choke
 //   point: UpdateItemSlots receives the list each view renders, so stripping
-//   there covers every rebuild order, and the sell-list accessors are
-//   cleaned as well so no other consumer sees a bay item.
+//   there covers every rebuild order, and the backing sell list is cleaned
+//   on open so no other consumer sees a bay item. GetSellItemList is not
+//   hooked: it is a bare field getter whose body the compiler shares with
+//   unrelated getters (TacticalManager.GetFactions among them).
 // - OwnedItems.GetUsers reports OTs-14 as the user of a bay-slotted
 //   instance, once per instance, so the equipment dropdown's used counts and
 //   used-by labels agree with the bay.
@@ -29,7 +31,6 @@ public sealed class Ots14BayStockSystem : JiangyuSystem
     {
         Context.Patches.Postfix("Il2CppMenace.UI.Strategy.BlackMarketUIScreen", "OnOpened", OnMarketOpened);
         Context.Patches.Prefix("Il2CppMenace.UI.Strategy.BlackMarketUIScreen", "UpdateItemSlots", OnMarketItemSlots);
-        Context.Patches.Postfix("Il2CppMenace.UI.Strategy.BlackMarketUIScreen", "GetSellItemList", OnMarketSellList);
         Context.Patches.Postfix("Il2CppMenace.Strategy.OwnedItems", "GetUsers", OnGetUsers);
         Context.Patches.Postfix("Il2CppMenace.Strategy.OwnedItems", "GetUnusedInstance", OnGetUnusedInstance);
         Context.Patches.Postfix("Il2CppMenace.Strategy.OwnedItems", "GetUnusedDefaultItemInstance", OnGetUnusedInstance);
@@ -65,21 +66,6 @@ public sealed class Ots14BayStockSystem : JiangyuSystem
         catch (Exception ex)
         {
             Context.Log.Warn($"bay market draw filter failed: {ex.GetType().Name}: {ex.Message}");
-        }
-    }
-
-    private void OnMarketSellList(PatchInfo info)
-    {
-        try
-        {
-            // The getter hands out the backing list, so mutating it cleans
-            // every consumer that pulls through the accessor.
-            var list = (info.Result as Il2CppObjectBase)?.TryCast<Il2CppSystem.Collections.Generic.List<BaseItem>>();
-            Strip(list, "sell list read");
-        }
-        catch (Exception ex)
-        {
-            Context.Log.Warn($"bay market sell filter failed: {ex.GetType().Name}: {ex.Message}");
         }
     }
 

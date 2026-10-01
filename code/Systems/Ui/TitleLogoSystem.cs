@@ -8,10 +8,11 @@ namespace WOMENACE.Code;
 
 // Puts the WOMENACE logo on the main menu.
 //
-// The vanilla logo is a UXML element named MenaceLogo in the title screen's ButtonColumn, carrying
-// an inline background-image that resolves through Resources. A style.backgroundImage write from
-// code overwrites that inline property, so the swap is a direct assignment on the live element
-// rather than a rewrite of the texture behind it.
+// The vanilla logo is a UXML container named MenaceLogo on the title screen. Three stacked children
+// (LogoBottomLayer, LogoMiddleLayer, LogoTopLayer) paint the artwork through inline background-images
+// that resolve through Resources, and a LogoDropshadow elsewhere on the screen repeats the middle layer
+// faintly. The swap paints our logo on the container and hides those layers, keeping the container's
+// size and position and its Version label.
 //
 // Scoped through the injection system rather than a Harmony patch. UiTarget.Screen<TitleUIScreen>()
 // resolves against the live tree on every apply, and the SDK re-applies on screen activation and on
@@ -26,6 +27,8 @@ namespace WOMENACE.Code;
 public sealed class TitleLogoSystem : JiangyuSystem
 {
     private const string LogoElement = "MenaceLogo";
+    private static readonly string[] VanillaLayers = ["LogoBottomLayer", "LogoMiddleLayer", "LogoTopLayer"];
+    private const string VanillaDropshadow = "LogoDropshadow";
     private const string LogoTexture = "womenace_logo";
 
     private Texture2D _logo;
@@ -48,8 +51,16 @@ public sealed class TitleLogoSystem : JiangyuSystem
         try
         {
             var texture = Logo();
-            if (texture != null)
-                slot.style.backgroundImage = new StyleBackground(texture);
+            if (texture == null)
+                return marker;
+            slot.style.backgroundImage = new StyleBackground(texture);
+            slot.style.backgroundSize = new StyleBackgroundSize(new BackgroundSize(BackgroundSizeType.Contain));
+            foreach (var layer in VanillaLayers)
+                UI.Find(slot, UiSelector.Name(layer))?.SetVisible(false);
+            var root = slot;
+            while (root.parent != null)
+                root = root.parent;
+            UI.Find(root, UiSelector.Name(VanillaDropshadow))?.SetVisible(false);
         }
         catch (Exception ex) { Context.Log.Warn($"title logo: swap failed: {ex.Message}"); }
         return marker;

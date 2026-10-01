@@ -275,8 +275,9 @@ public sealed class TransmogPickerSystem : JiangyuSystem
         }
     }
 
-    // Delay rebuilding until the card's click has finished dispatching. The native visual
-    // alteration event also rebuilds the armoury's 3D stage, which SetLeader alone does not.
+    // Delay rebuilding until the card's click has finished dispatching. The dirty visual
+    // alterations flag, which ArmoryUnitSelector polls, rebuilds the armoury's 3D stage and
+    // SetLeader alone does not.
     private System.Collections.IEnumerator RefreshNextFrame(VisualElement window, ItemSlot slot, IntPtr leaderPointer)
     {
         yield return null;
@@ -288,7 +289,8 @@ public sealed class TransmogPickerSystem : JiangyuSystem
         {
             unitWindow.SetLeader(leader);
             var items = leader.GetItems();
-            items?.OnVisualAlterationChanged?.Invoke(items.GetOwner(), items.GetItemAtSlot(slot));
+            if (items != null)
+                items.VisualAlterationsDirty = true;
         }
         catch (Exception ex) { Context.Log.Warn($"appearance picker: preview refresh failed: {ex.Message}"); }
     }

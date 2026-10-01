@@ -491,7 +491,7 @@ public sealed class SextansUltSystem : JiangyuSystem
             // no movement events, so refresh it and flag vision dirty by
             // hand (the drill dash contract).
             user.UpdateAveragePosition();
-            user.VisionDirty = true;
+            user.SetPropertyDirty(PropertyDirtyFlag.Vision);
             Context.Log.Debug($"ult: dashed to ({landing.GetX()},{landing.GetZ()})");
         }
 

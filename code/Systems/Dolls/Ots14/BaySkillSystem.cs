@@ -876,7 +876,7 @@ public sealed class BaySkillSystem : JiangyuSystem
                 var heat = HeatOf(info.Skill);
                 if (heat == null)
                     continue;
-                var next = heat.GetHeat() + heat.GetHeatPerUse();
+                var next = heat.GetHeat() + heat.m_HeatPerUse;
                 var max = heat.GetMaxHeat();
                 heat.SetHeat(max > 0 ? Math.Min(next, max) : next);
                 heat.Synchronize();

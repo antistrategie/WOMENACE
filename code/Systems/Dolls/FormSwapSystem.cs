@@ -609,9 +609,14 @@ public sealed class FormSwapSystem : JiangyuSystem
 
     private VisualElement BuildSwapButton(VisualElement window)
     {
-        var button = new TextButton(Locale.Text("WOMENACE::ui/swap_form", "SWAP FORM"));
+        // Dressed like its neighbour, the vanilla Add/Remove from Mission button: the old-text-button
+        // style, the same 28px height, auto-sized label and 5px right margin.
+        var button = new TextButton(Locale.Text("WOMENACE::ui/swap_form", "SWAP FORM")).WithStyle("old-text-button");
         button.Root.name = "wm-formswap";
-        button.Root.style.marginRight = new StyleLength(4f);
+        button.Root.style.height = new StyleLength(28f);
+        button.Root.style.marginRight = new StyleLength(5f);
+        button.Label.AddToClassList("text-auto-size");
+        button.Label.AddToClassList("text-auto-size-max-11");
         button.OnClick(() => DoSwap(window));
         return button.Root;
     }

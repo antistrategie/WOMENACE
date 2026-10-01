@@ -1,5 +1,6 @@
 using System.Collections;
 using Il2CppMenace.Tactical;
+using Il2CppMenace.Tactical.Skills;
 using Jiangyu.Sdk;
 using UnityEngine;
 
@@ -207,7 +208,7 @@ public sealed class VoymastinaMechSystem : JiangyuSystem
         // A normal move recomputes the unit's vision per tile, lifting fog of war around the new
         // position. The dash skips that, so flag the vision dirty: the game's CheckForDirtyVision
         // pass recomputes it and reveals the fog the mech can now see.
-        mech.VisionDirty = true;
+        mech.SetPropertyDirty(PropertyDirtyFlag.Vision);
         Context.Log.Debug($"drill dash: slid to ({landing.GetX()},{landing.GetZ()})");
     }
 

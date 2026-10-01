@@ -73,7 +73,7 @@ public sealed partial class RallyHandler : SkillEventHandler
     // The pool grows from ACTUAL hitpoint loss, not DamageInfo: armour,
     // durability and Toughness have all had their say by the time hitpoints
     // move, and the grey band must never promise more than was really lost.
-    public override void OnDamageReceived(Entity attacker, DamageInfo damageInfo)
+    public override void OnDamageReceived(Entity attacker, Skill skill, DamageInfo damageInfo)
         => SyncHp();
 
     // The per-tick sync catches what OnDamageReceived does not: damage over

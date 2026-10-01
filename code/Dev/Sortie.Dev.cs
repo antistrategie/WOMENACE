@@ -12,7 +12,7 @@ namespace WOMENACE.Code;
 //
 // Both screens expose a public entry point, so this drives the game's own path
 // rather than synthesising UI clicks: MissionPrepUIScreen.TryOpen skips the map
-// POI and Plan Mission steps, and LaunchMission is what the launch button calls.
+// POI and Plan Mission steps, and StartMission is what the launch button calls.
 //
 //   Sortie.Where   -> where we are (scene, active screen, prep readiness, in-mission)
 //   Sortie.Open    -> open mission prep for the current operation's mission
@@ -95,7 +95,7 @@ public static class Sortie
         // Raise the ceiling to what the loadout actually costs so the launch is accepted.
         if (maxSupplies.GetAmount() < deployCosts.GetAmount())
             maxSupplies = new Il2CppMenace.Strategy.OperationResources(deployCosts.GetAmount());
-        screen.LaunchMission(deployCosts, maxSupplies);
+        screen.StartMission(deployCosts, maxSupplies);
         return new
         {
             ok = true,

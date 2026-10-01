@@ -1,0 +1,15 @@
+clone "PerkTemplate" from="perk.payback_kubra" id="perk.wmgfl_payback" {
+    // Vanilla's generic Payback became Kubra's unique perk, whose text names her. The effect is
+    // ungated, so the clone only rewrites the text for other leaders.
+    set "Description" {
+        set "m_DefaultTranslation" """
+            Every hit gets returned with interest.
+
+
+            <style="Highlight">• Gains $1% Damage and $2% <link="accuracy">Accuracy</link> against the Enemy that attacked the SL last.</style>
+            """
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "+$1% DMG / ACC against the last Enemy that attacked the SL."
+    }
+}

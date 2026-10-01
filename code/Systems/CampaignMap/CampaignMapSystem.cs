@@ -10,32 +10,26 @@ using UnityEngine.UIElements;
 
 namespace WOMENACE.Code;
 
-// Reskins the campaign mission-select map (MissionSelectUIScreen's MissionPois board) into the
-// GFL1 mission UI: every mission node becomes a circular "spot" that carries its state from the
-// mission's own status (blue = Played/cleared, hollow ring = still to do, red command post = the
-// enemy-held final mission), keeping the vanilla mission-type glyph inside the circle plus the
-// name strip and reward assets. The icon's selection-highlight box is removed: the chibi standing
-// on the selected node marks the selection instead. That Voymastina chibi idles on the selected
-// node and walks to a newly selected node (playing her run animation, facing her travel
-// direction) when the player picks a different mission, always heading to the latest pick even if
-// selection changes mid-walk. Any click during the walk snaps it to the end.
+// Stands a walking Voymastina chibi on the campaign mission-select board (MissionSelectUIScreen's
+// MissionPois container). She idles beside the selected mission's state icon and walks to a newly
+// selected mission (playing her run animation, facing her travel direction) when the player picks
+// a different one, always heading to the latest pick even if selection changes mid-walk. Any click
+// during the walk snaps it to the end.
 //
 // The board lives on the screen's own UIDocument, outside the active screen's GetRootElement(),
-// so everything here rides Harmony postfixes on the live element instances (MissionPoi.SetMission
-// for the nodes, MissionPoisContainer.Init/SetSelectedMission for the board and selection) rather
-// than screen-tree injection.
+// so everything here rides Harmony postfixes on the live element instances (MissionPoi.SetSelected
+// for the selection, MissionPoisContainer.Init for the board) rather than screen-tree injection.
 public sealed class CampaignMapSystem : JiangyuSystem
 {
-    // The circle a bit larger than the vanilla 36px icon so it reads as the node, with the
-    // type glyph inset inside it. The final/boss node is drawn larger so its detailed art reads.
-    private const float NodeSize = 42f;
-    private const float EnemyNodeSize = 58f;
-    private const float GlyphFraction = 0.54f;
-
     // The chibi element is a square (every frame ships on a 256x256 canvas), sized so the
-    // character reads a little taller than a node. Her feet sit just below the node centre.
+    // character reads a little taller than the 40px state icon.
     private const float ChibiHeight = 76f;
-    private const float FootOffset = 7f;
+
+    // She stands to the left of the icon so she covers neither it nor the mission name to its
+    // right. The gap is horizontal space between her centre line and the icon's left edge, and
+    // her feet rest on the ground ellipse (Circle) drawn under the icon.
+    private const float IconGap = 14f;
+    private const float FootOffset = 2f;
 
     // Travel in the 1280x720 panel space, constant speed. Deliberately unhurried so the walk
     // reads as a little journey rather than a snap.
@@ -47,18 +41,16 @@ public sealed class CampaignMapSystem : JiangyuSystem
     private const int WaitFrameCount = 80;
     private const int MoveFrameCount = 18;
 
-    // Cleared nodes tint the glyph a darker shade of the circle's own blue so it reads as one
-    // blue node, every other node keeps a light glyph.
-    private static readonly Color ClearedGlyphColour = new(105f / 255f, 141f / 255f, 174f / 255f, 1f);
-    private static readonly Color LightGlyphColour = new(1f, 1f, 1f, 0.92f);
+    // Each mission shows one of three state panels, each with its own icon and ground ellipse.
+    private static readonly string[] StatePanels = ["Playable", "Completed", "Failed"];
 
-    private Texture2D _spotComplete, _spotIncomplete, _spotEnemy;
     private Texture2D[] _waitFrames, _moveFrames;
     private bool _framesLoaded;
 
     // Live board state. Cleared when the strategy scene unloads.
     private VisualElement _container;
     private VisualElement _chibi;
+    private VisualElement _selectedPoi;  // last node the game selected
     private VisualElement _currentPoi;   // node the chibi is resting on
     private VisualElement _targetPoi;    // node the chibi is walking toward (may change mid-walk)
     private Vector2 _chibiFoot;          // the chibi's live foot position, in container space
@@ -70,10 +62,8 @@ public sealed class CampaignMapSystem : JiangyuSystem
 
     public override void OnInit()
     {
-        Context.Patches.Postfix("Il2CppMenace.UI.Strategy.MissionPoi", "SetMission", OnPoiSetMission);
         Context.Patches.Postfix("Il2CppMenace.UI.Strategy.MissionPoi", "SetSelected", OnPoiSetSelected);
         Context.Patches.Postfix("Il2CppMenace.UI.Strategy.MissionPoisContainer", "Init", OnContainerInit);
-        Context.Patches.Postfix("Il2CppMenace.UI.Strategy.MissionPoisContainer", "SetSelectedMission", OnSelectedMissionChanged);
     }
 
     public override void OnSceneLoaded(int buildIndex, string sceneName)
@@ -84,6 +74,7 @@ public sealed class CampaignMapSystem : JiangyuSystem
         StopRoutine(ref _idleHandle);
         _container = null;
         _chibi = null;
+        _selectedPoi = null;
         _currentPoi = null;
         _targetPoi = null;
         _walking = false;
@@ -97,129 +88,8 @@ public sealed class CampaignMapSystem : JiangyuSystem
         _chibi?.RemoveFromHierarchy();
         _chibi = null;
         _container = null;
+        _selectedPoi = null;
         _currentPoi = null;
-    }
-
-    // ---- node reskin -------------------------------------------------------------------------
-
-    private void OnPoiSetMission(PatchInfo info)
-    {
-        var poi = Cast<VisualElement>(info.Instance);
-        if (poi == null)
-            return;
-        // Defer a frame so the vanilla icon's sprite and layout have resolved before we read them.
-        Context.Coroutines.Start(ReskinNextFrame(poi));
-    }
-
-    private IEnumerator ReskinNextFrame(VisualElement poi)
-    {
-        yield return null;
-        try { Reskin(poi); }
-        catch (System.Exception ex) { Context.Log.Warn($"campaign map: reskin failed: {ex.Message}"); }
-    }
-
-    // The game re-shows the icon selection border whenever a node is (de)selected, so keep it
-    // hidden here too. The chibi standing on the node marks the selection instead.
-    private void OnPoiSetSelected(PatchInfo info)
-    {
-        var poi = Cast<VisualElement>(info.Instance);
-        if (poi != null)
-            Hide(poi, "MissionIconBorder");
-    }
-
-    private void Reskin(VisualElement poi)
-    {
-        if (poi.panel == null)
-            return;
-        var icon = UI.Find(poi, UiSelector.Name("MissionIcon"));
-        if (icon == null)
-            return;
-
-        var isFinal = UI.Find(poi, UiSelector.Name("FinalAssetIcon")) != null;
-        var glyph = IconSprite(icon);
-        // The authoritative state is the mission's status, not the icon sprite: the game shows a
-        // "play" starburst on the selected playable node, which is not the same as completion.
-        var status = poi.TryCast<MissionPoi>()?.GetMission()?.GetStatus();
-        var played = status == MissionStatus.Played;
-        var circle = isFinal ? SpotEnemy() : played ? SpotComplete() : SpotIncomplete();
-        if (circle == null)
-            return;
-
-        // The circle sits over the vanilla icon: the vanilla icon is hidden and its glyph is
-        // redrawn inside the circle. The circle spills past the vanilla icon's box, so stop its
-        // ancestors clipping it, and insert it as the first child so every later sibling (the
-        // name strip) draws on top and it can never cover the mission title.
-        SetOverflowVisible(poi);
-        SetOverflowVisible(icon.parent);
-
-        var node = UI.Find(poi, UiSelector.Name("wm-node"));
-        if (node == null)
-        {
-            node = new VisualElement { name = "wm-node", pickingMode = PickingMode.Ignore };
-            node.style.position = new StyleEnum<Position>(Position.Absolute);
-            node.style.justifyContent = new StyleEnum<Justify>(Justify.Center);
-            node.style.alignItems = new StyleEnum<Align>(Align.Center);
-            icon.parent.Insert(0, node);
-        }
-
-        var size = isFinal ? EnemyNodeSize : NodeSize;
-        var box = icon.layout;
-        if (!float.IsNaN(box.x) && !float.IsNaN(box.y) && !float.IsNaN(box.width) && !float.IsNaN(box.height))
-        {
-            var cx = box.x + box.width / 2f;
-            var cy = box.y + box.height / 2f;
-            node.style.left = new StyleLength(cx - size / 2f);
-            node.style.top = new StyleLength(cy - size / 2f);
-        }
-        node.style.width = new StyleLength(size);
-        node.style.height = new StyleLength(size);
-        node.style.backgroundImage = new StyleBackground(circle);
-
-        // Keep the mission-type glyph inside the circle on every node except the final one
-        // (whose command-post art is self-contained). A cleared node tints the glyph the
-        // circle's own blue so it reads as one blue node, the rest stay light.
-        var inner = node.childCount > 0 ? node.ElementAt(0) : null;
-        if (!isFinal && glyph != null)
-        {
-            if (inner == null)
-            {
-                inner = new VisualElement { name = "wm-glyph", pickingMode = PickingMode.Ignore };
-                node.Add(inner);
-            }
-            inner.style.width = new StyleLength(size * GlyphFraction);
-            inner.style.height = new StyleLength(size * GlyphFraction);
-            inner.style.backgroundImage = new StyleBackground(glyph);
-            inner.style.unityBackgroundImageTintColor = new StyleColor(played ? ClearedGlyphColour : LightGlyphColour);
-            inner.style.display = new StyleEnum<DisplayStyle>(DisplayStyle.Flex);
-        }
-        else if (inner != null)
-        {
-            inner.style.display = new StyleEnum<DisplayStyle>(DisplayStyle.None);
-        }
-
-        // Remove the selection highlight box the game draws over the selected node's icon. The
-        // chibi standing on the node (plus the name strip's own highlight) marks the selection.
-        Hide(poi, "MissionIconBorder");
-        icon.style.display = new StyleEnum<DisplayStyle>(DisplayStyle.None);
-    }
-
-    private static Sprite IconSprite(VisualElement icon)
-    {
-        try { return icon.resolvedStyle.backgroundImage.sprite; }
-        catch { return null; }
-    }
-
-    private static void SetOverflowVisible(VisualElement element)
-    {
-        if (element != null)
-            element.style.overflow = new StyleEnum<Overflow>(Overflow.Visible);
-    }
-
-    private static void Hide(VisualElement root, string name)
-    {
-        var element = UI.Find(root, UiSelector.Name(name));
-        if (element != null)
-            element.style.display = new StyleEnum<DisplayStyle>(DisplayStyle.None);
     }
 
     // ---- chibi -------------------------------------------------------------------------------
@@ -244,7 +114,7 @@ public sealed class CampaignMapSystem : JiangyuSystem
 
     private IEnumerator InitChibiNextFrame()
     {
-        // Two frames: one for the board to lay out, one for our reskin pass to settle.
+        // Two frames so the board has laid out and the game has preselected a mission.
         yield return null;
         yield return null;
         try
@@ -253,7 +123,7 @@ public sealed class CampaignMapSystem : JiangyuSystem
                 yield break;
             EnsureChibi();
             HookSkip();
-            var selected = SelectedPoi();
+            var selected = SameRef(_selectedPoi?.parent, _container) ? _selectedPoi : FirstPoi();
             if (selected != null)
             {
                 _currentPoi = selected;
@@ -277,39 +147,29 @@ public sealed class CampaignMapSystem : JiangyuSystem
         StartIdle();
     }
 
-    // The selected node: the POI showing its name-strip selection border (InfoBorder). The icon
-    // border is hidden by the reskin, so the name-strip border is the readable selection tell.
-    // Falls back to the first node.
-    private VisualElement SelectedPoi()
+    private VisualElement FirstPoi()
     {
-        VisualElement first = null;
         foreach (var poi in Pois())
         {
-            first ??= poi;
-            var border = UI.Find(poi, UiSelector.Name("InfoBorder"));
-            if (border != null && BorderShown(border))
+            if (Shown(poi))
                 return poi;
         }
-        return first;
-    }
-
-    private static bool BorderShown(VisualElement border)
-    {
-        try { return border.resolvedStyle.display != DisplayStyle.None && border.resolvedStyle.width > 0.5f; }
-        catch { return false; }
+        return null;
     }
 
     // Selection changed: aim the chibi at the newly selected node. The walk loop reads _targetPoi
     // live, so switching selection rapidly just retargets an in-flight walk to the latest node
     // (from wherever the chibi actually is) rather than stranding it or restarting from the last
     // resting node.
-    private void OnSelectedMissionChanged(PatchInfo info)
+    private void OnPoiSetSelected(PatchInfo info)
     {
-        if (_container == null || _chibi == null)
+        if (info.Args.Count == 0 || info.Args[0] is not bool selected || !selected)
             return;
-        var mission = Cast<Mission>(info.Args.Count > 0 ? info.Args[0] : null);
-        var target = mission != null ? PoiForMission(mission) : SelectedPoi();
+        var target = Cast<VisualElement>(info.Instance);
         if (target == null)
+            return;
+        _selectedPoi = target;
+        if (_container == null || _chibi == null)
             return;
         _targetPoi = target;
 
@@ -322,7 +182,7 @@ public sealed class CampaignMapSystem : JiangyuSystem
         }
         // Already resting on the target and not walking: nothing to do. POIs are compared by
         // native pointer, as separate interop calls can hand back distinct wrappers for one
-        // element (the same reason Mission equality uses SameRef).
+        // element.
         if (_walkHandle == null && SameRef(_currentPoi, target))
             return;
         // Start the walk loop if one is not already running. A running loop picks up the new
@@ -428,17 +288,32 @@ public sealed class CampaignMapSystem : JiangyuSystem
         StartIdle();
     }
 
-    // The point the chibi's feet rest on: the node's centre in container space, nudged down. The
-    // vanilla icon is hidden (its bounds go stale), so anchor on IconPos, which keeps the node's
-    // live position, falling back to the reskinned circle or the POI itself.
+    // The point the chibi's feet rest on, in container space: left of the visible state panel's
+    // icon, level with the ground ellipse under it. Falls back to the node's left edge.
     private Vector2 FootPoint(VisualElement poi)
     {
-        var anchor = UI.Find(poi, UiSelector.Name("IconPos"))
-                     ?? UI.Find(poi, UiSelector.Name("wm-node"))
-                     ?? poi;
-        var world = anchor.worldBound.center;
-        var local = _container.WorldToLocal(world);
+        VisualElement panel = null;
+        foreach (var name in StatePanels)
+        {
+            var candidate = UI.Find(poi, UiSelector.Name(name));
+            if (candidate != null && Shown(candidate))
+            {
+                panel = candidate;
+                break;
+            }
+        }
+        var icon = panel == null ? null : UI.Find(panel, UiSelector.Name(panel.name == "Playable" ? "Icon" : "Image"));
+        var ground = panel == null ? null : UI.Find(panel, UiSelector.Name("Circle"));
+        var iconBox = (icon ?? panel ?? poi).worldBound;
+        var feetY = ground != null ? ground.worldBound.center.y : iconBox.yMax;
+        var local = _container.WorldToLocal(new Vector2(iconBox.xMin - IconGap, feetY));
         return new Vector2(local.x, local.y + FootOffset);
+    }
+
+    private static bool Shown(VisualElement element)
+    {
+        try { return element.resolvedStyle.display != DisplayStyle.None && element.worldBound.width > 0.5f; }
+        catch { return false; }
     }
 
     private void SetFoot(Vector2 foot)
@@ -481,17 +356,6 @@ public sealed class CampaignMapSystem : JiangyuSystem
         }
     }
 
-    private VisualElement PoiForMission(Mission mission)
-    {
-        foreach (var poi in Pois())
-        {
-            var mp = poi.TryCast<MissionPoi>();
-            if (mp != null && SameRef(mp.GetMission(), mission))
-                return poi;
-        }
-        return null;
-    }
-
     private bool LoadFrames()
     {
         if (_framesLoaded)
@@ -515,10 +379,6 @@ public sealed class CampaignMapSystem : JiangyuSystem
         }
         return frames;
     }
-
-    private Texture2D SpotComplete() => _spotComplete ??= Context.Assets.Load<Texture2D>("spot_complete");
-    private Texture2D SpotIncomplete() => _spotIncomplete ??= Context.Assets.Load<Texture2D>("spot_incomplete");
-    private Texture2D SpotEnemy() => _spotEnemy ??= Context.Assets.Load<Texture2D>("spot_enemy");
 
     private void StopRoutine(ref object handle)
     {
