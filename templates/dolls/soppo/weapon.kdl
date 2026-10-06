@@ -1,4 +1,5 @@
 clone "WeaponTemplate" from="weapon.generic_assault_rifle_tier1_ARC_762" id="weapon.soppo" {
+    append "Tags" "wmgfl_doll_weapon"
     append "Tags" "jy_no_sell"
     append "Tags" "wmgfl_class_ar"
     set "Title" {
@@ -83,6 +84,7 @@ clone "SkillTemplate" from="active.fire_assault_rifle_sustained_fire_tier1_762" 
 
 // SSR weapon
 clone "WeaponTemplate" from="specialweapon.infantry_automatic_rifle_tier2" id="weapon.soppo_ssr" {
+    append "Tags" "wmgfl_doll_weapon"
     append "Tags" "jy_no_sell"
     set "Title" {
         set "m_DefaultTranslation" "Sky-Shattering Howl"

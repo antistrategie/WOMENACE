@@ -255,6 +255,24 @@ var rejected = false;
 try { Procurement.Plan(state, catalogue, 2, 123); } catch (ArgumentOutOfRangeException) { rejected = true; }
 Assert(rejected, "Unsupported batch sizes must be rejected");
 
+var ownedDossier = catalogue.Single(reward => reward.Id == "dossier-a");
+var rosterState = new ProcurementState { RandomState = 7 };
+rosterState.ClaimOwned(ownedDossier);
+Assert(rosterState.Claimed("dossier-a") == 1 && !rosterState.Available(ownedDossier),
+    "A dossier doll already on the roster must count as claimed");
+rosterState.ClaimOwned(ownedDossier);
+Assert(rosterState.Claimed("dossier-a") == 1, "Claiming an owned dossier twice must not exceed its limit");
+var rosterPulls = new List<ProcurementReward>();
+for (var batch = 0; batch < 20; batch++)
+{
+    var rosterPlan = Procurement.Plan(rosterState, catalogue, 10, 11 + batch);
+    rosterState.Apply(rosterPlan.State);
+    rosterPulls.AddRange(rosterPlan.Rewards);
+}
+Assert(rosterPulls.All(reward => reward.Id != "dossier-a"), "The pool must not hand out a dossier doll already on the roster");
+rosterState.ClaimOwned(catalogue.Single(reward => reward.Id == "part"));
+Assert(rosterState.Claimed("part") == 0, "Unlimited rewards must not record a claim");
+
 if (args.Contains("--rates"))
     checks += RateAudit.Run();
 Console.WriteLine($"Procurement: {checks} checks passed");

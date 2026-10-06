@@ -156,6 +156,15 @@ public sealed class ProcurementState
             Claims[id] = count;
     }
 
+    // A dossier doll already on the roster (picked at new game, or recruited before the shop
+    // opened) fills her claims, so the pool cannot hand her out a second time. Dossier claims
+    // never return, so this latches like a pull and losing the doll later does not reopen it.
+    public void ClaimOwned(ProcurementReward reward)
+    {
+        if (reward.Limit > 0)
+            Claims[reward.Id] = Math.Max(Claimed(reward.Id), reward.Limit);
+    }
+
     public ProcurementState Copy() => new()
     {
         RandomState = RandomState,

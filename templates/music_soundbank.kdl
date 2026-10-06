@@ -1,0 +1,41 @@
+clone "SoundBank" from="music_soundbank" id="wmgfl_music_bank" {
+    // No clips: ModMusic loads music/<name> on first play so the tracks skip boot.
+    clear "sounds"
+    clear "busIndices"
+
+    append "sounds" {
+        set "name" "sextans_solo"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "fixedVolume" 0.12
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "ots14_solo"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "fixedVolume" 0.13
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "voymastina_mech_solo"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "fixedVolume" 0.16
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "kalina_shop"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "fixedVolume" 0.11
+        }
+    }
+    append "busIndices" 0
+}

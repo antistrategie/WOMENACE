@@ -30,6 +30,10 @@ clone "TagTemplate" from="unique" id="wmgfl_melee"
 // this tag and answers those checks on the skill's behalf.
 clone "TagTemplate" from="unique" id="wmgfl_entity_weapon"
 
+// Marks every doll weapon, so the weapon list's Dolls filter (DollWeaponFilterSystem)
+// can show them alone. Rank clones inherit it from their base weapon.
+clone "TagTemplate" from="unique" id="wmgfl_doll_weapon"
+
 // Weapon-type proficiency. A doll's speaker carries one of these to name the weapon
 // class she is trained on, and each of our weapons carries the one naming its own
 // class. WeaponProficiencySystem reads the tag and grants an affinity-scaled accuracy
@@ -57,6 +61,8 @@ patch "StrategyConfig" "strategy_config" {
     append "InitialPickableUnitLeaders" "squad_leader.soppo"
     append "InitialPickableUnitLeaders" "squad_leader.springfield"
     append "InitialPickableUnitLeaders" "squad_leader.makiatto"
+
+    insert "ItemFilters" index=0 "wmgfl_doll_weapons"
 }
 
 patch "GlobalDifficultyTemplate" "global_difficulty.normal" {

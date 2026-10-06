@@ -1,4 +1,5 @@
 clone "WeaponTemplate" from="weapon.generic_smg_tier1_ppp" id="weapon.vector" {
+    append "Tags" "wmgfl_doll_weapon"
     append "Tags" "jy_no_sell"
     append "Tags" "wmgfl_class_smg"
     set "Title" {
@@ -86,6 +87,7 @@ clone "SkillTemplate" from="active.fire_smg_tier_1_tap_fire" id="active.fire_vec
 
 // SSR weapon
 clone "WeaponTemplate" from="specialweapon.infantry_automatic_rifle_tier2" id="weapon.vector_ssr" {
+    append "Tags" "wmgfl_doll_weapon"
     append "Tags" "jy_no_sell"
     set "Title" {
         set "m_DefaultTranslation" "Banshee's Whisper"

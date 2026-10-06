@@ -150,8 +150,10 @@ public sealed class EffectHudIconSystem : JiangyuSystem
         }
     }
 
-    // Our own icon row, injected as a sibling right below the hitpoints bar
-    // (the native AddIcon row sits next to the unit badge instead).
+    // Our own icon row, injected right below the bars block (the native
+    // AddIcon row sits next to the unit badge instead). It goes beside the
+    // Bars element rather than inside it, because Bars paints an opaque
+    // backing that would otherwise stretch behind the icons.
     private const string IconRowName = "wm-effect-icons";
 
     // Container-mutation entry: resolve the actor's HUD, then draw. The
@@ -187,8 +189,8 @@ public sealed class EffectHudIconSystem : JiangyuSystem
 
     private void DrawRow(Il2CppMenace.UI.Tactical.UnitHUD hud, Actor actor, int[] counts)
     {
-        var bar = hud.m_HitpointsBar;
-        var host = bar?.parent;
+        var bars = hud.m_HitpointsBar?.parent;
+        var host = bars?.parent;
         if (host == null)
             return;
 
@@ -234,11 +236,11 @@ public sealed class EffectHudIconSystem : JiangyuSystem
             row = new VisualElement { name = IconRowName };
             row.style.flexDirection = new StyleEnum<FlexDirection>(FlexDirection.Row);
             row.style.justifyContent = new StyleEnum<Justify>(Justify.FlexStart);
-            // the host centres its children, so the shrink-wrapped row must
-            // pin itself to the left edge
+            // the host (DetailsContainer) lays its children out centred, so the
+            // shrink-wrapped row must pin itself to the left edge under the bars
             row.style.alignSelf = new StyleEnum<Align>(Align.FlexStart);
             row.style.marginTop = new StyleLength(2f);
-            host.Insert(host.IndexOf(bar) + 1, row);
+            host.Insert(host.IndexOf(bars) + 1, row);
         }
         row.Clear();
         foreach (var icon in icons)

@@ -25,7 +25,13 @@ public sealed class ProcurementSystem : JiangyuSystem
             Instance = null;
     }
 
-    internal void RefreshEquipmentClaims()
+    internal void RefreshClaims()
+    {
+        RefreshEquipmentClaims();
+        RefreshDossierClaims();
+    }
+
+    private void RefreshEquipmentClaims()
     {
         // The shop and pull entry points have a loaded campaign. Scene-load callbacks
         // can run before inventory restoration, and an exchange can still roll back.
@@ -41,6 +47,33 @@ public sealed class ProcurementSystem : JiangyuSystem
         }
     }
 
+    private void RefreshDossierClaims()
+    {
+        if (_trading || StrategyState.Get()?.Roster is not { } roster)
+            return;
+        try
+        {
+            // Dismissed and fallen leaders count too, so a save from before this check
+            // cannot reopen the dossier of a doll it has already had.
+            var onRoster = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var leaders in new[] { roster.m_HiredLeaders, roster.m_DismissedLeaders, roster.m_UnburiedLeaders, roster.m_BuriedLeaders })
+                for (var i = 0; leaders != null && i < leaders.Count; i++)
+                    if (leaders[i]?.LeaderTemplate?.GetID() is { } id)
+                        onRoster.Add(id);
+            var hirable = roster.m_HirableLeaders;
+            for (var i = 0; hirable != null && i < hirable.Count; i++)
+                if (hirable[i]?.GetID() is { } id)
+                    onRoster.Add(id);
+            foreach (var entry in Catalogue.Entries)
+                if (entry.Leader?.GetID() is { } leader && onRoster.Contains(leader))
+                    State.ClaimOwned(entry.Reward);
+        }
+        catch (Exception ex)
+        {
+            Context.Log.Warn($"Procurement could not refresh dossier claims: {ex}");
+        }
+    }
+
     public (bool ok, string error, IReadOnlyList<ProcurementCatalogue.Entry> rewards) Pull(int count)
     {
         if (_trading || !WorkshopAccess.IsUnlocked || count != 1 && count != 10 || Catalogue.Rewards.Count == 0)
@@ -52,7 +85,7 @@ public sealed class ProcurementSystem : JiangyuSystem
             return (false, Locale.Text("WOMENACE::ui/procurement/unavailable", "Procurement is unavailable."), null);
         if (Pieces < cost)
             return (false, Locale.Text("WOMENACE::ui/procurement/need_pieces", "Not enough Collapse Pieces."), null);
-        RefreshEquipmentClaims();
+        RefreshClaims();
         _trading = true;
         var unlocked = new List<UnitLeaderTemplate>();
         var committed = false;

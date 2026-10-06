@@ -49,6 +49,9 @@ public sealed partial class ShopSystem : JiangyuSystem
 
     public override void OnSceneLoaded(int buildIndex, string sceneName)
     {
+        // Cleared first: Reset hides the shop, and a pending restore would request the
+        // strategy track inside the scene that is loading.
+        _musicBeforeShop = null;
         _host.Reset();
         _buySelection.Clear();
         _sellSelection.Clear();
@@ -76,6 +79,7 @@ public sealed partial class ShopSystem : JiangyuSystem
         if (!show)
             HoverDelay.Cancel(ref _affinityHover);
         _root?.SetVisible(show);
+        SetShopMusic(show);
         _procurement?.SetVisible(show && _procurementActive);
         _affinity?.SetVisible(false);
         HideOutfits();

@@ -123,7 +123,7 @@ public static class Unlocks
         },
         ["wmgfl_asteria"] = new[]
         {
-            new Entry { Level = 4, Feature = Feature.SpecialWeapon, Items = new[] { "specialweapon.asteria_railgun" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_asteria/lv4", "Special Weapon: Particle Cannon") },
+            new Entry { Level = 7, Feature = Feature.SpecialWeapon, Items = new[] { "specialweapon.asteria_railgun" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_asteria/lv7", "Special Weapon: Particle Cannon") },
         },
         ["wmgfl_alva"] = new[]
         {
