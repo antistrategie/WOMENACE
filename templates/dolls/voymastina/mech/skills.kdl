@@ -69,6 +69,11 @@ clone "SkillTemplate" from="active.launch_construct_rocket" id="active.voymastin
 
     append "Tags" "wmgfl_entity_weapon"
 
+    // Replace only the visual, preserving the inherited projectile's flight settings.
+    set "ProjectileData" {
+        set "Prefab" asset="voymastina_mech/sirius_fall_rocket/main"
+    }
+
     set "MuzzleType" enum="MuzzleType" "Muzzle2"
     set "AnimationType" enum="AnimationType" "SpecialAttack1"
     set "KeyBind" enum="KeyBindPlayerSetting" "SelectItemSkill2"
@@ -77,10 +82,10 @@ clone "SkillTemplate" from="active.launch_construct_rocket" id="active.voymastin
     set "DelayAfterAnimationTrigger" 1.333
 
     set "EventHandlers" index=0 {
-        set "Damage" 130.0
-        set "ArmorPenetration" 80.0
+        set "Damage" 180.0
+        set "ArmorPenetration" 120.0
         set "Suppression" 50.0
-        set "DamageToArmorDurability" 50.0
+        set "DamageToArmorDurability" 100.0
         set "ElementsHit" 3
     }
 }
@@ -93,6 +98,8 @@ clone "SkillTemplate" from="active.wetteroth_thats_a_knife" id="active.voymastin
         set "m_DefaultTranslation" "Close in for a guaranteed melee strike that ignores cover. Consumes <link=\"voymastina_target_lock\">Target Lock</link> for bonus <link=\"hitpoint_damage\">Hitpoint damage</link>. Executions activate <link=\"voymastina_energy_thief\">Energy Thief</link>."
         clear "m_Placeholders"
     }
+    set "Icon" asset="voymastina/mech/skills/pile_bunker"
+    set "IconDisabled" asset="voymastina/mech/skills/pile_bunker_inactive"
 
     // The knife base is culled after combat and the per-mission grant does not
     // reliably restore it, so a granted clone goes missing on later missions.

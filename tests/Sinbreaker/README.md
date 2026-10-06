@@ -61,7 +61,10 @@ These checks require MENACE and are not claimed by the offline tests:
    22 AP per tile. Expert Pilot and Dash together cost 12, or 9 with Booster
    Injection. Check the existing fast movement, dash and landing behaviour.
 3. Check gun 40 AP, three 37-damage rounds, 30 penetration and 7 armour wear.
-   Check rocket 50 AP, 130 damage, 80 penetration, 50 armour wear and three elements hit.
+   Check rocket 50 AP, 180 damage, 120 penetration, 100 armour wear and three elements hit.
+   Sirius Fall uses a 2x-scale variant of the vanilla RPG projectile. Check its
+   size throughout flight and across repeated shots, with unchanged trajectory,
+   impact effects and targeting. Other units' vanilla rockets stay unchanged.
    Check bunker 60 AP, 150 damage, 160 penetration and 160 armour wear.
    Confirm six-tile guaranteed, cover-ignoring bunker hits all inherited elements.
 4. Gun-hit several enemies, including an armour-stopped hit. Repeated rounds and
