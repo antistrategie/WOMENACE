@@ -57,9 +57,13 @@ These checks require MENACE and are not claimed by the offline tests:
    save/reload with each form active. Infantry Voymastina keeps her own attributes.
    Pilot vitality must not override chassis HP. Pilot growth stays native,
    leaving over-cap agility at its authored base while other stats can grow to
-   100. Solo Dolls retain their existing caps and growth. Ordinary movement costs
-   22 AP per tile. Expert Pilot and Dash together cost 12, or 9 with Booster
-   Injection. Check the existing fast movement, dash and landing behaviour.
+   100. Solo Dolls retain their existing caps and growth. Base movement costs
+   17 AP across all terrain, including structures where traversal is legal.
+   Expert Pilot reduces ordinary movement to 13 AP, Dash brings it to 7, and
+   Booster Injection brings it to 4. Check the stack on each terrain and structures.
+   None of these combinations should permit free movement, including at 0 AP.
+   Other units keep their own costs.
+   Check the existing fast movement, dash and landing behaviour.
 3. Check gun 40 AP, three 37-damage rounds, 30 penetration and 7 armour wear.
    Check rocket 50 AP, 180 damage, 120 penetration, 100 armour wear and three elements hit.
    Sirius Fall uses a 2x-scale variant of the vanilla RPG projectile. Check its

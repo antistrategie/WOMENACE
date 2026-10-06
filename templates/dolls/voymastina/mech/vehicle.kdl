@@ -1,5 +1,27 @@
 clone "TagTemplate" from="unique" id="wmgfl_voymastina_mech"
 
+clone "MovementType" from="movement_type.construct_soldier_t1" id="movement_type.voymastina_mech" {
+    // Uniform AP costs for hovering, retaining the mech's speed, turning and animation curves.
+    set "m_MovementCosts" index=0 17
+    set "m_MovementCosts" index=1 17
+    set "m_MovementCosts" index=2 17
+    set "m_MovementCosts" index=3 17
+    set "m_MovementCosts" index=4 17
+    set "m_MovementCosts" index=5 17
+    set "m_MovementCosts" index=6 17
+    set "m_MovementCosts" index=7 17
+    set "m_MovementCosts" index=8 17
+    set "m_MovementCosts" index=9 17
+    set "m_MovementCosts" index=10 17
+    set "m_MovementCosts" index=11 17
+    set "m_MovementCosts" index=12 17
+    set "m_MovementCosts" index=13 17
+    set "m_MovementCostOnStructures" 17
+    // Keep the pathfinder's cached bounds aligned with this cost table.
+    set "m_LowestMovementCost" 17
+    set "m_HighestMovementCost" 17
+}
+
 clone "ModularVehicleTemplate" from="modular_vehicle_medium_walker" id="modular_vehicle.voymastina_mech" {
     clear "Slots"
 }
@@ -14,7 +36,7 @@ clone "EntityTemplate" from="player_vehicle.generic_heavy_attack_walker" id="pla
 
     set "AnimatorTemplate" "animator.voymastina_mech"
     set "AnimationSoundTemplate" "construct_soldier_animation_sounds"
-    set "MovementType" "movement_type.construct_soldier_t1"
+    set "MovementType" "movement_type.voymastina_mech"
     set "AimWithVisualSlot" enum="VisualAlterationSlot" "EntireModel"
     set "ModularVehicle" "modular_vehicle.voymastina_mech"
 
@@ -69,7 +91,7 @@ clone "EntityTemplate" from="player_vehicle.generic_heavy_attack_walker" id="pla
 
     set "AnimatorTemplate" "animator.voymastina_mech"
     set "AnimationSoundTemplate" "construct_soldier_animation_sounds"
-    set "MovementType" "movement_type.construct_soldier_t1"
+    set "MovementType" "movement_type.voymastina_mech"
     set "AimWithVisualSlot" enum="VisualAlterationSlot" "EntireModel"
     set "ModularVehicle" "modular_vehicle.voymastina_mech"
 
