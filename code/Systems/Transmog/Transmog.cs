@@ -9,7 +9,8 @@ namespace WOMENACE.Code;
 // their OnlyEquipableBy names only the wmgfl_transmog marker tag. TransmogSystem swaps the
 // rendered body prefab to the selection and the picker on the unit window writes it. Selections
 // persist per save slot through Context.State, keyed like affinity (Affinity.KeyForTag), so a
-// character's choice survives Voymastina's form swap.
+// character's choice survives Voymastina's form swap. The leader and her squaddies each have a
+// selection. The squaddie one is optional, and without it the whole squad wears the leader's.
 public static class Transmog
 {
     // Resolved armor.<name>_default templates, keyed by outfit id. Hits only (Templates.Resolve),
@@ -92,6 +93,36 @@ public static class Transmog
         return $"{name}/{armorId[prefix.Length..]}/main";
     }
 
+    // The outfit the character's squaddies render: their own saved selection when it is one of
+    // her outfits, otherwise the leader's.
+    public static string SquadSelectionFor(ModContext context, string characterTag)
+        => SavedSquadSelection(context, characterTag) ?? SelectionFor(context, characterTag);
+
+    // The squaddies' own selection, or null when they follow the leader.
+    public static string SavedSquadSelection(ModContext context, string characterTag)
+    {
+        var key = Affinity.KeyForTag(characterTag);
+        if (key == 0 || !context.State.Get<TransmogState>().SquadSelections.TryGetValue(key, out var id) || id == null)
+            return null;
+        foreach (var option in OptionsFor(characterTag))
+            if (option.ArmorId == id)
+                return id;
+        return null;
+    }
+
+    // A null armorId makes the squaddies follow the leader again.
+    public static void SetSquadSelection(ModContext context, string characterTag, string armorId)
+    {
+        var key = Affinity.KeyForTag(characterTag);
+        if (key == 0)
+            return;
+        var selections = context.State.Get<TransmogState>().SquadSelections;
+        if (armorId == null)
+            selections.Remove(key);
+        else
+            selections[key] = armorId;
+    }
+
     public static void SetSelection(ModContext context, string characterTag, string armorId)
     {
         var key = Affinity.KeyForTag(characterTag);
@@ -101,8 +132,10 @@ public static class Transmog
     }
 }
 
-// Persisted per-character outfit choice, keyed like AffinityState (Affinity.KeyForTag).
+// Persisted per-character outfit choices, keyed like AffinityState (Affinity.KeyForTag).
+// SquadSelections holds only the characters whose squaddies wear something other than the leader.
 public sealed class TransmogState
 {
     public Dictionary<int, string> Selections { get; set; } = [];
+    public Dictionary<int, string> SquadSelections { get; set; } = [];
 }

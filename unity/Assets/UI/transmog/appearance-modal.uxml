@@ -4,7 +4,9 @@
     <ui:VisualElement name="AppearanceAlternatives" class="window wm-outfit-modal">
         <ui:VisualElement class="unit-window-background" />
         <ui:VisualElement class="unit-window-border" />
-        <ui:Label name="appearance-title" text="" class="wm-outfit-title" />
+        <ui:VisualElement name="appearance-header" class="wm-outfit-header">
+            <ui:Label name="appearance-title" text="" class="wm-outfit-title" />
+        </ui:VisualElement>
         <ui:VisualElement name="appearance-list" class="wm-outfit-list" />
     </ui:VisualElement>
 </ui:UXML>

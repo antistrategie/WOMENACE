@@ -1,3 +1,4 @@
+using Il2CppInterop.Runtime;
 using Il2CppMenace.Items;
 using Il2CppMenace.UI.Strategy;
 using Jiangyu.Game;
@@ -12,11 +13,19 @@ namespace WOMENACE.Code;
 
 // Outfits and weapon skins share one picker per UnitWindow. Their choices and eligibility
 // come from their own models, while tiles, cards, dismissal and preview refresh are common.
+// The outfit picker dresses the squad leader on left click and her dummy links (squaddies) on
+// right click, and each click changes only its own side. Each card carries a badge for
+// whichever of the two wears it. Dummy links render the leader's outfit until either side is
+// first changed, and solo dolls have none, so right click does nothing for them.
 public sealed class TransmogPickerSystem : JiangyuSystem
 {
     private const string ModalName = "AppearanceAlternatives";
     private readonly Dictionary<string, ArmorTemplate> _armorCache = new(StringComparer.Ordinal);
     private Action<VisualElement> _onAffinityChanged;
+
+    // Set while a pick refreshes its own window, so that refresh keeps the picker open for the
+    // next pick. Any other window refresh still closes it.
+    private bool _keepOpen;
     internal static TransmogPickerSystem Instance { get; private set; }
 
     private sealed class Choice(string id, string name, string subtitle, StyleBackground art,
@@ -29,9 +38,11 @@ public sealed class TransmogPickerSystem : JiangyuSystem
     }
 
     private sealed class Appearance(string title, string heading, string selection, StyleBackground tileArt,
-        string imageClass, IReadOnlyList<Choice> choices)
+        string imageClass, IReadOnlyList<Choice> choices, string squadSelection = null, bool hasSquad = false)
     {
         public readonly string Title = title, Heading = heading, Selection = selection, ImageClass = imageClass;
+        public readonly string SquadSelection = squadSelection;
+        public readonly bool HasSquad = hasSquad;
         public readonly StyleBackground TileArt = tileArt;
         public readonly IReadOnlyList<Choice> Choices = choices;
     }
@@ -75,7 +86,7 @@ public sealed class TransmogPickerSystem : JiangyuSystem
     private void OnWindowChanged(PatchInfo info)
     {
         if (info.Instance is VisualElement window)
-            EnsureUi(window);
+            EnsureUi(window, close: !_keepOpen);
     }
 
     private void EnsureUi(VisualElement window, bool close = true)
@@ -98,6 +109,7 @@ public sealed class TransmogPickerSystem : JiangyuSystem
                 modal.AddToClassList("wm-dismiss-hooked");
                 UI.CloseOnOutsideClick(modal, () => AppearanceSlotUi.ClosePickers(window),
                     WeaponSkinSystem.Slots.Prepend(ItemSlot.InfantryArmor).Select(TileName).ToArray());
+                AddCloseButton(window);
             }
             foreach (var element in UI.FindAll(window, UiSelector.TypeName("EquipmentSlot")))
             {
@@ -156,9 +168,11 @@ public sealed class TransmogPickerSystem : JiangyuSystem
                     option.UnlockLevel <= level, Templates.DefaultText(template.Description),
                     Locale.Format("WOMENACE::ui/transmog_locked", "Unlocks at affinity level {0}", option.UnlockLevel)));
             }
+            var hasSquad = !SoloSquadSystem.IsSolo(leader);
             return new Appearance(Locale.Text("WOMENACE::ui/select_outfit", "Select Outfit"),
                 Locale.Text("WOMENACE::ui/transmog", "OUTFIT"), selection,
-                new StyleBackground(OutfitTemplate(selection)?.IconSkillBar), "wm-fill", choices);
+                new StyleBackground(OutfitTemplate(selection)?.IconSkillBar), "wm-fill", choices,
+                hasSquad ? Transmog.SquadSelectionFor(Context, tag) : null, hasSquad);
         }
         if (!WeaponSkinSystem.Slots.Contains(slot) || WeaponSkinSystem.Instance is not { } system)
             return null;
@@ -226,45 +240,124 @@ public sealed class TransmogPickerSystem : JiangyuSystem
             var subtitle = new Label(choice.Subtitle) { name = "ShortItemName", pickingMode = PickingMode.Ignore };
             subtitle.AddToClassList("wm-outfit-card-shortname");
             card.Add(subtitle);
-            card.clickable.clicked += (Action)(() =>
+            card.clickable.clicked += (Action)(() => Pick(window, slot, choice, squad: false));
+            if (appearance.HasSquad)
             {
-                if (!choice.Unlocked)
-                {
-                    Sound.RightClick();
-                    return;
-                }
-                Sound.Click();
-                Select(window, slot, choice.Id);
-            });
-            Tooltip.OnHover(card, () => ChoiceTooltip(choice));
+                // Clickable answers the left button only, so the squaddie pick listens for the
+                // right one itself. Stopping it keeps the window's own right click from firing.
+                card.RegisterCallback<PointerDownEvent>(DelegateSupport.ConvertDelegate<EventCallback<PointerDownEvent>>(
+                    (Action<PointerDownEvent>)(evt =>
+                    {
+                        if (evt.button != 1)
+                            return;
+                        evt.StopPropagation();
+                        Pick(window, slot, choice, squad: true);
+                    })));
+            }
+            if (slot == ItemSlot.InfantryArmor)
+                card.Add(Badges(choice.Id == appearance.Selection, appearance.HasSquad && choice.Id == appearance.SquadSelection));
+            Tooltip.OnHover(card, () => ChoiceTooltip(choice, hint: appearance.HasSquad));
             list.Add(card);
         }
     }
 
-    private static Tooltip ChoiceTooltip(Choice choice, string heading = null)
+    // The game's own close button, as on the bug report dialog, at the end of the title row so
+    // it centres on the title.
+    private void AddCloseButton(VisualElement window)
+    {
+        var header = UI.Find(window, UiSelector.Name("appearance-header"));
+        if (header == null || UI.Find(header, UiSelector.Name("appearance-close")) != null)
+            return;
+        var close = new Il2CppMenace.UI.CloseButton { name = "appearance-close" };
+        close.AddToClassList("wm-outfit-close");
+        close.SetOnLeftClickedAction(DelegateSupport.ConvertDelegate<Il2CppSystem.Action<Il2CppMenace.UI.InteractiveElement>>(
+            (Action<Il2CppMenace.UI.InteractiveElement>)(_ => AppearanceSlotUi.ClosePickers(window))));
+        header.Add(close);
+    }
+
+    private void Pick(VisualElement window, ItemSlot slot, Choice choice, bool squad)
+    {
+        if (!choice.Unlocked)
+        {
+            Sound.RightClick();
+            return;
+        }
+        Sound.Click();
+        Select(window, slot, choice.Id, squad);
+    }
+
+    // The labels in a card's bottom-left corner, under its name, saying who wears it: a rank
+    // chevron for the squad leader and a chain link for her dummy links.
+    private VisualElement Badges(bool leader, bool squad)
+    {
+        var badges = new VisualElement { name = "wm-outfit-badges", pickingMode = PickingMode.Ignore };
+        badges.AddToClassList("wm-outfit-badges");
+        if (!leader && !squad)
+            return badges;
+        if (leader)
+            badges.Add(Badge(Context.Assets.Load<Texture2D>("transmog__badge_leader"), Locale.Text("WOMENACE::ui/transmog_badge_leader", "SL")));
+        if (squad)
+            badges.Add(Badge(Context.Assets.Load<Texture2D>("transmog__badge_links"), Locale.Text("WOMENACE::ui/transmog_badge_links", "LINKS")));
+        return badges;
+    }
+
+    private static VisualElement Badge(Texture2D glyph, string text)
+    {
+        var badge = new VisualElement { pickingMode = PickingMode.Ignore };
+        badge.AddToClassList("wm-outfit-badge");
+        if (glyph != null)
+        {
+            var icon = new VisualElement { pickingMode = PickingMode.Ignore };
+            icon.AddToClassList("wm-outfit-badge-icon");
+            icon.style.backgroundImage = new StyleBackground(glyph);
+            badge.Add(icon);
+        }
+        var label = new Label(text) { pickingMode = PickingMode.Ignore };
+        label.AddToClassList("wm-outfit-badge-label");
+        badge.Add(label);
+        return badge;
+    }
+
+    private static Tooltip ChoiceTooltip(Choice choice, string heading = null, bool hint = false)
     {
         var tooltip = new Tooltip("wm-appearance", 230).Subheading(heading ?? choice.Name);
         if (heading != null)
             tooltip.Line().Paragraph(choice.Name);
         if (!string.IsNullOrEmpty(choice.Description))
             tooltip.Line().Paragraph(choice.Description);
+        if (hint && choice.Unlocked)
+            tooltip.Line().Paragraph(Locale.Text("WOMENACE::ui/transmog_click_hint",
+                "Left-click to dress the squad leader. Right-click to dress the dummy links."), Tooltip.Style.Hint);
         if (!choice.Unlocked)
             tooltip.Line().Paragraph(choice.LockedMessage, Tooltip.Style.Disabled);
         return tooltip;
     }
 
-    private bool Select(VisualElement window, ItemSlot slot, string id)
+    private bool Select(VisualElement window, ItemSlot slot, string id, bool squad = false)
     {
         try
         {
             var leader = Affinity.LeaderOf(window);
-            if (ChoicesFor(window, slot)?.Choices.Any(choice => choice.Id == id && choice.Unlocked) != true)
+            var appearance = ChoicesFor(window, slot);
+            if (appearance?.Choices.Any(choice => choice.Id == id && choice.Unlocked) != true)
                 return false;
-            if (slot == ItemSlot.InfantryArmor)
-                Transmog.SetSelection(Context, Affinity.CharacterTag(leader), id);
+            var tag = Affinity.CharacterTag(leader);
+            if (slot == ItemSlot.InfantryArmor && squad)
+            {
+                if (!appearance.HasSquad)
+                    return false;
+                Transmog.SetSquadSelection(Context, tag, id);
+            }
+            else if (slot == ItemSlot.InfantryArmor)
+            {
+                // Each button dresses only its own side. Dummy links still following the leader
+                // keep the outfit they were wearing, so a left click never changes them.
+                if (appearance.HasSquad && Transmog.SavedSquadSelection(Context, tag) == null)
+                    Transmog.SetSquadSelection(Context, tag, appearance.Selection);
+                Transmog.SetSelection(Context, tag, id);
+            }
             else if (WeaponSkinSystem.Instance?.Select(leader, slot, id) != true)
                 return false;
-            AppearanceSlotUi.ClosePickers(window);
             Context.Coroutines.Start(RefreshNextFrame(window, slot, leader.Pointer));
             return true;
         }
@@ -275,9 +368,10 @@ public sealed class TransmogPickerSystem : JiangyuSystem
         }
     }
 
-    // Delay rebuilding until the card's click has finished dispatching. The dirty visual
-    // alterations flag, which ArmoryUnitSelector polls, rebuilds the armoury's 3D stage and
-    // SetLeader alone does not.
+    // Delay rebuilding until the card's click has finished dispatching, since the rebuild clears
+    // the card that was clicked. SetLeader refreshes the window and the open picker is refilled
+    // after it. The dirty visual alterations flag, which ArmoryUnitSelector polls, rebuilds the
+    // armoury's 3D stage, which SetLeader alone does not.
     private System.Collections.IEnumerator RefreshNextFrame(VisualElement window, ItemSlot slot, IntPtr leaderPointer)
     {
         yield return null;
@@ -287,7 +381,13 @@ public sealed class TransmogPickerSystem : JiangyuSystem
             yield break;
         try
         {
-            unitWindow.SetLeader(leader);
+            _keepOpen = true;
+            try { unitWindow.SetLeader(leader); }
+            finally { _keepOpen = false; }
+            // The window refresh does not reliably refill the open picker, so the badges and
+            // selected border are refreshed here directly.
+            if (ModalRoot(window)?.IsVisible() == true && ChoicesFor(window, slot) is { } appearance)
+                FillModal(window, slot, appearance);
             var items = leader.GetItems();
             if (items != null)
                 items.VisualAlterationsDirty = true;

@@ -12,7 +12,8 @@ namespace WOMENACE.Code;
 // EntityVisuals.DetermineArmorPrefab is THE body-prefab pick (the tactical spawn and the
 // armoury preview are its only callers), dispatching on the EQUIPPED armour. The postfix
 // replaces its result with the selected outfit's model for our characters, on every element of
-// the squad, so a doll never renders as a vanilla soldier body whatever armour she wears.
+// the squad, so a doll never renders as a vanilla soldier body whatever armour she wears. The
+// leader's element and the squaddies' elements read separate selections.
 public sealed class TransmogSystem : JiangyuSystem
 {
     private readonly Dictionary<string, ArmorTemplate> _armorCache = new(StringComparer.Ordinal);
@@ -24,7 +25,10 @@ public sealed class TransmogSystem : JiangyuSystem
     }
 
     // Args: EntityTemplate, Squaddie, elementIndex, Gender, ItemContainer, UnitLeaderTemplate,
-    // PseudoRandom. The EntityTemplate carries the doll's identity tag, so nothing else is read.
+    // PseudoRandom. The EntityTemplate carries the doll's identity tag. The Squaddie is null for
+    // the leader's own element in both callers: Entity.CreateElement passes Squaddies.GetById,
+    // and the leader has no squaddie record, while the armoury preview passes
+    // BaseUnitLeader.GetSquaddie(i - 1), which is null for element 0.
     private void OnDetermineArmorPrefab(PatchInfo info)
     {
         try
@@ -32,7 +36,10 @@ public sealed class TransmogSystem : JiangyuSystem
             var characterTag = CharacterTagOf(info.Args.Count > 0 ? info.Args[0] as EntityTemplate : null);
             if (characterTag == null)
                 return;
-            var armorId = Transmog.SelectionFor(Context, characterTag);
+            var isLeader = info.Args.Count < 2 || info.Args[1] == null;
+            var armorId = isLeader
+                ? Transmog.SelectionFor(Context, characterTag)
+                : Transmog.SquadSelectionFor(Context, characterTag);
             var model = OutfitModel(characterTag, armorId);
             if (model != null)
             {
