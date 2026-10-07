@@ -31,6 +31,7 @@ Run as:
 import argparse
 import json
 import math
+import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -114,6 +115,14 @@ class TransferConfig:
     # are self-consistent with the rig's existing mesh-vs-bone relationship,
     # so recalibrating the palm would break the grips they were captured with.
     skip_palm_calibration: bool
+    # Keep the PMX's physics chains (bones its MMD rigid bodies simulate) as
+    # their own bones for the runtime spring solver instead of folding them
+    # onto the humanoid rig, and write a spring profile for the outfit. The
+    # dress_leg_prefixes rewrite and the hang_down_chain_prefixes
+    # straightening stand in for motion nothing else gives that cloth, so
+    # both are skipped. hang_down_chain_prefixes still marks the chains that
+    # hang as draped ribbons.
+    spring_bones: bool
 
     @staticmethod
     def load(path: Path) -> "TransferConfig":
@@ -156,6 +165,7 @@ class TransferConfig:
             strip_material_patterns=list(data.get("strip_material_patterns", [])),
             strip_bone_patterns=list(data.get("strip_bone_patterns", [])),
             skip_palm_calibration=bool(data.get("skip_palm_calibration", False)),
+            spring_bones=bool(data.get("spring_bones", False)),
         )
 
 
@@ -2346,11 +2356,10 @@ def strip_bone_driven_geometry(pmx_meshes: list, patterns: list[str]) -> None:
     """Delete geometry whose deform weight sits entirely on the named PMX bones.
 
     An MMD accessory can ride a bone chain the humanoid rig has no counterpart
-    for. The ribbon on Makiatto's ballroom sleeve is one: it hangs off its own
-    BowRibbon chain, and the nearest humanoid bone to fold that chain onto is a
-    torso bone, which anchors the ribbon to her chest while the arm it is tied
-    around animates away from it. MENACE has no spare deform bones to give the
-    accessory instead, so the accessory comes off.
+    for, and folded onto the nearest humanoid bone it can hang from the wrong
+    body part: a ribbon tied round a forearm folded onto the torso stays at the
+    chest while the arm animates away from it. Such an accessory either keeps
+    its chain to simulate (spring_bones) or comes off through these patterns.
 
     Matching is by substring against the PMX vertex-group name. Only vertices
     carrying no weight outside the matched groups are deleted, so a pattern that
@@ -2371,9 +2380,13 @@ def strip_bone_driven_geometry(pmx_meshes: list, patterns: list[str]) -> None:
         if not matched:
             continue
 
+        # mmd_tools keeps its own per-vertex data (edge scale, vertex order)
+        # as vertex groups on every vertex. They deform nothing, and counted
+        # they would leave no vertex wholly on the matched bones.
+        helpers = {vg.index for vg in mesh.vertex_groups if vg.name.startswith("mmd_")}
         doomed = []
         for vert in mesh.data.vertices:
-            total = sum(g.weight for g in vert.groups if g.weight > 0.0)
+            total = sum(g.weight for g in vert.groups if g.weight > 0.0 and g.group not in helpers)
             if total <= 0.0:
                 continue
             share = sum(
@@ -2619,6 +2632,326 @@ def straighten_hang_chains(pmx_meshes: list, prefixes: list[str]) -> None:
             )
 
 
+# -----------------------------------------------------------------------------
+# Spring chains
+# -----------------------------------------------------------------------------
+
+# Chain kinds by name: English words (spring_name_words), each matching a
+# whole word or, where marked, the end of one ("longhair", "overskirt"), and
+# Japanese by pattern. English-named bangs are short and stiff, so they stay
+# StiffCloth.
+SPRING_HAIR = ({"ahoge", "tail", "ponytail", "twintail", "sidetail"}, {"hair"}, re.compile(r"髪|アホ|もみあげ|テール|ポニ|ツイン|尻尾|しっぽ"))
+# Cloth hanging around the legs, which keeps its flare and is pushed aside by
+# the legs rather than hanging straight like a ribbon. A sleeve's hem (袖裾)
+# is not one.
+SPRING_SKIRT = (
+    {"jacket", "cloak", "dress", "mantle"},
+    {"skirt", "coat", "cape"},
+    re.compile(r"スカート|(?<!袖)裾|コート|ジャケット|マント|ドレス"),
+)
+# Rigid objects that swing as a whole.
+SPRING_ACCESSORY = (
+    {"case", "bag", "weapon", "pendant", "holster", "pouch", "charm", "stick"},
+    set(),
+    re.compile(r"ケース|バッグ|鞄|武器|ペンダント"),
+)
+# Body jiggle the rips simulate, which stays folded onto the body: breast and
+# buttock bones. English names match by word (spring_name_words), so chest
+# ribbons, buttons and butterflies keep their physics, and Japanese ones only
+# as the bare 胸 and 尻 bone families and おっぱい.
+SPRING_EXCLUDED_WORDS = {"breast", "bust", "boob", "butt", "buttock"}
+# Words a rig's exporter puts on every bone, which say nothing of its part.
+SPRING_IGNORED_WORDS = {"bone", "j", "jnt", "joint"}
+SPRING_EXCLUDED_PATTERN = re.compile(r"^尻(?!尾)|おっぱい|^胸[\d上下先DＤ筋]*(\.[LR])?$")
+SPRING_HELPER_PREFIXES = ("_dummy_", "_shadow_")
+
+# Chain length past which hair counts as long, and cloth as hanging, in metres.
+SPRING_LONG_HAIR_METRES = 0.25
+SPRING_HANGING_CLOTH_METRES = 0.12
+# How far below the knee a garment's longest column must reach, as a share of
+# the shin, for it to count as a gown.
+SPRING_GOWN_SHIN_SHARE = 0.25
+
+SPRING_ARM_TARGETS = re.compile(r"^(Shoulder|UpperArm|LowerArm|Hand)_[LR]$")
+SPRING_UPPER_ARM_TARGETS = re.compile(r"^(Shoulder|UpperArm)_[LR]$")
+
+
+def collect_spring_chains(pmx_armature, config: "TransferConfig") -> list[list[str]]:
+    """The PMX's physics chains as bone paths, root first, leaf last.
+
+    A bone is physics when an MMD rigid body of the simulated kinds (1, or 2
+    which also follows its bone) is attached to it. A chain starts at a
+    physics bone whose parent is not physics and runs down physics children to
+    a leaf. The leaf may be the non-physics tip bone MMD rigs end chains on,
+    since the runtime needs a bone below the last simulated one for its
+    direction, and it is kept off the fold too, so the tip's geometry rides
+    the chain. A branch becomes its own chain starting at the branch bone,
+    so the runtime simulates the trunk first. A physics bone with nothing
+    below it cannot point anywhere and stays folded. The first source bone
+    of each humanoid target never simulates or ends a chain, whatever its
+    rigid body says, and body jiggle never simulates (spring_is_jiggle)."""
+    physics: set[str] = set()
+    for obj in bpy.data.objects:
+        if getattr(obj, "mmd_type", "") != "RIGID_BODY":
+            continue
+        rigid = obj.mmd_rigid
+        if str(rigid.type) in ("1", "2") and rigid.bone:
+            physics.add(rigid.bone)
+    primaries: set[str] = set()
+    seen_targets: set[str] = set()
+    for source, target in config.bone_map.items():
+        if target not in seen_targets:
+            seen_targets.add(target)
+            primaries.add(source)
+    physics -= primaries
+    physics -= set(config.ignore_bones)
+    physics = {name for name in physics if not spring_is_jiggle(name)}
+
+    bones = pmx_armature.data.bones
+
+    def children(bone):
+        return [c for c in bone.children if not c.name.startswith(SPRING_HELPER_PREFIXES)]
+
+    chains: list[list[str]] = []
+
+    def walk(start):
+        path = [start.name]
+        bone = start
+        while True:
+            simulated = [c for c in children(bone) if c.name in physics]
+            if simulated:
+                for branch in simulated[1:]:
+                    walk(branch)
+                bone = simulated[0]
+                path.append(bone.name)
+                continue
+            tips = [c for c in children(bone) if c.name not in primaries]
+            if tips:
+                path.append(tips[0].name)
+            break
+        if len(path) >= 2:
+            chains.append(path)
+
+    for name in sorted(physics):
+        bone = bones.get(name)
+        if bone is None or (bone.parent is not None and bone.parent.name in physics):
+            continue
+        walk(bone)
+    return chains
+
+
+def spring_limb(chain: list[str], armature, config: "TransferConfig") -> str | None:
+    """The humanoid bone a chain hangs from: its nearest ancestor that is one,
+    by its MENACE name once the rig is renamed or its PMX name before."""
+    targets = set(config.bone_map.values())
+    ancestor = armature.data.bones[chain[0]].parent
+    while ancestor is not None:
+        if ancestor.name in targets:
+            return ancestor.name
+        target = config.bone_map.get(ancestor.name)
+        if target is not None:
+            return target
+        ancestor = ancestor.parent
+    return None
+
+
+def spring_humanoid_bone(armature, config: "TransferConfig", target: str):
+    """A humanoid bone by its MENACE name, or by its PMX source name before
+    the rig is renamed. None when the rig has neither."""
+    bones = armature.data.bones
+    bone = bones.get(target)
+    if bone is None:
+        source = next((src for src, dst in config.bone_map.items() if dst == target), None)
+        bone = bones.get(source) if source else None
+    return bone
+
+
+def spring_category(chain: list[str], armature, config: "TransferConfig") -> str:
+    """The preset a chain gets, from its bone names, the bone it hangs from
+    and its rest shape.
+
+    Named skirt, hair and accessory chains go by name first. Of the rest,
+    cloth listed in hang_down_chain_prefixes, and long cloth on an arm that
+    does not point up (an epaulette holds its shape), is a DrapedRibbon: in
+    the T-pose it lies along the arm, and shaped by the arm it swings out
+    sideways whenever the arm moves. Other long cloth that hangs at rest is a
+    Ribbon, and short cloth is StiffCloth. Skirt chains are grouped into
+    garments (spring_garment), each a Skirt or a Gown (spring_is_gown)."""
+    bones = armature.data.bones
+    head = armature.matrix_world @ bones[chain[0]].head_local
+    length = 0.0
+    previous = head
+    for name in chain[1:]:
+        point = armature.matrix_world @ bones[name].head_local
+        length += (point - previous).length
+        previous = point
+    drop = head.z - previous.z
+    names = " ".join(chain)
+    words = {spring_singular(w) for name in chain for w in spring_name_words(name)}
+
+    def kind(match) -> bool:
+        whole, endings, japanese = match
+        return bool(words & whole) or any(w.endswith(e) for w in words for e in endings) or bool(japanese.search(names))
+
+    if kind(SPRING_SKIRT):
+        return "Skirt"
+    if kind(SPRING_HAIR):
+        return "LongHair" if length > SPRING_LONG_HAIR_METRES else "ShortHair"
+    if kind(SPRING_ACCESSORY):
+        return "Accessory"
+    limb = spring_limb(chain, armature, config)
+    on_arm = limb is not None and SPRING_ARM_TARGETS.match(limb)
+    if any(chain[0].startswith(prefix) for prefix in config.hang_down_chain_prefixes):
+        return "DrapedRibbon"
+    if length > SPRING_HANGING_CLOTH_METRES and on_arm and drop > -0.25 * length:
+        return "DrapedRibbon"
+    if length > SPRING_HANGING_CLOTH_METRES and drop > 0.5 * length:
+        return "Ribbon"
+    return "StiffCloth"
+
+
+# Name parts that only place a chain on its garment: sides, front and back,
+# alone or run together ("BL").
+SPRING_PLACEMENT_WORDS = {"left", "right", "front", "back", "左", "右", "前", "後", "後ろ"}
+
+
+def spring_name_words(name: str) -> list[str]:
+    """A bone name's words, lower case: split at case changes, underscores,
+    digits and each Japanese character, with a trailing .L or .R dropped."""
+    name = re.sub(r"\.[LR]$", "", name)
+    words = re.findall(r"[A-Z]?[a-z]+|[A-Z]+(?![a-z])|後ろ|[^\x00-\x7f\d]", name)
+    return [w.lower() for w in words]
+
+
+def spring_is_jiggle(name: str) -> bool:
+    """Whether a bone is body jiggle: every word of its English name a
+    jiggle or placement word ("Breast_L", "BustR", "LeftBreast"), so a
+    "BustRibbon" keeps its physics, or a bare Japanese jiggle bone."""
+    words = [w for w in spring_name_words(name) if not spring_is_placement(w) and w not in SPRING_IGNORED_WORDS]
+    if words and all(spring_singular(w) in SPRING_EXCLUDED_WORDS for w in words):
+        return True
+    return bool(SPRING_EXCLUDED_PATTERN.search(name))
+
+
+def spring_singular(word: str) -> str:
+    """A plural English word as singular: "breasts", "bangs", but "dress"."""
+    return word[:-1] if word.endswith("s") and not word.endswith("ss") and len(word) > 3 else word
+
+
+def spring_is_placement(word: str) -> bool:
+    return word in SPRING_PLACEMENT_WORDS or set(word) <= set("lrfb")
+
+
+def spring_garment(chain: list[str]) -> str:
+    """The garment a skirt chain belongs to: its root bone's name without
+    numbers or the parts that only place it, so "Skirt_0_3", "SkirtBL01"
+    and "Skirt_L_12" make one skirt, "FCapeL1" and "Cape_0_0" one cape, and
+    "Coat_0_3" a coat over the skirt."""
+    return "".join(w for w in spring_name_words(chain[0]) if not spring_is_placement(w))
+
+
+def spring_is_gown(chains: list[list[str]], armature, config: "TransferConfig") -> bool:
+    """Whether a garment's longest column reaches well past the knee: by
+    SPRING_GOWN_SHIN_SHARE of the shin below it."""
+    bones = armature.data.bones
+    knee_bone = spring_humanoid_bone(armature, config, "LowerLeg_L")
+    ankle_bone = spring_humanoid_bone(armature, config, "Foot_L")
+    if knee_bone is None or ankle_bone is None:
+        return False
+    knee = armature.matrix_world @ knee_bone.head_local
+    ankle = armature.matrix_world @ ankle_bone.head_local
+    lowest = min((armature.matrix_world @ bones[chain[-1]].head_local).z for chain in chains)
+    return lowest < knee.z - SPRING_GOWN_SHIN_SHARE * (knee.z - ankle.z)
+
+
+def spring_body_height(armature, config: "TransferConfig", reference) -> float:
+    """The doll's Foot_L to Head span as scaled, the height the body
+    colliders are sized to. It is measured, since height_scale_override
+    leaves the doll at no height the config states."""
+    head = spring_humanoid_bone(armature, config, "Head")
+    foot = spring_humanoid_bone(armature, config, "Foot_L")
+    if head is None or foot is None:
+        return config.target_height_metres or reference.yspan_metres
+    return ((armature.matrix_world @ head.head_local) - (armature.matrix_world @ foot.head_local)).length
+
+
+def write_spring_profile(config: "TransferConfig", chains: list[list[str]], armature, height: float) -> None:
+    """Write the outfit's spring profile for the runtime, once.
+
+    The file is a C# partial of SpringBodyProfiles under
+    code/Systems/SpringBones/Profiles/, named after the outfit. Each skirt
+    garment gets its own spec, a Skirt or a Gown, so the runtime can layer one
+    over another. A draped ribbon off a shoulder or upper arm hangs from the
+    torso (anchored to Spine2), one off a forearm or hand from that limb. The
+    file is hand tuned afterwards, so an existing one is never overwritten."""
+    parts = config.output_path.parts
+    authored = parts.index("Authored")
+    doll, variant = parts[authored + 1], parts[authored + 2]
+    repo = Path(__file__).resolve().parent.parent
+    path = repo / "code" / "Systems" / "SpringBones" / "Profiles" / f"{doll}_{variant}.cs"
+    if path.exists():
+        print(f"[info] spring profile exists, left as authored: {path}")
+        return
+    if not chains:
+        print("[warn] no spring chains found, no profile written")
+        return
+
+    def natural(entry: str):
+        return [int(t) if t.isdigit() else t for t in re.split(r"(\d+)", entry)]
+
+    # (preset, first argument) -> chains, in emission order.
+    groups: dict[tuple[str, str], list[list[str]]] = {}
+    garments: dict[str, list[list[str]]] = {}
+    for chain in chains:
+        category = spring_category(chain, armature, config)
+        if category == "Skirt":
+            garments.setdefault(spring_garment(chain), []).append(chain)
+            continue
+        argument = ""
+        if category == "DrapedRibbon":
+            limb = spring_limb(chain, armature, config)
+            argument = '"Spine2"' if limb is None or SPRING_UPPER_ARM_TARGETS.match(limb) else "null"
+        groups.setdefault((category, argument), []).append(chain)
+    order = ("ShortHair", "LongHair", "StiffCloth", "Ribbon", "DrapedRibbon", "Accessory")
+    specs = sorted(groups.items(), key=lambda kv: (order.index(kv[0][0]), kv[0][1]))
+    for name in sorted(garments):
+        preset = "Gown" if spring_is_gown(garments[name], armature, config) else "Skirt"
+        specs.append(((preset, ""), garments[name]))
+
+    field = "".join(word.capitalize() for word in f"{doll}_{variant}".replace("-", "_").split("_"))
+    lines = [
+        "namespace WOMENACE.Code;",
+        "",
+        "internal static partial class SpringBodyProfiles",
+        "{",
+        "    // Generated by scripts/pmx_to_menace.py from the PMX's physics bodies",
+        f"    // ({doll}/{variant}). Tune it in place: the converter never rewrites it.",
+        f"    internal static readonly SpringBodyProfile {field} = new()",
+        "    {",
+        f'        LodMesh = "{config.lod_mesh_basename}_LOD0",',
+        "        Chains = new[]",
+        "        {",
+    ]
+    for (preset, argument), members in specs:
+        entries = sorted((f"{c[0]}>{c[-1]}" for c in members), key=natural)
+        lines.append(f"            SpringPresets.{preset}({argument + ',' if argument else ''}")
+        for i, entry in enumerate(entries):
+            comma = "," if i < len(entries) - 1 else ""
+            lines.append(f'                "{entry}"{comma}')
+        lines.append("            ),")
+    lines += [
+        "        },",
+        f"        Colliders = HumanoidColliders({height:.3f}f),",
+        "    };",
+        "}",
+        "",
+    ]
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join(lines), encoding="utf-8")
+    summary = ", ".join(f"{preset} {len(members)}" for (preset, _), members in specs)
+    print(f"[info] spring profile written ({summary}): {path}")
+
+
 def prep_pmx(config: "TransferConfig") -> tuple:
     """Stages 1-8: import, scale, rig rename, T-pose calibration, attachment
     grafting and the optional hip-leg weight blend. Returns (armature, meshes)
@@ -2660,6 +2993,14 @@ def prep_pmx(config: "TransferConfig") -> tuple:
     print(f"[info] uniform pre-scale factor: {scale:.4f}")
     apply_uniform_scale(pmx_armature, pmx_meshes, scale)
 
+    spring_chains: list[list[str]] = []
+    if config.spring_bones:
+        spring_chains = collect_spring_chains(pmx_armature, config)
+        kept = {name for chain in spring_chains for name in chain}
+        config.bone_map = {k: v for k, v in config.bone_map.items() if k not in kept}
+        config.ignore_bones = [b for b in config.ignore_bones if b not in kept]
+        print(f"[info] spring bones: {len(spring_chains)} chain(s), {len(kept)} bone(s) kept off the fold")
+
     if config.fist_pose:
         print("[info] applying fist-pose to fingers (bakes pose into mesh before bone collapse)")
         apply_fist_pose(
@@ -2668,8 +3009,14 @@ def prep_pmx(config: "TransferConfig") -> tuple:
             custom_rotations=config.fist_rotations,
         )
 
-    straighten_hang_chains(pmx_meshes, config.hang_down_chain_prefixes)
-    redistribute_dress_to_legs(pmx_meshes, pmx_armature, config)
+    if config.spring_bones:
+        if config.hang_down_chain_prefixes:
+            print("[info] spring bones: hang_down_chain_prefixes straightening skipped, the chains hang as draped ribbons")
+        if config.dress_leg_prefixes:
+            print("[info] spring bones: dress_leg_prefixes rewrite skipped, the skirt simulates")
+    else:
+        straighten_hang_chains(pmx_meshes, config.hang_down_chain_prefixes)
+        redistribute_dress_to_legs(pmx_meshes, pmx_armature, config)
 
     if config.skip_palm_calibration:
         print("[info] palm calibration disabled by config")
@@ -2712,6 +3059,9 @@ def prep_pmx(config: "TransferConfig") -> tuple:
 
     print("[info] grafting reference attachment bones onto the PMX character's armature")
     graft_attachment_bones(pmx_armature, reference)
+
+    if config.spring_bones:
+        write_spring_profile(config, spring_chains, pmx_armature, spring_body_height(pmx_armature, config, reference))
 
     if config.hip_leg_weight_blend > 0.0:
         print(

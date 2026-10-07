@@ -44,6 +44,7 @@ public sealed class TransmogSystem : JiangyuSystem
             if (model != null)
             {
                 info.Result = model;
+                SpringBoneSystem.Instance?.NoteBodyPrefab(model);
                 Context.Log.Debug($"transmog: '{characterTag}' renders '{armorId}'");
             }
         }
