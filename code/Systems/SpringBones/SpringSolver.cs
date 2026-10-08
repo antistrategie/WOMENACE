@@ -212,9 +212,19 @@ internal static class SpringSolver
     // above it moves the opposite way to the thigh, into the belly.
     private const float LegDriveFull = 0.1f;
 
-    // Swings the chain's target shape about each hip joint by a share of that
-    // thigh's swing away from straight down along the body, the front of a
-    // garment following fully and the back by SpringChainSpec.LegDriveBack.
+    // How far from the leg's axis the thigh's surface carries cloth, in
+    // metres at reference height: a slim thigh's radius under the cloth.
+    // Cloth this close to the axis turns with the thigh, and cloth hanging
+    // further out is carried by the surface point under it rather than turned
+    // on a longer lever. Turned on the longer lever about the hip joint, a
+    // panel hanging in front of the thigh lifts faster down its length than
+    // it descends where the drive fades in, and its links fold up over the
+    // thigh.
+    private const float LegSurfaceRadius = 0.05f;
+
+    // Carries the chain's target shape with each thigh's swing away from
+    // straight down along the body (Carried), by a share of it, the front of
+    // a garment following fully and the back by SpringChainSpec.LegDriveBack.
     // The rest pose is the T-pose, with the legs straight down, so a skirt
     // shaped by it runs through the thighs as soon as they move. A target
     // that already moves with the legs keeps the springs from fighting the
@@ -251,11 +261,24 @@ internal static class SpringSolver
             if (depth <= 0f)
                 continue;
             var weight = share * depth;
-            var left = Swung(target, pose.HipLeft, pose.KneeLeft, up, NQuaternion.Slerp(NQuaternion.Identity, swingLeft, weight));
-            var right = Swung(target, pose.HipRight, pose.KneeRight, up, NQuaternion.Slerp(NQuaternion.Identity, swingRight, weight));
+            var left = Carried(target, pose.HipLeft, pose.KneeLeft, up, NQuaternion.Slerp(NQuaternion.Identity, swingLeft, weight), LegSurfaceRadius * scale);
+            var right = Carried(target, pose.HipRight, pose.KneeRight, up, NQuaternion.Slerp(NQuaternion.Identity, swingRight, weight), LegSurfaceRadius * scale);
             chain.Targets[i] = NVector3.Lerp(left, right, rightShare);
         }
         Relay(chain, origin, scale);
+    }
+
+    // A target point carried by a thigh: moved as far as the point of the
+    // thigh's surface under it, within `radius` of the leg's axis, moves
+    // with the thigh's swing (LegSurfaceRadius).
+    private static NVector3 Carried(NVector3 target, NVector3 hip, NVector3 knee, NVector3 up, NQuaternion swing, float radius)
+    {
+        var depth = -NVector3.Dot(target - hip, up);
+        var axis = hip - up * depth;
+        var radial = target - axis;
+        var length = radial.Length();
+        var surface = length > radius ? axis + radial * (radius / length) : target;
+        return target + Swung(surface, hip, knee, up, swing) - surface;
     }
 
     // A target point swung with a thigh: turned about the hip down to knee
