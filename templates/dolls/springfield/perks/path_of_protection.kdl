@@ -1,0 +1,175 @@
+clone "PerkTemplate" from="perk.steady_gun" id="perk.springfield_path_of_protection" {
+    set "Title" {
+        set "m_DefaultTranslation" "Path of Protection"
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "Deploys Taryz, who heals an ally and marks $1 enemies each turn."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="PerkTemplate" "perk.springfield_path_of_protection" path="EventHandlers[2].MarkTargets"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            “She gives her enemies bullets and serves her friends coffee.”
+
+
+            <style="Highlight">• Grants the skill 'Deploy Taryz'. Taryz can be moved within $1 tiles of Springfield and can be shot down.</style>
+            <style="Highlight">• At the end of Springfield's turn, Taryz heals the most wounded allied squad within $2 tiles by $3% of its hitpoints.</style>
+            <style="Highlight">• At the end of Springfield's turn, Taryz marks up to $4 visible enemies within $5 tiles for $6 rounds. Attacks on marked targets gain $7% <link="accuracy">Accuracy</link>.</style>
+            """
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "active.springfield_taryz_command_move" path="MaxRange"
+        append "m_Placeholders" bind="PerkTemplate" "perk.springfield_path_of_protection" path="EventHandlers[2].HealRange"
+        append "m_Placeholders" bind="PerkTemplate" "perk.springfield_path_of_protection" path="EventHandlers[2].HealFraction" format="percent"
+        append "m_Placeholders" bind="PerkTemplate" "perk.springfield_path_of_protection" path="EventHandlers[2].MarkTargets"
+        append "m_Placeholders" bind="PerkTemplate" "perk.springfield_path_of_protection" path="EventHandlers[2].MarkRange"
+        append "m_Placeholders" bind="SkillTemplate" "effect.designated_target" path="EventHandlers[0].Lifetime"
+        append "m_Placeholders" bind="SkillTemplate" "effect.designated_target" path="EventHandlers[3].Amount"
+    }
+
+    set "Icon" asset="springfield/perks/path_of_protection"
+    set "IconDisabled" asset="springfield/perks/path_of_protection_inactive"
+    set "PerkIcon" asset="springfield/perks/path_of_protection"
+
+    clear "EventHandlers"
+    append "EventHandlers" type="AddSkill" {
+        set "Event" enum="AddEvent" "OnMissionStart"
+        set "SkillToAdd" "active.springfield_deploy_taryz"
+    }
+    append "EventHandlers" type="AddSkill" {
+        set "Event" enum="AddEvent" "OnMissionStart"
+        set "SkillToAdd" "active.springfield_taryz_command_move"
+    }
+    append "EventHandlers" type="WOMENACE:TaryzSupport" {
+        set "Taryz" "player_springfield_taryz"
+        set "Deploy" "active.springfield_deploy_taryz"
+        set "Mark" "effect.designated_target"
+        set "FirstDeploy" "effect.springfield_taryz_deployed"
+        set "Spent" "effect.springfield_taryz_spent"
+        set "HealFraction" 0.3
+        set "HealRange" 3
+        set "HealTargets" 1
+        set "MarkRange" 8
+        set "MarkTargets" 2
+        set "SoundBank" "wmgfl_springfield_taryz_bank"
+        set "HealSound" "taryz_heal"
+        set "MarkSound" "taryz_mark"
+    }
+}
+
+clone "SkillTemplate" from="active.deploy_recon_skybot" id="active.springfield_deploy_taryz" {
+    set "Title" {
+        set "m_DefaultTranslation" "Deploy Taryz"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Send Taryz out to a nearby tile. She heals and marks at the end of Springfield's turns."
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "Deploys Taryz."
+    }
+    set "Icon" asset="springfield/skills/deploy_taryz"
+    set "IconDisabled" asset="springfield/skills/deploy_taryz_disabled"
+    clear "SoundsOnUse"
+    append "SoundsOnUse" {
+        set "bankId" "wmgfl_springfield_taryz_bank"
+        set "itemId" "taryz_deploy"
+    }
+    set "EventHandlers" index=0 {
+        set "EntityToSpawn" "player_springfield_taryz"
+    }
+    append "EventHandlers" type="LimitUsability" {
+        append "NotUsableIfActorHasSkill" "effect.springfield_taryz_spent"
+    }
+}
+
+clone "SkillTemplate" from="active.recon_skybot_command_move" id="active.springfield_taryz_command_move" {
+    set "Title" {
+        set "m_DefaultTranslation" "Move Taryz"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Order Taryz to a new position within Springfield's range."
+    }
+    set "Icon" asset="springfield/skills/move_taryz"
+    set "IconDisabled" asset="springfield/skills/move_taryz_disabled"
+}
+
+clone "EntityTemplate" from="player_recon_falcon_skybot" id="player_springfield_taryz" {
+    set "Title" {
+        set "m_DefaultTranslation" "Taryz"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "This do be a birb."
+    }
+    set "Badge" asset="springfield/taryz_badge"
+    set "MovementType" "movement_type.springfield_taryz"
+    // The skybot's random scale variation would make Taryz a different size on every deploy.
+    set "Scale" {
+        set "x" 1.0
+        set "y" 1.0
+    }
+    set "ScaleOffsetSquadLeader" 0.0
+}
+
+// The Falcon skybot's flight, turning like the vanilla dragonfly so a bird faces where she flies.
+// The skybot never turns because its body has no front.
+clone "MovementType" from="movement_type.recon_skybot" id="movement_type.springfield_taryz" {
+    set "TurnSpeed" 360.0
+    set "TurnSpeedSlow" 360.0
+    set "TurnSpeedCrawl" 360.0
+    set "TurnInPlaceBeforeMovement" #true
+}
+
+// Deploy markers, hidden status effects on Springfield that the engine drops after combat.
+clone "SkillTemplate" from="effect.reduced_ap_after_transport" id="effect.springfield_taryz_deployed" {
+    set "Title" {
+        set "m_DefaultTranslation" "Taryz Deployed"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Springfield has deployed Taryz this mission."
+    }
+    clear "EventHandlers"
+}
+
+clone "SkillTemplate" from="effect.reduced_ap_after_transport" id="effect.springfield_taryz_spent" {
+    set "Title" {
+        set "m_DefaultTranslation" "Taryz Spent"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Springfield has no deploys of Taryz left this mission."
+    }
+    clear "EventHandlers"
+}
+
+clone "SoundBank" from="weapons_soundbank" id="wmgfl_springfield_taryz_bank" {
+    clear "sounds"
+    clear "busIndices"
+
+    append "sounds" {
+        set "name" "taryz_deploy"
+        set "fixedVolume" 1.0
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="springfield/taryz/taryz_deploy_01"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "taryz_heal"
+        set "fixedVolume" 1.0
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="springfield/taryz/taryz_heal_01"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "taryz_mark"
+        set "fixedVolume" 1.0
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="springfield/taryz/taryz_mark_01"
+        }
+    }
+    append "busIndices" 0
+}

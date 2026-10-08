@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace WOMENACE.Code;
 
-// The native squad preview and tactical spawn both select their body through
+// The native squad preview and tactical spawn (summoned drones included) both select their body through
 // DetermineArmorPrefab. Install the vehicle's prefab immediately before that choice
 // so unused vehicles keep their model and texture bundles unloaded.
 public sealed class VehicleModelSystem : JiangyuSystem
