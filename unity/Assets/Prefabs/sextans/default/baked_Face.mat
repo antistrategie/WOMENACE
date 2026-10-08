@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: baked_c_SextansSSR01_slg_hair_d
+  m_Name: baked_Face
   m_Shader: {fileID: 4800000, guid: 1b369dd5de6b035faa60de9ecc69caad, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -24,7 +24,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _BaseMap:
-        m_Texture: {fileID: 2800000, guid: 1a7d8ce53cef1066d8a420494f215e79, type: 3}
+        m_Texture: {fileID: 2800000, guid: 834625e78639a6c67817f7907561653b, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MaskMap:
@@ -36,11 +36,11 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _RampMap:
-        m_Texture: {fileID: 2800000, guid: f32e9b29e38447448af86ff26eae1fde, type: 3}
+        m_Texture: {fileID: 2800000, guid: b577eb2ea80ef19a3666dccafcbb9175, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SdfMap:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: 58bdf3837d167b31f63efaabd0bf6267, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SpecularMap:
@@ -52,11 +52,11 @@ Material:
     - _BlendSmoothness: 0.1
     - _IblIntensity: 0.6038
     - _MaskRoughnessInverted: 0
-    - _MatCapIntensity: 1
+    - _MatCapIntensity: 0
     - _MatCapUVOffset: 0.025
     - _NormalScale: 1
     - _OcclusionStrength: 1
-    - _UseBlendTex: 0
+    - _UseBlendTex: 1
     m_Colors:
     - _BaseTint: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []

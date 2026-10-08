@@ -3183,39 +3183,48 @@ def keep_body_weights(mesh, blend_path: Path, lod0_name: str, spring_bones: set[
     Every vertex with no weight on a spring bone takes its weights from the
     approved blend's LOD0 verbatim, so whatever made the body right there
     (hand painting, or a config since changed) survives. Vertices on a spring
-    chain keep the fresh chain weights, which the old blend cannot have. The
-    two meshes come from the same PMX through the same geometry steps, so
-    vertex i is the same vertex in both. Their T-posed positions are checked
-    to be sure, and a mismatch stops the prep rather than scrambling
-    weights."""
+    chain keep the fresh chain weights, which the old blend cannot have.
+    Each fresh vertex is matched to the approved vertex at its T-posed
+    position, so layers stripped or added since (a hidden alternate-state
+    submesh the config now strips in prep) do not misalign the two. A fresh
+    vertex with no approved vertex in its place stops the prep rather than
+    take weights from a neighbour."""
+    from mathutils import kdtree
+
     with bpy.data.libraries.load(str(blend_path), link=False) as (src, dst):
         if lod0_name not in src.objects:
             raise RuntimeError(f"{blend_path} has no {lod0_name}")
         dst.objects = [lod0_name]
     old = dst.objects[0]
     try:
-        if len(old.data.vertices) != len(mesh.data.vertices):
-            raise RuntimeError(
-                f"{blend_path}: {len(old.data.vertices)} vertices, the fresh prep has {len(mesh.data.vertices)}"
-            )
-        worst = max(
-            ((old.matrix_world @ a.co) - (mesh.matrix_world @ b.co)).length
-            for a, b in zip(old.data.vertices, mesh.data.vertices)
-        )
-        if worst > 1e-3:
-            raise RuntimeError(f"{blend_path}: vertices sit up to {worst * 1000:.1f} mm from the fresh prep's")
+        old_vertices = old.data.vertices
+        tree = kdtree.KDTree(len(old_vertices))
+        for v in old_vertices:
+            tree.insert(old.matrix_world @ v.co, v.index)
+        tree.balance()
+        same_order = len(old_vertices) == len(mesh.data.vertices)
+        matches = []
+        for v in mesh.data.vertices:
+            at = mesh.matrix_world @ v.co
+            if same_order and ((old.matrix_world @ old_vertices[v.index].co) - at).length <= 1e-4:
+                matches.append(v.index)
+                continue
+            _, index, distance = tree.find(at)
+            if distance > 1e-4:
+                raise RuntimeError(f"{blend_path}: no approved vertex within 0.1 mm of fresh vertex {v.index} ({distance * 1000:.1f} mm)")
+            matches.append(index)
         old_names = {g.index: g.name for g in old.vertex_groups}
         new_names = {g.index: g.name for g in mesh.vertex_groups}
         spring_groups = {i for i, name in new_names.items() if name in spring_bones}
         kept = cloth = 0
-        for a, b in zip(old.data.vertices, mesh.data.vertices):
+        for b in mesh.data.vertices:
             if any(g.group in spring_groups and g.weight > 0.0 for g in b.groups):
                 cloth += 1
                 continue
             for g in list(b.groups):
                 if not new_names[g.group].startswith("mmd_"):
                     mesh.vertex_groups[g.group].remove([b.index])
-            for g in a.groups:
+            for g in old_vertices[matches[b.index]].groups:
                 name = old_names[g.group]
                 if name.startswith("mmd_") or g.weight <= 0.0:
                     continue
