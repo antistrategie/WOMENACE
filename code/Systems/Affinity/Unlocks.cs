@@ -59,7 +59,7 @@ public static class Unlocks
         ["wmgfl_voymastina"] = new[]
         {
             new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.voymastina_erwin" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_voymastina/lv2", "Outfit: Erwin") },
-            new Entry { Level = 10, Feature = Feature.Mech, Items = new[] { "vehicle.voymastina_mech", "vehicle.voymastina_mech_erwin" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_voymastina/lv10", "Alternate form: Sinbreaker") },
+            new Entry { Level = 9, Feature = Feature.Mech, Items = new[] { "vehicle.voymastina_mech", "vehicle.voymastina_mech_erwin" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_voymastina/lv9", "Alternate form: Sinbreaker") },
         },
         ["wmgfl_leva"] = new[]
         {
@@ -110,7 +110,7 @@ public static class Unlocks
         ["wmgfl_koleda"] = new[]
         {
             new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.koleda_spooms" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_koleda/lv2", "Outfit: Age of Spooms") },
-            new Entry { Level = 4, Feature = Feature.Vehicle, Items = new[] { "vehicle.koleda_car" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_koleda/lv4", "Vehicle: The Sinner") },
+            new Entry { Level = 6, Feature = Feature.Vehicle, Items = new[] { "vehicle.koleda_car" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_koleda/lv6", "Vehicle: The Sinner") },
         },
         ["wmgfl_klukai"] = new[]
         {
