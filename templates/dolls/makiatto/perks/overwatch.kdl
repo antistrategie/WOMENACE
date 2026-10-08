@@ -1,0 +1,158 @@
+clone "PerkTemplate" from="perk.steady_gun" id="perk.makiatto_overwatch" {
+    // Makiatto's reaction fire. The Interception handler grants the toggles, holds her leftover
+    // AP as a reserve between her turns and fires on enemies that finish a move in her sights.
+    set "Title" {
+        set "m_DefaultTranslation" "Overwatch"
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "Grants 'Interception'."
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            Heroes never di- Oh, wrong Overwatch.
+
+
+            <style="Highlight">• Grants the skill 'Interception' for the Squad Weapon, and for the Special Weapon if one is equipped. Each can be toggled on or off.</style>
+            <style="Highlight">• While on, <link="action_points">AP</link> left at the end of the turn is kept and used to fire on enemies that end their move in range and line of sight.</style>
+            <style="Highlight">• Interception shots cost $1% less <link="action_points">AP</link> and need at least $2% Chance to Hit.</style>
+            """
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="PerkTemplate" "perk.makiatto_overwatch" path="EventHandlers[0].ApDiscount" format="percent"
+        append "m_Placeholders" bind="PerkTemplate" "perk.makiatto_overwatch" path="EventHandlers[0].MinHitChance"
+    }
+
+    set "Icon" asset="makiatto/perks/overwatch"
+    set "IconDisabled" asset="makiatto/perks/overwatch_inactive"
+    set "PerkIcon" asset="makiatto/perks/overwatch"
+
+    clear "EventHandlers"
+    append "EventHandlers" type="WOMENACE:Interception" {
+        set "SquadToggle" "active.makiatto_interception_squad"
+        set "SquadStop" "active.makiatto_interception_squad_stop"
+        set "LeaderToggle" "active.makiatto_interception_leader"
+        set "LeaderStop" "active.makiatto_interception_leader_stop"
+        set "SquadMarker" "effect.makiatto_interception_squad"
+        set "LeaderMarker" "effect.makiatto_interception_leader"
+        set "MinHitChance" 60
+        set "ApDiscount" 0.35
+    }
+}
+
+// The toggles, a pair per weapon. Free, instant self-uses that switch the slot's Interception on or
+// off without ending her turn. The slot's marker hides the one that does not apply, so the bar
+// shows the state. Each pair has its own Order: equal Orders fall back to the order skills were
+// shown in, and the pairs would trade places with each toggle. Granted each mission by the perk,
+// so they go after combat.
+clone "SkillTemplate" from="active.special.lucky_shot" id="active.makiatto_interception_squad" {
+    set "Order" enum="SkillOrder" "Background"
+    set "Title" {
+        set "m_DefaultTranslation" "Interception: Squad Weapon"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Turn on Interception for the Squad Weapon. <link=\"action_points\">AP</link> left at the end of the turn is used to fire on enemies that end their move in range and line of sight."
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "Turn on reaction fire for the Squad Weapon."
+    }
+    set "Icon" asset="makiatto/skills/interception_squad"
+    set "IconDisabled" asset="makiatto/skills/interception_squad_disabled"
+    set "ActionPointCost" 0
+    set "IsLimitedUses" #false
+    set "MarkAsActed" #false
+    set "IsRemovedAfterCombat" #true
+    clear "Tags"
+    clear "EventHandlers"
+    append "EventHandlers" type="WOMENACE:InterceptionToggle" {
+        set "Slot" "squad"
+    }
+    append "EventHandlers" type="LimitUsability" {
+        append "HiddenIfActorHasSkill" "effect.makiatto_interception_squad"
+    }
+}
+
+clone "SkillTemplate" from="active.makiatto_interception_squad" id="active.makiatto_interception_squad_stop" {
+    set "Order" enum="SkillOrder" "Background"
+    set "Title" {
+        set "m_DefaultTranslation" "Stop Interception: Squad Weapon"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Turn off Interception for the Squad Weapon."
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "Turn off reaction fire for the Squad Weapon."
+    }
+    set "Icon" asset="makiatto/skills/interception_squad_on"
+    set "IconDisabled" asset="makiatto/skills/interception_squad_disabled"
+    clear "EventHandlers"
+    append "EventHandlers" type="WOMENACE:InterceptionToggle" {
+        set "Slot" "squad"
+    }
+    append "EventHandlers" type="LimitUsability" {
+        append "NotHiddenIfActorHasSkill" "effect.makiatto_interception_squad"
+    }
+}
+
+clone "SkillTemplate" from="active.makiatto_interception_squad" id="active.makiatto_interception_leader" {
+    set "Order" enum="SkillOrder" "Perk"
+    set "Title" {
+        set "m_DefaultTranslation" "Interception: Special Weapon"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Turn on Interception for the Special Weapon. <link=\"action_points\">AP</link> left at the end of the turn is used to fire on enemies that end their move in range and line of sight. Fires before the Squad Weapon."
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "Turn on reaction fire for the Special Weapon."
+    }
+    set "Icon" asset="makiatto/skills/interception_leader"
+    set "IconDisabled" asset="makiatto/skills/interception_leader_disabled"
+    clear "EventHandlers"
+    append "EventHandlers" type="WOMENACE:InterceptionToggle" {
+        set "Slot" "leader"
+    }
+    append "EventHandlers" type="LimitUsability" {
+        append "HiddenIfActorHasSkill" "effect.makiatto_interception_leader"
+    }
+}
+
+clone "SkillTemplate" from="active.makiatto_interception_squad" id="active.makiatto_interception_leader_stop" {
+    set "Order" enum="SkillOrder" "Perk"
+    set "Title" {
+        set "m_DefaultTranslation" "Stop Interception: Special Weapon"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Turn off Interception for the Special Weapon."
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "Turn off reaction fire for the Special Weapon."
+    }
+    set "Icon" asset="makiatto/skills/interception_leader_on"
+    set "IconDisabled" asset="makiatto/skills/interception_leader_disabled"
+    clear "EventHandlers"
+    append "EventHandlers" type="WOMENACE:InterceptionToggle" {
+        set "Slot" "leader"
+    }
+    append "EventHandlers" type="LimitUsability" {
+        append "NotHiddenIfActorHasSkill" "effect.makiatto_interception_leader"
+    }
+}
+
+// A toggle's state, a hidden status effect on Makiatto that the toggle pair hides by. Re-applied
+// from the persisted state each mission, since effects go after combat.
+clone "SkillTemplate" from="effect.reduced_ap_after_transport" id="effect.makiatto_interception_squad" {
+    set "Title" {
+        set "m_DefaultTranslation" "Interception: Squad Weapon"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Interception is on for the Squad Weapon."
+    }
+    clear "EventHandlers"
+}
+
+clone "SkillTemplate" from="effect.makiatto_interception_squad" id="effect.makiatto_interception_leader" {
+    set "Title" {
+        set "m_DefaultTranslation" "Interception: Special Weapon"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Interception is on for the Special Weapon."
+    }
+}
