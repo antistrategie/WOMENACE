@@ -40,15 +40,6 @@ public sealed class AffinitySystem : JiangyuSystem
     // Resolved vehicle-item templates for Vehicle unlocks, cached on the same basis.
     private readonly Dictionary<string, VehicleItemTemplate> _vehicleCache = new(StringComparer.Ordinal);
 
-    // The game's rarity palette, read once from UIConfig (with the shipped values as a fallback) so
-    // gift tiles in the picker show the same common/uncommon/rare colours the game uses elsewhere.
-    private bool _rarityLoaded;
-    private int _uncommonMinRarity = 33;
-    private int _rareMinRarity = 66;
-    private UnityEngine.Color _commonRarity = new(0.455f, 0.424f, 0.294f, 1f);
-    private UnityEngine.Color _uncommonRarity = new(0.239f, 0.459f, 0.533f, 1f);
-    private UnityEngine.Color _rareRarity = new(0.741f, 0.192f, 0.192f, 1f);
-
     // Modal state, captured when it is injected / opened.
     private VisualElement _modalRoot;
     private VisualElement _grid;
@@ -503,60 +494,6 @@ public sealed class AffinitySystem : JiangyuSystem
         catch (Exception ex) { Context.Log.Warn($"affinity: unlock failed: {ex.Message}"); }
     }
 
-    // Read the rarity brackets and colours from the game's UIConfig once. Falls back to the shipped
-    // values if the config is unavailable, so the borders always render.
-    private void EnsureRarityPalette()
-    {
-        if (_rarityLoaded)
-            return;
-        _rarityLoaded = true;
-        try
-        {
-            var all = DataTemplateLoader.GetAll<Il2CppMenace.UI.UIConfig>();
-            var list = all?.TryCast<Il2CppSystem.Collections.Generic.IReadOnlyList<Il2CppMenace.UI.UIConfig>>();
-            var config = list != null && all.Count > 0 ? list[0] : null;
-            if (config == null || !config.IsAlive())
-                return;
-            _uncommonMinRarity = config.UncommonMinRarity;
-            _rareMinRarity = config.RareMinRarity;
-            _commonRarity = config.ColorCommonRarity;
-            _uncommonRarity = config.ColorUncommonRarity;
-            _rareRarity = config.ColorRareRarity;
-        }
-        catch (Exception ex) { Context.Log.Warn($"affinity: rarity palette read failed: {ex.Message}"); }
-    }
-
-    private UnityEngine.Color RarityColor(int rarity)
-    {
-        EnsureRarityPalette();
-        if (rarity >= _rareMinRarity)
-            return _rareRarity;
-        if (rarity >= _uncommonMinRarity)
-            return _uncommonRarity;
-        return _commonRarity;
-    }
-
-    // Frame a gift tile in its rarity colour, matching the game's common/uncommon/rare palette.
-    private void ApplyRarityBorder(VisualElement element, int rarity)
-    {
-        if (element == null)
-            return;
-        try
-        {
-            var colour = new StyleColor(RarityColor(rarity));
-            element.style.borderTopColor = colour;
-            element.style.borderBottomColor = colour;
-            element.style.borderLeftColor = colour;
-            element.style.borderRightColor = colour;
-            var width = new StyleFloat(2f);
-            element.style.borderTopWidth = width;
-            element.style.borderBottomWidth = width;
-            element.style.borderLeftWidth = width;
-            element.style.borderRightWidth = width;
-        }
-        catch { }
-    }
-
     private VisualElement BuildGiftButton(VisualElement window)
     {
         var button = new IconButton();
@@ -673,7 +610,7 @@ public sealed class AffinitySystem : JiangyuSystem
     }
 
     // Fill the grid with one ItemTile per owned gift type. The component renders the native
-    // loot slot, the game's hover glow, the selected border and the chosen-count badge. The
+    // loot slot, the game's slot hover, a frame while chosen and the chosen-count badge. The
     // WOMENACE classes restyle its tile and badge.
     private void BuildBoxes()
     {
@@ -694,8 +631,8 @@ public sealed class AffinitySystem : JiangyuSystem
 
             var slot = new ItemTile(gift.Template, count);
             slot.Root.AddToClassList("wm-gift-box");
+            ItemTileStyle.Align(slot);
             slot.Badge.AddToClassList("wm-gift-box__badge");
-            ApplyRarityBorder(slot.Root, gift.Template.Rarity);
 
             var box = new Box { Gift = gift, Slot = slot };
             _boxes.Add(box);

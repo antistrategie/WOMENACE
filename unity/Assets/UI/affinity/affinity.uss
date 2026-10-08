@@ -75,7 +75,6 @@
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: flex-start;
-    flex-gap: 4px;
 }
 
 .wm-gift-preview-track {
@@ -129,10 +128,11 @@
     color: rgb(188, 176, 150);
 }
 
-.wm-gift-box {
-    margin: 4px;
-    align-items: flex-start;
-}
+/* Sized like the shop's item tiles. ItemTileStyle.Align stretches the loot slot to the tile, so
+   the tile carries the size. */
+.wm-gift-box { width: 48px; height: 48px; margin: 0 7px 7px 0; flex-shrink: 0; }
+.wm-gift-box > MissionResultLootSlot { width: 48px; height: 48px; margin: 0; }
+.wm-gift-box #Pickable { margin: 0; left: 0; right: auto; width: 48px; height: 48px; }
 
 .wm-gift-box__badge {
     display: none;
