@@ -33,7 +33,7 @@ import json
 import math
 import re
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 try:
@@ -123,6 +123,8 @@ class TransferConfig:
     # both are skipped. hang_down_chain_prefixes still marks the chains that
     # hang as draped ribbons.
     spring_bones: bool
+    # The bones kept off the fold for the spring chains, filled in by prep.
+    spring_bone_names: set[str] = field(default_factory=set)
 
     @staticmethod
     def load(path: Path) -> "TransferConfig":
@@ -191,6 +193,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--blend",
         help="Path to the handoff .blend file. Written by --stage prep, read by --stage finish.",
+    )
+    parser.add_argument(
+        "--keep-body-weights",
+        help=(
+            "prep: a previously approved handoff .blend of the same outfit. Every LOD0 "
+            "vertex that does not ride a spring chain keeps its weights from it, so hand "
+            "edits survive a re-prep that turns spring_bones on."
+        ),
     )
     argv = sys.argv
     if "--" in argv:
@@ -2645,15 +2655,17 @@ SPRING_HAIR = ({"ahoge", "tail", "ponytail", "twintail", "sidetail"}, {"hair"}, 
 # the legs rather than hanging straight like a ribbon. A sleeve's hem (袖裾)
 # is not one.
 SPRING_SKIRT = (
-    {"jacket", "cloak", "dress", "mantle"},
+    {"jacket", "cloak", "dress", "mantle", "apron"},
     {"skirt", "coat", "cape"},
-    re.compile(r"スカート|(?<!袖)裾|コート|ジャケット|マント|ドレス"),
+    re.compile(r"スカート|(?<!袖)裾|コート|ジャケット|マント|ドレス|エプロン"),
 )
+# Sleeve hems and flares, which keep their shape round the arm.
+SPRING_SLEEVE = ({"sleeve", "cuff"}, set(), re.compile(r"袖"))
 # Rigid objects that swing as a whole.
 SPRING_ACCESSORY = (
-    {"case", "bag", "weapon", "pendant", "holster", "pouch", "charm", "stick"},
+    {"case", "bag", "weapon", "pendant", "holster", "pouch", "charm", "stick", "sword", "scabbard", "sheath"},
     set(),
-    re.compile(r"ケース|バッグ|鞄|武器|ペンダント"),
+    re.compile(r"ケース|バッグ|鞄|武器|ペンダント|剣|刀|鞘"),
 )
 # Body jiggle the rips simulate, which stays folded onto the body: breast and
 # buttock bones. English names match by word (spring_name_words), so chest
@@ -2771,12 +2783,15 @@ def spring_category(chain: list[str], armature, config: "TransferConfig") -> str
     and its rest shape.
 
     Named skirt, hair and accessory chains go by name first. Of the rest,
-    cloth listed in hang_down_chain_prefixes, and long cloth on an arm that
-    does not point up (an epaulette holds its shape), is a DrapedRibbon: in
-    the T-pose it lies along the arm, and shaped by the arm it swings out
-    sideways whenever the arm moves. Other long cloth that hangs at rest is a
-    Ribbon, and short cloth is StiffCloth. Skirt chains are grouped into
-    garments (spring_garment), each a Skirt or a Gown (spring_is_gown)."""
+    cloth listed in hang_down_chain_prefixes is a DrapedRibbon, and a
+    sleeve's hem a Ribbon that keeps its shape round the arm. Other long
+    cloth on an arm that does not point up (an epaulette holds its shape) is
+    a DrapedRibbon: in the T-pose it lies along the arm, and shaped by the
+    arm it swings out sideways whenever the arm moves. Other long cloth that
+    hangs at rest is a Ribbon, unless it hangs past the hip joints, like a
+    belt's tails or a long veil, which meets the legs as a Skirt does. Short
+    cloth is StiffCloth. Skirt chains are grouped into garments
+    (spring_garment), each a Skirt or a Gown (spring_is_gown)."""
     bones = armature.data.bones
     head = armature.matrix_world @ bones[chain[0]].head_local
     length = 0.0
@@ -2803,9 +2818,14 @@ def spring_category(chain: list[str], armature, config: "TransferConfig") -> str
     on_arm = limb is not None and SPRING_ARM_TARGETS.match(limb)
     if any(chain[0].startswith(prefix) for prefix in config.hang_down_chain_prefixes):
         return "DrapedRibbon"
+    if kind(SPRING_SLEEVE):
+        return "Ribbon"
     if length > SPRING_HANGING_CLOTH_METRES and on_arm and drop > -0.25 * length:
         return "DrapedRibbon"
     if length > SPRING_HANGING_CLOTH_METRES and drop > 0.5 * length:
+        hip = spring_humanoid_bone(armature, config, "UpperLeg_L")
+        if hip is not None and previous.z < (armature.matrix_world @ hip.head_local).z:
+            return "Skirt"
         return "Ribbon"
     return "StiffCloth"
 
@@ -2844,10 +2864,10 @@ def spring_is_placement(word: str) -> bool:
 
 def spring_garment(chain: list[str]) -> str:
     """The garment a skirt chain belongs to: its root bone's name without
-    numbers or the parts that only place it, so "Skirt_0_3", "SkirtBL01"
-    and "Skirt_L_12" make one skirt, "FCapeL1" and "Cape_0_0" one cape, and
-    "Coat_0_3" a coat over the skirt."""
-    return "".join(w for w in spring_name_words(chain[0]) if not spring_is_placement(w))
+    numbers, single letters or the parts that only place it, so "Skirt_0_3",
+    "SkirtBL01" and "Skirt_L_12" make one skirt, "FCapeL1", "Cape_0_0" and
+    "CapeB1.L" one cape, and "Coat_0_3" a coat over the skirt."""
+    return "".join(w for w in spring_name_words(chain[0]) if not spring_is_placement(w) and len(w) > 1)
 
 
 def spring_is_gown(chains: list[list[str]], armature, config: "TransferConfig") -> bool:
@@ -2997,6 +3017,7 @@ def prep_pmx(config: "TransferConfig") -> tuple:
     if config.spring_bones:
         spring_chains = collect_spring_chains(pmx_armature, config)
         kept = {name for chain in spring_chains for name in chain}
+        config.spring_bone_names = kept
         config.bone_map = {k: v for k, v in config.bone_map.items() if k not in kept}
         config.ignore_bones = [b for b in config.ignore_bones if b not in kept]
         print(f"[info] spring bones: {len(spring_chains)} chain(s), {len(kept)} bone(s) kept off the fold")
@@ -3156,6 +3177,59 @@ def recover_handoff_scene(config: "TransferConfig", blend_path: Path) -> tuple:
     return armature, chosen
 
 
+def keep_body_weights(mesh, blend_path: Path, lod0_name: str, spring_bones: set[str]) -> None:
+    """Carry an approved handoff blend's weights onto a fresh prep.
+
+    Every vertex with no weight on a spring bone takes its weights from the
+    approved blend's LOD0 verbatim, so whatever made the body right there
+    (hand painting, or a config since changed) survives. Vertices on a spring
+    chain keep the fresh chain weights, which the old blend cannot have. The
+    two meshes come from the same PMX through the same geometry steps, so
+    vertex i is the same vertex in both. Their T-posed positions are checked
+    to be sure, and a mismatch stops the prep rather than scrambling
+    weights."""
+    with bpy.data.libraries.load(str(blend_path), link=False) as (src, dst):
+        if lod0_name not in src.objects:
+            raise RuntimeError(f"{blend_path} has no {lod0_name}")
+        dst.objects = [lod0_name]
+    old = dst.objects[0]
+    try:
+        if len(old.data.vertices) != len(mesh.data.vertices):
+            raise RuntimeError(
+                f"{blend_path}: {len(old.data.vertices)} vertices, the fresh prep has {len(mesh.data.vertices)}"
+            )
+        worst = max(
+            ((old.matrix_world @ a.co) - (mesh.matrix_world @ b.co)).length
+            for a, b in zip(old.data.vertices, mesh.data.vertices)
+        )
+        if worst > 1e-3:
+            raise RuntimeError(f"{blend_path}: vertices sit up to {worst * 1000:.1f} mm from the fresh prep's")
+        old_names = {g.index: g.name for g in old.vertex_groups}
+        new_names = {g.index: g.name for g in mesh.vertex_groups}
+        spring_groups = {i for i, name in new_names.items() if name in spring_bones}
+        kept = cloth = 0
+        for a, b in zip(old.data.vertices, mesh.data.vertices):
+            if any(g.group in spring_groups and g.weight > 0.0 for g in b.groups):
+                cloth += 1
+                continue
+            for g in list(b.groups):
+                if not new_names[g.group].startswith("mmd_"):
+                    mesh.vertex_groups[g.group].remove([b.index])
+            for g in a.groups:
+                name = old_names[g.group]
+                if name.startswith("mmd_") or g.weight <= 0.0:
+                    continue
+                group = mesh.vertex_groups.get(name) or mesh.vertex_groups.new(name=name)
+                group.add([b.index], g.weight, "REPLACE")
+            kept += 1
+        print(f"[info] kept the approved weights on {kept} body vertices, {cloth} ride spring chains: {blend_path.name}")
+    finally:
+        mesh_data = old.data
+        bpy.data.objects.remove(old, do_unlink=True)
+        if mesh_data.users == 0:
+            bpy.data.meshes.remove(mesh_data)
+
+
 def main() -> None:
     args = parse_args()
     config = TransferConfig.load(Path(args.config).resolve())
@@ -3190,6 +3264,8 @@ def main() -> None:
         lod0_name = f"{config.lod_mesh_basename}_LOD0"
         meshes[0].name = lod0_name
         meshes[0].data.name = lod0_name
+        if args.keep_body_weights:
+            keep_body_weights(meshes[0], Path(args.keep_body_weights).resolve(), lod0_name, config.spring_bone_names)
         blend_path = Path(args.blend).resolve()
         blend_path.parent.mkdir(parents=True, exist_ok=True)
         bpy.ops.wm.save_as_mainfile(filepath=str(blend_path))
