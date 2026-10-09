@@ -1,0 +1,8 @@
+clone "PerkTemplate" from="perk.unique_juryrigged_bog" id="perk.papasha_juryrigged" {
+    // Bog's Juryrigged in Papasha's voice: the vanilla perk plays Bog's line on use.
+    clear "SoundsOnUse"
+    append "SoundsOnUse" {
+        set "bankId" "wmgfl_tactical_barks_papasha_va"
+        set "itemId" "Series_Hit_Single_Hit_001"
+    }
+}
