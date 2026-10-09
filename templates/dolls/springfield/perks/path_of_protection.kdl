@@ -14,7 +14,7 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.springfield_path_of_protect
 
             <style="Highlight">• Grants the skill 'Deploy Taryz'. Taryz can be moved within $1 tiles of Springfield and can be shot down.</style>
             <style="Highlight">• At the end of Springfield's turn, Taryz heals the most wounded allied squad within $2 tiles by $3% of its hitpoints.</style>
-            <style="Highlight">• At the end of Springfield's turn, Taryz marks up to $4 visible enemies within $5 tiles for $6 rounds. Attacks on marked targets gain $7% <link="accuracy">Accuracy</link>.</style>
+            <style="Highlight">• At the end of Springfield's turn, Taryz marks up to $4 visible enemies within $5 tiles as 'Designated Target' for $6 rounds.</style>
             """
         clear "m_Placeholders"
         append "m_Placeholders" bind="SkillTemplate" "active.springfield_taryz_command_move" path="MaxRange"
@@ -23,7 +23,6 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.springfield_path_of_protect
         append "m_Placeholders" bind="PerkTemplate" "perk.springfield_path_of_protection" path="EventHandlers[2].MarkTargets"
         append "m_Placeholders" bind="PerkTemplate" "perk.springfield_path_of_protection" path="EventHandlers[2].MarkRange"
         append "m_Placeholders" bind="SkillTemplate" "effect.designated_target" path="EventHandlers[0].Lifetime"
-        append "m_Placeholders" bind="SkillTemplate" "effect.designated_target" path="EventHandlers[3].Amount"
     }
 
     set "Icon" asset="springfield/perks/path_of_protection"

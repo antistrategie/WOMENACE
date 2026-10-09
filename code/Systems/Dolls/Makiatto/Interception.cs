@@ -222,7 +222,7 @@ public sealed class InterceptionSystem : JiangyuSystem
     // Weapon skills with an Interception shot still resolving, counted per skill. Vanilla's own
     // counter and auto-attack handlers set WasAutoTriggered too, so a reaction is a shot whose skill
     // is in here and still auto-triggered. A shot's mark is released once the game is no longer
-    // busy with it (ReleaseReaction), not when Skill.Use returns, because a burst's later
+    // done with it (ReleaseReaction), not when Skill.Use returns, because a burst's later
     // repetitions resolve after Use returns. A count rather than a flag, so a queued second shot of
     // the same skill keeps its mark when the first one's release lands.
     private readonly Dictionary<IntPtr, int> _reactionSkills = new();
@@ -388,13 +388,28 @@ public sealed class InterceptionSystem : JiangyuSystem
     }
 
     // Lets go of a fired shot's reaction mark once the shot, every repetition included, has
-    // resolved. The turn-start ClearReactions and the scene-load clear back this up.
-    private IEnumerator ReleaseReaction(IntPtr skill)
+    // resolved: Skill.ClearBusy (RVA 0x72AC40) clears WasAutoTriggered at exactly that point. The
+    // turn-start ClearReactions and the scene-load clear back this up.
+    private IEnumerator ReleaseReaction(Skill skill)
     {
+        var pointer = skill.Pointer;
         yield return null;
-        while (TacticalManager.IsSkillBusy())
+        while (StillResolving(skill))
             yield return null;
-        ReleaseMark(skill);
+        ReleaseMark(pointer);
+    }
+
+    // a skill that went away with its scene counts as resolved
+    private static bool StillResolving(Skill skill)
+    {
+        try
+        {
+            return skill.WasAutoTriggered;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
     }
 
     private void ReleaseMark(IntPtr skill)
@@ -489,12 +504,22 @@ public sealed class InterceptionSystem : JiangyuSystem
         skill.WasAutoTriggered = true;
         _reactionSkills[skill.Pointer] = _reactionSkills.GetValueOrDefault(skill.Pointer) + 1;
         var usage = "Free";
-        var used = skill.Use(r.Tile, UsageParameter.Free);
-        if (!used)
+        bool used;
+        try
         {
-            // the off-turn 0 AP can fail the usability check the game's own overwatch passes
-            usage = "Free|IgnoreUsabilityCheck";
-            used = skill.Use(r.Tile, UsageParameter.Free | UsageParameter.IgnoreUsabilityCheck);
+            used = skill.Use(r.Tile, UsageParameter.Free);
+            if (!used)
+            {
+                // the off-turn 0 AP can fail the usability check the game's own overwatch passes
+                usage = "Free|IgnoreUsabilityCheck";
+                used = skill.Use(r.Tile, UsageParameter.Free | UsageParameter.IgnoreUsabilityCheck);
+            }
+        }
+        catch (Exception)
+        {
+            skill.WasAutoTriggered = false;
+            ReleaseMark(skill.Pointer);
+            throw;
         }
         if (!used)
         {
@@ -506,7 +531,7 @@ public sealed class InterceptionSystem : JiangyuSystem
         }
         r.Handler.Reserve -= cost;
         r.Handler.Fired = true;
-        Context.Coroutines.Start(ReleaseReaction(skill.Pointer));
+        Context.Coroutines.Start(ReleaseReaction(skill));
         // Skill.Use spends a shot's uses inline before it returns, so an unchanged count here
         // means this Free use skipped the spend and the shot is paid for by hand: its cost, then
         // the other skills sharing the weapon's pool brought into line.

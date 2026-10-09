@@ -106,6 +106,7 @@ Record expensive findings next to the code they constrain. Add a short repositor
 - `SkillTemplate.CustomAoEShape` and `AOETiles` are Odin-serialised and cannot be authored in KDL. A footprint other than a radius needs an `ICustomAoEShape` assigned by a system, with `GetAoERadius` returning 0 or the generic radius ring is drawn too. A handler template's fields read through a fresh interop wrapper come back as their initialisers, so read authored numbers off the handler instance the skill carries.
 - `SpawnTileEffect.ChancePerTileFromCenter` is a per-tile falloff (-100 spawns on the aimed tile only, 0 spawns on every tile). A tile holds one spawned object effect, so when two handlers spawn on the same tile the later handler wins.
 - `IsLimitedUses` with `Uses N` is a per-turn budget, on a perk-granted skill too. A per-mission charge is a hidden marker effect added on first use with `LimitUsability` on the skill.
+- Localised text substitutes only `$1` to `$6`. `BaseLocalizedString` builds its token table once with six entries (static constructor, RVA `0x501F70`), so a seventh placeholder renders as a literal `$7`. Compile and format do not catch it. Name a vanilla effect whose own tooltip carries the number instead of binding a seventh value.
 
 ## Sourcing from the GFL2 client
 

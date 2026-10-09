@@ -1,0 +1,64 @@
+clone "PerkTemplate" from="perk.steady_gun" id="perk.makiatto_battlefield_insight" {
+    set "Title" {
+        set "m_DefaultTranslation" "Battlefield Insight"
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "+$1 View Range, +$5 Detection, +$4 range for Bittersweet Caramel. Interception with it: +$2% DMG, +$3% AP discount."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="PerkTemplate" "perk.makiatto_battlefield_insight" path="EventHandlers[0].Amount"
+        append "m_Placeholders" bind="PerkTemplate" "perk.makiatto_battlefield_insight" path="EventHandlers[2].DamageBonus" format="percent"
+        append "m_Placeholders" bind="PerkTemplate" "perk.makiatto_battlefield_insight" path="EventHandlers[2].ApDiscount" format="percent"
+        append "m_Placeholders" bind="PerkTemplate" "perk.makiatto_battlefield_insight" path="EventHandlers[1].MaxRangeChange"
+        append "m_Placeholders" bind="PerkTemplate" "perk.makiatto_battlefield_insight" path="EventHandlers[3].Amount"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            Annoyances, get lost!
+
+
+            <style="Highlight">• +$1 <link="vision">View Range</link> and +$5 <link="detection">Detection</link>.
+            • +$4 maximum and ideal range for Bittersweet Caramel.
+            • Interception shots fired with Bittersweet Caramel deal +$2% Damage and get +$3% to Interception's <link="action_points">AP</link> discount.</style>
+            """
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="PerkTemplate" "perk.makiatto_battlefield_insight" path="EventHandlers[0].Amount"
+        append "m_Placeholders" bind="PerkTemplate" "perk.makiatto_battlefield_insight" path="EventHandlers[2].DamageBonus" format="percent"
+        append "m_Placeholders" bind="PerkTemplate" "perk.makiatto_battlefield_insight" path="EventHandlers[2].ApDiscount" format="percent"
+        append "m_Placeholders" bind="PerkTemplate" "perk.makiatto_battlefield_insight" path="EventHandlers[1].MaxRangeChange"
+        append "m_Placeholders" bind="PerkTemplate" "perk.makiatto_battlefield_insight" path="EventHandlers[3].Amount"
+    }
+
+    set "Icon" asset="makiatto/perks/battlefield_insight"
+    set "IconDisabled" asset="makiatto/perks/battlefield_insight_inactive"
+    set "PerkIcon" asset="makiatto/perks/battlefield_insight"
+
+    clear "EventHandlers"
+    append "EventHandlers" type="ChangeProperty" {
+        set "Trigger" enum="UpdateEvent" "OnUpdate"
+        set "PropertyType" enum="EntityPropertyType" "Vision"
+        set "Amount" 1
+        set "AmountMult" 1.0
+    }
+    append "EventHandlers" type="ChangeRangesOfSkillsWithTags" {
+        set "MinRangeChange" 0
+        set "MinRangeMult" 1.0
+        set "IdealRangeChange" 1
+        set "IdealRangeMult" 1.0
+        set "MaxRangeChange" 1
+        set "MaxRangeMult" 1.0
+        set "SkillFilter" type="SpecificSkillsFilter" {
+            append "TargetSkills" "active.makiatto_ssr_freeze"
+        }
+    }
+    append "EventHandlers" type="WOMENACE:InterceptionWeaponBonus" {
+        set "Weapon" ref="WeaponTemplate" "weapon.makiatto_ssr"
+        set "DamageBonus" 0.2
+        set "ApDiscount" 0.15
+    }
+    append "EventHandlers" type="ChangeProperty" {
+        set "Trigger" enum="UpdateEvent" "OnUpdate"
+        set "PropertyType" enum="EntityPropertyType" "Detection"
+        set "Amount" 1
+        set "AmountMult" 1.0
+    }
+}
