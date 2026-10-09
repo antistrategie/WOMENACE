@@ -10,11 +10,11 @@ Read Jiangyu's own [AGENTS.md](https://github.com/antistrategie/jiangyu/blob/mai
 
 Use the pipeline skill that matches the work:
 
-- [`skills/character-authoring/SKILL.md`](skills/character-authoring/SKILL.md) for a Doll's KDL spine.
-- [`skills/pmx-to-menace/SKILL.md`](skills/pmx-to-menace/SKILL.md) for PMX to humanoid prefab conversion.
-- [`skills/doll-shading/SKILL.md`](skills/doll-shading/SKILL.md) for GFL-style materials, face SDFs, hair UVs, and outlines.
-- [`skills/voice-pipeline/SKILL.md`](skills/voice-pipeline/SKILL.md) for voice audio, subtitles, SoundBanks, and conversations.
-- [`skills/weapon-pipeline/SKILL.md`](skills/weapon-pipeline/SKILL.md) for weapon models, audio, templates, and skills.
+- [`.agents/skills/character-authoring/SKILL.md`](.agents/skills/character-authoring/SKILL.md) for a Doll's KDL spine.
+- [`.agents/skills/pmx-to-menace/SKILL.md`](.agents/skills/pmx-to-menace/SKILL.md) for PMX to humanoid prefab conversion.
+- [`.agents/skills/doll-shading/SKILL.md`](.agents/skills/doll-shading/SKILL.md) for GFL-style materials, face SDFs, hair UVs, and outlines.
+- [`.agents/skills/voice-pipeline/SKILL.md`](.agents/skills/voice-pipeline/SKILL.md) for voice audio, subtitles, SoundBanks, and conversations.
+- [`.agents/skills/weapon-pipeline/SKILL.md`](.agents/skills/weapon-pipeline/SKILL.md) for weapon models, audio, templates, and skills.
 
 [`docs/ONBOARDING.md`](docs/ONBOARDING.md) is the longer human-oriented introduction.
 
@@ -43,6 +43,7 @@ Use the implementation and its adjacent comments as the authority for current be
 - `Systems/NewGame/` for WOMENACE campaign options, Doll roster selection, vanilla leader filtering, and dummy-link limits.
 - `Systems/Vehicles/` and `Systems/Weapons/` for signature vehicles, weapon skins, and weapon presentation.
 - `Systems/CampaignMap/` for the GFL1-inspired mission-board reskin.
+- `Systems/SpringBones/` for hair and cloth physics on Doll outfits. Each outfit's profile under `Profiles/` is written once by the PMX converter and tuned in place. `SpringBody` is the single frame driver for both the live rig and the offline replay in `tests/SpringBones/`.
 
 Persisted cross-system state belongs in `Context.State.Get<T>()`. Reusable rules and ID conventions belong in small shared models rather than being copied between systems.
 
@@ -92,16 +93,23 @@ Record expensive findings next to the code they constrain. Add a short repositor
 - Offmap ability uses are one pool per operation on `OffmapAbilityInstance.m_RemainingUses`, refilled only by `Operation.StartOperation`, `EndOperation` and the ship-upgrades dialog. Fairy abilities are a per-mission budget through `FairyUsesSystem` (refill on `Operation.EndMission`, skill-card usage line reworded). Fairy `OffmapAbilityTemplate.UpgradeType` carries the mod-owned fairy type so `ChangeOffmapAbilityUsesEffect` (Arsenal) never matches them. Vanilla module cards never state uses, the skill card does.
 - The mission board is outside `GetActiveScreen().GetRootElement()`. Reach `MissionPoi` and `MissionPoisContainer` through their instances or inspect the complete `UIDocument` panels. Mission completion is `Mission.GetStatus() == Played`, not the `mission_icon_played` sprite.
 - The deployed `Jiangyu.Loader.dll` and the CLI used to compile must come from the same Jiangyu commit. A mismatch can make valid addition prefabs fail asset lookup at runtime.
+- `jiangyu loader deploy` copies a staged loader, not a fresh build, and the SDK ships inside it. After an SDK or loader change, run `mise run build:loader` in the Jiangyu checkout first and check the deployed DLL's timestamp, or the game keeps running the old code.
 - `mise` uses the Jiangyu CLI from `${JIANGYU_BUILD:-Debug}`. Treat Unity Editor script drift warnings as actionable. Build the configuration `mise` will use, then run `jiangyu unity sync` when managed scripts differ.
 - Bundles target `StandaloneWindows64` with D3D11 shader variants for MENACE under Proton and DXVK. After installing missing Windows build support or correcting the target, run one clean compile so bad cached bundles are replaced.
 - Extracted `Menace/*` shader stubs may render magenta in the Editor but are rebound to the game's shaders by name at runtime. Mod-owned shaders live under `Womenace/` and must retain needed runtime keyword variants with `multi_compile`.
 - `BakeVehicle -targetLength` scales from measured renderer bounds. Check the logged measured length because a stray or double-transformed renderer silently rescales the whole vehicle.
+- A summoned drone standing in for the vanilla recon skybot bakes with `BakeVehicle`, then `Womenace.EditorTools.BuildSummonPrefab` gives it the skybot's animator parameters, hover height and collider. The deploy skill throws the drone as an arc projectile whose prefab lives in Odin-serialised `ProjectileData`, so a system sets it at runtime.
+- UnityEngine maths (`Vector3`, `Quaternion`, `Mathf`) called from mod code is a native interop call under IL2CPP. Per-frame hot paths do their maths in `System.Numerics` and touch Unity only to read and write transforms.
 - `SkillContainer` defers removals while it is dispatching to handlers (`m_UpdateStack` is raised for every OnMovementFinished, OnTurnEnd and OnUpdate). In that state `Remove(SkillTemplate)` only flags the first match as garbage and returns true, and the next call finds the same flagged skill again, so `while (container.Remove(template))` hangs the game with a clean log. Remove through `SkillEffects.RemoveInstances`, never in a loop on the return value.
 - `TacticalManager.InvokeOnTurnEnd` fires from `Actor.SetTurnDone`, before the actor's `SkillContainer.OnTurnEnd` runs the `LifetimeLimit` countdown. An effect refreshed from an `InvokeOnTurnEnd` postfix is counted down straight after and expires a turn early. Refresh from an `Actor.OnTurnEnd` postfix instead.
 - `TacticalPreloader.PreloadSkill` indexes the 14-entry `ImpactOnSurface` table of every fire skill during map generation. `clear "ImpactOnSurface"` on a weapon-fire clone leaves the mission stuck loading. Override the entries by index.
 - `SkillTemplate.CustomAoEShape` and `AOETiles` are Odin-serialised and cannot be authored in KDL. A footprint other than a radius needs an `ICustomAoEShape` assigned by a system, with `GetAoERadius` returning 0 or the generic radius ring is drawn too. A handler template's fields read through a fresh interop wrapper come back as their initialisers, so read authored numbers off the handler instance the skill carries.
 - `SpawnTileEffect.ChancePerTileFromCenter` is a per-tile falloff (-100 spawns on the aimed tile only, 0 spawns on every tile). A tile holds one spawned object effect, so when two handlers spawn on the same tile the later handler wins.
 - `IsLimitedUses` with `Uses N` is a per-turn budget, on a perk-granted skill too. A per-mission charge is a hidden marker effect added on first use with `LimitUsability` on the skill.
+
+## Sourcing from the GFL2 client
+
+About 50,000 of the GFL2 client's asset bundles are stored end to end inside other bundle files, indexed by a single `GFF`-format file in `AssetBundles_Windows`. AssetStudio reads only the first bundle in each pack file, so an asset missing from an asset map or a name search is usually in a pack piece. Cut the piece out through the GFF index into a standalone bundle, which AssetStudio then reads normally.
 
 ## Writing conventions
 

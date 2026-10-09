@@ -1,6 +1,6 @@
 ---
 name: voice-pipeline
-description: End-to-end voice authoring for a MENACE character — transcribe source clips to JP+EN, build the SoundBank, clone conversation templates against a vanilla speaker, normalise loudness to vanilla. Use when adding voice barks to a new character or troubleshooting why a clone doesn't fire / sounds wrong.
+description: End-to-end voice authoring for a MENACE character: transcribe source clips to JP+EN, build the SoundBank, clone conversation templates against a vanilla speaker, normalise loudness to vanilla. Use when adding voice barks to a new character or troubleshooting why a clone doesn't fire / sounds wrong.
 ---
 
 # Voice pipeline
@@ -9,11 +9,11 @@ description: End-to-end voice authoring for a MENACE character — transcribe so
 
 How a character's voice barks get from raw audio rips to triggering in-game. Five tools + one runtime pattern:
 
-1. `scripts/voice/transcribe.py` — OpenAI ASR + MT → `assets/additions/audio/<char>/.trans.csv`
-2. `scripts/voice/normalize_audio.py` — LUFS-normalise raw clips to match vanilla MENACE bark loudness
-3. `templates/<char>/voice/soundbank.kdl` — SoundBank clone that registers the WAVs as a runtime bank
-4. `templates/<char>/voice/{arrivals,clicks,enemy,misc,movement,objectives,responses}.kdl` — ConversationTemplate clones that fire those bank entries on in-game events
-5. `scripts/voice/serve.py` — local web utility to browse + play each character's clips and read their transcripts
+1. `scripts/voice/transcribe.py`: OpenAI ASR + MT → `assets/additions/audio/<char>/.trans.csv`
+2. `scripts/voice/normalize_audio.py`: LUFS-normalise raw clips to match vanilla MENACE bark loudness
+3. `templates/<char>/voice/soundbank.kdl`: SoundBank clone that registers the WAVs as a runtime bank
+4. `templates/<char>/voice/{arrivals,clicks,enemy,misc,movement,objectives,responses}.kdl`: ConversationTemplate clones that fire those bank entries on in-game events
+5. `scripts/voice/serve.py`: local web utility to browse + play each character's clips and read their transcripts
 
 ## Pipeline at a glance
 
@@ -39,7 +39,7 @@ How a character's voice barks get from raw audio rips to triggering in-game. Fiv
 
 ## 1. Drop the WAVs
 
-Source the character's voice clips (typically a community rip — GFL2 voice files at `~/dev/github.com/beanpuppy/gfl2-voice/JP/VO_<Character>_JP/` was our reference). Copy + rename to strip the source-prefix junk:
+Source the character's voice clips (typically a community rip, GFL2 voice files at `~/dev/github.com/beanpuppy/gfl2-voice/JP/VO_<Character>_JP/` was our reference). Copy + rename to strip the source-prefix junk:
 
 ```
 VO_Cheyenne_JP_VO_Cheyenne_Single_Login_001.wav → Single_Login_001.wav
@@ -100,19 +100,19 @@ clone "SoundBank" from="tactical_barks_carda_va_full_mid" id="wmgfl_tactical_bar
 }
 ```
 
-**Filename-as-name convention** — each Sound's `name` field equals the WAV filename (without `.wav`). Bank itemId references in conversation/squad-leader templates use this same name. The asset path (e.g. `<character>/Single_Login_001`) is the Jiangyu-derived addition asset name (strips `assets/additions/audio/`).
+**Filename-as-name convention**: each Sound's `name` field equals the WAV filename (without `.wav`). Bank itemId references in conversation/squad-leader templates use this same name. The asset path (e.g. `<character>/Single_Login_001`) is the Jiangyu-derived addition asset name (strips `assets/additions/audio/`).
 
 **Exception**: weapon SoundBanks need multiple variations per Sound (so the engine picks randomly for shot-to-shot variety). For those, the Sound name is a semantic shorthand (e.g. `rf_shot`) and the variations are the per-shot files. See [`weapon-pipeline`](../weapon-pipeline/SKILL.md). Voice banks are one-Sound-per-clip and use filename-as-name.
 
-Each `append "sounds"` must be followed by an `append "busIndices" 0` (zero = the default voice bus). Sound and bus arrays are parallel — if they desync the bank loader fails. There's an auto-extension that may save you, but don't rely on it.
+Each `append "sounds"` must be followed by an `append "busIndices" 0` (zero = the default voice bus). Sound and bus arrays are parallel, so if they desync the bank loader fails. There's an auto-extension that may save you, but don't rely on it.
 
-Mod-bank IDs are FNV-1a hashed from the clone-ID string at load time, then the loader binds them. Conversation/skill references use the string `"wmgfl_tactical_barks_<character>_va"`; the loader does the hash routing.
+Mod-bank IDs are FNV-1a hashed from the clone-ID string at load time, then the loader binds them. Conversation/skill references use the string `"wmgfl_tactical_barks_<character>_va"`, and the loader does the hash routing.
 
 Cloning from a Speaker-specific bank (e.g. `tactical_barks_carda_va_full_mid`) inherits the bus/falloff defaults the speaker uses. If you can find a parent bank that matches your character's archetype, prefer that over `weapons_soundbank` or other class banks.
 
 ## 5. ConversationTemplate clones
 
-The 7-file split (arrivals/clicks/enemy/misc/movement/objectives/responses) is just organisational — the engine doesn't care which file a clone lives in.
+The 7-file split (arrivals/clicks/enemy/misc/movement/objectives/responses) is just organisational: the engine doesn't care which file a clone lives in.
 
 Each clone shape:
 
@@ -143,11 +143,11 @@ clone "ConversationTemplate" from="<Parent_Namespace>/<event_name>" id="<Charact
 }
 ```
 
-**`Active #true`** is non-negotiable. Most base ConversationTemplates (e.g. `Carda_Early/arrival_carda`, `JeanSy/click_bark`) ship with `Active=False` — they're prototypes. Clones inherit the field, the bark dispatcher filters out Active=False entries, and the lines silently never fire. Set `Active #true` on every voice-clone block or you'll hear nothing in-game.
+**`Active #true`** is non-negotiable. Most base ConversationTemplates (e.g. `Carda_Early/arrival_carda`, `JeanSy/click_bark`) ship with `Active=False`, as they're prototypes. Clones inherit the field, the bark dispatcher filters out Active=False entries, and the lines silently never fire. Set `Active #true` on every voice-clone block or you'll hear nothing in-game.
 
-**Parent namespace** — JeanSy templates live at `JeanSy/<event>` (sy's barks). Carda's at `Carda_Early/<event>` (her early-game progression bank). Pick the parent that matches your character's source archetype. A character cloned from sy uses JeanSy parents; one cloned from carda uses Carda_Early parents.
+**Parent namespace**: JeanSy templates live at `JeanSy/<event>` (sy's barks), and Carda's at `Carda_Early/<event>` (her early-game progression bank). Pick the parent that matches your character's source archetype. A character cloned from sy uses JeanSy parents, and one cloned from carda uses Carda_Early parents.
 
-**Speaker role index** — the index of the role in the parent template that gets the character's tag-override. Find it via:
+**Speaker role index**: the index of the role in the parent template that gets the character's tag-override. Find it via:
 
 ```bash
 dotnet ../jiangyu/src/Jiangyu.Cli/bin/Debug/net10.0/jiangyu.dll templates inspect \
@@ -156,14 +156,14 @@ dotnet ../jiangyu/src/Jiangyu.Cli/bin/Debug/net10.0/jiangyu.dll templates inspec
 
 The Roles array is small (1–3 entries). The speaker is the role tagged in your character clones (named after the source speaker, e.g. `JeanSy`, `Carda`, `SL`).
 
-**RoleGuid per template** — must match the role NAME at the same index in the parent template, NOT a fixed value. This varies per-template:
+**RoleGuid per template**: must match the role NAME at the same index in the parent template, NOT a fixed value. This varies per-template:
 
 - arrival_carda Roles: `[Carda]` → speaker RoleGuid = `Carda`
 - idle_bark_combat Roles: `[SL]` → speaker RoleGuid = `SL`
 - enemy_fleeing Roles: `[Fleeing, SL]` → speaker (index 1) RoleGuid = `SL`
 - response_taking_fire_anyone Roles: `[Damaged, Attacker, SL]` → speaker (index 2) RoleGuid = `SL`
 
-A `RoleGuid` that doesn't match any role in the parent fails template validation at compile. The error message lists the parent's known role names — exactly what you need.
+A `RoleGuid` that doesn't match any role in the parent fails template validation at compile. The error message lists the parent's known role names, exactly what you need.
 
 ## What inherits, what you override
 
@@ -173,9 +173,9 @@ A ConversationTemplate clone deep-copies the parent. Anything you don't `set` ke
 - `PlayChance`, `Priority`, `Repeatable`, `Repetitions`
 - All Roles except the one you tag-override
 
-The `set "Nodes" { ... }` block fully replaces the parent's Nodes — your `append "m_SerializedNodes"` builds a fresh container, the parent's variations are discarded. That's intentional: the character's lines are different from the parent's lines.
+The `set "Nodes" { ... }` block fully replaces the parent's Nodes: your `append "m_SerializedNodes"` builds a fresh container, the parent's variations are discarded. That's intentional: the character's lines are different from the parent's lines.
 
-`Repetitions: 0` (recurring filler, e.g. `taking_fire`) vs `Repetitions: 1` (one-shot flavour barks like `taking_fire1`/`11`/`111`/`1111`) is inherited. You don't need to set it. The numbered suffix templates are intended to play once per mission for variety; the base recurs.
+`Repetitions: 0` (recurring filler, e.g. `taking_fire`) vs `Repetitions: 1` (one-shot flavour barks like `taking_fire1`/`11`/`111`/`1111`) is inherited. You don't need to set it. The numbered suffix templates are intended to play once per mission for variety, and the base recurs.
 
 ## Browse + play locally
 
@@ -189,7 +189,7 @@ The `set "Nodes" { ... }` block fully replaces the parent's Nodes — your `appe
 python3 scripts/voice/serve.py
 ```
 
-Stdlib-only (no extra deps); auto-opens `http://127.0.0.1:8765/`.
+Stdlib-only (no extra deps) and auto-opens `http://127.0.0.1:8765/`.
 
 ## Bootstrapping a new character's voice KDL from an existing one
 
@@ -208,4 +208,4 @@ It is a first write only. Once the files exist they are hand-edited in place (ba
 
 - [`character-authoring`](../character-authoring/SKILL.md) for the parent-character-pick decision and the squad-leader spine.
 - [`weapon-pipeline`](../weapon-pipeline/SKILL.md) for the variations-per-Sound convention used by weapon banks (different from voice banks).
-- [`../../AGENTS.md`](../../AGENTS.md) for the SoundBank-construction gotchas (`fixedVolume=1`, `fixedPitch=1`, `dopplerLevel=1` defaults; bus-index auto-extend behaviour).
+- [`../../AGENTS.md`](../../AGENTS.md) for the SoundBank-construction gotchas (`fixedVolume=1`, `fixedPitch=1`, `dopplerLevel=1` defaults, bus-index auto-extend behaviour).

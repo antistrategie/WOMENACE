@@ -1,6 +1,6 @@
 ---
 name: doll-shading
-description: Shade a doll with the GFL2 character shader in MENACE. Use when adding or re-baking a doll's materials, porting ramp atlases, wiring the face SDF or eye layers, or debugging how a doll renders (flat, too bright, seams, missing outline). The PMX-to-glTF conversion has its own skill; this is everything after it.
+description: Shade a doll with the GFL2 character shader in MENACE. Use when adding or re-baking a doll's materials, porting ramp atlases, wiring the face SDF or eye layers, or debugging how a doll renders (flat, too bright, seams, missing outline). The PMX-to-glTF conversion has its own skill, and this is everything after it.
 ---
 
 # Doll shading
@@ -74,11 +74,11 @@ unexported Blender edits about to be baked over.
 
 | script | reads | writes |
 |---|---|---|
-| `prepare_doll.py` | — | orchestrates the four below, then bakes |
+| `prepare_doll.py` | none | orchestrates the four below, then bakes |
 | `bake_face_sdf_uv.py` | rest positions, `data/face_sdf_uv_ref.npz` | `TEXCOORD_2` in `model.bin` |
 | `transfer_hair_uv.py` | rest positions, `<doll>/<outfit>/hair_uv1_ref.npz` when the outfit wears its own hairstyle, else `<doll>/hair_uv1_ref.npz` | `TEXCOORD_1` in `model.bin` |
 | `add_outline_submesh.py` | `doll_shading` part rules | an `Outline` material + primitives |
-| `doll_shading.py` | `model.gltf`, texture folder | nothing — prints bake arguments |
+| `doll_shading.py` | `model.gltf`, texture folder | nothing, prints bake arguments |
 
 Three more sit beside them, run once per character rather than per bake:
 
@@ -108,7 +108,7 @@ doll needs its own list. Adding a doll usually means adding no rules at all.
 | part | shader | notes |
 |---|---|---|
 | hair, cloth, skin, silkstock, weapon | `DollToon` | ramp per part |
-| face, mouth, teeth, tongue, eyewhite | `DollToon` + face SDF | one material; they are welded together |
+| face, mouth, teeth, tongue, eyewhite | `DollToon` + face SDF | one material, as they are welded together |
 | eyes, iris, pupil | `DollEye` | opaque eyeball, view-based UV parallax |
 | eyeshadow | `DollEyeShadow` | multiply layer, `Blend DstColor Zero` |
 | eyes+ | `DollEyeHighlight` | additive layer, `Blend One One` |
@@ -182,7 +182,7 @@ per slot.
   material (`wa2000_preview`), not the mesh name. Read it from the glb or press
   "Fill from source glTF".
 - **Check the mesh has tangents.** `DollToon` builds its tangent frame from `TANGENT`
-  and a glTF exporter often omits it; the importer generates them here, but a mesh
+  and a glTF exporter often omits it. The importer generates them here, but a mesh
   without them shades off a zero vector and now writes that into the normal buffer.
   `MeshAttributeCheck.Run -assetPath <asset>` reports normals, tangents and UV sets.
 - The weapon takes no outline yet: the contour needs a duplicated submesh, and
@@ -220,7 +220,7 @@ character:
   and not in CN, which is what `--client` is for.
 
 A ramp is a 256x16 atlas of four bands, and **binding it upside down is silent**. The
-main-diffuse band at V=0.125 must carry the warm per-part gradient; if it carries a
+main-diffuse band at V=0.125 must carry the warm per-part gradient. If it carries a
 neutral grey that is identical across parts, the atlas is flipped and every surface is
 shading through a linear grey curve with no stylisation at all. That reads as
 "plastic" and nothing else looks wrong.
@@ -253,7 +253,7 @@ against, and filtering across rows blends bands that mean different things.
 - **A second pass with the same `LightMode` tag never draws.** HDRP draws only the
   first. That is why the outline and the eye layers are separate materials on
   duplicated submeshes rather than extra passes. A dead pass compiles, ships, and
-  reports itself in `passCount` — it just never executes.
+  reports itself in `passCount`. It just never executes.
 - **A `MotionVectors` pass that does not write stencil bit 32 achieves nothing.**
   HDRP's full-screen camera motion pass runs straight afterwards with
   `Comp NotEqual` against `StencilUsage.ObjectMotionVector`, so untagged pixels have
@@ -266,7 +266,7 @@ against, and filtering across rows blends bands that mean different things.
   opting out.
 - **A renderer with motion vectors is dropped from the depth prepass.**
   `excludeObjectMotionVectors` is set on that renderer list, so the `MotionVectors`
-  pass is the only prepass record of her depth and has to write it — matching the
+  pass is the only prepass record of her depth and has to write it, matching the
   forward pass's cull, its depth bias and, for the outline, its clip-space expansion.
 - **Verify shaders against D3D11.** A shader can compile for the editor's API and fail
   for the one the bundle ships. Run `ShaderCheck` with
@@ -283,7 +283,7 @@ against, and filtering across rows blends bands that mean different things.
   grep -A5 'Compiling shader "Womenace/DollToon" pass "MotionVectors" (fp)' unity/build.log
   ```
 
-  `Full variant space` counts what the pragmas declare; `After scriptable stripping`
+  `Full variant space` counts what the pragmas declare, and `After scriptable stripping`
   is what ships. A pass reporting a full space of 1 when it declares `multi_compile`
   keywords is reading a stale log.
 - **`mise run compile` refreshes the Editor scripts from the *Debug* CLI build.** Edit

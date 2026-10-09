@@ -1,6 +1,6 @@
 ---
 name: weapon-pipeline
-description: End-to-end weapon authoring for MENACE — OBJ + textures → Blender preprocessor → manual IK nudge → Unity bake → KDL WeaponTemplate clone, plus optional custom gunshot SoundBank + Skill clones. Use when adding a character-specific weapon model with bespoke audio or troubleshooting attach-point / IK / audio routing.
+description: End-to-end weapon authoring for MENACE: OBJ + textures → Blender preprocessor → manual IK nudge → Unity bake → KDL WeaponTemplate clone, plus optional custom gunshot SoundBank + Skill clones. Use when adding a character-specific weapon model with bespoke audio or troubleshooting attach-point / IK / audio routing.
 ---
 
 # Weapon pipeline
@@ -22,13 +22,13 @@ dotnet ../jiangyu/src/Jiangyu.Cli/bin/Debug/net10.0/jiangyu.dll templates inspec
   --type WeaponTemplate --name <parent_id>
 ```
 
-**`weapon.*` vs `specialweapon.*`** — specialweapons consume a precious squad slot (1 per squad in most setups). For a character-locked weapon that should feel like normal equipment, prefer `weapon.*`. Vanilla MENACE has no `weapon.*` snipers — the closest normal-class equivalent is `weapon.generic_battle_rifle_tier1_crowbar_marksman` (a battle rifle with a marksman barrel + scope).
+**`weapon.*` vs `specialweapon.*`**: specialweapons consume a precious squad slot (1 per squad in most setups). For a character-locked weapon that should feel like normal equipment, prefer `weapon.*`. Vanilla MENACE has no `weapon.*` snipers. The closest normal-class equivalent is `weapon.generic_battle_rifle_tier1_crowbar_marksman` (a battle rifle with a marksman barrel + scope).
 
 Inspect `Model` (the reference 3D prefab the parent uses), `SkillsGranted[]` (the fire skills), and `Icon`/`IconEquipment`/`IconSkillBar` to know what you'll be overriding.
 
 ## Source meshes from the GFL2 client
 
-Pull a Doll's guns from the CN client with AssetStudio.CLI (Mesh as OBJ, Texture2D as PNG) rather than from community rips. The naming in the client: `cw_<Doll>SR01_WL` is the standard gun, `cw_<Doll>SSR01_WL` is the signature SSR weapon, shipped as a body plus Grip, Light, Sight and Silencer part meshes that a merge script seats by their socket offsets before the bake, and `cw_AR_SSR_Cla_<Doll>_WL` is a cosmetic weapon skin of the standard gun, not the SSR. The two rifles share a receiver, so after a nudge session check the mesh name and vertex count in each `raw.glb` before baking: the empties do not reveal a scene exported over the wrong file.
+Pull a Doll's guns from the CN client with AssetStudio.CLI (Mesh as OBJ, Texture2D as PNG) rather than from community rips. The naming in the client: `cw_<Doll>SR01_WL` is the standard gun, `cw_<Doll>SSR01_WL` is the signature SSR weapon, shipped as a body plus Grip, Light, Sight and Silencer part meshes that a merge script seats by their socket offsets before the bake, and `cw_AR_SSR_Cla_<Doll>_WL` is a cosmetic weapon skin of the standard gun, not the SSR. The two rifles share a receiver, so after a nudge session check the mesh name and vertex count in each `raw.glb` before baking: the empties do not reveal a scene exported over the wrong file. A mesh missing from a name search is usually in one of the client's packed bundles (see Sourcing from the GFL2 client in `AGENTS.md`).
 
 ## 1. Blender preprocessor
 
@@ -76,20 +76,20 @@ dotnet ../jiangyu/src/Jiangyu.Cli/bin/Debug/net10.0/jiangyu.dll \
   assets export model <vanilla_weapon> --output /tmp/<vanilla_weapon> --path-id <id>
 ```
 
-The `--path-id` comes from a search; `import-prefab` is what makes the reference available to `BakeWeapon` in the Unity step.
+The `--path-id` comes from a search, and `import-prefab` is what makes the reference available to `BakeWeapon` in the Unity step.
 
 ## 2. Manual IK nudge in Blender
 
-`raw.glb` lands with seeded attach-point empties at the REFERENCE weapon's positions — i.e. they fit the parent gun's geometry, not yours. Open in Blender, nudge `muzzle` and `weapon_hand_l` to the right places on the new mesh:
+`raw.glb` lands with seeded attach-point empties at the REFERENCE weapon's positions, i.e. they fit the parent gun's geometry, not yours. Open in Blender, nudge `muzzle` and `weapon_hand_l` to the right places on the new mesh:
 
-- `muzzle` — where bullet trace lines start + muzzle flash spawns. Set to the front face of the barrel exit, oriented along the barrel axis (empty Y axis → out the barrel).
-- `weapon_hand_l` — where the soldier's left hand grips the foregrip. Position is the palm centre; rotation defines the wrist orientation.
+- `muzzle`: where bullet trace lines start + muzzle flash spawns. Set to the front face of the barrel exit, oriented along the barrel axis (empty Y axis → out the barrel).
+- `weapon_hand_l`: where the soldier's left hand grips the foregrip. Position is the palm centre, and rotation defines the wrist orientation.
 
-**The mesh and empties are siblings under a `<name>_root` empty**, so moving the mesh shifts the right-hand grip (the prefab parents under Hand_R at runtime) without dragging the muzzle / left-hand IK targets. Move the empties; leave the mesh alone unless the right-hand grip is also wrong.
+**The mesh and empties are siblings under a `<name>_root` empty**, so moving the mesh shifts the right-hand grip (the prefab parents under Hand_R at runtime) without dragging the muzzle / left-hand IK targets. Move the empties and leave the mesh alone unless the right-hand grip is also wrong.
 
-**Don't apply transform to the empties** — they have no geometry, so apply zeroes the position. Save the GLB and re-bake without applying. The mesh transform can be applied if you moved the mesh; the empties cannot.
+**Don't apply transform to the empties**: they have no geometry, so apply zeroes the position. Save the GLB and re-bake without applying. The mesh transform can be applied if you moved the mesh, but the empties cannot.
 
-**Mirrored rotation gotcha**: glTF round-trips can sometimes flip the empty's rotation around the X axis (e.g. quaternion `(+0.597, +0.253, +0.761, +0.025)` instead of the reference's `(-0.597, +0.253, +0.761, -0.025)`). Manifests in-game as the left hand grip rotated 180° around the gun barrel. Patch the rotation directly in the GLB (modify the JSON chunk, fix the chunk length headers) before re-baking; see `scripts/render_weapon.py` for a working GLB-mutation example.
+**Mirrored rotation gotcha**: glTF round-trips can sometimes flip the empty's rotation around the X axis (e.g. quaternion `(+0.597, +0.253, +0.761, +0.025)` instead of the reference's `(-0.597, +0.253, +0.761, -0.025)`). Manifests in-game as the left hand grip rotated 180° around the gun barrel. Patch the rotation directly in the GLB (modify the JSON chunk, fix the chunk length headers) before re-baking. See `scripts/render_weapon.py` for a working GLB-mutation example.
 
 ## 3. Unity bake
 
@@ -105,8 +105,8 @@ A single-material weapon keeps its d / n / rmo trio flat in `textures/`. A weapo
 
 Output:
 
-- `unity/Assets/Prefabs/weapon/<name>/main.prefab` — the authored prefab
-- `unity/Assets/Prefabs/weapon/<name>/baked.mat` — the cloned material with new textures
+- `unity/Assets/Prefabs/weapon/<name>/main.prefab`: the authored prefab
+- `unity/Assets/Prefabs/weapon/<name>/baked.mat`: the cloned material with new textures
 
 The `asset="weapon/<name>/main"` KDL ref points at this prefab.
 
@@ -139,17 +139,17 @@ clone "WeaponTemplate" from="<parent_weapon>" id="weapon.<character>_<name>" {
 }
 ```
 
-`SkillsGranted` indices match the parent's positions — typically [0] = primary semi-auto/burst and [1] = aimed/sustained/marksman. Inspecting the parent reveals what's at each index.
+`SkillsGranted` indices match the parent's positions, typically [0] = primary semi-auto/burst and [1] = aimed/sustained/marksman. Inspecting the parent reveals what's at each index.
 
 ## 6. Custom gunshot audio (optional)
 
-Skip if you want the weapon to use the vanilla parent's gunshot SFX — `SkillsGranted` already inherits the parent's `SoundsOnAttack`.
+Skip if you want the weapon to use the vanilla parent's gunshot SFX, as `SkillsGranted` already inherits the parent's `SoundsOnAttack`.
 
 For custom audio:
 
 ### Source clips
 
-One clip is enough; two gives a bit of variety. For a bolt-action sniper, you only need single-shot variants (no burst concatenation). For an automatic weapon, see the burst recipe in [`project_weapon_audio_pipeline`](../../) memory — concatenate 4/3/2 shots offset by `60s/RPM` per round.
+One clip is enough, and two gives a bit of variety. For a bolt-action sniper, you only need single-shot variants (no burst concatenation). For an automatic weapon, concatenate 4, 3 and 2 shots, each offset by `60s/RPM`, for the three burst variants.
 
 Bake script (per-weapon): converts source WAV(s) to 96 kHz mono, derives a distant variant via lowpass(4 kHz) + 5 early reflections at 38/75/135/220/310 ms. Pattern in `/tmp/bake_m200_audio.py` for the M200 / `rf` class.
 
@@ -215,11 +215,11 @@ clone "SkillTemplate" from="<parent_fire_skill>" id="active.fire_<character>_<na
 }
 ```
 
-`SoundsOnAttack` is the layered close-range audio (close + distant tail mixed; the engine attenuates the distant layer for nearby observers). `SoundsOnAttackFar` is what distant observers hear — single layer, just the distant variant.
+`SoundsOnAttack` is the layered close-range audio (close + distant tail mixed, and the engine attenuates the distant layer for nearby observers). `SoundsOnAttackFar` is what distant observers hear: single layer, just the distant variant.
 
-Optionally keep a vanilla brass layer (`bankId "weapons_soundbank"; itemId "small_caliber_brass_burst"`) in the close-range stack for character — the AK-15 setup does this; the M200 (bolt-action) skips it since the click is part of the recorded shot.
+Optionally keep a vanilla brass layer (`bankId "weapons_soundbank"; itemId "small_caliber_brass_burst"`) in the close-range stack for character. The AK-15 setup does this. The M200 (bolt-action) skips it since the click is part of the recorded shot.
 
-`SoundsOnAttack` and `SoundsOnAttackFar` are inherited from the parent until you `clear` + `append`. If the parent's other entries (e.g. magazine clatter) are what you want to keep, don't `clear` — just `set "SoundsOnAttack" index=N {...}` to override a specific layer.
+`SoundsOnAttack` and `SoundsOnAttackFar` are inherited from the parent until you `clear` + `append`. If the parent's other entries (e.g. magazine clatter) are what you want to keep, don't `clear`, just `set "SoundsOnAttack" index=N {...}` to override a specific layer.
 
 Update the WeaponTemplate's `SkillsGranted` index to reference your new skill clone IDs.
 
@@ -267,15 +267,15 @@ templates/weapon/
 
 ## Common shape mistakes
 
-- **Cloning from `specialweapon.*`** when you wanted a normal-class weapon — consumes the squad's precious specialweapon slot. Swap to `weapon.generic_battle_rifle_*` or similar.
-- **Wrong attach-point rotation** on `weapon_hand_l` — left hand floats 180° around the barrel. Patch the rotation in `raw.glb` (see the IK nudge gotcha).
-- **Skipping `set "fixedPitch" 1.0`** on SoundBank sound entries — the engine may treat `fixedPitch=0` as muted. Vanilla weapons set it explicitly.
-- **Bank/skill name mismatch** — the SkillTemplate's `bankId` string must match the SoundBank's clone-ID exactly. The loader hashes (FNV-1a) the string at runtime; a typo silently misroutes.
-- **`SoundsOnAttack` populated, but `SoundsOnAttackFar` left empty** after a `clear` — distant observers hear nothing. Always populate both, or skip both clears.
+- **Cloning from `specialweapon.*`** when you wanted a normal-class weapon, as it consumes the squad's precious specialweapon slot. Swap to `weapon.generic_battle_rifle_*` or similar.
+- **Wrong attach-point rotation** on `weapon_hand_l`: left hand floats 180° around the barrel. Patch the rotation in `raw.glb` (see the IK nudge gotcha).
+- **Skipping `set "fixedPitch" 1.0`** on SoundBank sound entries: the engine may treat `fixedPitch=0` as muted. Vanilla weapons set it explicitly.
+- **Bank/skill name mismatch**: the SkillTemplate's `bankId` string must match the SoundBank's clone-ID exactly. The loader hashes (FNV-1a) the string at runtime, and a typo silently misroutes.
+- **`SoundsOnAttack` populated, but `SoundsOnAttackFar` left empty** after a `clear`: distant observers hear nothing. Always populate both, or skip both clears.
 - **`clear "ImpactOnSurface"` on a fire-skill clone.** `TacticalPreloader.PreloadSkill` indexes the 14-entry table during map generation and the mission never finishes loading. Override the entries by index (`set "ImpactOnSurface" index=0..13 { ... }`, one block per surface) and set `DefaultSoundOnImpact` alongside.
 - **A rifle shot repurposed as a deployable.** It keeps the muzzle flash, tracer and report from the fire-skill parent: set `IsAttack #false`, `IsAlwaysHitting #true`, `Repetitions 1`, `AnimationType ShootSingle`, clear `EventHandlers` and add the `SpawnTileEffect` handlers. The footprint comes from an `ICustomAoEShape` in code, the KDL cannot author it.
 
 ## Cross-references
 
 - [`voice-pipeline`](../voice-pipeline/SKILL.md) for the voice-bank-vs-weapon-bank distinction (filename-as-name vs variations-per-Sound).
-- [`../../AGENTS.md`](../../AGENTS.md) for audio-bank routing, sprite slots, and the burst-concatenation recipe for full-auto weapons.
+- [`AGENTS.md`](../../../AGENTS.md) for the content and asset rules weapon additions follow.

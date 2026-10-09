@@ -13,9 +13,9 @@ The KDL "spine" of a new character: the TagTemplate / SpeakerTemplate / EntityTe
 
 Every clone needs a vanilla MENACE leader as its starting point. The parent dictates:
 
-- **Class archetype** — what kind of unit (assault, sniper, heavy, medic, etc.). Their default perks, stats, and weapon class flow through.
-- **SpeakerTemplate role name** — different speakers use different role names in their ConversationTemplate clones. JeanSy templates' speaker role is "JeanSy"; Carda's combat templates use "SL"; arrival templates use "Carda". See [voice-pipeline](../voice-pipeline/SKILL.md) for the per-template-role mapping.
-- **Conversation namespace** — JeanSy's barks live at `JeanSy/<event>`; Carda's at `Carda_Early/<event>`. The voice pipeline relies on this.
+- **Class archetype**: what kind of unit (assault, sniper, heavy, medic, etc.). Their default perks, stats, and weapon class flow through.
+- **SpeakerTemplate role name**: different speakers use different role names in their ConversationTemplate clones. JeanSy templates' speaker role is "JeanSy". Carda's combat templates use "SL", and arrival templates use "Carda". See [voice-pipeline](../voice-pipeline/SKILL.md) for the per-template-role mapping.
+- **Conversation namespace**: JeanSy's barks live at `JeanSy/<event>`, and Carda's at `Carda_Early/<event>`. The voice pipeline relies on this.
 
 Find candidates via Jiangyu CLI:
 
@@ -23,7 +23,7 @@ Find candidates via Jiangyu CLI:
 dotnet ../jiangyu/src/Jiangyu.Cli/bin/Debug/net10.0/jiangyu.dll templates inspect --type UnitLeaderTemplate --name squad_leader.<name>
 ```
 
-For an existing-archetype clone (e.g. another sniper from carda), pick the vanilla leader with the closest class. The clone inherits everything; you override only what differs.
+For an existing-archetype clone (e.g. another sniper from carda), pick the vanilla leader with the closest class. The clone inherits everything, and you override only what differs.
 
 ## File layout
 
@@ -93,30 +93,30 @@ The five clones depend on each other by ID:
 
 Tags gate which items each unit can equip.
 
-- **`wmgfl_<character>`** — unique per character. The character's `EntityTemplate.Tags` adds it; their weapon `OnlyEquipableBy` references it, so the weapon shows only in that character's dropdown (vanilla `OnlyEquipableBy` filtering hides it from everyone else).
-- **`jy_weapon_restricted` / `jy_special_restricted`** — slot-restriction tags on the EntityTemplate for a doll locked TO her own gear (a melee-only doll carries both). When the unit has one, Jiangyu's `InventoryFilterPatch` Harmony hook filters that slot's loadout-UI dropdown to items with a matching `OnlyEquipableBy`. Without it the character equips vanilla items in that slot too.
-- **`wmgfl_transmog`** — carried by no unit. An outfit `ArmorTemplate` whose `OnlyEquipableBy` names only this tag never appears in any equip dropdown: outfits are cosmetic carriers for the transmog picker, never equippable armour. Dolls equip vanilla armour for stats.
+- **`wmgfl_<character>`**: unique per character. The character's `EntityTemplate.Tags` adds it, and their weapon `OnlyEquipableBy` references it, so the weapon shows only in that character's dropdown (vanilla `OnlyEquipableBy` filtering hides it from everyone else).
+- **`jy_weapon_restricted` / `jy_special_restricted`**: slot-restriction tags on the EntityTemplate for a doll locked TO her own gear (a melee-only doll carries both). When the unit has one, Jiangyu's `InventoryFilterPatch` Harmony hook filters that slot's loadout-UI dropdown to items with a matching `OnlyEquipableBy`. Without it the character equips vanilla items in that slot too.
+- **`wmgfl_transmog`**: carried by no unit. An outfit `ArmorTemplate` whose `OnlyEquipableBy` names only this tag never appears in any equip dropdown: outfits are cosmetic carriers for the transmog picker, never equippable armour. Dolls equip vanilla armour for stats.
 
-**The `InventoryFilterPatch` filter only runs in the strategy-mode loadout dropdown** (`UnitWindowEquipment.UpdateEquipmentAlternatives` → `SortedFilteredItemList.GetSortedAndFilteredItems`). Other UI paths (blackmarket, debug menus) bypass it; `OnlyEquipableBy` is documentation-only there.
+**The `InventoryFilterPatch` filter only runs in the strategy-mode loadout dropdown** (`UnitWindowEquipment.UpdateEquipmentAlternatives` → `SortedFilteredItemList.GetSortedAndFilteredItems`). Other UI paths (blackmarket, debug menus) bypass it, so `OnlyEquipableBy` is documentation-only there.
 
 ## Sprite slots
 
 Several portrait/badge fields exist on both `UnitLeaderTemplate` and `EntityTemplate`. MENACE's UI is inconsistent about which one it reads. For an Infantry leader clone (`UnitActorType == 0`):
 
-- `EntityTemplate.Badge` / `BadgeWhite` — in-mission badge above units and the turn-bar squad list (via `InfantryUnitTemplate.Badge`).
-- `UnitLeaderTemplate.BadgeMini` — mission-prep tactical preview small badge. Read in `MissionPrepDeployedEntity.Init`.
-- `UnitLeaderTemplate.Slot` / `SlotInactive` — turn-bar portrait.
-- `UnitLeaderTemplate.BadgeUnitWindow` — unit-info window header (read in `UnitLeaderUIExtensions.InitUnitWindowHeader`).
-- `UnitLeaderTemplate.BigBadge` — hiring info-panel banner.
-- `UnitLeaderTemplate.SlotBadge` / `BadgeDragged` — hire-slot + drag visuals.
-- `UnitLeaderTemplate.Badge` / `BadgeWhite` — dead for Infantry. Don't bother setting.
-- `EntityTemplate.PreviewMapIcon` — also dead in tested screens.
+- `EntityTemplate.Badge` / `BadgeWhite`: in-mission badge above units and the turn-bar squad list (via `InfantryUnitTemplate.Badge`).
+- `UnitLeaderTemplate.BadgeMini`: mission-prep tactical preview small badge. Read in `MissionPrepDeployedEntity.Init`.
+- `UnitLeaderTemplate.Slot` / `SlotInactive`: turn-bar portrait.
+- `UnitLeaderTemplate.BadgeUnitWindow`: unit-info window header (read in `UnitLeaderUIExtensions.InitUnitWindowHeader`).
+- `UnitLeaderTemplate.BigBadge`: hiring info-panel banner.
+- `UnitLeaderTemplate.SlotBadge` / `BadgeDragged`: hire-slot + drag visuals.
+- `UnitLeaderTemplate.Badge` / `BadgeWhite`: dead for Infantry. Don't bother setting.
+- `EntityTemplate.PreviewMapIcon`: also dead in tested screens.
 
 The full bestiary lives in [`../../AGENTS.md`](../../AGENTS.md) under "Sprite slots".
 
 ## armor.kdl (transmog outfits)
 
-One `ArmorTemplate` clone per outfit. Outfits carry the character's look (model, icons, name) for the transmog picker; they hold no combat stats and no unit can equip them. The character wears vanilla armour for stats and always renders her selected outfit:
+One `ArmorTemplate` clone per outfit. Outfits carry the character's look (model, icons, name) for the transmog picker. They hold no combat stats and no unit can equip them. The character wears vanilla armour for stats and always renders her selected outfit:
 
 ```kdl
 clone "ArmorTemplate" from="armor.player_fatigues" id="armor.<character>_<variant>" {
@@ -141,7 +141,7 @@ The model `asset=` ref points at the per-variant subdir under `unity/Assets/Pref
 Code-side registration, both in `code/`:
 
 - `Transmog.DefaultFor` (`Systems/Transmog/Transmog.cs`) derives `armor.<character>_default` from the `wmgfl_<character>` tag and probes the template registry for it. A character is a transmog character exactly when that template exists, so the default outfit needs no code-side registration, but its id MUST follow the `armor.<character>_default` convention or the character renders whatever armour she wears.
-- Extra outfits (skins) are `Unlocks` entries (`Feature.Skins`) with the affinity level that unlocks them; the picker lists them greyed until then.
+- Extra outfits (skins) are `Unlocks` entries (`Feature.Skins`) with the affinity level that unlocks them, and the picker lists them greyed until then.
 
 ## perk_tree.kdl
 
@@ -156,7 +156,7 @@ clone "PerkTreeTemplate" from="perk_tree.<parent>" id="perk_tree.<character>" {
 
 Tiers gate when a perk unlocks during levelling. Vanilla characters mostly have 4-5 tier-1, 4-5 tier-2, 4 tier-3, 2 tier-4. Match that distribution or the perk panel UI looks sparse.
 
-Verify each perk exists before referencing — Jiangyu rejects unknown perk IDs at compile:
+Verify each perk exists before referencing, as Jiangyu rejects unknown perk IDs at compile:
 
 ```bash
 dotnet ../jiangyu/src/Jiangyu.Cli/bin/Debug/net10.0/jiangyu.dll templates search "perk.<name>"
@@ -167,7 +167,7 @@ dotnet ../jiangyu/src/Jiangyu.Cli/bin/Debug/net10.0/jiangyu.dll templates search
 - **British English** in titles, descriptions, comments (analyse, colour). Only use American spelling for external library APIs.
 - **No em dashes**, **no semicolons** in prose / Title / Description / KDL string literals. Periods, commas, colons only.
 - **`mise run format`** before committing. Rewrites KDL through Jiangyu's parse → validate → normalise → serialise pipeline so diffs only show real authoring changes. `mise run format --check` exits non-zero in CI when files would change.
-- **KDL composite-over-dotted** — never `set "Type.field" v`. Always `set "Type" composite="X" { set "field" v }` or the bare-child-block form for monomorphic destinations.
+- **KDL composite-over-dotted**: never `set "Type.field" v`. Always `set "Type" composite="X" { set "field" v }` or the bare-child-block form for monomorphic destinations.
 - **`wmgfl_` prefix** on collision-prone clone IDs: SoundBank names, character Tags (`wmgfl_<character>`), SpeakerTemplate IDs (`wmgfl_<character>_speaker`). Already-namespaced IDs like `armor.<character>_default` skip it. See `AGENTS.md` for the full rule and rationale.
 
 ## What inherits, what you override
@@ -175,16 +175,16 @@ dotnet ../jiangyu/src/Jiangyu.Cli/bin/Debug/net10.0/jiangyu.dll templates search
 A `clone` deep-copies the parent's typed state, then applies the patches in your block. Anything you don't `set` keeps the parent's value. This matters because:
 
 - `Triggers`, `Condition`, `EventSettings`, `Priority`, `PlayChance`, `Repeatable`, `Repetitions` on cloned ConversationTemplates flow through. You almost never need to set these.
-- The parent's other Roles (the ones whose `m_SerializedRequirements` you don't patch) flow through. `set "Roles" index=N` modifies one role; the others stay parent-defined.
+- The parent's other Roles (the ones whose `m_SerializedRequirements` you don't patch) flow through. `set "Roles" index=N` modifies one role, and the others stay parent-defined.
 - The parent's `Nodes` (m_SerializedNodes) get REPLACED if you do `set "Nodes" { ... }` (not `append`). The voice-pipeline skill explains the implication.
 
 ## Common shape mistakes
 
-- **Cloning the wrong parent class** — e.g. cloning from `specialweapon.X` if you don't want the unit to consume the specialweapon slot. For a sniper-style weapon in the normal slot, pick `weapon.generic_battle_rifle_tier1_crowbar_marksman` or similar.
+- **Cloning the wrong parent class**: e.g. cloning from `specialweapon.X` if you don't want the unit to consume the specialweapon slot. For a sniper-style weapon in the normal slot, pick `weapon.generic_battle_rifle_tier1_crowbar_marksman` or similar.
 - **Forgetting `append "Tags" "wmgfl_<character>"`** on the EntityTemplate. The transmog swap never matches (the character renders her equipped vanilla armour as a vanilla soldier body) and weapon `OnlyEquipableBy` gating fails.
-- **Naming the default outfit off-convention** — `Transmog.DefaultFor` derives `armor.<character>_default` from the character tag, so an id like `armor.<character>_base` means the picker tile never appears and nothing renders the outfits.
-- **Wrong RoleGuid in cloned ConversationTemplates** — must match the role NAME in the actual parent template, which differs per-template (see [voice-pipeline](../voice-pipeline/SKILL.md)).
-- **Two UnitLeaderTemplates sharing an id segment** — the game's `GameConditionVars` static ctor builds a `LEADER_STATUS_<SEGMENT>` conversation var per leader template from the id segment after the dot. `pilot.<character>` plus `squad_leader.<character>` both yield `LEADER_STATUS_<CHARACTER>`, which throws a duplicate-key `TypeInitializationException` and crashes new-game creation. A character with two forms needs a unique segment per form (`squad_leader.<character>` plus `pilot.<character>_mech`, or `pilot.<character>` plus `squad_leader.<character>_foot`).
+- **Naming the default outfit off-convention**: `Transmog.DefaultFor` derives `armor.<character>_default` from the character tag, so an id like `armor.<character>_base` means the picker tile never appears and nothing renders the outfits.
+- **Wrong RoleGuid in cloned ConversationTemplates**: must match the role NAME in the actual parent template, which differs per-template (see [voice-pipeline](../voice-pipeline/SKILL.md)).
+- **Two UnitLeaderTemplates sharing an id segment**: the game's `GameConditionVars` static ctor builds a `LEADER_STATUS_<SEGMENT>` conversation var per leader template from the id segment after the dot. `pilot.<character>` plus `squad_leader.<character>` both yield `LEADER_STATUS_<CHARACTER>`, which throws a duplicate-key `TypeInitializationException` and crashes new-game creation. A character with two forms needs a unique segment per form (`squad_leader.<character>` plus `pilot.<character>_mech`, or `pilot.<character>` plus `squad_leader.<character>_foot`).
 
 ## Cross-references
 
