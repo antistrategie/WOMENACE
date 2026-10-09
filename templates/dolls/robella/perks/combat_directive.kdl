@@ -1,0 +1,66 @@
+clone "PerkTemplate" from="perk.command_rally" id="perk.robella_combat_directive" {
+    // Robella orders an ally to return fire. The ally gains a Counterattack that lasts until its
+    // next turn, the same CounterAttack handler Counter Strike grants, so it fires once and goes.
+    set "Title" {
+        set "m_DefaultTranslation" "Combat Directive"
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "ACTIVATE: An ally within $1 tiles shoots back at its next attacker."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="PerkTemplate" "perk.robella_combat_directive" path="MaxRange"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            There's no teammate more helpful than me.
+
+
+            <style="Highlight">• ACTIVATE: Target an allied unit within $1 tiles. Until its next turn, it shoots back at the next enemy that attacks it.
+
+
+            ** The attacker needs to be in range and visible. No attack is possible if the squad is pinned, stunned or disabled. **</style>
+            """
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="PerkTemplate" "perk.robella_combat_directive" path="MaxRange"
+    }
+
+    set "Icon" asset="robella/perks/combat_directive"
+    set "IconDisabled" asset="robella/perks/combat_directive_inactive"
+    set "PerkIcon" asset="robella/perks/combat_directive"
+
+    set "ActionPointCost" 20
+    set "MaxRange" 6
+    clear "SoundsOnUse"
+    append "SoundsOnUse" {
+        set "bankId" "wmgfl_tactical_barks_robella_va"
+        set "itemId" "Series_Attack_Series_Tone_Positive_003"
+    }
+
+    clear "EventHandlers"
+    append "EventHandlers" type="AddSkill" {
+        set "Event" enum="AddEvent" "OnUse"
+        set "SkillToAdd" "effect.robella_combat_directive"
+    }
+    append "EventHandlers" type="Cooldown" {
+        set "RoundsToCoolDown" 1
+        set "AIOnly" #false
+    }
+}
+
+clone "SkillTemplate" from="effect.counter_strike" id="effect.robella_combat_directive" {
+    set "Title" {
+        set "m_DefaultTranslation" "Combat Directive"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "This unit will counter strike the next time it is attacked before its next turn."
+    }
+    append "EventHandlers" type="LifetimeLimit" {
+        set "Event" enum="LifetimeType" "OnTurnStart"
+        set "Lifetime" 1
+        set "ResetLifetimeOnRefresh" #true
+    }
+    append "EventHandlers" type="DisplayText" {
+        set "Event" enum="DisplayEvent" "OnAdded"
+        set "LocaKey" "robella_combat_directive"
+        set "DefaultText" "Counterattack ready!"
+    }
+}

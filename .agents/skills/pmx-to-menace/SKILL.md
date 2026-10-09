@@ -71,6 +71,7 @@ The profile is written once and never overwritten. After that it is tuned in pla
 
 - Tune live with the `Springs.Status` and `Springs.Set` dev verbs, then copy settled values into the profile.
 - Check the whole roster offline with the replay harness in `tests/SpringBones/` (its README covers recording and the report). It runs the real solver against each outfit's baked skeleton.
+- MENACE's deployed stance is a kneel with one shin flat behind her. A floor-length skirt too slim to swallow that leg lets the shin out through its back on the generated `Gown`. Switch it to `SpringPresets.SlimGown` and the profile's colliders to `SlimGownColliders`, which follow the legs with the back only while a knee is bent deep and widen the thigh capsules. A full ball gown stays on `Gown`.
 - Regenerating the Asteria and Alva default profiles must reproduce the committed ones exactly. Use that as the regression check after changing the converter's chain rules.
 
 ## Pipeline stages

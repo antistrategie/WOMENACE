@@ -56,7 +56,7 @@ internal sealed class SpringBindPose
 internal static class SpringChainBuilder
 {
     // The bones the body pose is read from (SpringBodyPose).
-    internal static readonly string[] PoseBones = { "Hips", "Spine", "UpperLeg_L", "LowerLeg_L", "UpperLeg_R", "LowerLeg_R" };
+    internal static readonly string[] PoseBones = { "Hips", "Spine", "UpperLeg_L", "LowerLeg_L", "UpperLeg_R", "LowerLeg_R", "Foot_L", "Foot_R" };
 
     // The MENACE humanoid bones, recorded as a full-body pose by the flight
     // recorder so the offline replay can drive every outfit's skeleton.

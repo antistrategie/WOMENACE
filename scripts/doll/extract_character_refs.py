@@ -12,8 +12,8 @@ bundles:
               Written to Authored/<doll>/hair_uv1_ref.npz, from where
               transfer_hair_uv.py transfers it onto the doll's own hair.
 
-Reading the bundles is tdollhouse's ShaderDump, which needs ASSET_STUDIO_DIR set
-to that project's extract/AS. The bundle a given asset lives in comes from the
+Reading the bundles is tdollhouse-re's ShaderDump, which needs ASSET_STUDIO_DIR set
+to tdollhouse's extract/AS. The bundle a given asset lives in comes from the
 asset map under ~/gfl2-extract/maps/.
 
 Two clients hold different content and a character missing from one may be in
@@ -40,7 +40,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from bake_ramp_png import bake, write_meta, write_png                 # noqa: E402
 
 TDOLLHOUSE = Path.home() / "dev/github.com/antistrategie/tdollhouse"
-SHADERDUMP = TDOLLHOUSE / "tools/shaderdump/bin/ShaderDump.dll"
+SHADERDUMP = Path.home() / "dev/github.com/antistrategie/tdollhouse-re/shaderdump/bin/Release/ShaderDump.dll"
 MAPS = Path.home() / "gfl2-extract/maps"
 
 CLIENTS = {

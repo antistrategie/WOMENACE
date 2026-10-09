@@ -10,7 +10,7 @@ hair to the game's with a trimmed-ICP similarity fit, give each doll vertex the
 inverse-distance-weighted UV of its nearest game vertices.
 
 The reference is <doll>/hair_uv1_ref.npz (pos + uv), dumped from the game's
-hair mesh by tdollhouse's shaderdump (Mesh mode decodes the channels). When the
+hair mesh by tdollhouse-re's shaderdump (Mesh mode decodes the channels). When the
 file exists, prepare_doll runs this and doll_shading switches the hair
 materials onto the specular path.
 

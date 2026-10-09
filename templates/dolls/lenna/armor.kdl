@@ -18,3 +18,45 @@ clone "ArmorTemplate" from="armor.player_fatigues" id="armor.lenna_default" {
     append "OnlyEquipableBy" "wmgfl_transmog"
     append "Tags" "jy_no_sell"
 }
+
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.lenna_vitality_magic" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
+    set "Title" {
+        set "m_DefaultTranslation" "Vitality Magic"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Stage Outfit"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "A gift Lenna received from the Commander. Whether it is a delicate flower or a playful bow - it finds a perfect home on Lenna."
+    }
+    set "Icon" asset="lenna/armor/vitality_magic/Icon"
+    set "IconEquipment" asset="lenna/armor/vitality_magic/IconEquipment"
+    set "IconSkillBar" asset="lenna/armor/vitality_magic/IconSkillBar"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_transmog"
+    append "Tags" "jy_no_sell"
+}
+
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.lenna_flying_phantom" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
+    set "Title" {
+        set "m_DefaultTranslation" "Flying Phantom"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Field Outfit"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "She hides her form and secrets in the night, protecting everything she loves with her silent guardianship."
+    }
+    set "Icon" asset="lenna/armor/flying_phantom/Icon"
+    set "IconEquipment" asset="lenna/armor/flying_phantom/IconEquipment"
+    set "IconSkillBar" asset="lenna/armor/flying_phantom/IconSkillBar"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_transmog"
+    append "Tags" "jy_no_sell"
+}

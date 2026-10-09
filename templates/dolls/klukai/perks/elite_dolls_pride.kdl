@@ -1,0 +1,54 @@
+clone "SkillTemplate" from="effect.solid_grouping" id="effect.klukai_elite_dolls_pride" {
+    set "Icon" asset="klukai/effects/elite_dolls_pride"
+    set "Title" {
+        set "m_DefaultTranslation" "Elite Doll's Pride"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "+$1 <link=\"accuracy\">Accuracy</link> and +$2% Damage for each visible enemy within $3 tiles. Cannot be Pinned Down."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.klukai_elite_dolls_pride" path="EventHandlers[0].AccuracyPerEnemy"
+        append "m_Placeholders" bind="SkillTemplate" "effect.klukai_elite_dolls_pride" path="EventHandlers[0].DamagePerEnemy" format="percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.klukai_elite_dolls_pride" path="EventHandlers[0].Range"
+    }
+    clear "EventHandlers"
+    append "EventHandlers" type="WOMENACE:ElitePride" {
+        set "AccuracyPerEnemy" 5
+        set "DamagePerEnemy" 0.05
+        set "Range" 6
+        set "MaxEnemies" 4
+    }
+}
+
+clone "PerkTemplate" from="perk.solid_grouping" id="perk.klukai_elite_dolls_pride" {
+    set "Title" {
+        set "m_DefaultTranslation" "Elite Doll's Pride"
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "+$1 ACC and +$2% DMG for each enemy nearby. Cannot be Pinned Down."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.klukai_elite_dolls_pride" path="EventHandlers[0].AccuracyPerEnemy"
+        append "m_Placeholders" bind="SkillTemplate" "effect.klukai_elite_dolls_pride" path="EventHandlers[0].DamagePerEnemy" format="percent"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            Second place is for other squads.
+
+
+            <style="Highlight">• +$1 <link="accuracy">Accuracy</link> and +$2% Damage for each visible enemy within $3 tiles, up to $4 enemies.
+            • Cannot be Pinned Down by <link="suppression">Suppression</link>.</style>
+            """
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.klukai_elite_dolls_pride" path="EventHandlers[0].AccuracyPerEnemy"
+        append "m_Placeholders" bind="SkillTemplate" "effect.klukai_elite_dolls_pride" path="EventHandlers[0].DamagePerEnemy" format="percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.klukai_elite_dolls_pride" path="EventHandlers[0].Range"
+        append "m_Placeholders" bind="SkillTemplate" "effect.klukai_elite_dolls_pride" path="EventHandlers[0].MaxEnemies"
+    }
+
+    set "Icon" asset="klukai/perks/elite_dolls_pride"
+    set "IconDisabled" asset="klukai/perks/elite_dolls_pride_inactive"
+    set "PerkIcon" asset="klukai/perks/elite_dolls_pride"
+
+    set "EventHandlers" index=0 {
+        set "SkillToAdd" "effect.klukai_elite_dolls_pride"
+    }
+}

@@ -136,6 +136,30 @@ blended shader. Across this project's dolls exactly one costume trips the real
 test: a costume's sticker sheet, whose client material name carries
 `_trans_ubertrans`.
 
+**Every new outfit needs a transparency check, because PMX repacks usually drop
+the marker.** The repack renames its texture sheets, so a sheer skirt, veil or
+cover-up that the game blends lands on the opaque shader with nothing to warn
+of it. Before baking an outfit:
+
+1. Search the client asset maps (`~/gfl2-extract/maps/`) for `Mesh` entries
+   carrying both the outfit's client code (`c_<Character>SSR01NN`) and `trans`.
+   No hits means the outfit has no blended surfaces.
+2. Match each hit to the repack material that draws it. Dump the mesh's UVs with
+   ShaderDump (the same way `extract_character_refs.py` dumps the hair mesh) and
+   compare them with each LOD0 material's `TEXCOORD_0` in `model.gltf`. The
+   material whose UVs coincide with the mesh's is the one, and a sheet shared
+   with opaque parts still splits cleanly by material. A `trans` mesh with no
+   match is a part the repack does not carry, such as a battle-only variant.
+3. Add the matched materials to `TRANSLUCENT_OVERRIDES` in `doll_shading.py`,
+   keyed by `<doll>/<outfit>`, then re-run `prepare_doll.py --bake`. Skip a
+   material whose repack sheet has no alpha channel: blending it changes nothing.
+
+An outfit missing from both clients has no verdict to carry over. Then, and
+only then, judge from the sheet: view each outer layer's alpha, and route a
+material whose panel is painted translucent by design, as a sarong or sheer
+shirt is. Say so in the override's comment, since the table is otherwise the
+game's word.
+
 A translucent material also drops out of the outline submesh, because the game
 draws no contour through transparency and a hull around a decal sheet is a rim
 in mid-air around the sheet rather than around anything visible on it.

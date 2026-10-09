@@ -1,0 +1,35 @@
+clone "PerkTemplate" from="perk.scavenger" id="perk.soppo_souvenir" {
+    // Soppo's mission-end loot roll. The Souvenir handler (code/Perks/Souvenir.cs) picks a commodity
+    // from the loot tables of the enemies killed this mission, preferring ones worth MinValue to
+    // MaxValue, and adds it to the mission-result loot. Fallback covers kills that carry none.
+    set "Title" {
+        set "m_DefaultTranslation" "Souvenir"
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "$1% chance to bring home a commodity from killed enemies after a mission."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="PerkTemplate" "perk.soppo_souvenir" path="EventHandlers[0].Chance" format="percent"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            The battlefield isn't a place to be wandering around idly, you know~
+
+
+            <style="Highlight">• At the end of each mission, $1% chance to bring home 1 commodity taken from the enemies killed.</style>
+            """
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="PerkTemplate" "perk.soppo_souvenir" path="EventHandlers[0].Chance" format="percent"
+    }
+
+    set "Icon" asset="soppo/perks/souvenir"
+    set "IconDisabled" asset="soppo/perks/souvenir_inactive"
+    set "PerkIcon" asset="soppo/perks/souvenir"
+
+    clear "EventHandlers"
+    append "EventHandlers" type="WOMENACE:Souvenir" {
+        set "Chance" 0.2
+        set "MinValue" 30
+        set "MaxValue" 40
+        set "Fallback" ref="CommodityTemplate" "commodity.high_value_salvage"
+    }
+}

@@ -1,0 +1,42 @@
+clone "PerkTemplate" from="perk.steady_gun" id="perk.makiatto_frozen_sights" {
+    set "Title" {
+        set "m_DefaultTranslation" "Frozen Sights"
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "+$1 View Range. Interception with Bittersweet Caramel: +$2% DMG, +$3% AP discount."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="PerkTemplate" "perk.makiatto_frozen_sights" path="EventHandlers[0].Amount"
+        append "m_Placeholders" bind="PerkTemplate" "perk.makiatto_frozen_sights" path="EventHandlers[1].DamageBonus" format="percent"
+        append "m_Placeholders" bind="PerkTemplate" "perk.makiatto_frozen_sights" path="EventHandlers[1].ApDiscount" format="percent"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            Annoyances, get lost!
+
+
+            <style="Highlight">• +$1 <link="vision">View Range</link>.
+            • Interception shots fired with Bittersweet Caramel deal +$2% Damage and get +$3% to Interception's <link="action_points">AP</link> discount.</style>
+            """
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="PerkTemplate" "perk.makiatto_frozen_sights" path="EventHandlers[0].Amount"
+        append "m_Placeholders" bind="PerkTemplate" "perk.makiatto_frozen_sights" path="EventHandlers[1].DamageBonus" format="percent"
+        append "m_Placeholders" bind="PerkTemplate" "perk.makiatto_frozen_sights" path="EventHandlers[1].ApDiscount" format="percent"
+    }
+
+    set "Icon" asset="makiatto/perks/frozen_sights"
+    set "IconDisabled" asset="makiatto/perks/frozen_sights_inactive"
+    set "PerkIcon" asset="makiatto/perks/frozen_sights"
+
+    clear "EventHandlers"
+    append "EventHandlers" type="ChangeProperty" {
+        set "Trigger" enum="UpdateEvent" "OnUpdate"
+        set "PropertyType" enum="EntityPropertyType" "Vision"
+        set "Amount" 2
+        set "AmountMult" 1.0
+    }
+    append "EventHandlers" type="WOMENACE:InterceptionWeaponBonus" {
+        set "Weapon" ref="WeaponTemplate" "weapon.makiatto_ssr"
+        set "DamageBonus" 0.2
+        set "ApDiscount" 0.15
+    }
+}

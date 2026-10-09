@@ -38,11 +38,11 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.makiatto_overwatch" {
     }
 }
 
-// The toggles, a pair per weapon. Free, instant self-uses that switch the slot's Interception on or
-// off without ending her turn. The slot's marker hides the one that does not apply, so the bar
-// shows the state. Each pair has its own Order: equal Orders fall back to the order skills were
-// shown in, and the pairs would trade places with each toggle. Granted each mission by the perk,
-// so they go after combat.
+// The toggles, a pair per weapon, built like vanilla Take Aim. Free, instant self-uses that switch
+// the slot's Interception on or off without ending her turn. SwitchBetweenSkills shows one of the
+// pair at a time, the on skill adds the slot's marker and the off skill removes it. Each pair has
+// its own Order: equal Orders fall back to the order skills were shown in, and the pairs would
+// trade places with each toggle. Granted each mission by the perk, so they go after combat.
 clone "SkillTemplate" from="active.special.lucky_shot" id="active.makiatto_interception_squad" {
     set "Order" enum="SkillOrder" "Background"
     set "Title" {
@@ -62,11 +62,14 @@ clone "SkillTemplate" from="active.special.lucky_shot" id="active.makiatto_inter
     set "IsRemovedAfterCombat" #true
     clear "Tags"
     clear "EventHandlers"
-    append "EventHandlers" type="WOMENACE:InterceptionToggle" {
-        set "Slot" "squad"
+    append "EventHandlers" type="SwitchBetweenSkills" {
+        set "IsVisibleAtStart" #true
+        set "SwitchWithSkill" "active.makiatto_interception_squad_stop"
+        set "Mode" enum="DeactivateMode" "Hide"
     }
-    append "EventHandlers" type="LimitUsability" {
-        append "HiddenIfActorHasSkill" "effect.makiatto_interception_squad"
+    append "EventHandlers" type="AddSkill" {
+        set "Event" enum="AddEvent" "OnUse"
+        set "SkillToAdd" "effect.makiatto_interception_squad"
     }
 }
 
@@ -84,11 +87,14 @@ clone "SkillTemplate" from="active.makiatto_interception_squad" id="active.makia
     set "Icon" asset="makiatto/skills/interception_squad_on"
     set "IconDisabled" asset="makiatto/skills/interception_squad_disabled"
     clear "EventHandlers"
-    append "EventHandlers" type="WOMENACE:InterceptionToggle" {
-        set "Slot" "squad"
+    append "EventHandlers" type="SwitchBetweenSkills" {
+        set "IsVisibleAtStart" #false
+        set "SwitchWithSkill" "active.makiatto_interception_squad"
+        set "Mode" enum="DeactivateMode" "Hide"
     }
-    append "EventHandlers" type="LimitUsability" {
-        append "NotHiddenIfActorHasSkill" "effect.makiatto_interception_squad"
+    append "EventHandlers" type="RemoveSkill" {
+        set "Event" enum="RemoveTrigger" "OnUse"
+        append "SkillsToRemove" "effect.makiatto_interception_squad"
     }
 }
 
@@ -106,11 +112,14 @@ clone "SkillTemplate" from="active.makiatto_interception_squad" id="active.makia
     set "Icon" asset="makiatto/skills/interception_leader"
     set "IconDisabled" asset="makiatto/skills/interception_leader_disabled"
     clear "EventHandlers"
-    append "EventHandlers" type="WOMENACE:InterceptionToggle" {
-        set "Slot" "leader"
+    append "EventHandlers" type="SwitchBetweenSkills" {
+        set "IsVisibleAtStart" #true
+        set "SwitchWithSkill" "active.makiatto_interception_leader_stop"
+        set "Mode" enum="DeactivateMode" "Hide"
     }
-    append "EventHandlers" type="LimitUsability" {
-        append "HiddenIfActorHasSkill" "effect.makiatto_interception_leader"
+    append "EventHandlers" type="AddSkill" {
+        set "Event" enum="AddEvent" "OnUse"
+        set "SkillToAdd" "effect.makiatto_interception_leader"
     }
 }
 
@@ -128,16 +137,19 @@ clone "SkillTemplate" from="active.makiatto_interception_squad" id="active.makia
     set "Icon" asset="makiatto/skills/interception_leader_on"
     set "IconDisabled" asset="makiatto/skills/interception_leader_disabled"
     clear "EventHandlers"
-    append "EventHandlers" type="WOMENACE:InterceptionToggle" {
-        set "Slot" "leader"
+    append "EventHandlers" type="SwitchBetweenSkills" {
+        set "IsVisibleAtStart" #false
+        set "SwitchWithSkill" "active.makiatto_interception_leader"
+        set "Mode" enum="DeactivateMode" "Hide"
     }
-    append "EventHandlers" type="LimitUsability" {
-        append "NotHiddenIfActorHasSkill" "effect.makiatto_interception_leader"
+    append "EventHandlers" type="RemoveSkill" {
+        set "Event" enum="RemoveTrigger" "OnUse"
+        append "SkillsToRemove" "effect.makiatto_interception_leader"
     }
 }
 
-// A toggle's state, a hidden status effect on Makiatto that the toggle pair hides by. Re-applied
-// from the persisted state each mission, since effects go after combat.
+// A toggle's state, a hidden status effect on Makiatto while the slot's Interception is on. Effects
+// go after combat, so every mission starts with Interception off.
 clone "SkillTemplate" from="effect.reduced_ap_after_transport" id="effect.makiatto_interception_squad" {
     set "Title" {
         set "m_DefaultTranslation" "Interception: Squad Weapon"

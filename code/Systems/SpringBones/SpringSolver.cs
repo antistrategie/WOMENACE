@@ -155,6 +155,8 @@ internal struct SpringBodyPose
     public NVector3 KneeLeft;
     public NVector3 HipRight;
     public NVector3 KneeRight;
+    public NVector3 FootLeft;
+    public NVector3 FootRight;
 
     public NVector3 Up => SpringSolver.Direction(Spine - Hips);
     public NVector3 HipCentre => (HipLeft + HipRight) * 0.5f;
@@ -224,8 +226,8 @@ internal static class SpringSolver
 
     // Carries the chain's target shape with each thigh's swing away from
     // straight down along the body (Carried), by a share of it, the front of
-    // a garment following fully and the back by SpringChainSpec.LegDriveBack.
-    // The rest pose is the T-pose, with the legs straight down, so a skirt
+    // a garment following fully and the back by SpringChainSpec.LegDriveBack,
+    // or by LegDriveBackKneeling while a knee is bent deep. The rest pose is the T-pose, with the legs straight down, so a skirt
     // shaped by it runs through the thighs as soon as they move. A target
     // that already moves with the legs keeps the springs from fighting the
     // leg colliders.
@@ -251,7 +253,7 @@ internal static class SpringSolver
         var across = NVector3.Dot(tip, lateral);
         var around = MathF.Sqrt(Math.Max(front * front + across * across, 1e-8f));
         var frontness = 0.5f + 0.5f * Math.Clamp(front / around, -1f, 1f);
-        var back = chain.Spec.LegDriveBack;
+        var back = Math.Max(chain.Spec.LegDriveBack, chain.Spec.LegDriveBackKneeling * Kneeling(pose));
         var share = drive * (back + (1f - back) * frontness);
 
         for (var i = 0; i < chain.Targets.Length; i++)
@@ -266,6 +268,29 @@ internal static class SpringSolver
             chain.Targets[i] = NVector3.Lerp(left, right, rightShare);
         }
         Relay(chain, origin, scale);
+    }
+
+    // How far into a kneel the deeper-bent knee is, by the angle between
+    // thigh and shin. The combat stance bends the knees about 50 degrees and
+    // a stride mostly up to 95, while the deployed kneel folds one to 135.
+    private const float KneelBendStart = 100f;
+    private const float KneelBendFull = 125f;
+
+    private static float Kneeling(in SpringBodyPose pose)
+    {
+        var bend = Math.Max(
+            AngleBetween(pose.KneeLeft - pose.HipLeft, pose.FootLeft - pose.KneeLeft),
+            AngleBetween(pose.KneeRight - pose.HipRight, pose.FootRight - pose.KneeRight));
+        return Math.Clamp((bend - KneelBendStart) / (KneelBendFull - KneelBendStart), 0f, 1f);
+    }
+
+    private static float AngleBetween(NVector3 a, NVector3 b)
+    {
+        var la = a.Length();
+        var lb = b.Length();
+        if (la < 1e-6f || lb < 1e-6f)
+            return 0f;
+        return MathF.Acos(Math.Clamp(NVector3.Dot(a, b) / (la * lb), -1f, 1f)) * (180f / MathF.PI);
     }
 
     // A target point carried by a thigh: moved as far as the point of the

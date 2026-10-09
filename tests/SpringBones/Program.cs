@@ -9,7 +9,7 @@ namespace WOMENACE.SpringBones.Tests;
 // outfit profile, against each outfit's own baked skeleton, and reports per
 // chain how jittery, folded, sunk into the body and lively it was.
 //
-//   dotnet run --project tests/SpringBones -- <recording.csv> <source outfit> [outfit filter] [--set chain.Field=value ...]
+//   dotnet run --project tests/SpringBones -- <recording.csv[.gz]> <source outfit> [outfit filter] [--set chain.Field=value ...]
 //
 // --set retunes every chain spec with that name before the run, the way the
 // Springs.Set dev verb does live, e.g. --set skirt.Follow=0.7.
@@ -25,7 +25,7 @@ internal static class Program
     {
         if (args.Length < 2)
         {
-            Console.Error.WriteLine("usage: <recording.csv> <source outfit, e.g. ots14/default> [outfit filter] [--set chain.Field=value ...]");
+            Console.Error.WriteLine("usage: <recording.csv[.gz]> <source outfit, e.g. ots14/default> [outfit filter] [--set chain.Field=value ...]");
             return 2;
         }
         var repo = FindRepo();
@@ -130,7 +130,15 @@ internal sealed class Clip
 
     internal static Clip Load(string path)
     {
-        var lines = File.ReadAllLines(path);
+        // A kept reference recording is stored gzipped, a raw dump is plain CSV.
+        string[] lines;
+        if (path.EndsWith(".gz", StringComparison.Ordinal))
+        {
+            using var reader = new StreamReader(new System.IO.Compression.GZipStream(File.OpenRead(path), System.IO.Compression.CompressionMode.Decompress));
+            lines = reader.ReadToEnd().Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        }
+        else
+            lines = File.ReadAllLines(path);
         var header = lines[0].Split(',');
         var column = new Dictionary<string, int>(StringComparer.Ordinal);
         for (var i = 0; i < header.Length; i++)

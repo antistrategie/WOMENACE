@@ -33,7 +33,7 @@ internal static partial class SpringBodyProfiles
                 "Pifeng_R012>Pifeng_R017",
                 "Pifeng_R018>Pifeng_R023"
             ),
-            SpringPresets.Gown(
+            SpringPresets.SlimGown(
                 "Skirt_0_0>Skirt_9_0",
                 "Skirt_0_1>Skirt_9_1",
                 "Skirt_0_2>Skirt_9_2",
@@ -54,6 +54,6 @@ internal static partial class SpringBodyProfiles
                 "Skirt_1_9>Skirt_9_9"
             ),
         },
-        Colliders = HumanoidColliders(1.679f),
+        Colliders = SlimGownColliders(1.679f),
     };
 }

@@ -41,7 +41,7 @@ internal static partial class SpringBodyProfiles
             SpringPresets.Skirt(
                 "Cape1>Cape5"
             ),
-            SpringPresets.Gown(
+            SpringPresets.SlimGown(
                 "Skirt_0_0>Skirt_11_0",
                 "Skirt_0_1>Skirt_11_1",
                 "Skirt_0_2>Skirt_11_2",
@@ -65,6 +65,6 @@ internal static partial class SpringBodyProfiles
                 "Skirt_0_20>Skirt_11_20"
             ),
         },
-        Colliders = HumanoidColliders(1.566f),
+        Colliders = SlimGownColliders(1.566f),
     };
 }

@@ -70,6 +70,14 @@ TRANSLUCENT_OVERRIDES = {
         "Cth1-Cape", "Cth1-Belt", "Cth2-Skirt",
         "Cth3-Skirt", "Cth3-Sleeve", "Cth3-GlassShoes",
     },
+    # The cn client draws the cover-up skirt under c_LevaSSR0102_slg_cloth2_trans,
+    # whose UVs are Cloth2's exactly.
+    "leva/sultry_tempo": {"Cloth2"},
+    # The sheer sarong and cover-up shirt. Neither local client carries
+    # SpringfieldSSR0103, so this one is not the client's verdict: both panels are
+    # painted at about 75% alpha on sheets they share with the opaque bikini,
+    # which keeps its own materials.
+    "springfield/swimsuit": {"SkirtOutWear", "TopOutWear"},
 }
 
 # First match wins, so the specific parts come before the general ones. Matching

@@ -4,7 +4,7 @@ Run from the repository root:
 
 ```sh
 mise compile
-dotnet run --project tests/SpringBones -c Release -- <recording.csv> <source outfit> [outfit filter] [--set chain.Field=value ...]
+dotnet run --project tests/SpringBones -c Release -- <recording.csv[.gz]> <source outfit> [outfit filter] [--set chain.Field=value ...]
 ```
 
 Replays recorded motion through `SpringBody`, which drives the game's rigs, for
@@ -35,7 +35,11 @@ python3 scripts/bridge.py verb Springs.Record --args '[20000, "ots14"]'
 python3 scripts/bridge.py verb Springs.Dump
 ```
 
-`Springs.Dump` writes `springs_record_<n>.csv` into the deployed mod folder. The
+`Springs.Dump` writes `springs_record_<time>_<n>.csv` into the game's
+`UserData/womenace-springs/`, outside the mod folder, which a deploy deletes whole.
+The reference recording the roster is checked against is kept gzipped in
+`tests/SpringBones/recordings/`, named after the outfit it was taken on. The
+replay reads a `.csv.gz` as it does a plain dump. The
 source outfit is the one the recording was taken on (`ots14/default` above). Its
 humanoid motion is retargeted onto every other outfit by each bone's rotation away
 from its bind pose in the root's space, which transfers because every Doll is

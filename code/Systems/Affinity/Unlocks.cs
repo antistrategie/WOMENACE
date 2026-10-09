@@ -64,6 +64,7 @@ public static class Unlocks
         ["wmgfl_leva"] = new[]
         {
             new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.leva_diamond_flower" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_leva/lv2", "Outfit: Diamond Flower") },
+            new Entry { Level = 4, Feature = Feature.Skins, Armors = new[] { "armor.leva_sultry_tempo" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_leva/lv4", "Outfit: Sultry Tempo") },
         },
         ["wmgfl_makiatto"] = new[]
         {
@@ -88,7 +89,13 @@ public static class Unlocks
         },
         ["wmgfl_cheyanne"] = new[]
         {
+            new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.cheyanne_maiden_debut" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_cheyanne/lv2", "Outfit: Maiden Debut") },
             new Entry { Level = 3, Feature = Feature.Weapon, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_cheyanne/lv3", "SSR Weapon: Nightwalker Cardamom") },
+        },
+        ["wmgfl_lenna"] = new[]
+        {
+            new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.lenna_vitality_magic" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_lenna/lv2", "Outfit: Vitality Magic") },
+            new Entry { Level = 4, Feature = Feature.Skins, Armors = new[] { "armor.lenna_flying_phantom" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_lenna/lv4", "Outfit: Flying Phantom") },
         },
         ["wmgfl_helen"] = new[]
         {
@@ -97,6 +104,7 @@ public static class Unlocks
         ["wmgfl_springfield"] = new[]
         {
             new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.springfield_fragrance" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_springfield/lv2", "Outfit: Enjoy the Fragrance") },
+            new Entry { Level = 4, Feature = Feature.Skins, Armors = new[] { "armor.springfield_swimsuit" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_springfield/lv4", "Outfit: Stirring Mermaid") },
         },
         ["wmgfl_robella"] = new[]
         {
@@ -116,6 +124,7 @@ public static class Unlocks
         {
             new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.klukai_speedstar" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_klukai/lv2", "Outfit: Speed Star") },
             new Entry { Level = 4, Feature = Feature.Skins, Armors = new[] { "armor.klukai_indigo_oath" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_klukai/lv4", "Outfit: Indigo Oath") },
+            new Entry { Level = 5, Feature = Feature.Skins, Armors = new[] { "armor.klukai_immaculate_service" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_klukai/lv5", "Outfit: Immaculate Service") },
         },
         ["wmgfl_ots14"] = new[]
         {

@@ -3,10 +3,10 @@
 
 GFL2 ships most characters' ramps as gradient assets, not textures: a
 RampAtlasRGBA MonoBehaviour holding four Unity Gradients, baked to a 256x16
-atlas at runtime. The gradients are the source of truth. tdollhouse's
+atlas at runtime. The gradients are the source of truth. tdollhouse-re's
 shaderdump tool dumps them raw from a character's texture bundles:
 
-    dotnet bin/ShaderDump.dll GirlsFrontline <out> MonoBehaviour ramp <bundle...>
+    dotnet bin/Release/ShaderDump.dll GirlsFrontline <out> MonoBehaviour ramp <bundle...>
 
 This decodes that dump and writes the atlas the shaders bind: 256x16, four
 bands of four rows, gradient 0 in the bottom quarter where the shader's main

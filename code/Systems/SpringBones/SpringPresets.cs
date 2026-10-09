@@ -160,4 +160,16 @@ internal static class SpringPresets
         spec.Colliders |= SpringColliderGroup.Pelvis;
         return spec;
     }
+
+    // A floor-length gown slim enough that MENACE's deployed kneel, one shin
+    // flat behind her, reaches its back panel. On Gown's values the back
+    // hangs still and the kneeling shin goes straight out through it, so here
+    // the back follows the legs while a knee is bent deep. A full skirt
+    // swallows the kneeling leg and stays on Gown.
+    internal static SpringChainSpec SlimGown(params string[] roots)
+    {
+        var spec = Gown(roots);
+        spec.LegDriveBackKneeling = 1f;
+        return spec;
+    }
 }

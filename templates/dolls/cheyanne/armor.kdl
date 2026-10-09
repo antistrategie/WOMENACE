@@ -18,3 +18,27 @@ clone "ArmorTemplate" from="armor.player_fatigues" id="armor.cheyanne_default" {
     append "OnlyEquipableBy" "wmgfl_transmog"
     append "Tags" "jy_no_sell"
 }
+
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.cheyanne_maiden_debut" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
+    set "Title" {
+        set "m_DefaultTranslation" "Maiden Debut"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Formal Wear"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            "Forgive me, I'm not very good at social events like this. Please, Commander, teach me what I should do..."
+            The flush on her cheeks isn't from any kind of emotional reaction, yet her stiff, awkward movements betray her innocence. Cheyanne turns her moist eyes towards you, like a startled fawn quietly pleading for help.
+            """
+    }
+    set "Icon" asset="cheyanne/armor/maiden_debut/Icon"
+    set "IconEquipment" asset="cheyanne/armor/maiden_debut/IconEquipment"
+    set "IconSkillBar" asset="cheyanne/armor/maiden_debut/IconSkillBar"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_transmog"
+    append "Tags" "jy_no_sell"
+}

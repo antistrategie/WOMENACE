@@ -16,8 +16,8 @@ internal enum SpringColliderGroup
     Legs = 4,
     // The capsule across the hip joints. Short skirts and coats leave it out:
     // their waistbands hug the hips inside it, and the legs and the seat
-    // already hold their panels. Gowns, whose backs do not follow the legs,
-    // take it.
+    // already hold their panels. Gowns, whose backs mostly hang still while
+    // the legs move, take it.
     Pelvis = 8,
     // The buttocks, behind the hip joints, which the pelvis capsule does not
     // reach, so the back of a skirt cannot sag into them.
@@ -68,6 +68,13 @@ internal sealed class SpringChainSpec
     // front following fully. The legs swing mostly forward in a stride, so
     // the back of a skirt has little to follow.
     public float LegDriveBack = 0.25f;
+
+    // Share of the leg drive the back of the garment takes while a knee is
+    // bent deep, as in the deployed kneel with one shin flat behind her. A
+    // floor-length back that hangs still lets that shin straight through it,
+    // while one that always follows the legs stands off a wide stance like a
+    // bell. The larger of this and LegDriveBack applies.
+    public float LegDriveBackKneeling;
 
     // Largest swing, in degrees about the chain's root, its target shape
     // takes to clear the legs. Uncapped, a skirt kept wide of both legs in a
@@ -157,6 +164,22 @@ internal static partial class SpringBodyProfiles
             c.Back *= scale;
             c.Down *= scale;
         }
+        return colliders;
+    }
+
+    // Leg capsules for a slim floor-length skirt. The shared thigh capsules
+    // start a tenth of the way down the thigh, so a raised thigh comes through
+    // the top rows of a skirt hung off the hips. These start just above the
+    // hip joint and are wider.
+    internal static SpringColliderSpec[] SlimGownColliders(float heightMetres)
+    {
+        var colliders = HumanoidColliders(heightMetres);
+        foreach (var c in colliders)
+            if (c.From.StartsWith("UpperLeg_", StringComparison.Ordinal) && c.To.StartsWith("LowerLeg_", StringComparison.Ordinal))
+            {
+                c.T0 = -0.1f;
+                c.Radius *= 1.3f;
+            }
         return colliders;
     }
 

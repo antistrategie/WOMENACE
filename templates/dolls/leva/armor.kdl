@@ -42,3 +42,27 @@ clone "ArmorTemplate" from="armor.player_fatigues" id="armor.leva_diamond_flower
     append "OnlyEquipableBy" "wmgfl_transmog"
     append "Tags" "jy_no_sell"
 }
+
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.leva_sultry_tempo" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
+    set "Title" {
+        set "m_DefaultTranslation" "Sultry Tempo"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Summer Outfit"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            Commander, it seems you're having trouble deciding where to place your eyes. Do you need me to go over there and correct you?
+            The sunlight chases her curves, and her sunny disposition swells the places where the sweat soaks the fabric.
+            """
+    }
+    set "Icon" asset="leva/armor/sultry_tempo/Icon"
+    set "IconEquipment" asset="leva/armor/sultry_tempo/IconEquipment"
+    set "IconSkillBar" asset="leva/armor/sultry_tempo/IconSkillBar"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_transmog"
+    append "Tags" "jy_no_sell"
+}

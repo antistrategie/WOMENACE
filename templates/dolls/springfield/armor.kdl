@@ -42,3 +42,27 @@ clone "ArmorTemplate" from="armor.player_fatigues" id="armor.springfield_fragran
     append "OnlyEquipableBy" "wmgfl_transmog"
     append "Tags" "jy_no_sell"
 }
+
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.springfield_swimsuit" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
+    set "Title" {
+        set "m_DefaultTranslation" "Stirring Mermaid"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Beach Outfit"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            "Commander, please take my hand and listen to the ocean wind with me~"
+            Springfield smiles as she holds her hat down, inviting you to enjoy a warm movement on the island with her.
+            """
+    }
+    set "Icon" asset="springfield/armor/swimsuit/Icon"
+    set "IconEquipment" asset="springfield/armor/swimsuit/IconEquipment"
+    set "IconSkillBar" asset="springfield/armor/swimsuit/IconSkillBar"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_transmog"
+    append "Tags" "jy_no_sell"
+}

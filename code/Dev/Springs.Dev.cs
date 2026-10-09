@@ -12,7 +12,7 @@ namespace WOMENACE.Code;
 //   scripts/bridge.py verb Springs.Measure --args '[180]'                sample tip jitter, read it in Status
 //   scripts/bridge.py verb Springs.Record --args '[3000]'                keep the last frames in a ring buffer
 //   scripts/bridge.py verb Springs.Record --args '[20000, "ots14"]'      only rigs whose LOD0 name starts with "ots14"
-//   scripts/bridge.py verb Springs.Dump                                  write the buffer to CSV in the mod folder
+//   scripts/bridge.py verb Springs.Dump                                  write the buffer to CSV in UserData/womenace-springs
 //   scripts/bridge.py verb Springs.Set --args '["twintails", "Stiffness", 1.2]' --mutate
 //
 // Set writes the shared chain spec, so it retunes every live rig at once and
@@ -80,7 +80,8 @@ public static class Springs
 
     // Starts the flight recorder on every live rig, keeping the last `frames`
     // frames, and without a profile filter on every rig built later this
-    // session too. Dump writes them to CSV in the mod folder.
+    // session too. Dump writes them to CSV in UserData/womenace-springs, outside
+    // the mod folder, since a deploy deletes the mod folder whole.
     public static object Record(int frames = 3000, string profile = null)
     {
         var system = SpringBoneSystem.Instance;
@@ -103,13 +104,17 @@ public static class Springs
         var system = SpringBoneSystem.Instance;
         if (system == null)
             return new { error = "spring system not initialised" };
+        var folder = System.IO.Path.GetFullPath(System.IO.Path.Combine(
+            UnityEngine.Application.dataPath, "..", "UserData", "womenace-springs"));
+        System.IO.Directory.CreateDirectory(folder);
+        var stamp = DateTime.Now.ToString("yyyyMMdd-HHmmss");
         var files = new List<string>();
         var index = 0;
         foreach (var rig in system.Rigs)
         {
             if (rig.IsDead || !rig.Recording)
                 continue;
-            var path = System.IO.Path.Combine(system.Context.ModFolder, $"springs_record_{index++}.csv");
+            var path = System.IO.Path.Combine(folder, $"springs_record_{stamp}_{index++}.csv");
             files.Add($"{path} ({rig.DumpRecording(path)} frames)");
         }
         return files.Count == 0 ? "nothing recording" : string.Join("\n", files);

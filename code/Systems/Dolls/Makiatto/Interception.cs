@@ -10,8 +10,10 @@ namespace WOMENACE.Code;
 
 // Overwatch, Makiatto's reaction fire. The perk grants an Interception toggle per weapon she can
 // intercept with: the squad weapon always, the squad leader's special weapon when one is equipped.
-// Each toggle is a pair of skills, one to switch it on and one to switch it off, and the slot's
-// marker hides whichever does not apply (LimitUsability), so the skill bar shows the state.
+// Each toggle is a pair of skills, one to switch it on and one to switch it off, built like vanilla
+// Take Aim: SwitchBetweenSkills shows one of the pair at a time, the on skill adds the slot's
+// hidden marker effect and the off skill removes it. The marker is the toggle's state, so a slot is
+// on exactly while she carries its marker. Markers go after combat, so every mission starts off.
 // While a toggle is on, the AP she ends her turn with is held back, and every time an enemy
 // finishes a move within that weapon's range and her sight, she fires at it, paying each shot's
 // discounted AP cost out of the reserve. The reserve lapses at her next turn start. With both toggles on,
@@ -22,31 +24,6 @@ namespace WOMENACE.Code;
 // (OverwatchHandler.OnMovementFinished, RVA 0x7A4D00): inside the movement-finished event, so it
 // lands before the enemy acts on its new tile, with WasAutoTriggered set and Skill.Use(tile, Free).
 // The game drops a reacting actor to 0 AP during the enemy turn, so the reserve is kept here.
-//
-// The toggles persist per Doll across missions (InterceptionState). Their markers are hidden status
-// effects re-applied from that state when a mission starts, and the toggle pairs hide by them.
-public sealed class InterceptionState
-{
-    // leader template id -> enabled weapon slots (InterceptionSlots)
-    public Dictionary<string, HashSet<string>> Enabled { get; set; } = new(StringComparer.Ordinal);
-
-    internal bool IsOn(string leader, string slot)
-        => leader != null && Enabled.TryGetValue(leader, out var slots) && slots.Contains(slot);
-
-    internal void Set(string leader, string slot, bool on)
-    {
-        if (leader == null)
-            return;
-        if (!Enabled.TryGetValue(leader, out var slots))
-            Enabled[leader] = slots = new HashSet<string>(StringComparer.Ordinal);
-        if (on)
-            slots.Add(slot);
-        else
-            slots.Remove(slot);
-        if (slots.Count == 0)
-            Enabled.Remove(leader);
-    }
-}
 
 internal static class InterceptionSlots
 {
@@ -121,8 +98,7 @@ public sealed partial class InterceptionHandler : SkillEventHandler
     private bool _registered;
     private bool _granted;
     private Actor _actor;
-    // The slots whose toggles this mission granted. A slot persisted as on but with no weapon
-    // equipped this mission neither banks AP nor fires.
+    // the slots whose toggles this mission granted
     internal bool HasSquad;
     internal bool HasLeader;
     // whether a reaction fired since her last turn start, so her turn start lowers the weapons
@@ -176,9 +152,9 @@ public sealed partial class InterceptionHandler : SkillEventHandler
             HasSquad = squadWeapon != null;
             HasLeader = leaderWeapon != null;
             if (HasSquad)
-                Grant(actor, InterceptionSlots.Squad, SquadToggle, SquadStop);
+                Grant(actor, SquadToggle, SquadStop);
             if (HasLeader)
-                Grant(actor, InterceptionSlots.Leader, LeaderToggle, LeaderStop);
+                Grant(actor, LeaderToggle, LeaderStop);
         }
         catch (Exception ex)
         {
@@ -186,14 +162,13 @@ public sealed partial class InterceptionHandler : SkillEventHandler
         }
     }
 
-    private void Grant(Actor actor, string slot, SkillTemplate on, SkillTemplate off)
+    private void Grant(Actor actor, SkillTemplate on, SkillTemplate off)
     {
         var skills = actor.GetSkills();
         if (on != null && SkillEffects.FindInstance(skills, on) == null)
             SkillEffects.TryAddEffect(actor, on, message => Log.Warn($"interception: {message}"));
         if (off != null && SkillEffects.FindInstance(skills, off) == null)
             SkillEffects.TryAddEffect(actor, off, message => Log.Warn($"interception: {message}"));
-        InterceptionSystem.SyncMarker(actor, this, slot);
     }
 
     // What she has left when her turn ends is what she intercepts with until her next one.
@@ -216,8 +191,10 @@ public sealed partial class InterceptionHandler : SkillEventHandler
             // would otherwise bank the last turn's leftover.
             LastAp = actor.GetActionPointsAtTurnStart();
             GrantOnce(actor);
-            // weapons raised by last round's reactions come down for her own turn, and the
-            // reaction mark comes off the weapon skills before she fires them herself
+            // weapons raised by last round's reactions come down for her own turn. The game clears
+            // WasAutoTriggered when each shot resolves (Skill.ClearBusy, RVA 0x72AC40), so the reset
+            // below is only a backstop.
+            InterceptionSystem.ClearReactions(actor);
             if (Fired)
             {
                 Fired = false;
@@ -233,33 +210,6 @@ public sealed partial class InterceptionHandler : SkillEventHandler
     }
 }
 
-[JiangyuType("InterceptionToggle")]
-public sealed partial class InterceptionToggle : SkillEventHandlerTemplate
-{
-    // InterceptionSlots.Leader or InterceptionSlots.Squad
-    public string Slot;
-
-    public override SkillEventHandler Create() => new InterceptionToggleHandler { Slot = Slot };
-}
-
-[JiangyuType("InterceptionToggleHandler")]
-public sealed partial class InterceptionToggleHandler : SkillEventHandler
-{
-    public string Slot;
-
-    public override void OnUse(Actor _user, Tile _targetTile, UsageParameter _usageParams, ref bool _applyToTile)
-    {
-        try
-        {
-            InterceptionSystem.Toggle(_user ?? GetActor(), Slot);
-        }
-        catch (Exception ex)
-        {
-            Log.Warn($"interception: toggle failed: {ex.GetType().Name}: {ex.Message}");
-        }
-    }
-}
-
 public sealed class InterceptionSystem : JiangyuSystem
 {
     // A second weapon's shot waits for the first to resolve: two attacks cannot run at once.
@@ -267,14 +217,21 @@ public sealed class InterceptionSystem : JiangyuSystem
 
     private static InterceptionSystem _instance;
     private readonly Dictionary<IntPtr, (Actor Actor, InterceptionHandler Handler)> _watchers = new();
+    // per-weapon bonuses from other perks (InterceptionWeaponBonus), by shooter
+    private readonly Dictionary<IntPtr, InterceptionWeaponBonusHandler> _bonuses = new();
+    // Weapon skills with an Interception shot still resolving, counted per skill. Vanilla's own
+    // counter and auto-attack handlers set WasAutoTriggered too, so a reaction is a shot whose skill
+    // is in here and still auto-triggered. A shot's mark is released once the game is no longer
+    // busy with it (ReleaseReaction), not when Skill.Use returns, because a burst's later
+    // repetitions resolve after Use returns. A count rather than a flag, so a queued second shot of
+    // the same skill keeps its mark when the first one's release lands.
+    private readonly Dictionary<IntPtr, int> _reactionSkills = new();
     private readonly Queue<Reaction> _queue = new();
     private bool _firing;
     private bool _sampling;
     // Inside the movement-finished event the mover may still report the tile it left, so the
     // still-standing check is for queued shots only.
     private bool _inEvent;
-
-    private InterceptionState State => Context.State.Get<InterceptionState>();
 
     private sealed class Reaction
     {
@@ -296,6 +253,8 @@ public sealed class InterceptionSystem : JiangyuSystem
     public override void OnSceneLoaded(int buildIndex, string sceneName)
     {
         _watchers.Clear();
+        _bonuses.Clear();
+        _reactionSkills.Clear();
         _queue.Clear();
         _firing = false;
         _sampling = false;
@@ -331,6 +290,34 @@ public sealed class InterceptionSystem : JiangyuSystem
         }
     }
 
+    internal static void RegisterBonus(Actor actor, InterceptionWeaponBonusHandler bonus)
+    {
+        if (_instance != null && actor != null && bonus != null)
+            _instance._bonuses[actor.Pointer] = bonus;
+    }
+
+    internal static void UnregisterBonus(Actor actor)
+    {
+        if (_instance != null && actor != null)
+            _instance._bonuses.Remove(actor.Pointer);
+    }
+
+    // Whether the skill is resolving a shot Interception fired.
+    internal static bool IsReaction(Skill skill)
+        => _instance != null && skill != null && skill.WasAutoTriggered && _instance._reactionSkills.ContainsKey(skill.Pointer);
+
+    internal static void ClearReactions(Actor actor)
+    {
+        if (_instance == null || actor == null)
+            return;
+        foreach (var slot in InterceptionSlots.All)
+        {
+            var weapon = InterceptionSlots.WeaponSkill(actor, slot);
+            if (weapon != null)
+                _instance._reactionSkills.Remove(weapon.Pointer);
+        }
+    }
+
     internal static void Unregister(Actor actor)
     {
         if (_instance != null && actor != null)
@@ -347,40 +334,10 @@ public sealed class InterceptionSystem : JiangyuSystem
         return false;
     }
 
-    // A slot counts only when this mission granted its toggle and the toggle is on.
+    // A slot counts only when this mission granted its toggle and she carries its marker.
     private bool IsOn(Actor actor, InterceptionHandler handler, string slot)
         => (slot == InterceptionSlots.Leader ? handler.HasLeader : handler.HasSquad)
-            && State.IsOn(InterceptionSlots.LeaderId(actor), slot);
-
-    internal static void Toggle(Actor actor, string slot)
-    {
-        if (_instance == null || actor == null || slot == null)
-            return;
-        if (!_instance._watchers.TryGetValue(actor.Pointer, out var watcher))
-        {
-            _instance.Context.Log.Warn($"interception: toggle on an unregistered actor '{InterceptionSlots.LeaderId(actor)}'");
-            return;
-        }
-        var leader = InterceptionSlots.LeaderId(actor);
-        _instance.State.Set(leader, slot, !_instance.State.IsOn(leader, slot));
-        _instance.Context.Log.Debug($"interception: '{leader}' {slot} now {(_instance.State.IsOn(leader, slot) ? "on" : "off")}");
-        SyncMarker(actor, watcher.Handler, slot);
-    }
-
-    // The marker carries a toggle's state for the skill bar, re-applied from the persisted state.
-    internal static void SyncMarker(Actor actor, InterceptionHandler handler, string slot)
-    {
-        var marker = handler.MarkerFor(slot);
-        if (_instance == null || marker == null)
-            return;
-        var skills = actor.GetSkills();
-        var on = _instance.State.IsOn(InterceptionSlots.LeaderId(actor), slot);
-        var present = SkillEffects.FindInstance(skills, marker) != null;
-        if (on && !present)
-            SkillEffects.TryAddEffect(actor, marker, message => _instance.Context.Log.Warn($"interception: {message}"));
-        else if (!on && present)
-            SkillEffects.RemoveInstances(skills, marker);
-    }
+            && SkillEffects.FindInstance(actor.GetSkills(), handler.MarkerFor(slot)) != null;
 
     private void OnMovementFinished(PatchInfo info)
     {
@@ -428,6 +385,26 @@ public sealed class InterceptionSystem : JiangyuSystem
             if (_queue.Count > 0 && !_firing)
                 Context.Coroutines.Start(Drain());
         }
+    }
+
+    // Lets go of a fired shot's reaction mark once the shot, every repetition included, has
+    // resolved. The turn-start ClearReactions and the scene-load clear back this up.
+    private IEnumerator ReleaseReaction(IntPtr skill)
+    {
+        yield return null;
+        while (TacticalManager.IsSkillBusy())
+            yield return null;
+        ReleaseMark(skill);
+    }
+
+    private void ReleaseMark(IntPtr skill)
+    {
+        if (!_reactionSkills.TryGetValue(skill, out var count))
+            return;
+        if (count <= 1)
+            _reactionSkills.Remove(skill);
+        else
+            _reactionSkills[skill] = count - 1;
     }
 
     private IEnumerator Drain()
@@ -481,8 +458,12 @@ public sealed class InterceptionSystem : JiangyuSystem
         var from = shooter.GetTile();
         if (skill == null || from == null)
             return Held("no weapon skill or tile");
-        // rounded up, so no discount turns a shot free
-        var cost = Mathf.CeilToInt(skill.GetActionPointCost() * (1f - r.Handler.ApDiscount));
+        // rounded up and capped, so no discount turns a shot free
+        var discount = r.Handler.ApDiscount;
+        if (_bonuses.TryGetValue(shooter.Pointer, out var bonus) && bonus.Matches(skill))
+            discount += bonus.ApDiscount;
+        discount = Math.Clamp(discount, 0f, 0.9f);
+        var cost = Mathf.CeilToInt(skill.GetActionPointCost() * (1f - discount));
         if (cost <= 0 || cost > r.Handler.Reserve)
             return Held($"shot costs {cost} AP, reserve {r.Handler.Reserve}");
         if (skill.HasLimitedUses() && (skill.IsOutOfUses() || skill.GetUses() <= 0))
@@ -506,6 +487,7 @@ public sealed class InterceptionSystem : JiangyuSystem
         var usesBefore = skill.GetUses();
         Aim(shooter, skill, r.Tile);
         skill.WasAutoTriggered = true;
+        _reactionSkills[skill.Pointer] = _reactionSkills.GetValueOrDefault(skill.Pointer) + 1;
         var usage = "Free";
         var used = skill.Use(r.Tile, UsageParameter.Free);
         if (!used)
@@ -518,11 +500,13 @@ public sealed class InterceptionSystem : JiangyuSystem
         {
             // nothing fired, so the aim and the reaction mark come off again
             skill.WasAutoTriggered = false;
+            ReleaseMark(skill.Pointer);
             shooter.SetAiming(false, null);
             return Held("refused by Skill.Use");
         }
         r.Handler.Reserve -= cost;
         r.Handler.Fired = true;
+        Context.Coroutines.Start(ReleaseReaction(skill.Pointer));
         // Skill.Use spends a shot's uses inline before it returns, so an unchanged count here
         // means this Free use skipped the spend and the shot is paid for by hand: its cost, then
         // the other skills sharing the weapon's pool brought into line.

@@ -140,6 +140,8 @@ internal sealed class SpringBody
             KneeLeft = Positions[_poseBones[3]],
             HipRight = Positions[_poseBones[4]],
             KneeRight = Positions[_poseBones[5]],
+            FootLeft = Positions[_poseBones[6]],
+            FootRight = Positions[_poseBones[7]],
         };
         var pose = Pose;
         for (var c = 0; colliders && c < Colliders.Count; c++)
