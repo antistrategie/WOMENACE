@@ -172,21 +172,21 @@ clone "UnitLeaderTemplate" from="squad_leader.carda" id="squad_leader.springfiel
     append "EmotionalStateResponses" {
         set "EmotionalState" enum="EmotionalStateType" "Hesitant"
         set "Text" {
-            set "m_DefaultTranslation" "Not just the Elmo—she has to handle maintenance and repairs for the dolls as well. Will Meilin be all right?"
+            set "m_DefaultTranslation" "It’s dangerous."
         }
         set "Sound" {
             set "bankId" "wmgfl_tactical_barks_springfield_va"
-            set "itemId" "Series_Daily_007"
+            set "itemId" "Series_Tone_Positive_008"
         }
     }
     append "EmotionalStateResponses" {
         set "EmotionalState" enum="EmotionalStateType" "Frustrated"
         set "Text" {
-            set "m_DefaultTranslation" "(Tch)"
+            set "m_DefaultTranslation" "Heh?"
         }
         set "Sound" {
             set "bankId" "wmgfl_tactical_barks_springfield_va"
-            set "itemId" "Series_Tone_Negative_001"
+            set "itemId" "Series_Tone_Negative_002"
         }
     }
     append "EmotionalStateResponses" {
