@@ -356,7 +356,7 @@ public sealed class InterceptionSystem : JiangyuSystem
             {
                 if (shooter == null || !shooter.IsAlive() || !Pierce.IsHostileTo(shooter, mover))
                     continue;
-                Context.Log.Debug($"interception: '{mover.GetTemplate()?.GetID()}' finished a move, reserve={handler.Reserve}");
+                Context.Log.Debug($"interception: '{mover.GetTemplate()?.GetID()}' finished a move, reserve={handler.Reserve}, busy={TacticalManager.IsSkillBusy()}");
                 if (handler.Reserve <= 0)
                     continue;
                 // the first shot fires now, inside the event, and a second waits for it to resolve
@@ -366,9 +366,12 @@ public sealed class InterceptionSystem : JiangyuSystem
                     if (!IsOn(shooter, handler, slot))
                         continue;
                     var reaction = new Reaction { Shooter = shooter, Handler = handler, Target = mover, Tile = tile, Slot = slot };
-                    // two attacks cannot run at once, so while an earlier reaction is still queued
-                    // or resolving this one waits its turn
-                    if (!fired && !_firing && _queue.Count == 0)
+                    // Two attacks cannot run at once, so while an earlier reaction is still queued
+                    // or any shot is resolving this one waits its turn, as vanilla's own reaction
+                    // fire does (AutoAttackOnFleeingHandler.TryTargetActor). A shot that destroys
+                    // a transport ejects its passengers, and their landing raises this event
+                    // mid-shot.
+                    if (!fired && !_firing && _queue.Count == 0 && !TacticalManager.IsSkillBusy())
                         fired = Fire(reaction);
                     else
                         _queue.Enqueue(reaction);
@@ -517,6 +520,9 @@ public sealed class InterceptionSystem : JiangyuSystem
         }
         catch (Exception)
         {
+            // The enemy turn waits for every busy skill to clear, with no timeout, and a shot
+            // that throws mid-resolution never clears its own.
+            skill.ClearBusy(UsageParameter.Default);
             skill.WasAutoTriggered = false;
             ReleaseMark(skill.Pointer);
             throw;
