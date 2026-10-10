@@ -23,6 +23,12 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.lenna_nv_goggles" {
     clear "EventHandlers"
     append "EventHandlers" type="AddSkill" {
         set "Event" enum="AddEvent" "OnMissionStart"
-        set "SkillToAdd" "passive.nightvision"
+        set "SkillToAdd" "passive.lenna_nightvision"
     }
+}
+
+clone "SkillTemplate" from="passive.nightvision" id="passive.lenna_nightvision" {
+    // Vanilla keeps night vision across missions because the goggles item grants it once. The
+    // perk grants it afresh each mission, so it goes after combat or it stacks.
+    set "IsRemovedAfterCombat" #true
 }

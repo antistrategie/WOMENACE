@@ -56,6 +56,9 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.springfield_path_of_protect
 }
 
 clone "SkillTemplate" from="active.deploy_recon_skybot" id="active.springfield_deploy_taryz" {
+    // Vanilla keeps the skybot skills across missions because its accessory item grants them
+    // once. The perk grants these afresh each mission, so they go after combat or they stack.
+    set "IsRemovedAfterCombat" #true
     set "Title" {
         set "m_DefaultTranslation" "Deploy Taryz"
     }
@@ -89,6 +92,7 @@ clone "SkillTemplate" from="active.recon_skybot_command_move" id="active.springf
     }
     set "Icon" asset="springfield/skills/move_taryz"
     set "IconDisabled" asset="springfield/skills/move_taryz_disabled"
+    set "IsRemovedAfterCombat" #true
 }
 
 clone "EntityTemplate" from="player_recon_falcon_skybot" id="player_springfield_taryz" {
