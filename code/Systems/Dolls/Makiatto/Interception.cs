@@ -246,19 +246,35 @@ public sealed class InterceptionSystem : JiangyuSystem
     {
         _instance = this;
         Context.Patches.Postfix("Il2CppMenace.Tactical.TacticalManager", "InvokeOnMovementFinished", OnMovementFinished);
+        Context.Patches.Postfix("Il2CppMenace.Tactical.Actor", "SetTransporterInactive", OnTransporterInactive);
     }
 
-    // A scene change can drop the coroutines without running their finally blocks, so their
-    // running flags are cleared here too.
-    public override void OnSceneLoaded(int buildIndex, string sceneName)
+    // A reaction fires inside a transport's own action, so it can kill the passengers while the
+    // transport is still the AI's active unit. Their death switches the transport off
+    // (Actor.SetTransporterInactive, RVA 0x611A80) and nulls its m_Agent, and AIFaction.Process
+    // (RVA 0x798C40) reads the active unit's agent before anything else every frame, so the enemy
+    // turn throws on that null forever. Clearing the faction's active unit takes Process down its
+    // own no-active-unit path, which finishes the unit and picks the next one.
+    private void OnTransporterInactive(PatchInfo info)
     {
-        _watchers.Clear();
-        _bonuses.Clear();
-        _reactionSkills.Clear();
-        _queue.Clear();
-        _firing = false;
-        _sampling = false;
-        _inEvent = false;
+        try
+        {
+            if (info.Instance is not Actor transport || transport == null)
+                return;
+            var factions = TacticalManager.Get()?.GetFactions();
+            for (var i = 0; factions != null && i < factions.Length; i++)
+            {
+                var faction = factions[i];
+                if (faction?.m_ActiveActor?.Pointer != transport.Pointer)
+                    continue;
+                faction.m_ActiveActor = null;
+                Context.Log.Debug($"interception: released switched-off transport '{transport.GetTemplate()?.GetID()}' as its faction's active unit");
+            }
+        }
+        catch (Exception ex)
+        {
+            Context.Log.Warn($"interception: could not release a switched-off transport: {ex.GetType().Name}: {ex.Message}");
+        }
     }
 
     internal static void Register(Actor actor, InterceptionHandler handler)
@@ -469,6 +485,11 @@ public sealed class InterceptionSystem : JiangyuSystem
             return Held("shooter or target gone");
         if (shooter.IsStunned())
             return Held("stunned");
+        // A transport whose passengers die inside is switched off rather than killed
+        // (Actor.SetTransporterInactive, RVA 0x611A80: Neutral faction, AI agent disposed), and a
+        // shot at it never lets the enemy turn finish.
+        if (!Pierce.IsHostileTo(shooter, r.Target))
+            return Held("target no longer hostile");
         // a queued second shot fires only while the target still stands where it stopped
         if (r.Target.GetTile()?.Pointer != r.Tile.Pointer && r.Target.GetTile() != null && !_inEvent)
             return Held("target moved on");
