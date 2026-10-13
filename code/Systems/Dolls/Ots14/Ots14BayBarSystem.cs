@@ -401,26 +401,14 @@ public sealed class Ots14BayBarSystem : JiangyuSystem
     // Re-run the bar's hotkey assignment with the bay slots' buttons in
     // their final state: the vanilla pass ran before this postfix set the
     // items, so without it every bay button keeps the stale special-weapon
-    // key. The fold is the vanilla algorithm (each element consumes item
-    // keys and returns the continuation), so re-running it re-assigns the
-    // vanilla buttons identically before threading into the bay's.
+    // key. The shared fold re-assigns the vanilla buttons identically before
+    // threading into the bay's.
 
     private void AssignKeyBinds(SkillBar bar)
     {
         try
         {
-            var next = Il2CppMenace.PlayerSettings.KeyBindPlayerSetting.SelectItemSkill1;
-            var all = bar.m_AllElements;
-            for (var i = 0; all != null && i < all.Count; i++)
-            {
-                var element = all[i];
-                if (element != null)
-                    next = element.UpdateKeyBinds(next);
-            }
-            if (!_inBarList)
-                foreach (var slot in _slots)
-                    if (slot != null)
-                        next = slot.UpdateKeyBinds(next);
+            SkillBarKeySystem.Assign(bar, _inBarList ? null : _slots);
         }
         catch (Exception ex)
         {
