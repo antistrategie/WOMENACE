@@ -1,4 +1,5 @@
 using Il2CppInterop.Runtime;
+using Il2CppInterop.Runtime.InteropTypes;
 using Il2CppMenace.UI;
 using Il2CppMenace.UI.Strategy;
 using Jiangyu.Game.Ui;
@@ -36,9 +37,12 @@ internal sealed class ShopHost : IDisposable
         _setVisible = setVisible;
         _onEntering = onEntering;
         _navigation = UI.Inject(UiTarget.Screen<StrategyUIScreen>().After(UiSelector.Name(WorkshopUi.Navigation)), BuildNavigation);
-        context.Patches.Postfix(WorkshopUi.ScreenType, "OnOpened", _ => Refresh());
-        // Jiangyu restores injections on activation. Refresh this host's mode and selection too.
-        context.Patches.Postfix("Il2CppMenace.UI.UIScreen", "Activate", _ => OnScreenActivated());
+        context.Patches.Postfix(WorkshopUi.ScreenType, "OnOpened",
+            info => Refresh((info.Instance as Il2CppObjectBase)?.TryCast<WorkshopUIScreen>()));
+        // A cached screen comes back through OnEnable, which calls OnOpen on a rebuilt tree.
+        // Jiangyu restores injections there. Refresh this host's mode and selection too.
+        context.Patches.Postfix("Il2CppMenace.UI.UIScreen", "OnOpen",
+            info => OnScreenOpened((info.Instance as Il2CppObjectBase)?.TryCast<UIScreen>()));
         context.Patches.Postfix("Il2CppMenace.UI.Strategy.StrategyNavigation", "InitWorkshopButton", _ => RefreshNavigation());
         context.Patches.Postfix("Il2CppMenace.UI.Strategy.SystemMapUIScreen", "OnOpened", _ => RefreshNavigation());
         context.Patches.Postfix("Il2CppMenace.States.StrategyState", "SetConversationVarValue", info =>
@@ -136,25 +140,29 @@ internal sealed class ShopHost : IDisposable
         _factions = null;
     }
 
-    private void OnScreenActivated()
+    // Acts on the opened screen rather than the active one. A screen re-enabled by closing
+    // the pause menu opens while the closing screen is still active.
+    private void OnScreenOpened(UIScreen screen)
     {
-        var screen = UIManager.Get()?.GetActiveScreen();
-        if (screen?.TryCast<WorkshopUIScreen>() != null)
-            Refresh();
+        var workshop = screen?.TryCast<WorkshopUIScreen>();
+        if (workshop != null)
+            Refresh(workshop);
         else
         {
             _setVisible(false);
-            if (screen?.TryCast<StrategyUIScreen>() != null)
+            var strategy = screen?.TryCast<StrategyUIScreen>();
+            if (strategy != null)
             {
                 _wantShop = false;
-                RefreshNavigation();
+                RefreshNavigation(strategy);
             }
         }
     }
 
-    private void RefreshNavigation()
+    private void RefreshNavigation() => RefreshNavigation(UIManager.Get()?.GetActiveScreen()?.TryCast<StrategyUIScreen>());
+
+    private void RefreshNavigation(StrategyUIScreen screen)
     {
-        var screen = UIManager.Get()?.GetActiveScreen()?.TryCast<StrategyUIScreen>();
         var root = screen?.GetRootElement();
         if (root == null)
             return;
@@ -210,9 +218,10 @@ internal sealed class ShopHost : IDisposable
             UIManager.Get()?.GetActiveScreen()?.TryCast<WorkshopUIScreen>()?.UpdateWindow();
     }
 
-    public void Refresh()
+    public void Refresh() => Refresh(UIManager.Get()?.GetActiveScreen()?.TryCast<WorkshopUIScreen>());
+
+    private void Refresh(WorkshopUIScreen screen)
     {
-        var screen = UIManager.Get()?.GetActiveScreen()?.TryCast<WorkshopUIScreen>();
         var root = screen?.GetRootElement();
         if (root == null)
             return;
@@ -240,6 +249,6 @@ internal sealed class ShopHost : IDisposable
         _setVisible(show);
         if (!show)
             UI.Find(root, UiSelector.Name(WorkshopUi.Navigation))?.TryCast<NavigationButton>()?.SetSelected(true);
-        RefreshNavigation();
+        RefreshNavigation(screen);
     }
 }
