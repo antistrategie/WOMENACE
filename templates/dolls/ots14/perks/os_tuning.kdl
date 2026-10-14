@@ -107,15 +107,23 @@ clone "SkillTemplate" from="active.treat_wounds" id="active.wmgfl_bay_repair" {
     }
 }
 
-clone "SkillTemplate" from="active.rogue_ammo_runner_refill_ammo" id="active.wmgfl_bay_reload" {
+// The perk is the only vanilla holder of a RefillAmmo handler, and its SkillFilter (special and
+// squad weapons) is Odin-serialised, so the handler is kept rather than appended fresh.
+clone "PerkTemplate" from="perk.gostepriimstvo_babushki" id="active.wmgfl_bay_reload" {
     set "Title" {
         set "m_DefaultTranslation" "Ammo Refill"
     }
     set "Description" {
         set "m_DefaultTranslation" "Refill the ammunition of every weapon OTs-14 carries."
+        clear "m_Placeholders"
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "Refill the ammunition of every weapon OTs-14 carries."
+        clear "m_Placeholders"
     }
     set "Icon" asset="ots14/skills/reload"
     set "IconDisabled" asset="ots14/skills/reload_disabled"
+    set "PerkIcon" asset="ots14/skills/reload"
     set "IsTargeted" #false
     set "TargetsAllowed" enum="SkillTarget" "EmptyTile"
     set "MinRange" 0
@@ -124,6 +132,11 @@ clone "SkillTemplate" from="active.rogue_ammo_runner_refill_ammo" id="active.wmg
     set "IsLimitedUses" #false
     set "IsRemovedAfterCombat" #true
     append "Tags" "wmgfl_field_kit"
+    remove "EventHandlers" index=3
+    remove "EventHandlers" index=1
+    set "EventHandlers" index=1 {
+        set "RestorePct" 1.0
+    }
     append "EventHandlers" type="LimitUsability" {
         append "NotUsableIfActorHasSkill" "effect.wmgfl_field_kit_spent"
     }
