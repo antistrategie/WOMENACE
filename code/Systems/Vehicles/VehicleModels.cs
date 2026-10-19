@@ -9,6 +9,7 @@ internal static class VehicleModels
     public const string SinbreakerErwinConstruct = "construct.voymastina_mech_erwin";
     // Springfield's summon, spawned by her Path of Protection perk.
     public const string Taryz = "player_springfield_taryz";
+    public const string TitanSupport = "enemy.wmgfl_titan_support";
 
     public static string AssetFor(string templateId) => templateId switch
     {
@@ -16,6 +17,7 @@ internal static class VehicleModels
         SinbreakerErwin or SinbreakerErwinConstruct => "voymastina_mech/erwin/main",
         Sinner => "koleda_car/default/main",
         Taryz => "springfield/taryz/main",
+        TitanSupport => "titan/support/main",
         _ => null,
     };
 }

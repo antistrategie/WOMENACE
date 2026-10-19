@@ -15,13 +15,14 @@ Use the pipeline skill that matches the work:
 - [`.agents/skills/doll-shading/SKILL.md`](.agents/skills/doll-shading/SKILL.md) for GFL-style materials, face SDFs, hair UVs, and outlines.
 - [`.agents/skills/voice-pipeline/SKILL.md`](.agents/skills/voice-pipeline/SKILL.md) for voice audio, subtitles, SoundBanks, and conversations.
 - [`.agents/skills/weapon-pipeline/SKILL.md`](.agents/skills/weapon-pipeline/SKILL.md) for weapon models, audio, templates, and skills.
+- [`.agents/skills/enemy-authoring/SKILL.md`](.agents/skills/enemy-authoring/SKILL.md) for enemy units: GFL2 rig to prefab, entity and skill KDL, AoE shapes, AI weighting, sound, and army lists.
 
 [`docs/ONBOARDING.md`](docs/ONBOARDING.md) is the longer human-oriented introduction.
 
 ## Repository map
 
 - `templates/dolls/<name>/` contains each Doll's leader, entity, armour, perk tree, weapon, calibration ranks, voice, and any Doll-specific KDL.
-- `templates/perks/` contains perks shared by several Dolls, one file per perk. `templates/fairies/`, `templates/gifts/`, `templates/vehicles/`, and the root KDL files contain other shared or non-Doll content.
+- `templates/perks/` contains perks shared by several Dolls, one file per perk. `templates/enemies/<enemy>/` holds each added enemy unit with its skills, sound bank, and army-list placement. `templates/fairies/`, `templates/gifts/`, `templates/vehicles/`, and the root KDL files contain other shared or non-Doll content.
 - `code/Systems/` contains runtime systems grouped by feature. `code/Perks/` contains custom perk behaviour. `code/Dev/` contains development-only verbs excluded from release builds.
 - `assets/additions/` contains added sprites, textures, and audio. Logical asset names preserve the path below the asset-type directory.
 - `unity/Assets/Authored/` contains source assets. `unity/Assets/Prefabs/` contains bundle-ready prefabs. `unity/Assets/Shaders/` contains the mod's `Womenace/` shaders. `unity/Assets/Editor/` holds the mod's own batch-mode tools (asset checks, clip extraction, prefab splitting) next to the Jiangyu-managed scripts.
@@ -40,6 +41,7 @@ Use the implementation and its adjacent comments as the authority for current be
 - `Systems/Ssr/` and `Systems/Elements/` for imprint bonuses, elemental build-up, Phase effects, and HUD gauges. A kit that makes a victim take more damage from an element registers the multiplier with `ElementsSystem.RegisterVictimDamageMult`, which both the hit path and the hover preview read.
 - `Systems/Dolls/` for bespoke per-Doll kits, one folder per Doll, plus the form-swap system they share.
 - `Systems/Fairies/` for Fairy Lodge unlocks and off-map abilities.
+- `Systems/Enemies/` for added enemy units: the AoE shapes and skill AI configs their templates cannot author.
 - `Systems/NewGame/` for WOMENACE campaign options, Doll roster selection, vanilla leader filtering, and dummy-link limits.
 - `Systems/Vehicles/` and `Systems/Weapons/` for signature vehicles, weapon skins, and weapon presentation.
 - `Systems/CampaignMap/` for the GFL1-inspired mission-board reskin.
@@ -76,7 +78,7 @@ Run verification in proportion to the change. At minimum, compile after KDL, C#,
 
 Use the least expensive source that can answer the question:
 
-1. Use `jiangyu templates search`, `query`, and `inspect` for template types, members, and live template values.
+1. Use `jiangyu templates search`, `query`, and `inspect` for template types, members, and live template values. A skill's event handlers are separate objects: `inspect --output json` gives each handler's `pathId`, and `inspect --collection resources.assets --path-id <id>` prints its fields.
 2. Use the generated `cpp2il_out/Assembly-CSharp.dll` for metadata, attributes, offsets, and method RVAs. Its method bodies are stubs.
 3. Disassemble `GameAssembly.dll` at the recorded RVA only when behaviour cannot be established from templates, metadata, or a live probe.
 

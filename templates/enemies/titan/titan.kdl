@@ -1,0 +1,289 @@
+clone "ElementAnimatorTemplate" from="animator.construct_soldier" id="animator.wmgfl_titan" {
+    set "DeathBehaviour" enum="AnimatorDeathBehaviour" "DeathAnimations"
+}
+
+clone "ModularVehicleTemplate" from="modular_vehicle_medium_walker" id="modular_vehicle.wmgfl_titan" {
+    clear "Slots"
+}
+
+clone "EntityTemplate" from="enemy.vehicle_rogue_army_mercenary_medium_walker" id="enemy.wmgfl_titan_support" {
+    set "Title" {
+        set "m_DefaultTranslation" "Temblor Titan"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "A heavy assault mech fielded in support of mercenary operations. Its rotary cannon and sensor dish make it the anchor of any line it holds."
+    }
+
+    set "AnimatorTemplate" "animator.wmgfl_titan"
+    set "AimWithVisualSlot" enum="VisualAlterationSlot" "EntireModel"
+    set "ModularVehicle" "modular_vehicle.wmgfl_titan"
+    set "HUDOffset" {
+        set "y" 7.0
+    }
+
+    set "ArmyPointCost" 550
+
+    set "AIRole" {
+        set "CoverAgainstOpponents" #false
+        set "PeekInAndOutOfCover" #false
+        set "IsAllowedToEvadeEnemies" #false
+        set "SafetyScale" 0.0
+        set "InflictSuppression" 1.0
+    }
+
+    set "Properties" {
+        set "HitpointsPerElement" 300
+        set "Armor" 160
+        set "ArmorSide" 160
+        set "ArmorBack" 160
+        set "ArmorDurabilityPerElement" 600.0
+        set "Accuracy" 70.0
+        set "Vision" 10
+        set "SoundOnMovementStepOverrides2" #null
+        set "SoundOnMovementStep" {
+            set "bankId" "wmgfl_titan_sfx"
+            set "itemId" "Footstep"
+        }
+        set "SoundOnDeath" {
+            set "bankId" "wmgfl_titan_sfx"
+            set "itemId" "Collision_Body"
+        }
+    }
+
+    remove "Prefabs" index=2
+    remove "Prefabs" index=1
+
+    clear "AttachedPrefabs"
+    clear "Items"
+    append "Items" "accessory.wmgfl_titan_thermal_launcher"
+    clear "Loot"
+
+    clear "Skills"
+    append "Skills" "active.wmgfl_titan_pierce"
+    append "Skills" "active.wmgfl_titan_strobe"
+    append "Skills" "effect.wmgfl_titan_thermal_cycle"
+}
+
+clone "SkillTemplate" from="active.fire_heavy_auto_repeater" id="active.wmgfl_titan_pierce" {
+    set "Title" {
+        set "m_DefaultTranslation" "Power Pulse: Pierce"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Fire a long burst from the rotary cannon."
+        clear "m_Placeholders"
+    }
+
+    set "ActionPointCost" 60
+    set "MuzzleType" enum="MuzzleType" "Muzzle"
+    set "AnimationType" enum="AnimationType" "ShootSingle"
+
+    set "IsOverridingRanges" #true
+    set "MinRange" 3
+    set "IdealRange" 3
+    set "MaxRange" 4
+
+    set "DelayAfterAnimationTrigger" 1.27
+    set "RepetitionDelay" 0.15
+    set "DelayAfterSkillUse" 3.0
+    set "IsPlayingAnimationForEachRepetition" #false
+
+    set "Repetitions" 10
+    set "EventHandlers" index=0 {
+        set "Damage" 12.0
+        set "ArmorPenetration" 30.0
+        set "Suppression" 1.0
+        set "DamageToArmorDurability" 2.0
+    }
+
+    set "IsSoundOnAttackPerElementPlayingAfterAnimationDelay" #true
+    set "IsSoundOnAttackPerElementFarPlayingAfterAnimationDelay" #true
+    clear "SoundsOnAttack"
+    clear "SoundsOnAttackFar"
+    clear "SoundsOnAttackPerElement"
+    append "SoundsOnAttackPerElement" {
+        set "bankId" "wmgfl_titan_sfx"
+        set "itemId" "Support_Pierce"
+    }
+    clear "SoundsOnAttackPerElementFar"
+    append "SoundsOnAttackPerElementFar" {
+        set "bankId" "wmgfl_titan_sfx"
+        set "itemId" "Support_Pierce"
+    }
+}
+
+clone "SkillTemplate" from="active.scarecrow_aoe_attack" id="active.wmgfl_titan_strobe" {
+    set "Title" {
+        set "m_DefaultTranslation" "Power Pulse: Strobe"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Release a pulse that hits every enemy within 2 tiles."
+        clear "m_Placeholders"
+    }
+
+    set "ActionPointCost" 60
+    set "AnimationType" enum="AnimationType" "SpecialAttack1"
+    set "IsAlwaysHitting" #true
+    set "AoEChanceToHitCenter" 100
+
+    set "IsTargeted" #true
+    set "TargetsAllowed" enum="SkillTarget" "Attack"
+    set "MinRange" 1
+    set "IdealRange" 1
+    set "MaxRange" 2
+
+    set "EventHandlers" index=0 {
+        set "ElementsHit" 3
+        set "ElementsHitPercentage" 0.6
+        set "Damage" 50.0
+        set "ArmorPenetration" 60.0
+        set "Suppression" 45.0
+        set "DamageToArmorDurability" 90.0
+    }
+
+    set "DelayAfterAnimationTrigger" 0.8
+    set "IsSoundOnAttackPerElementPlayingAfterAnimationDelay" #true
+    set "IsSoundOnAttackPerElementFarPlayingAfterAnimationDelay" #true
+    clear "SoundsOnUse"
+    clear "SoundsOnAttack"
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_titan_sfx"
+        set "itemId" "Support_Strobe"
+    }
+    clear "SoundsOnAttackPerElement"
+    append "SoundsOnAttackPerElement" {
+        set "bankId" "wmgfl_titan_sfx"
+        set "itemId" "Foot_Slam"
+    }
+    append "SoundsOnAttackPerElement" {
+        set "bankId" "wmgfl_titan_sfx"
+        set "itemId" "Support_Strobe_Hit"
+    }
+    clear "SoundsOnAttackPerElementFar"
+    append "SoundsOnAttackPerElementFar" {
+        set "bankId" "wmgfl_titan_sfx"
+        set "itemId" "Foot_Slam"
+    }
+}
+
+clone "SkillTemplate" from="active.throw_incendiary_grenade" id="active.wmgfl_titan_thermal_overload" {
+    set "Title" {
+        set "m_DefaultTranslation" "Thermal Overload"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Fire an incendiary shell that hits everything within 2 tiles of the target and sets the area on fire."
+        clear "m_Placeholders"
+    }
+
+    set "ActionPointCost" 60
+    set "IsLimitedUses" #true
+    set "Uses" 2
+    set "IsWeaponSetupRequired" #false
+    set "MuzzleType" enum="MuzzleType" "Muzzle"
+    set "AnimationType" enum="AnimationType" "SpecialAttack2"
+    set "IsAlwaysHitting" #true
+    set "CanHitAnotherTile" #false
+    set "ScatterChance" 0
+    set "AoEChanceToHitCenter" 100
+
+    set "IsOverridingRanges" #true
+    set "MinRange" 3
+    set "IdealRange" 3
+    set "MaxRange" 5
+
+    set "EventHandlers" index=0 {
+        set "ChancePerTileFromCenter" 0
+    }
+    set "EventHandlers" index=1 {
+        set "ElementsHit" 3
+        set "ElementsHitPercentage" 0.6
+        set "Damage" 35.0
+        set "ArmorPenetration" 30.0
+        set "Suppression" 10.0
+        set "DamageToArmorDurability" 40.0
+    }
+
+    clear "SoundsOnAttack"
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_titan_sfx"
+        set "itemId" "Support_Thermal_Launch"
+    }
+    clear "SoundsOnHit"
+    append "SoundsOnHit" {
+        set "bankId" "wmgfl_titan_sfx"
+        set "itemId" "Support_Thermal_Hit"
+    }
+
+    append "Tags" "wmgfl_titan_thermal"
+    append "EventHandlers" type="LimitUsability" {
+        append "NotUsableIfActorHasSkill" "effect.wmgfl_titan_thermal_cooldown"
+    }
+}
+
+clone "AccessoryTemplate" from="accessory.vehicle_ammo_cases" id="accessory.wmgfl_titan_thermal_launcher" {
+    clear "SkillsGranted"
+    append "SkillsGranted" "active.wmgfl_titan_thermal_overload"
+}
+
+clone "TagTemplate" from="unique" id="wmgfl_titan_thermal"
+
+clone "SkillTemplate" from="effect.reduced_ap_after_transport" id="effect.wmgfl_titan_thermal_cycle" {
+    set "Title" {
+        set "m_DefaultTranslation" "Thermal Overload Cycle"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Thermal Overload needs 3 turns to cycle after firing."
+    }
+    set "IsRemovedAfterCombat" #false
+    clear "EventHandlers"
+    append "EventHandlers" type="ApplySkillToSelf" {
+        set "SkillToApply" "active.wmgfl_titan_thermal_vent"
+        set "Event" enum="ApplyOnEvent" "OnSkillWithTagsUsed"
+        append "RequiredTags" "wmgfl_titan_thermal"
+        set "RequiredLogic" enum="LogicType" "Or"
+        set "ChanceToApply" 100
+    }
+}
+
+clone "SkillTemplate" from="active.special.lucky_shot" id="active.wmgfl_titan_thermal_vent" {
+    set "Title" {
+        set "m_DefaultTranslation" "Thermal Overload Venting"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Thermal Overload is cooling down."
+    }
+    set "IsHidden" #true
+    set "ActionPointCost" 0
+    set "IsLimitedUses" #false
+    set "IsRemovedAfterCombat" #true
+    set "MaxRange" 0
+    set "AoEType" enum="SkillAoEType" "CenterOnly"
+    clear "EventHandlers"
+    append "EventHandlers" type="AddSkill" {
+        set "Event" enum="AddEvent" "OnUse"
+        set "SkillToAdd" "effect.wmgfl_titan_thermal_cooldown"
+    }
+}
+
+clone "SkillTemplate" from="effect.reduced_ap_after_transport" id="effect.wmgfl_titan_thermal_cooldown" {
+    set "Title" {
+        set "m_DefaultTranslation" "Thermal Overload Cooling Down"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Thermal Overload is cooling down."
+    }
+    clear "EventHandlers"
+    append "EventHandlers" type="LifetimeLimit" {
+        set "Event" enum="LifetimeType" "OnRoundStart"
+        set "Lifetime" 4
+        set "ResetLifetimeOnRefresh" #true
+    }
+}
+
+patch "ArmyTemplate" "army.rogue_army_list_general_mid_game" {
+    append "PossibleUnits" {
+        set "Template" "enemy.wmgfl_titan_support"
+        set "Weight" 10
+        set "WeightMultAfterPick" 0.1
+        set "MaxConcurrentPctOfArmyPoints" 57
+    }
+}

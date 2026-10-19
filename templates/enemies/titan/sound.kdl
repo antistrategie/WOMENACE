@@ -1,0 +1,111 @@
+clone "SoundBank" from="weapons_soundbank" id="wmgfl_titan_sfx" {
+    // GFL2 Titan sounds. The footsteps and body impact are shared by every
+    // Titan, the rest belong to one variant.
+    clear "sounds"
+    clear "busIndices"
+
+    append "sounds" {
+        set "name" "Footstep"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="titan/FS_01"
+        }
+        append "variations" {
+            set "clip" asset="titan/FS_02"
+        }
+        append "variations" {
+            set "clip" asset="titan/FS_03"
+        }
+        append "variations" {
+            set "clip" asset="titan/FS_04"
+        }
+        append "variations" {
+            set "clip" asset="titan/FS_05"
+        }
+        append "variations" {
+            set "clip" asset="titan/FS_06"
+        }
+        append "variations" {
+            set "clip" asset="titan/FS_07"
+        }
+        append "variations" {
+            set "clip" asset="titan/FS_08"
+        }
+        append "variations" {
+            set "clip" asset="titan/FS_09"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "Collision_Body"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="titan/Collision_Body_01"
+        }
+        append "variations" {
+            set "clip" asset="titan/Collision_Body_02"
+        }
+        append "variations" {
+            set "clip" asset="titan/Collision_Body_03"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "Foot_Slam"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="titan/Collision_Foot_01"
+        }
+        append "variations" {
+            set "clip" asset="titan/Collision_Foot_02"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "Support_Pierce"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="titan/support/jtl_Shot"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "Support_Strobe"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="titan/support/jdyb_Cast01"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "Support_Strobe_Hit"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="titan/support/gz_Hit"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "Support_Thermal_Launch"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="titan/support/Skill02_Bullet"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "Support_Thermal_Hit"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="titan/support/Skill_Hit"
+        }
+    }
+    append "busIndices" 0
+}
