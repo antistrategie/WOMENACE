@@ -71,7 +71,7 @@ Unpack the boss's CriWare `.acb` with `vgmstream-cli` (names collide, so index t
 
 ## 8. Army lists
 
-A faction's `ArmyTemplate` lists (`army.<faction>_list_*`) hold `PossibleUnits` entries of `Template`, `Weight`, `WeightMultAfterPick` and `MaxConcurrentPctOfArmyPoints`, each list gated by `ReqCampaignProgress`. A mission fills its army-point budget by weighted picks. Append the enemy with a `patch "ArmyTemplate"` block. Bosses use a low weight, a small repeat multiplier and a budget cap so they always arrive with escorts, and stay out of reinforcement lists.
+A faction's `ArmyTemplate` lists (`army.<faction>_list_*`) hold `PossibleUnits` entries of `Template`, `Weight`, `WeightMultAfterPick` and `MaxConcurrentPctOfArmyPoints`, each list gated by `ReqCampaignProgress`. A mission fills its army-point budget by weighted picks. Append the enemy with a `patch "ArmyTemplate"` block. Bosses use a low weight, a small repeat multiplier and a budget cap so they always arrive with escorts. `WeightMultAfterPick 0` limits a unit to one per army. Each starting list has a `_reinforcements` twin with the same units, which supplies the enemies that arrive mid-mission. A unit appears there only if it is appended to that list as well.
 
 ## 9. Testing
 

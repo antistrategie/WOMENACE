@@ -21,7 +21,7 @@ clone "EntityTemplate" from="enemy.vehicle_rogue_army_mercenary_medium_walker" i
         set "y" 7.0
     }
 
-    set "ArmyPointCost" 550
+    set "ArmyPointCost" 650
 
     set "AIRole" {
         set "CoverAgainstOpponents" #false
@@ -32,11 +32,11 @@ clone "EntityTemplate" from="enemy.vehicle_rogue_army_mercenary_medium_walker" i
     }
 
     set "Properties" {
-        set "HitpointsPerElement" 300
-        set "Armor" 160
-        set "ArmorSide" 160
+        set "HitpointsPerElement" 450
+        set "Armor" 200
+        set "ArmorSide" 180
         set "ArmorBack" 160
-        set "ArmorDurabilityPerElement" 600.0
+        set "ArmorDurabilityPerElement" 800.0
         set "Accuracy" 70.0
         set "Vision" 10
         set "SoundOnMovementStepOverrides2" #null
@@ -284,6 +284,15 @@ patch "ArmyTemplate" "army.rogue_army_list_general_mid_game" {
         set "Template" "enemy.wmgfl_titan_support"
         set "Weight" 10
         set "WeightMultAfterPick" 0.1
+        set "MaxConcurrentPctOfArmyPoints" 57
+    }
+}
+
+patch "ArmyTemplate" "army.rogue_army_list_general_mid_game_reinforcements" {
+    append "PossibleUnits" {
+        set "Template" "enemy.wmgfl_titan_support"
+        set "Weight" 10
+        set "WeightMultAfterPick" 0.0
         set "MaxConcurrentPctOfArmyPoints" 57
     }
 }

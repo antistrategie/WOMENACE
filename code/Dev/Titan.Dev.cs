@@ -6,8 +6,7 @@ using Jiangyu.Sdk;
 namespace WOMENACE.Code;
 
 // Spawns a Titan a few tiles out from the squad in a live mission. With player set
-// it joins the squad's side instead, so its skills can be fired by hand. The AI
-// Titan keeps to Pierce range and shoots from beyond the squad's sight.
+// it joins the squad's side instead, so its skills can be fired by hand.
 //
 //   {"verb":"Titan.Spawn","args":[],"mutate":true}
 //   {"verb":"Titan.Spawn","args":["enemy.wmgfl_titan_support", 4, true],"mutate":true}
@@ -43,7 +42,6 @@ public static class Titan
     }
 
     // Every field on each handler of the Titan's skills, read off the live templates.
-    // Handler fields are Odin-serialised, so offline inspection cannot show them.
     //   {"verb":"Titan.Stats","args":[]}
     public static string Stats(string templateId = VehicleModels.TitanSupport)
     {
@@ -66,6 +64,26 @@ public static class Titan
             return $"no SkillTemplate '{skillId}'";
         var lines = new List<string>();
         DescribeSkill(skill, lines);
+        return string.Join("\n", lines);
+    }
+
+    // Whether the Titan clone shares its nested AIRole and Properties objects with
+    // the vanilla walker it clones. Shared objects mean the Titan's KDL edits also
+    // land on every vanilla mercenary walker.
+    //   {"verb":"Titan.Shared","args":[]}
+    public static string Shared(string templateId = VehicleModels.TitanSupport, string sourceId = "enemy.vehicle_rogue_army_mercenary_medium_walker")
+    {
+        var titan = Templates.ById<EntityTemplate>(templateId);
+        var source = Templates.ById<EntityTemplate>(sourceId);
+        if (titan == null || source == null)
+            return $"missing template: {(titan == null ? templateId : sourceId)}";
+        var lines = new List<string>
+        {
+            $"AIRole shared: {titan.AIRole != null && source.AIRole != null && titan.AIRole.Pointer == source.AIRole.Pointer}",
+            $"  titan SafetyScale {titan.AIRole?.SafetyScale}, source SafetyScale {source.AIRole?.SafetyScale}",
+            $"Properties shared: {titan.Properties != null && source.Properties != null && titan.Properties.Pointer == source.Properties.Pointer}",
+            $"  titan HP {titan.Properties?.HitpointsPerElement}, source HP {source.Properties?.HitpointsPerElement}",
+        };
         return string.Join("\n", lines);
     }
 
