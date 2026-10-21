@@ -73,6 +73,8 @@ Unpack the boss's CriWare `.acb` with `vgmstream-cli` (names collide, so index t
 
 A faction's `ArmyTemplate` lists (`army.<faction>_list_*`) hold `PossibleUnits` entries of `Template`, `Weight`, `WeightMultAfterPick` and `MaxConcurrentPctOfArmyPoints`, each list gated by `ReqCampaignProgress`. A mission fills its army-point budget by weighted picks. Append the enemy with a `patch "ArmyTemplate"` block. Bosses use a low weight, a small repeat multiplier and a budget cap so they always arrive with escorts. `WeightMultAfterPick 0` limits a unit to one per army. Each starting list has a `_reinforcements` twin with the same units, which supplies the enemies that arrive mid-mission. A unit appears there only if it is appended to that list as well.
 
+A fixed weight dilutes when another mod adds units to the same list. `ArmyShareSystem` holds an entry at a target share of picks instead: list the army, the unit and the fraction in its `Shares` table, and it solves the weight from the other entries in a prefix on `Army.CreateArmy`, after every template mod has finished. The KDL weight only applies until then.
+
 ## 9. Testing
 
 A dev spawn verb (`code/Dev/<Enemy>.Dev.cs`) spawns the unit near the squad on the mission's enemy side, or on the player side to fire its skills by hand. The Unity player log at `<Proton prefix>/AppData/LocalLow/Overhype Studios/Menace/Player.log` records every `OnTurnStart`, `OnMovementFinished`, `OnSkillUse` and `OnDeath` per actor, which is the trace for what the AI actually did each turn. The bridge `aiscore` command reports skill scores only during the AI's own turn and reads 0 otherwise.

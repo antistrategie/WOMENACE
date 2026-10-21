@@ -41,7 +41,7 @@ Use the implementation and its adjacent comments as the authority for current be
 - `Systems/Ssr/` and `Systems/Elements/` for imprint bonuses, elemental build-up, Phase effects, and HUD gauges. A kit that makes a victim take more damage from an element registers the multiplier with `ElementsSystem.RegisterVictimDamageMult`, which both the hit path and the hover preview read.
 - `Systems/Dolls/` for bespoke per-Doll kits, one folder per Doll, plus the form-swap system they share.
 - `Systems/Fairies/` for Fairy Lodge unlocks and off-map abilities.
-- `Systems/Enemies/` for added enemy units: the AoE shapes and skill AI configs their templates cannot author.
+- `Systems/Enemies/` for added enemy units: the AoE shapes and skill AI configs their templates cannot author, and `ArmyShareSystem`, which keeps each unit at a fixed share of its army lists when other mods grow them.
 - `Systems/NewGame/` for WOMENACE campaign options, Doll roster selection, vanilla leader filtering, and dummy-link limits.
 - `Systems/Vehicles/` and `Systems/Weapons/` for signature vehicles, weapon skins, and weapon presentation.
 - `Systems/CampaignMap/` for the GFL1-inspired mission-board reskin.
