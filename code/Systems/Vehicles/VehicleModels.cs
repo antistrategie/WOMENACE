@@ -10,6 +10,7 @@ internal static class VehicleModels
     // Springfield's summon, spawned by her Path of Protection perk.
     public const string Taryz = "player_springfield_taryz";
     public const string TitanSupport = "enemy.wmgfl_titan_support";
+    public const string Oljefat = "enemy.wmgfl_oljefat";
 
     public static string AssetFor(string templateId) => templateId switch
     {
@@ -18,6 +19,7 @@ internal static class VehicleModels
         Sinner => "koleda_car/default/main",
         Taryz => "springfield/taryz/main",
         TitanSupport => "titan/support/main",
+        Oljefat => "oljefat/default/main",
         _ => null,
     };
 }

@@ -22,14 +22,16 @@ GFL2 clips carry `PlayBattleSound(int)` animation events. `VoyExport --clipevent
 
 ## 2. Bake
 
-Write a per-enemy `Build<Enemy>.cs` under `unity/Assets/Authored/<enemy>/Editor/`, modelled on the existing Titan bake. It must:
+Write a per-enemy `Build<Enemy>.cs` under `unity/Assets/Authored/<enemy>/Editor/`, modelled on the existing Titan bake and calling `BuildTitan`'s internal helpers (scale measure, in-place clips, footsteps, muzzle anchoring, materials) rather than copying them. It must:
 
 - Solve the import scale from bind-pose bounds to the GFL2 canon height times the 1.2 world factor (the Doll height policy).
 - Build its own controller on the construct driver contract with a Generic avatar, `applyRootMotion` off, and every parameter the construct driver writes (`Speed`, `Movement_Initialized`, `Aiming`, `Hit`, `Vault`, `Overloaded`, `Rotation`, plus the attack triggers). The walker animator drives locomotion partly in code against the vanilla walker rig, so a non-vanilla rig cannot use it.
 - Strip planar travel from the top skeleton bone only, so MENACE owns the tile move.
+- Under `DeathBehaviour DeathAnimations`, `ElementAnimator.OnDeath` only fires the `OnDeath` trigger. Declare it and add an any-state transition into the death state, or the unit freezes in its last pose when killed.
 - Map attacks to native triggers: `AnimationType` `ShootSingle` sets `Shoot_Single`, `SpecialAttack1` sets `Special_Attack_1`, `SpecialAttack2` sets `Special_Attack_2`.
 - Stamp `OnAnimationEvent` with int 4 (`MovementStep`) on each foot plant of the walk clip, or the unit's `SoundOnMovementStep` never plays.
-- Add the named transforms skills resolve: `muzzle` (and `muzzle2`, `muzzle3`) at the barrel tip facing +Z, and `damage` for self-centred skills with `MuzzleType Damage`. A missing `damage` child logs "Required muzzle 'damage'" and the skill applies nothing.
+- Add the named transforms skills resolve: `muzzle` (and `muzzle2`, `muzzle3`) at the barrel tip facing +Z, and `damage` for self-centred skills with `MuzzleType Damage`. A missing `damage` child logs "Required muzzle 'damage'" and the skill applies nothing. A thrown attack on a non-humanoid rig launches from a `muzzle2` on the throwing hand (`MuzzleType Muzzle2`), since vanilla's `HandL` expects a humanoid hand.
+- Log the muzzle or hand through each attack clip and set the skill's `DelayAfterAnimationTrigger` to the moment it is aimed or released.
 - Add a solid `BoxCollider` named `ColliderDestroyProps` under the root, sized to the body, for vehicle prop crushing.
 
 Body loading goes through `VehicleModels.AssetFor`, so the entity carries no eager bundle reference.
@@ -52,7 +54,7 @@ Clone a vanilla skill whose handler chain already does the job, then retune. Ski
 
 ## 5. What KDL cannot author
 
-`CustomAoEShape` and `AIConfig` are Odin-serialised. A system assigns both in `OnTemplatesApplied` and `OnSceneLoaded`.
+`CustomAoEShape` and `AIConfig` are Odin-serialised. A system assigns both in `OnTemplatesApplied` and `OnSceneLoaded`. A clone of a vanilla skill whose own footprint and AI already fit, such as a flamethrower cone (`ConeAngle`) or a thrown grenade, keeps both and needs no system.
 
 - **AoE shapes**: an `ICustomAoEShape` injected with `[JiangyuType(Interfaces=...)]`, `GetAoERadius` returning 0. During AI tile scoring the origin tile can be empty, so resolve the attacker from `TacticalManager.GetActiveActor()` when the origin holds no entity, or the shape counts no hostiles from any tile the unit has not reached.
 - **AI configs**: assign a fresh `Il2CppMenace.Tactical.AI.Behaviors.Data.InflictDamage` (base `Il2CppMenace.Tactical.AI.Data.SkillBehavior`) with `ScoreMult` and `InfluencesPositioning`, leaving the vanilla skill's own config untouched.

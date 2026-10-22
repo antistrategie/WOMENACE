@@ -1,0 +1,67 @@
+clone "SoundBank" from="weapons_soundbank" id="wmgfl_oljefat_sfx" {
+    clear "sounds"
+    clear "busIndices"
+
+    append "sounds" {
+        set "name" "Footstep"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="oljefat/FS_01"
+        }
+        append "variations" {
+            set "clip" asset="oljefat/FS_02"
+        }
+        append "variations" {
+            set "clip" asset="oljefat/FS_03"
+        }
+        append "variations" {
+            set "clip" asset="oljefat/FS_04"
+        }
+        append "variations" {
+            set "clip" asset="oljefat/FS_05"
+        }
+        append "variations" {
+            set "clip" asset="oljefat/FS_06"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "Collision_Body"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="oljefat/Collision_Body_01"
+        }
+        append "variations" {
+            set "clip" asset="oljefat/Collision_Body_02"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "Flame"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="oljefat/Flame"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "Combustible_Throw"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="oljefat/Combustible_Throw"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "Combustible_Hit"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="oljefat/Combustible_Hit"
+        }
+    }
+    append "busIndices" 0
+}

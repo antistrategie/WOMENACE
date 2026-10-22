@@ -1,0 +1,328 @@
+clone "TagTemplate" from="unique" id="wmgfl_oljefat"
+
+clone "SpeakerTemplate" from="enemy.pirate_chaingun_team" id="wmgfl_oljefat_speaker" {
+    set "Tags" "wmgfl_oljefat pirate"
+    set "Nickname" {
+        set "m_DefaultTranslation" "Oljefat"
+    }
+    set "BarkImage" asset="oljefat/bark"
+}
+
+clone "SoundBank" from="tactical_barks_jeansy_va" id="wmgfl_tactical_barks_oljefat_va" {
+    clear "sounds"
+    clear "busIndices"
+    append "sounds" {
+        set "name" "Single_Skill_001"
+        append "variations" {
+            set "clip" asset="oljefat/voice/Single_Skill_001"
+        }
+    }
+    append "busIndices" 0
+    append "sounds" {
+        set "name" "Single_Skill_002"
+        append "variations" {
+            set "clip" asset="oljefat/voice/Single_Skill_002"
+        }
+    }
+    append "busIndices" 0
+    append "sounds" {
+        set "name" "Single_Skill_003"
+        append "variations" {
+            set "clip" asset="oljefat/voice/Single_Skill_003"
+        }
+    }
+    append "busIndices" 0
+    append "sounds" {
+        set "name" "Series_Positive_001"
+        append "variations" {
+            set "clip" asset="oljefat/voice/Series_Positive_001"
+        }
+    }
+    append "busIndices" 0
+    append "sounds" {
+        set "name" "Series_Positive_002"
+        append "variations" {
+            set "clip" asset="oljefat/voice/Series_Positive_002"
+        }
+    }
+    append "busIndices" 0
+    append "sounds" {
+        set "name" "Series_Positive_004"
+        append "variations" {
+            set "clip" asset="oljefat/voice/Series_Positive_004"
+        }
+    }
+    append "busIndices" 0
+    append "sounds" {
+        set "name" "Series_Positive_005"
+        append "variations" {
+            set "clip" asset="oljefat/voice/Series_Positive_005"
+        }
+    }
+    append "busIndices" 0
+    append "sounds" {
+        set "name" "Series_HittedLast_001"
+        append "variations" {
+            set "clip" asset="oljefat/voice/Series_HittedLast_001"
+        }
+    }
+    append "busIndices" 0
+    append "sounds" {
+        set "name" "Single_Battleend_001"
+        append "variations" {
+            set "clip" asset="oljefat/voice/Single_Battleend_001"
+        }
+    }
+    append "busIndices" 0
+    append "sounds" {
+        set "name" "Single_PassiveSkill_001"
+        append "variations" {
+            set "clip" asset="oljefat/voice/Single_PassiveSkill_001"
+        }
+    }
+    append "busIndices" 0
+}
+
+clone "ConversationTemplate" from="Pirate_Heavy/pirate_heavies_introduce_themselves" id="Oljefat/introduce" {
+    set "Active" #true
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=0 type="HasOneTag" {
+            set "Tags" "wmgfl_oljefat"
+        }
+    }
+    set "Condition" {
+        set "ExpressionStr" ""
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_oljefat_va"
+                        set "itemId" "Single_Skill_001"
+                    }
+                    set "RoleGuid" "Discovered"
+                    set "Text" "I'll burn you all."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="Pirate_Heavy/flame_attacks_pirateheavy" id="Oljefat/flame_attacks" {
+    set "Active" #true
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_oljefat"
+        }
+    }
+    set "Condition" {
+        set "ExpressionStr" ""
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_oljefat_va"
+                        set "itemId" "Single_Skill_003"
+                    }
+                    set "RoleGuid" "Attacker"
+                    set "Text" "Burn!"
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_oljefat_va"
+                        set "itemId" "Single_Skill_002"
+                    }
+                    set "RoleGuid" "Attacker"
+                    set "Text" "Flames, burst!"
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_oljefat_va"
+                        set "itemId" "Series_Positive_005"
+                    }
+                    set "RoleGuid" "Attacker"
+                    set "Text" "Burn."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="Pirate_Heavy/enemy_suppressed_pirateheavy" id="Oljefat/enemy_suppressed" {
+    set "Active" #true
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=4 type="HasOneTag" {
+            set "Tags" "wmgfl_oljefat"
+        }
+    }
+    set "Condition" {
+        set "ExpressionStr" ""
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_oljefat_va"
+                        set "itemId" "Series_Positive_001"
+                    }
+                    set "RoleGuid" "Pirate"
+                    set "Text" "How's the heat?"
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="Pirate_Heavy/pirate_heavy_killing_constructs_1" id="Oljefat/enemy_killed" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=1 type="IsActor" {}
+    }
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_oljefat"
+        }
+    }
+    set "Condition" {
+        set "ExpressionStr" ""
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_oljefat_va"
+                        set "itemId" "Series_Positive_004"
+                    }
+                    set "RoleGuid" "Killer"
+                    set "Text" "That's right."
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_oljefat_va"
+                        set "itemId" "Series_Positive_002"
+                    }
+                    set "RoleGuid" "Killer"
+                    set "Text" "Ha ha ha!"
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="Pirate_Heavy/pirate_heavy_blocked_armor" id="Oljefat/armor_blocked" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_oljefat"
+        }
+    }
+    set "Condition" {
+        set "ExpressionStr" ""
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_oljefat_va"
+                        set "itemId" "Series_Positive_002"
+                    }
+                    set "RoleGuid" "Target"
+                    set "Text" "Ha ha ha!"
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="Pirate_Mamas/taking_fire_mama" id="Oljefat/taking_fire" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_oljefat"
+        }
+    }
+    set "Condition" {
+        set "ExpressionStr" ""
+    }
+    set "PlayChance" 30
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_oljefat_va"
+                        set "itemId" "Series_HittedLast_001"
+                    }
+                    set "RoleGuid" "Damaged"
+                    set "Text" "You bastard..."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="Pirate_Heavy/pirate_heavy_killing_constructs_2" id="Oljefat/killed" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=1 type="HasOneTag" {
+            set "Tags" "wmgfl_oljefat"
+        }
+    }
+    set "Roles" index=1 {
+        set "m_SerializedRequirements" index=0 type="IsActor" {}
+        set "m_SerializedRequirements" index=2 type="IsActor" {}
+    }
+    set "Condition" {
+        set "ExpressionStr" ""
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_oljefat_va"
+                        set "itemId" "Single_Battleend_001"
+                    }
+                    set "RoleGuid" "Killed"
+                    set "Text" "My flames..."
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_oljefat_va"
+                        set "itemId" "Single_PassiveSkill_001"
+                    }
+                    set "RoleGuid" "Killed"
+                    set "Text" "Come on, let's die together."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}

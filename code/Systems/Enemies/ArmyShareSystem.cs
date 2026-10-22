@@ -16,6 +16,9 @@ public sealed class ArmyShareSystem : JiangyuSystem
     {
         new("army.rogue_army_list_general_mid_game", "enemy.wmgfl_titan_support", 0.03f),
         new("army.rogue_army_list_general_mid_game_reinforcements", "enemy.wmgfl_titan_support", 0.045f),
+        new("army.pirate_offensive_mid_game", "enemy.wmgfl_oljefat", 0.03f),
+        new("army.pirate_defensive_mid_game", "enemy.wmgfl_oljefat", 0.03f),
+        new("army.pirate_offensive_mid_game_reinforcements", "enemy.wmgfl_oljefat", 0.045f),
     };
 
     public override void OnInit() => Context.Patches.Prefix("Il2CppMenace.Strategy.Army", "CreateArmy", OnCreateArmy);

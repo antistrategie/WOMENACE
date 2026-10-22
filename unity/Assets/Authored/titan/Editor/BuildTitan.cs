@@ -127,6 +127,9 @@ namespace WOMENACE.Editor
                 // Skills with AnimationType SpecialAttack1/2 pull these natively.
                 ac.AddParameter("Special_Attack_1", AnimatorControllerParameterType.Trigger);
                 ac.AddParameter("Special_Attack_2", AnimatorControllerParameterType.Trigger);
+                // DeathBehaviour DeathAnimations fires this trigger and nothing else
+                // (ElementAnimator.OnDeath, the ON_DEATH_ID hash).
+                ac.AddParameter("OnDeath", AnimatorControllerParameterType.Trigger);
                 var sm = ac.layers[0].stateMachine;
 
                 var idle = sm.AddState("Idle"); idle.motion = idleC; sm.defaultState = idle;
@@ -172,8 +175,9 @@ namespace WOMENACE.Editor
                 T(idle, turnL, AnimatorConditionMode.Less, -0.5f, "Rotation");
                 TExit(turnR, idle, 0.85f);
                 TExit(turnL, idle, 0.85f);
-                // Death is entered by the driver under DeathBehaviour DeathAnimations.
-                _ = death;
+                var dying = sm.AddAnyStateTransition(death);
+                dying.hasExitTime = false; dying.duration = 0.1f; dying.canTransitionToSelf = false;
+                dying.AddCondition(AnimatorConditionMode.If, 0, "OnDeath");
 
                 var inst = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(fbx));
                 inst.name = $"titan_{variant}";
@@ -243,7 +247,7 @@ namespace WOMENACE.Editor
         }
 
         // World height of the bind pose, from the skinned vertices themselves.
-        private static float MeasureHeight(string fbx)
+        internal static float MeasureHeight(string fbx)
         {
             var inst = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(fbx));
             try { return BindPoseBounds(inst).size.y; }
@@ -252,7 +256,7 @@ namespace WOMENACE.Editor
 
         // Bounds of the skinned vertices in the space of the instance root, which sits
         // at the origin unrotated.
-        private static Bounds BindPoseBounds(GameObject inst)
+        internal static Bounds BindPoseBounds(GameObject inst)
         {
             var bounds = new Bounds();
             var first = true;
@@ -275,7 +279,7 @@ namespace WOMENACE.Editor
 
         // Blender names its FBX takes "<object>|<action>|<layer>", and the action
         // already carries the armature prefix, so the clip is the second-to-last part.
-        private static string ClipKey(string take)
+        internal static string ClipKey(string take)
         {
             var parts = take.Split('|');
             return parts.Length > 1 ? parts[^2] : take;
@@ -305,7 +309,7 @@ namespace WOMENACE.Editor
 
         // HDRP mask layout R=metallic, G=AO, B=detail, A=smoothness. Without one the
         // shader reads a white mask, which is full chrome.
-        private static Texture2D MatteMask(string animDir)
+        internal static Texture2D MatteMask(string animDir)
         {
             var path = $"{animDir}/titan_matte_mask.asset";
             var existing = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
@@ -318,7 +322,7 @@ namespace WOMENACE.Editor
             return t;
         }
 
-        private static Texture2D LoadTex(string path, bool sRGB, bool isNormal)
+        internal static Texture2D LoadTex(string path, bool sRGB, bool isNormal)
         {
             if (!System.IO.File.Exists(path)) return null;
             if (AssetImporter.GetAtPath(path) is TextureImporter imp)
@@ -334,7 +338,7 @@ namespace WOMENACE.Editor
         }
 
         // Copy a clip and strip the planar travel on the top skeleton bone only.
-        private static AnimationClip MakeInPlace(AnimationClip src, string animDir, string assetName, bool loop)
+        internal static AnimationClip MakeInPlace(AnimationClip src, string animDir, string assetName, bool loop)
         {
             if (src == null) return null;
             var copy = UnityEngine.Object.Instantiate(src);
@@ -353,14 +357,15 @@ namespace WOMENACE.Editor
             settings.loopTime = loop;
             AnimationUtility.SetAnimationClipSettings(copy, settings);
             AssetDatabase.CreateAsset(copy, $"{animDir}/{assetName}.anim");
-            Debug.Log($"titan in-place {assetName}: stripped {removed} root travel curves, loop={loop}");
+            Debug.Log($"in-place {assetName}: stripped {removed} root travel curves, loop={loop}");
             return copy;
         }
 
         // Fire skills spawn their muzzle flash on a child named "muzzle", facing its +Z.
-        // Gun_Jnt is the barrel's pivot, so the anchor goes at the far end of the vertices
-        // it carries: the barrel's longest local axis, on the side away from the grip.
-        private static void AddMuzzle(GameObject inst, Transform gun)
+        // The gun bone carries the barrel, so the anchor goes at the far end of the
+        // vertices it carries: the barrel's longest local axis, on the side away from the
+        // grip.
+        internal static void AddMuzzle(GameObject inst, Transform gun, string gripName = "Grip_Jnt")
         {
             var points = new List<Vector3>();
             foreach (var smr in inst.GetComponentsInChildren<SkinnedMeshRenderer>(true))
@@ -382,7 +387,7 @@ namespace WOMENACE.Editor
             muzzle.SetParent(gun, false);
             if (points.Count == 0)
             {
-                Debug.LogWarning("titan: no vertices on Gun_Jnt, muzzle left at the pivot");
+                Debug.LogWarning($"muzzle: no vertices on {gun.name}, muzzle left at the pivot");
                 return;
             }
             var min = points.Aggregate(Vector3.Min);
@@ -390,7 +395,7 @@ namespace WOMENACE.Editor
             var extent = max - min;
             var axis = extent.x >= extent.y && extent.x >= extent.z ? 0 : extent.y >= extent.z ? 1 : 2;
             // The grip sits at the breech end, so the tip is the end farther from it.
-            var grip = inst.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == "Grip_Jnt");
+            var grip = inst.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == gripName);
             var gripLocal = grip != null ? gun.InverseTransformPoint(grip.position)[axis] : min[axis];
             var tipAtMax = Mathf.Abs(max[axis] - gripLocal) >= Mathf.Abs(min[axis] - gripLocal);
             var tipEnd = tipAtMax ? max[axis] : min[axis];
@@ -401,7 +406,7 @@ namespace WOMENACE.Editor
             dir[axis] = tipAtMax ? 1f : -1f;
             muzzle.localPosition = tip;
             muzzle.localRotation = Quaternion.LookRotation(dir, Mathf.Abs(dir.y) > 0.9f ? Vector3.forward : Vector3.up);
-            Debug.Log($"titan: muzzle at {muzzle.position} facing {muzzle.forward} ({points.Count} barrel vertices, axis {axis})");
+            Debug.Log($"muzzle: at {muzzle.position} facing {muzzle.forward} ({points.Count} barrel vertices, axis {axis})");
         }
 
         // The burst fires from 1.27 s, so the muzzle should point level and forward there.
@@ -427,7 +432,7 @@ namespace WOMENACE.Editor
         // The GFL2 walk carries no events, so a step goes where each ankle comes
         // down to its lowest band after a swing. SetAnimationEvents replaces, so
         // re-runs are idempotent.
-        private static void AddFootsteps(string fbx, AnimationClip walk)
+        internal static void AddFootsteps(string fbx, AnimationClip walk)
         {
             var inst = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(fbx));
             try
@@ -437,7 +442,7 @@ namespace WOMENACE.Editor
                 foreach (var name in new[] { "Ankle_L", "Ankle_R" })
                 {
                     var ankle = bones.FirstOrDefault(t => t.name == name);
-                    if (ankle == null) { Debug.LogWarning($"titan: no {name} for footsteps"); continue; }
+                    if (ankle == null) { Debug.LogWarning($"footsteps: no {name}"); continue; }
                     const int samples = 120;
                     var heights = new float[samples];
                     for (var i = 0; i < samples; i++)
@@ -462,12 +467,12 @@ namespace WOMENACE.Editor
                 events.Sort((a, b) => a.time.CompareTo(b.time));
                 AnimationUtility.SetAnimationEvents(walk, events.ToArray());
                 EditorUtility.SetDirty(walk);
-                Debug.Log($"titan: {events.Count} footstep event(s) on {walk.name} at [{string.Join(", ", events.Select(e => e.time.ToString("0.00")))}] of {walk.length:0.00}s");
+                Debug.Log($"footsteps: {events.Count} event(s) on {walk.name} at [{string.Join(", ", events.Select(e => e.time.ToString("0.00")))}] of {walk.length:0.00}s");
             }
             finally { UnityEngine.Object.DestroyImmediate(inst); }
         }
 
-        private static void EnsureFolder(string path)
+        internal static void EnsureFolder(string path)
         {
             if (AssetDatabase.IsValidFolder(path)) return;
             var parent = System.IO.Path.GetDirectoryName(path).Replace('\\', '/');

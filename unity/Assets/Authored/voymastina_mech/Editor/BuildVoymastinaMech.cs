@@ -235,6 +235,9 @@ namespace WOMENACE.Editor
                 // clip doesn't play in-game, the trigger name is what to retune.
                 ac.AddParameter("SpecialAttack1", AnimatorControllerParameterType.Trigger);
                 ac.AddParameter("SpecialAttack2", AnimatorControllerParameterType.Trigger);
+                // DeathBehaviour DeathAnimations fires this trigger and nothing else
+                // (ElementAnimator.OnDeath, the ON_DEATH_ID hash).
+                ac.AddParameter("OnDeath", AnimatorControllerParameterType.Trigger);
                 var sm = ac.layers[0].stateMachine;
 
                 var idle = sm.AddState("Idle"); idle.motion = idleC; sm.defaultState = idle;
@@ -252,7 +255,7 @@ namespace WOMENACE.Editor
                 var ultraHit = sm.AddState("UltraSkillHit"); ultraHit.motion = ultraHitInPlace ?? ultraHitC ?? idleC;
                 var hit = sm.AddState("Hit"); hit.motion = hitC ?? idleC;
                 var overload = sm.AddState("Overload"); overload.motion = stunC ?? idleC;
-                // Death state driven by DeathBehaviour=DeathAnimations (driver plays it on death).
+                // Entered on the OnDeath trigger and never left, so the wreck stays down.
                 var death = sm.AddState("Death"); death.motion = dieC ?? idleC;
                 // Turn-in-place, driven by the Rotation parameter (Normalized angle mapping).
                 var turnL = sm.AddState("TurnL"); turnL.motion = turnLC ?? idleC;
@@ -298,6 +301,9 @@ namespace WOMENACE.Editor
                 var toHit = sm.AddAnyStateTransition(hit); toHit.hasExitTime = false; toHit.duration = 0.05f;
                 toHit.AddCondition(AnimatorConditionMode.If, 0, "Hit");
                 var hitOut = hit.AddTransition(idle); hitOut.hasExitTime = true; hitOut.exitTime = 0.9f; hitOut.duration = 0.1f;
+                var dying = sm.AddAnyStateTransition(death);
+                dying.hasExitTime = false; dying.duration = 0.1f; dying.canTransitionToSelf = false;
+                dying.AddCondition(AnimatorConditionMode.If, 0, "OnDeath");
 
                 // No Vault state: the mech flies (its locomotion "run" is a hover), so it never
                 // traverses cover on foot. The driver still pulses the Vault trigger when a move
