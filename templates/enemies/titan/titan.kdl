@@ -220,6 +220,12 @@ clone "SkillTemplate" from="active.throw_incendiary_grenade" id="active.wmgfl_ti
 }
 
 clone "AccessoryTemplate" from="accessory.vehicle_ammo_cases" id="accessory.wmgfl_titan_thermal_launcher" {
+    set "Title" {
+        set "m_DefaultTranslation" "Thermal Launcher"
+    }
+    set "Rarity" 0
+    set "TradeValue" 0
+    set "BlackMarketMaxQuantity" 0
     clear "SkillsGranted"
     append "SkillsGranted" "active.wmgfl_titan_thermal_overload"
 }

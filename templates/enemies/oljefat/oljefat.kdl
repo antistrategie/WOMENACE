@@ -164,6 +164,12 @@ clone "SkillTemplate" from="active.throw_incendiary_grenade" id="active.wmgfl_ol
 }
 
 clone "AccessoryTemplate" from="accessory.incendiary_grenade" id="accessory.wmgfl_oljefat_combustible_pack" {
+    set "Title" {
+        set "m_DefaultTranslation" "Combustible Charges"
+    }
+    set "Rarity" 0
+    set "TradeValue" 0
+    set "BlackMarketMaxQuantity" 0
     clear "SkillsGranted"
     append "SkillsGranted" "active.wmgfl_oljefat_flashpoint_overdrive"
 }
