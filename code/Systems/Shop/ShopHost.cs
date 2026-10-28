@@ -44,6 +44,9 @@ internal sealed class ShopHost : IDisposable
         context.Patches.Postfix("Il2CppMenace.UI.UIScreen", "OnOpen",
             info => OnScreenOpened((info.Instance as Il2CppObjectBase)?.TryCast<UIScreen>()));
         context.Patches.Postfix("Il2CppMenace.UI.Strategy.StrategyNavigation", "InitWorkshopButton", _ => RefreshNavigation());
+        // OperationResultUIScreen hides every native button through HideAllButtons. The shop
+        // button is not one of them and would open the workshop over the operation result.
+        context.Patches.Postfix("Il2CppMenace.UI.Strategy.StrategyNavigation", "HideAllButtons", _ => RefreshNavigation());
         context.Patches.Postfix("Il2CppMenace.UI.Strategy.SystemMapUIScreen", "OnOpened", _ => RefreshNavigation());
         context.Patches.Postfix("Il2CppMenace.States.StrategyState", "SetConversationVarValue", info =>
         {
@@ -94,11 +97,16 @@ internal sealed class ShopHost : IDisposable
         button.SetSelected(_wantShop && UIManager.Get()?.GetActiveScreen()?.TryCast<WorkshopUIScreen>() != null);
         button.SetOnLeftClickedAction(DelegateSupport.ConvertDelegate<Il2CppSystem.Action<InteractiveElement>>(
             (Action<InteractiveElement>)(_ => Open())));
-        button.SetVisible(WorkshopAccess.IsUnlocked);
+        button.SetVisible(false);
+        button.schedule.Execute(DelegateSupport.ConvertDelegate<Il2CppSystem.Action>(() =>
+            button.SetVisible(ShowsShop(button.parent == null ? null : UI.Find(button.parent, UiSelector.Name(WorkshopUi.Navigation)))))).StartingIn(0);
         button.RegisterCallback<GeometryChangedEvent>(DelegateSupport.ConvertDelegate<EventCallback<GeometryChangedEvent>>(
             (Action<GeometryChangedEvent>)(_ => PositionFactions(button))));
         return button;
     }
+
+    // The shop rides the native workshop button, which screens without navigation hide.
+    private static bool ShowsShop(VisualElement workshop) => WorkshopAccess.IsUnlocked && workshop?.IsVisible() == true;
 
     private void PositionFactions(NavigationButton shop)
     {
@@ -115,7 +123,7 @@ internal sealed class ShopHost : IDisposable
             _factionsTop = factions.style.top;
             _factionsBottom = factions.style.bottom;
         }
-        if (!WorkshopAccess.IsUnlocked)
+        if (!shop.IsVisible())
         {
             factions.style.top = _factionsTop;
             factions.style.bottom = _factionsBottom;
@@ -168,7 +176,7 @@ internal sealed class ShopHost : IDisposable
             return;
         var shop = UI.Find(root, UiSelector.Name("wm-kalina-shop-button"))?.TryCast<NavigationButton>();
         var workshop = UI.Find(root, UiSelector.Name(WorkshopUi.Navigation))?.TryCast<NavigationButton>();
-        shop?.SetVisible(WorkshopAccess.IsUnlocked);
+        shop?.SetVisible(ShowsShop(workshop));
         shop?.SetSelected(_wantShop && screen.TryCast<WorkshopUIScreen>() != null);
         if (shop != null)
             shop.schedule.Execute(DelegateSupport.ConvertDelegate<Il2CppSystem.Action>(() => PositionFactions(shop))).StartingIn(0);
