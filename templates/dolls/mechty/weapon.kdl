@@ -67,6 +67,7 @@ clone "SkillTemplate" from="active.fire_assault_rifle_tier1_556" id="active.fire
 }
 
 clone "SkillTemplate" from="active.fire_assault_rifle_sustained_fire_tier1_556" id="active.fire_mechty_sustained" {
+    set "Repetitions" 16
     set "Uses" 20
     clear "SoundsOnAttack"
     append "SoundsOnAttack" {
