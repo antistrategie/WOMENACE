@@ -2,6 +2,10 @@ clone "ElementAnimatorTemplate" from="animator.construct_soldier" id="animator.w
     set "DeathBehaviour" enum="AnimatorDeathBehaviour" "DeathAnimations"
 }
 
+clone "MovementType" from="movement_type.human_soldier" id="movement_type.wmgfl_oljefat" {
+    set "VaultMode" enum="VaultMode" "Destroy"
+}
+
 clone "EntityTemplate" from="enemy.pirate_flamethrower_team" id="enemy.wmgfl_oljefat" {
     set "Title" {
         set "m_DefaultTranslation" "Oljefat"
@@ -12,6 +16,9 @@ clone "EntityTemplate" from="enemy.pirate_flamethrower_team" id="enemy.wmgfl_olj
 
     set "SpeakerTemplate" "wmgfl_oljefat_speaker"
     set "AnimatorTemplate" "animator.wmgfl_oljefat"
+    set "MovementType" "movement_type.wmgfl_oljefat"
+    set "VisualPositioning" enum="TilePositioning" "Default"
+    set "RotationAfterMovement" enum="RotationAfterMovement" "KeepCurrentRotation"
     set "FactionSpecificAnimation" enum="FactionAnimationType" "None"
     set "AimWithVisualSlot" enum="VisualAlterationSlot" "EntireModel"
     set "IsAffectedByFatalities" #false
