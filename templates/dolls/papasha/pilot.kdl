@@ -32,6 +32,9 @@ clone "SpeakerTemplate" from="ivey" id="wmgfl_papasha_speaker" {
 }
 
 clone "UnitLeaderTemplate" from="pilot.ivey" id="pilot.papasha" {
+    set "FactionBackground" asset="factions/background_pol03_1180x1040"
+    set "BigBackground" asset="factions/background_pol03_972x906"
+    set "SlotFactionBackground" asset="factions/background_pol03_162x162"
     set "SpeakerTemplate" "wmgfl_papasha_speaker"
     set "UnitTitle" {
         set "m_DefaultTranslation" "POL-03 Security Management Department"

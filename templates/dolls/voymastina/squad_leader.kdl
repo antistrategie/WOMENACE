@@ -57,6 +57,9 @@ clone "EntityTemplate" from="player_squad.sy" id="player_squad.voymastina" {
 }
 
 clone "UnitLeaderTemplate" from="squad_leader.sy" id="squad_leader.voymastina" {
+    set "FactionBackground" asset="factions/background_defy_1180x1040"
+    set "BigBackground" asset="factions/background_defy_972x906"
+    set "SlotFactionBackground" asset="factions/background_defy_162x162"
     set "InfantryUnitTemplate" "player_squad.voymastina"
     set "SpeakerTemplate" "wmgfl_voymastina_speaker"
     set "CustomHead" #null

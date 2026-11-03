@@ -54,6 +54,9 @@ clone "EntityTemplate" from="player_squad.sy" id="player_squad.klukai" {
 }
 
 clone "UnitLeaderTemplate" from="squad_leader.sy" id="squad_leader.klukai_foot" {
+    set "FactionBackground" asset="factions/background_404_team_a_1180x1040"
+    set "BigBackground" asset="factions/background_404_team_a_972x906"
+    set "SlotFactionBackground" asset="factions/background_404_team_a_162x162"
     set "InfantryUnitTemplate" "player_squad.klukai"
     set "SpeakerTemplate" "wmgfl_klukai_speaker"
     set "CustomHead" #null

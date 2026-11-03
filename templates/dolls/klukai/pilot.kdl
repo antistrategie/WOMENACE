@@ -30,6 +30,9 @@ clone "SpeakerTemplate" from="ivey" id="wmgfl_klukai_pilot_speaker" {
 }
 
 clone "UnitLeaderTemplate" from="pilot.ivey" id="pilot.klukai" {
+    set "FactionBackground" asset="factions/background_404_team_a_1180x1040"
+    set "BigBackground" asset="factions/background_404_team_a_972x906"
+    set "SlotFactionBackground" asset="factions/background_404_team_a_162x162"
     set "SpeakerTemplate" "wmgfl_klukai_pilot_speaker"
     set "UnitTitle" {
         set "m_DefaultTranslation" "H.I.D.E. 404 Team A"

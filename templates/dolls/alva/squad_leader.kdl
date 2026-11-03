@@ -54,6 +54,9 @@ clone "EntityTemplate" from="player_squad.carda" id="player_squad.alva" {
 }
 
 clone "UnitLeaderTemplate" from="squad_leader.carda" id="squad_leader.alva" {
+    set "FactionBackground" asset="factions/background_defy_1180x1040"
+    set "BigBackground" asset="factions/background_defy_972x906"
+    set "SlotFactionBackground" asset="factions/background_defy_162x162"
     set "InfantryUnitTemplate" "player_squad.alva"
     set "SpeakerTemplate" "wmgfl_alva_speaker"
     set "CustomHead" #null

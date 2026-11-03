@@ -54,6 +54,9 @@ clone "EntityTemplate" from="player_squad.sy" id="player_squad.vector" {
 }
 
 clone "UnitLeaderTemplate" from="squad_leader.sy" id="squad_leader.vector" {
+    set "FactionBackground" asset="factions/background_404_team_b_1180x1040"
+    set "BigBackground" asset="factions/background_404_team_b_972x906"
+    set "SlotFactionBackground" asset="factions/background_404_team_b_162x162"
     set "InfantryUnitTemplate" "player_squad.vector"
     set "SpeakerTemplate" "wmgfl_vector_speaker"
     set "CustomHead" #null

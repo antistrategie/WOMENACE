@@ -54,6 +54,9 @@ clone "EntityTemplate" from="player_squad.sy" id="player_squad.lenna" {
 }
 
 clone "UnitLeaderTemplate" from="squad_leader.sy" id="squad_leader.lenna" {
+    set "FactionBackground" asset="factions/background_404_1180x1040"
+    set "BigBackground" asset="factions/background_404_972x906"
+    set "SlotFactionBackground" asset="factions/background_404_162x162"
     set "InfantryUnitTemplate" "player_squad.lenna"
     set "SpeakerTemplate" "wmgfl_lenna_speaker"
     set "CustomHead" #null

@@ -62,6 +62,9 @@ clone "EntityTemplate" from="player_squad.sy" id="player_squad.ots14" {
 }
 
 clone "UnitLeaderTemplate" from="squad_leader.sy" id="squad_leader.ots14" {
+    set "FactionBackground" asset="factions/background_elmo_3rd_gen_1180x1040"
+    set "BigBackground" asset="factions/background_elmo_3rd_gen_972x906"
+    set "SlotFactionBackground" asset="factions/background_elmo_3rd_gen_162x162"
     set "InfantryUnitTemplate" "player_squad.ots14"
     set "SpeakerTemplate" "wmgfl_ots14_speaker"
     set "InitialPerk" "perk.wmgfl_os_tuning"
