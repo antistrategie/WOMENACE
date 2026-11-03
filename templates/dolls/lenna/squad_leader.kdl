@@ -40,8 +40,8 @@ clone "EntityTemplate" from="player_squad.sy" id="player_squad.lenna" {
         set "m_DefaultTranslation" "A cheerful and friendly Doll that devotes all her energy to protecting her beloved family. As Lenna becomes more composed, she displays a perfect smile when communicating with others and even gives \"forced\" hugs to her family."
     }
 
-    set "Badge" asset="lenna/badge_mini"
-    set "BadgeWhite" asset="lenna/badge_mini"
+    set "Badge" asset="lenna/badge_unit_window"
+    set "BadgeWhite" asset="lenna/badge_white"
     clear "Items"
     append "Items" "armor.player_fatigues"
     append "Items" "weapon.lenna"

@@ -35,9 +35,10 @@ Badges, from an emblem image (--emblem, with --cut-background for one photograph
 
     sprites/<doll>/badge_mini.png              48x48
     sprites/<doll>/slot_badge.png              54x54
-    sprites/<doll>/badge_unit_window.png       234x234
+    sprites/<doll>/badge_unit_window.png       234x234, also the unit's Badge
+    sprites/<doll>/badge_white.png             234x234 white silhouette of it, the Badge's state overlay
     sprites/<doll>/big_badge.png               720x270, sewn onto the patch fabric
-    sprites/<doll>/badge_dragged.png           90x165, small portrait over the emblem in the drag frame
+    sprites/<doll>/badge_dragged.png           90x165, head and shoulders over the emblem in the drag frame
 
 Outfit icons, from that outfit's own art (--outfit <folder> with --whole), cropped around the
 head the same way:
@@ -48,8 +49,9 @@ head the same way:
 
 Outfit art often has scenery and odd poses, where the head match fails: check, use --head-box.
 
-The fabric and the empty drag frame are rebuilt from the roster's sprites (data/badge_*.png).
-The emblem is fitted inside each sprite's measured box, so badge_dragged needs bark.png first.
+The fabric is rebuilt from the roster's sprites, the empty drag frame from vanilla's
+(data/badge_*.png). Emblems are centred on their outline's bounding box. badge_dragged cuts its
+portrait from stand_look_right.png around the bark crop, so it needs both of those first.
 
 Run:
     uv run scripts/doll/make_doll_sprites.py --doll suomi \\
@@ -96,14 +98,18 @@ BARK_HEAD_TOP = (-31, -10)
 # Emblem fit boxes (width, height, centre x, centre y), measured on the roster's free-form emblems.
 EMBLEM_MINI = (44, 44, 24, 24)
 EMBLEM_SLOT = (52, 52, 27, 27)
-EMBLEM_UNIT_WINDOW = (218, 200, 117, 120)
+EMBLEM_UNIT_WINDOW = (218, 200, 117, 117)
 EMBLEM_BIG = (286, 240, 360, 133)
 EMBLEM_DRAGGED = (78, 56, 45, 116)
 # Drag frame pentagon interior: left/top corner, right/top corner, shoulder (bottom of the
 # straight sides), point. Fitting keeps PENTAGON_MARGIN px clear of the gold line.
 PENTAGON = ((1, 84), (88, 84), (0, 130), (44.5, 155))
 PENTAGON_MARGIN = 3
-DRAGGED_PORTRAIT = (78, 81, 6, 0)  # bark scaled to w x h, placed at x, y
+# Drag frame portrait panel (w, h, x, y) over the stripes. The portrait is cut from the stand
+# image around the bark crop: DRAGGED_CROP[0] bark widths wide, its top DRAGGED_CROP[1] bark
+# pixels above the bark's top, which gives vanilla's head size.
+DRAGGED_PORTRAIT = (88, 80, 1, 4)
+DRAGGED_CROP = (1.4, 10)
 
 
 def load_rgba(path):
@@ -295,7 +301,66 @@ def fit_pentagon(emblem):
     raise SystemExit("emblem does not fit the drag frame")
 
 
-def badges(emblem, bark):
+def find_bark(stand, bark):
+    """(scale, x, y) of the bark crop inside the stand image: both are cut from the same art."""
+    k = 4
+    sg = grey(cv2.resize(stand, (stand.shape[1] // k, stand.shape[0] // k), interpolation=cv2.INTER_AREA))
+    sg = sg[:sg.shape[0] * 2 // 5]
+    best = None
+    for s in np.geomspace(0.4, 2.0, 40):
+        w, h = round(BARK_SIZE[0] * s / k), round(BARK_SIZE[1] * s / k)
+        if h >= sg.shape[0]:
+            continue
+        tg = grey(cv2.resize(bark, (w, h), interpolation=cv2.INTER_AREA))
+        _, mv, _, ml = cv2.minMaxLoc(cv2.matchTemplate(sg, tg, cv2.TM_CCOEFF_NORMED))
+        if best is None or mv > best[0]:
+            best = (mv, s, ml[0] * k, ml[1] * k)
+    return best[1:]
+
+
+def dragged_portrait(stand, bark):
+    """Head and shoulders for the drag frame, cut from the stand image so the stripes show round her."""
+    pw, ph, _, _ = DRAGGED_PORTRAIT
+    s, x, y = find_bark(stand, bark)
+    width, top = DRAGGED_CROP
+    w = width * BARK_SIZE[0] * s
+    h = w * ph / pw
+    x0, y0 = x + BARK_SIZE[0] * s / 2 - w / 2, y - top * s
+    m = np.float32([[pw / w, 0, -x0 * pw / w], [0, ph / h, -y0 * ph / h]])
+    a = stand[..., 3:4].astype(np.float32) / 255
+    pre = np.dstack([stand[..., :3] * a, stand[..., 3:4]]).astype(np.float32)
+    pre = cv2.warpAffine(pre, m, (pw, ph), flags=cv2.INTER_AREA, borderValue=0)
+    alpha = pre[..., 3:4]
+    rgb = np.where(alpha > 0, pre[..., :3] / np.maximum(alpha / 255, 1e-6), 0)
+    return np.dstack([np.clip(rgb, 0, 255), alpha]).astype(np.uint8)
+
+
+def badge_dragged(emblem, stand, bark):
+    """The drag frame: portrait over the striped panel, emblem inside the pentagon."""
+    frame = cv2.imread(str(DATA / "badge_dragged_frame_90x165.png"), cv2.IMREAD_UNCHANGED)
+    inner, cx, cy = fit_pentagon(emblem)
+    out = over(frame, inner, cx, cy)
+    pw, ph, px, py = DRAGGED_PORTRAIT
+    return over(out, dragged_portrait(stand, bark), px + pw / 2, py + ph / 2)
+
+
+def badge_white(badge):
+    """The badge's flat white silhouette, holes filled. The unit badge draws it over the Badge,
+    tinted by state (white pulse when wavering or fleeing, grey when the turn is done, red when
+    stabilised or dead), so it has to cover the same shape."""
+    a = badge[..., 3]
+    # Close gaps first (see-through panels, open lettering) so the fill finds them enclosed.
+    k = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (15, 15))
+    solid = cv2.morphologyEx((a > 12).astype(np.uint8), cv2.MORPH_CLOSE, k)
+    _, lbl = cv2.connectedComponents(1 - solid, connectivity=4)
+    outside = set(np.unique(np.concatenate([lbl[0], lbl[-1], lbl[:, 0], lbl[:, -1]])))
+    filled = ((solid == 1) | ~np.isin(lbl, list(outside))) & (cv2.erode(solid, np.ones((3, 3), np.uint8)) == 1)
+    out = np.full(badge.shape, 255, np.uint8)
+    out[..., 3] = np.maximum(a, filled.astype(np.uint8) * 255)
+    return out
+
+
+def badges(emblem, bark, stand):
     """Emblem sprites: plain at three sizes, on the patch fabric, and in the drag frame."""
     out = {}
     for name, (bw, bh, cx, cy), size in (("badge_mini", EMBLEM_MINI, 48), ("slot_badge", EMBLEM_SLOT, 54),
@@ -318,12 +383,8 @@ def badges(emblem, bark):
     textured[..., :3] = np.clip(patch[..., :3].astype(np.float32) + 0.8 * weave[y0:y0 + h, x0:x0 + w], 0, 255)
     out["big_badge"] = over(big, textured, cx, cy)
 
-    dragged = cv2.imread(str(DATA / "badge_dragged_frame_90x165.png"), cv2.IMREAD_UNCHANGED)
-    inner, cx, cy = fit_pentagon(emblem)
-    dragged = over(dragged, inner, cx, cy)
-    pw, ph, px, py = DRAGGED_PORTRAIT
-    portrait = fit(bark, pw, ph)
-    out["badge_dragged"] = over(dragged, portrait, px + pw / 2, py + ph / 2)
+    out["badge_white"] = badge_white(out["badge_unit_window"])
+    out["badge_dragged"] = badge_dragged(emblem, stand, bark)
     return out
 
 
@@ -339,7 +400,7 @@ def main():
                     "top of the head) when a raised hand or weapon reaches far above it: that part fades out")
     ap.add_argument("--outfit", help="outfit folder name: --whole is then that outfit's art and the "
                     "script makes armor/<outfit>/ Icon, IconEquipment and IconSkillBar")
-    ap.add_argument("--emblem", help="the doll's emblem image, makes the badge sprites (needs bark.png)")
+    ap.add_argument("--emblem", help="the doll's emblem image, makes the badge sprites (needs bark.png and stand_look_right.png)")
     ap.add_argument("--cut-background", action="store_true", help="remove a light backdrop around the emblem")
     args = ap.parse_args()
 
@@ -351,9 +412,12 @@ def main():
         emblem = load_rgba(args.emblem)
         if args.cut_background:
             emblem = cut_background(emblem)
+        ys, xs = np.where(emblem[..., 3] > 12)
+        emblem = emblem[ys.min():ys.max() + 1, xs.min():xs.max() + 1]
         sprites = ASSETS / "sprites" / args.doll
         bark = load_rgba(sprites / "bark.png")
-        for name, im in badges(emblem, bark).items():
+        stand = load_rgba(ASSETS / "textures" / args.doll / "stand_look_right.png")
+        for name, im in badges(emblem, bark, stand).items():
             path = sprites / f"{name}.png"
             cv2.imwrite(str(path), im)
             print(f"wrote {path.relative_to(REPO)}")

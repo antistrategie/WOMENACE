@@ -40,8 +40,8 @@ clone "EntityTemplate" from="player_squad.sy" id="player_squad.mechty" {
         set "m_DefaultTranslation" "A doll who approaches everything with peak laziness-except for gaming and reading manga. She's mastered the ultimate skill: falling asleep anytime, anywhere, under any circumstance. Although she seems to embody the philosophy of \"lying flat\" to the extreme, she reveals her dependable side in times of crisis-though in her words, \"It'd be better if we just never ran into any 'crisis' at all...\""
     }
 
-    set "Badge" asset="mechty/badge_mini"
-    set "BadgeWhite" asset="mechty/badge_mini"
+    set "Badge" asset="mechty/badge_unit_window"
+    set "BadgeWhite" asset="mechty/badge_white"
     clear "Items"
     append "Items" "armor.player_fatigues"
     append "Items" "weapon.mechty"

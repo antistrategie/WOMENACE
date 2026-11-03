@@ -124,7 +124,7 @@ The full bestiary lives in [`../../AGENTS.md`](../../AGENTS.md) under "Sprite sl
 
 - `--whole --head --span` writes `bark`, `slot`, `slot_inactive` and the three `stand_look_*` textures. `--span` is her canon span from the height policy, which picks her size class in the stand image.
 - `--outfit <folder> --whole <that outfit's art>` writes the outfit's `Icon`, `IconEquipment` and `IconSkillBar` under `sprites/<character>/armor/<folder>/`.
-- `--emblem <image>` writes the five emblem sprites. `--cut-background` removes a light paper or table backdrop around an outlined emblem. `badge_dragged` carries a small copy of `bark`, so run the portraits first.
+- `--emblem <image>` writes the six emblem sprites (`badge_unit_window` doubles as the unit `Badge`, `badge_white` is its silhouette for `BadgeWhite`). `--cut-background` removes a light paper or table backdrop around an outlined emblem. `badge_dragged` cuts a head-and-shoulders portrait from `stand_look_right` around the `bark` crop, so run the portraits first.
 
 Placement is drawn from the spread measured across the roster, seeded by the doll's name, so reruns are stable and the set keeps the roster's slightly uneven hand placement. Two things need a look on every doll:
 

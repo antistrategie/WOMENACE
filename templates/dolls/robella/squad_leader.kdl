@@ -40,8 +40,8 @@ clone "EntityTemplate" from="player_squad.carda" id="player_squad.robella" {
         set "m_DefaultTranslation" "On the surface, Robella appears decisive and acts with swift efficiency. In reality, in places unseen, she has already been struggling alone for a long time. Her sensitivity, gentleness, and delicacy are things that only you can see."
     }
 
-    set "Badge" asset="robella/badge_mini"
-    set "BadgeWhite" asset="robella/badge_mini"
+    set "Badge" asset="robella/badge_unit_window"
+    set "BadgeWhite" asset="robella/badge_white"
     clear "Items"
     append "Items" "armor.player_fatigues"
     append "Items" "weapon.robella"

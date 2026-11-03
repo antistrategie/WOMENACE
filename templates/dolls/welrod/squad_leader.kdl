@@ -40,8 +40,8 @@ clone "EntityTemplate" from="player_squad.sy" id="player_squad.welrod" {
         set "m_DefaultTranslation" "Welrod usually speaks in a self-centered manner and can seem somewhat harsh towards her teammates. In reality, she deeply values her partners and strives to help everyone. She is particularly confident in her judgment, enjoys judging right and wrong, and will take action to uphold her sense of justice. She is kind-hearted but not good at expressing her concern for others. She finds this frustrating and needs her partners' understanding and tolerance. When her feigned strength is exposed, she reveals an unexpectedly adorable side."
     }
 
-    set "Badge" asset="welrod/badge_mini"
-    set "BadgeWhite" asset="welrod/badge_mini"
+    set "Badge" asset="welrod/badge_unit_window"
+    set "BadgeWhite" asset="welrod/badge_white"
     clear "Items"
     append "Items" "armor.player_fatigues"
     append "Items" "weapon.welrod"

@@ -44,8 +44,8 @@ clone "EntityTemplate" from="player_squad.sy" id="player_squad.leva" {
             """
     }
 
-    set "Badge" asset="leva/badge_mini"
-    set "BadgeWhite" asset="leva/badge_mini"
+    set "Badge" asset="leva/badge_unit_window"
+    set "BadgeWhite" asset="leva/badge_white"
     clear "Items"
     append "Items" "armor.player_fatigues"
     append "Items" "weapon.leva"

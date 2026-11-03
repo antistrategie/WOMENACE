@@ -40,8 +40,8 @@ clone "EntityTemplate" from="player_squad.carda" id="player_squad.koleda" {
         set "m_DefaultTranslation" "The former alpha wolf of the rebellious squad, after experiencing her worst day, took responsibility and led her comrades to stand guard until the very end. She ultimately handed over the leadership and title to a trustworthy companion, choosing to continue fighting in a different way. To this day, she remains the AK-12 you know, but please be careful, she is now more dangerous than ever."
     }
 
-    set "Badge" asset="koleda/badge_mini"
-    set "BadgeWhite" asset="koleda/badge_mini"
+    set "Badge" asset="koleda/badge_unit_window"
+    set "BadgeWhite" asset="koleda/badge_white"
     clear "Items"
     append "Items" "armor.player_fatigues"
     append "Items" "weapon.koleda"

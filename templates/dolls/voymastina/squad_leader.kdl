@@ -43,8 +43,8 @@ clone "EntityTemplate" from="player_squad.sy" id="player_squad.voymastina" {
             """
     }
 
-    set "Badge" asset="voymastina/badge_mini"
-    set "BadgeWhite" asset="voymastina/badge_mini"
+    set "Badge" asset="voymastina/badge_unit_window"
+    set "BadgeWhite" asset="voymastina/badge_white"
     clear "Items"
     append "Items" "armor.player_fatigues"
     append "Items" "weapon.voymastina"

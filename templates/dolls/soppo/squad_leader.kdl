@@ -43,8 +43,8 @@ clone "EntityTemplate" from="player_squad.sy" id="player_squad.soppo" {
             """
     }
 
-    set "Badge" asset="soppo/badge_mini"
-    set "BadgeWhite" asset="soppo/badge_mini"
+    set "Badge" asset="soppo/badge_unit_window"
+    set "BadgeWhite" asset="soppo/badge_white"
     clear "Items"
     append "Items" "armor.player_fatigues"
     append "Items" "weapon.soppo"

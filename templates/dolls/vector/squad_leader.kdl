@@ -40,8 +40,8 @@ clone "EntityTemplate" from="player_squad.sy" id="player_squad.vector" {
         set "m_DefaultTranslation" "A regularly pessimistic Doll. However, as the leader of H.I.D.E 404's Team B, Vector will absolutely push through and endure till the very last moment with her teammates in the face of adversity, no matter how depressing the outcomes of her calculations."
     }
 
-    set "Badge" asset="vector/badge_mini"
-    set "BadgeWhite" asset="vector/badge_mini"
+    set "Badge" asset="vector/badge_unit_window"
+    set "BadgeWhite" asset="vector/badge_white"
     clear "Items"
     append "Items" "armor.player_fatigues"
     append "Items" "weapon.vector"
