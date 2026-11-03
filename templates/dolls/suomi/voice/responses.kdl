@@ -1,0 +1,59 @@
+clone "ConversationTemplate" from="JeanSy/response_kill_anyone_nice" id="Suomi/response_kill" {
+    set "Active" #true
+    set "Roles" index=2 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_suomi"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_suomi_va"
+                        set "itemId" "Series_Tone_Positive_007"
+                    }
+                    set "RoleGuid" "JeanSy"
+                    set "Text" "Thanks a lot!"
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_suomi_va"
+                        set "itemId" "Series_Up_003"
+                    }
+                    set "RoleGuid" "JeanSy"
+                    set "Text" "Thank you."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/response_taking_fire_anyone" id="Suomi/response_taking_fire_anyone" {
+    set "Active" #true
+    set "Roles" index=2 {
+        set "m_SerializedRequirements" index=2 type="HasOneTag" {
+            set "Tags" "wmgfl_suomi"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_suomi_va"
+                        set "itemId" "Series_Set_Click_Series_Tone_Positive_009"
+                    }
+                    set "RoleGuid" "JeanSy"
+                    set "Text" "Are you alright?"
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}

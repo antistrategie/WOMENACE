@@ -101,6 +101,11 @@ public static class Unlocks
         {
             new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.welrod_welwyn_mist" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_welrod/lv2", "Outfit: Welwyn Mist") },
         },
+        ["wmgfl_suomi"] = new[]
+        {
+            new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.suomi_sparkling_ocean" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_suomi/lv2", "Outfit: Sparkling Ocean") },
+            new Entry { Level = 4, Feature = Feature.Skins, Armors = new[] { "armor.suomi_fluffy_korvatunturi" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_suomi/lv4", "Outfit: Fluffy Korvatunturi") },
+        },
         ["wmgfl_helen"] = new[]
         {
             new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.helen_starlit_waltz" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_helen/lv2", "Outfit: Starlit Waltz") },

@@ -1,0 +1,75 @@
+clone "WeaponTemplate" from="weapon.suomi" id="weapon.suomi_r1" {
+    set "Damage" 10.5
+    set "ArmorPenetration" 14.0
+    set "DamageToArmorDurability" 11.5
+}
+
+clone "WeaponTemplate" from="weapon.suomi" id="weapon.suomi_r2" {
+    set "Damage" 11.5
+    set "ArmorPenetration" 15.0
+    set "DamageToArmorDurability" 12.0
+}
+
+clone "WeaponTemplate" from="weapon.suomi" id="weapon.suomi_r3" {
+    set "Damage" 12.5
+    set "ArmorPenetration" 16.0
+    set "DamageToArmorDurability" 13.0
+}
+
+clone "WeaponTemplate" from="weapon.suomi" id="weapon.suomi_r4" {
+    set "Damage" 14.0
+    set "ArmorPenetration" 18.0
+    set "DamageToArmorDurability" 14.0
+}
+
+clone "WeaponTemplate" from="weapon.suomi" id="weapon.suomi_r5" {
+    set "Damage" 15.0
+    set "ArmorPenetration" 20.0
+    set "DamageToArmorDurability" 15.0
+}
+
+clone "WeaponTemplate" from="weapon.suomi" id="weapon.suomi_r6" {
+    set "Damage" 17.0
+    set "ArmorPenetration" 22.0
+    set "DamageToArmorDurability" 16.0
+}
+
+clone "CommodityTemplate" from="commodity.construct_weapon_parts" id="commodity.wmgfl_component_suomi" {
+    set "Title" {
+        set "m_DefaultTranslation" "KP/-31 Component"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "[PLACEHOLDER] Weapon component for KP/-31"
+    }
+    append "Tags" "jy_no_sell"
+    set "Icon" asset="weapon/suomi/Icon"
+    set "Rarity" 0
+    set "TradeValue" 0
+    set "BlackMarketMaxQuantity" 0
+    set "MinCampaignProgress" 0
+}
+
+clone "BlueprintTemplate" from="blueprint.squad_weapon_electro_magnetic_enhanced_assault_rifle" id="blueprint.wmgfl_suomi_duplicate" {
+    set "m_CraftingResult" "weapon.suomi"
+    clear "m_CraftingMaterials"
+    append "m_CraftingMaterials" {
+        set "Template" "commodity.wmgfl_part_smg_barrel"
+        set "Count" 1
+    }
+    append "m_CraftingMaterials" {
+        set "Template" "commodity.wmgfl_part_smg_receiver"
+        set "Count" 1
+    }
+    append "m_CraftingMaterials" {
+        set "Template" "commodity.wmgfl_part_smg_grip"
+        set "Count" 1
+    }
+    append "m_CraftingMaterials" {
+        set "Template" "commodity.wmgfl_part_smg_sights"
+        set "Count" 1
+    }
+    append "m_CraftingMaterials" {
+        set "Template" "commodity.wmgfl_component_suomi"
+        set "Count" 1
+    }
+}

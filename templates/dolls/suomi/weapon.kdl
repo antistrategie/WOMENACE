@@ -1,0 +1,89 @@
+clone "WeaponTemplate" from="weapon.generic_smg_tier1_ppp" id="weapon.suomi" {
+    append "Tags" "wmgfl_doll_weapon"
+    append "Tags" "jy_no_sell"
+    append "Tags" "wmgfl_class_smg"
+    set "Title" {
+        set "m_DefaultTranslation" "KP/-31"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "SMG"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "A firearm that is highly compatible with Suomi. It has been modified to suit Suomi's fighting style. Reducing the gun's weight has also increased its durability and firepower."
+    }
+
+    set "Model" asset="weapon/suomi/main"
+    set "Icon" asset="weapon/suomi/Icon"
+    set "IconEquipment" asset="weapon/suomi/IconEquipment"
+    set "IconEquipmentDisabled" asset="weapon/suomi/IconEquipmentDisabled"
+    set "IconSkillBar" asset="weapon/suomi/IconSkillBar"
+    set "IconSkillBarDisabled" asset="weapon/suomi/IconSkillBarDisabled"
+
+    set "AccuracyBonus" 0.0
+    set "AccuracyDropoff" -8.0
+    set "ArmorPenetration" 14.0
+    set "ArmorPenetrationDropoff" -2.27
+
+    set "Damage" 10.0
+    set "DamageDropoff" -1.13
+    set "DamageToArmorDurability" 11.0
+    set "DamageToArmorDurabilityDropoff" -1.25
+
+    set "MaxRange" 6
+    set "IdealRange" 3
+    set "Suppression" 3.0
+
+    set "DeployCosts" {
+        set "m_Supplies" 10
+    }
+
+    set "BlackMarketMaxQuantity" 0
+
+    set "SkillsGranted" index=0 "active.fire_suomi_kp31"
+    set "SkillsGranted" index=1 "active.fire_suomi_kp31_tap"
+}
+
+clone "SkillTemplate" from="active.fire_smg_tier1_burst" id="active.fire_suomi_kp31" {
+    set "Repetitions" 4
+    set "Uses" 38
+    clear "SoundsOnAttack"
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_smg_addition_bank"
+        set "itemId" "smg_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "weapons_soundbank"
+        set "itemId" "small_caliber_brass_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_smg_addition_bank"
+        set "itemId" "smg_burst_distant"
+    }
+    clear "SoundsOnAttackFar"
+    append "SoundsOnAttackFar" {
+        set "bankId" "wmgfl_weapons_smg_addition_bank"
+        set "itemId" "smg_burst_distant"
+    }
+}
+
+clone "SkillTemplate" from="active.fire_smg_tier_1_tap_fire" id="active.fire_suomi_kp31_tap" {
+    set "Uses" 38
+    clear "SoundsOnAttack"
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_smg_addition_bank"
+        set "itemId" "smg_single"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "weapons_soundbank"
+        set "itemId" "small_caliber_brass_burst"
+    }
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_weapons_smg_addition_bank"
+        set "itemId" "smg_single_distant"
+    }
+    clear "SoundsOnAttackFar"
+    append "SoundsOnAttackFar" {
+        set "bankId" "wmgfl_weapons_smg_addition_bank"
+        set "itemId" "smg_single_distant"
+    }
+}

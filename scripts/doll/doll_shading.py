@@ -85,6 +85,11 @@ TRANSLUCENT_OVERRIDES = {
     # GlassesFrame.
     "welrod/default": {"Glasses"},
     "welrod/welwyn_mist": {"Glasses"},
+    # The cn client draws c_SuomiSSR0102_slg_P1_cloth2_trans (the sheer chest
+    # panel) and cloth4_trans (the snowflakes on the capelet), whose UVs are
+    # P1-Cloth2-Top's and Cloth4-Cape-SnowFlakes' respectively. The repack's
+    # sheets carry no marker.
+    "suomi/fluffy_korvatunturi": {"P1-Cloth2-Top", "Cloth4-Cape-SnowFlakes"},
 }
 
 # First match wins, so the specific parts come before the general ones. Matching

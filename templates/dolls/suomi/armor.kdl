@@ -1,0 +1,65 @@
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.suomi_default" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
+    set "Title" {
+        set "m_DefaultTranslation" "Snow Bright"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Field Outfit"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Suomi's typical attire. A warm winter ensemble, naturally complete with a fur collar and fluffy pom-poms."
+    }
+    set "Icon" asset="suomi/armor/default/Icon"
+    set "IconEquipment" asset="suomi/armor/default/IconEquipment"
+    set "IconSkillBar" asset="suomi/armor/default/IconSkillBar"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_transmog"
+    append "Tags" "jy_no_sell"
+}
+
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.suomi_sparkling_ocean" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
+    set "Title" {
+        set "m_DefaultTranslation" "Sparkling Ocean"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Swimsuit"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Suomi's beach attire. The vibrant ribbon design resembles a fish's tail, making Suomi the happiest pixie in the ocean as she wears it."
+    }
+    set "Icon" asset="suomi/armor/sparkling_ocean/Icon"
+    set "IconEquipment" asset="suomi/armor/sparkling_ocean/IconEquipment"
+    set "IconSkillBar" asset="suomi/armor/sparkling_ocean/IconSkillBar"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_transmog"
+    append "Tags" "jy_no_sell"
+}
+
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.suomi_fluffy_korvatunturi" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
+    set "Title" {
+        set "m_DefaultTranslation" "Fluffy Korvatunturi"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Loungewear"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            "Commander, your Christmas present is here. Would you like to open it?"
+            Suomi approaches you with nothing in hand and a blush on her face.
+            """
+    }
+    set "Icon" asset="suomi/armor/fluffy_korvatunturi/Icon"
+    set "IconEquipment" asset="suomi/armor/fluffy_korvatunturi/IconEquipment"
+    set "IconSkillBar" asset="suomi/armor/fluffy_korvatunturi/IconSkillBar"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_transmog"
+    append "Tags" "jy_no_sell"
+}

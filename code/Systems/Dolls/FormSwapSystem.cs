@@ -73,6 +73,23 @@ public sealed class FormSwapSystem : JiangyuSystem
         public Func<string> AltTabLabel;
     }
 
+    private static string DeployInfantryLabel() => Locale.Text("WOMENACE::ui/deploy_infantry", "DEPLOY INFANTRY");
+    private static string DeployPilotLabel() => Locale.Text("WOMENACE::ui/deploy_pilot", "DEPLOY PILOT");
+    private static string SquadLeaderTabLabel() => Locale.Text("WOMENACE::ui/form_tab_sl", "SQUAD LEADER");
+    private static string PilotTabLabel() => Locale.Text("WOMENACE::ui/form_tab_pilot", "PILOT");
+
+    // A squad leader whose alt form is an ungated walker pilot riding the player's regular vehicles.
+    private static FormPair WalkerPilot(string character) => new()
+    {
+        Character = character,
+        BaseFormId = $"squad_leader.{character}_foot",
+        AltFormId = $"pilot.{character}",
+        ToAltLabel = DeployPilotLabel,
+        ToBaseLabel = DeployInfantryLabel,
+        BaseTabLabel = SquadLeaderTabLabel,
+        AltTabLabel = PilotTabLabel,
+    };
+
     private static readonly FormPair[] Pairs =
     [
         new FormPair
@@ -84,40 +101,14 @@ public sealed class FormSwapSystem : JiangyuSystem
             DefaultChassisId = "vehicle.voymastina_mech",
             ToAltLabel = () => Locale.Text("WOMENACE::ui/deploy_sinbreaker", "DEPLOY SINBREAKER"),
             ToAltLockedLabel = lv => Locale.Format("WOMENACE::ui/deploy_sinbreaker_locked", "SINBREAKER (LV.{0})", lv),
-            ToBaseLabel = () => Locale.Text("WOMENACE::ui/deploy_infantry", "DEPLOY INFANTRY"),
-            BaseTabLabel = () => Locale.Text("WOMENACE::ui/form_tab_sl", "SQUAD LEADER"),
+            ToBaseLabel = DeployInfantryLabel,
+            BaseTabLabel = SquadLeaderTabLabel,
             AltTabLabel = () => Locale.Text("WOMENACE::ui/form_tab_sinbreaker", "SINBREAKER"),
         },
-        new FormPair
-        {
-            Character = "papasha",
-            BaseFormId = "squad_leader.papasha_foot",
-            AltFormId = "pilot.papasha",
-            ToAltLabel = () => Locale.Text("WOMENACE::ui/deploy_pilot", "DEPLOY PILOT"),
-            ToBaseLabel = () => Locale.Text("WOMENACE::ui/deploy_infantry", "DEPLOY INFANTRY"),
-            BaseTabLabel = () => Locale.Text("WOMENACE::ui/form_tab_sl", "SQUAD LEADER"),
-            AltTabLabel = () => Locale.Text("WOMENACE::ui/form_tab_pilot", "PILOT"),
-        },
-        new FormPair
-        {
-            Character = "koleda",
-            BaseFormId = "squad_leader.koleda_foot",
-            AltFormId = "pilot.koleda",
-            ToAltLabel = () => Locale.Text("WOMENACE::ui/deploy_pilot", "DEPLOY PILOT"),
-            ToBaseLabel = () => Locale.Text("WOMENACE::ui/deploy_infantry", "DEPLOY INFANTRY"),
-            BaseTabLabel = () => Locale.Text("WOMENACE::ui/form_tab_sl", "SQUAD LEADER"),
-            AltTabLabel = () => Locale.Text("WOMENACE::ui/form_tab_pilot", "PILOT"),
-        },
-        new FormPair
-        {
-            Character = "klukai",
-            BaseFormId = "squad_leader.klukai_foot",
-            AltFormId = "pilot.klukai",
-            ToAltLabel = () => Locale.Text("WOMENACE::ui/deploy_pilot", "DEPLOY PILOT"),
-            ToBaseLabel = () => Locale.Text("WOMENACE::ui/deploy_infantry", "DEPLOY INFANTRY"),
-            BaseTabLabel = () => Locale.Text("WOMENACE::ui/form_tab_sl", "SQUAD LEADER"),
-            AltTabLabel = () => Locale.Text("WOMENACE::ui/form_tab_pilot", "PILOT"),
-        },
+        WalkerPilot("papasha"),
+        WalkerPilot("koleda"),
+        WalkerPilot("klukai"),
+        WalkerPilot("suomi"),
     ];
 
     // Both forms of a pair are kept alive between swaps so each preserves its own state exactly

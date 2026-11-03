@@ -1,0 +1,224 @@
+clone "TagTemplate" from="unique" id="wmgfl_suomi"
+
+clone "SpeakerTemplate" from="sy" id="wmgfl_suomi_speaker" {
+    set "Tags" "wmgfl_suomi pirate_sl female infantry waybacker wmgfl_class_smg"
+    set "Nickname" {
+        set "m_DefaultTranslation" "Suomi"
+    }
+    set "Forename" {
+        set "m_DefaultTranslation" "Suomi"
+    }
+    set "Surname" {
+        set "m_DefaultTranslation" ""
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            Name: Suomi (KP/-31)
+
+            Proficiency: Support
+
+            Birth: Unknown
+
+            Age: Classified
+
+            Affiliation(s): Doll Community
+            """
+    }
+
+    set "BarkImage" asset="suomi/bark"
+    set "StandLookLeftImage" asset="suomi/stand_look_left"
+    set "StandLookRightImage" asset="suomi/stand_look_right"
+    set "StandLookRightInactiveImage" asset="suomi/stand_look_right_inactive"
+}
+
+clone "EntityTemplate" from="player_squad.sy" id="player_squad.suomi" {
+    append "Tags" "wmgfl_suomi"
+    set "Title" {
+        set "m_DefaultTranslation" "Doll Community"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "A cute, conscientious, and kind-hearted Doll who will do what it takes for a mission. She bravely steps forward for her companions in the Community whilst she wanders the lands in search of those she treasures dearly. You need not worry when entrusting her with assignments. She will never fail to meet your expectations or complete her missions."
+    }
+
+    set "Badge" asset="suomi/badge_mini"
+    set "BadgeWhite" asset="suomi/badge_mini"
+    clear "Items"
+    append "Items" "armor.player_fatigues"
+    append "Items" "weapon.suomi"
+
+    set "Scale" {
+        set "x" 1.0
+        set "y" 1.0
+    }
+    set "OverrideScaleForSquadLeader" #false
+}
+
+clone "UnitLeaderTemplate" from="squad_leader.sy" id="squad_leader.suomi_foot" {
+    set "FactionBackground" asset="factions/background_doll_community_1180x1040"
+    set "BigBackground" asset="factions/background_doll_community_972x906"
+    set "SlotFactionBackground" asset="factions/background_doll_community_162x162"
+    set "InfantryUnitTemplate" "player_squad.suomi"
+    set "SpeakerTemplate" "wmgfl_suomi_speaker"
+    set "CustomHead" #null
+    set "UnitTitle" {
+        set "m_DefaultTranslation" "Tactical Doll"
+    }
+    set "UnitDescription" {
+        set "m_DefaultTranslation" "A cute, conscientious, and kind-hearted Doll who will do what it takes for a mission. She bravely steps forward for her companions in the Community whilst she wanders the lands in search of those she treasures dearly. You need not worry when entrusting her with assignments. She will never fail to meet your expectations or complete her missions."
+    }
+
+    set "InitialAttributes" index=0 100
+    set "InitialAttributes" index=1 75
+    set "InitialAttributes" index=2 80
+    set "InitialAttributes" index=3 100
+    set "InitialAttributes" index=4 100
+    set "InitialAttributes" index=5 20
+    set "InitialAttributes" index=6 100
+
+    set "QualityLevel" 3
+    set "GrowthPotential" 5
+    set "FixedSupplyCost" 100
+    set "PromotionCostMult" 0.8
+    set "SquaddieTax" 25
+    set "Rarity" 5
+
+    set "InitialPerk" "perk.covert_ops"
+    set "PerkTrees" index=0 "perk_tree.suomi"
+
+    set "Slot" asset="suomi/slot"
+    set "SlotInactive" asset="suomi/slot_inactive"
+    set "SlotBadge" asset="suomi/slot_badge"
+
+    set "BadgeDragged" asset="suomi/badge_dragged"
+    set "BigBadge" asset="suomi/big_badge"
+    set "BadgeUnitWindow" asset="suomi/badge_unit_window"
+    set "BadgeMini" asset="suomi/badge_mini"
+
+    set "HiringSelectBarkSound" {
+        set "bankId" "wmgfl_tactical_barks_suomi_va"
+        set "itemId" "Series_Battle_Start_Series_Hit_Series_Tone_Positive_008"
+    }
+    set "HiredBarkSound" {
+        set "bankId" "wmgfl_tactical_barks_suomi_va"
+        set "itemId" "Series_Up_004"
+    }
+
+    set "PromotionBarkSounds" index=0 {
+        set "PerkTier" 1
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_suomi_va"
+            set "itemId" "Series_Up_002"
+        }
+    }
+    set "PromotionBarkSounds" index=1 {
+        set "PerkTier" 2
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_suomi_va"
+            set "itemId" "Series_Up_001"
+        }
+    }
+    set "PromotionBarkSounds" index=2 {
+        set "PerkTier" 3
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_suomi_va"
+            set "itemId" "Series_Up_004"
+        }
+    }
+    set "PromotionBarkSounds" index=3 {
+        set "PerkTier" 4
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_suomi_va"
+            set "itemId" "Series_Set_Fall_Series_Up_007"
+        }
+    }
+
+    clear "EmotionalStateResponses"
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Eager"
+        set "Text" {
+            set "m_DefaultTranslation" "I wish... to help everyone!"
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_suomi_va"
+            set "itemId" "Series_Ultimate_Single_Ultimate_SSR_001"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Determined"
+        set "Text" {
+            set "m_DefaultTranslation" "Yup, we need to work even harder."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_suomi_va"
+            set "itemId" "Series_Up_005"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Overconfident"
+        set "Text" {
+            set "m_DefaultTranslation" "Don't underestimate me!"
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_suomi_va"
+            set "itemId" "Single_Passive_SSR_001"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Euphoric"
+        set "Text" {
+            set "m_DefaultTranslation" "I'm not the same as I used to be."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_suomi_va"
+            set "itemId" "Series_Up_004"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Hesitant"
+        set "Text" {
+            set "m_DefaultTranslation" "Oh..."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_suomi_va"
+            set "itemId" "Series_Chosen_Auto_Series_Tone_Positive_005"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Frustrated"
+        set "Text" {
+            set "m_DefaultTranslation" "Our mission completion rate isn't great. And we need to gather as many Collapse Pieces as we can."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_suomi_va"
+            set "itemId" "Series_Daily_003"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Disheartened"
+        set "Text" {
+            set "m_DefaultTranslation" "Will this be enough?"
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_suomi_va"
+            set "itemId" "Series_Up_006"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Miserable"
+        set "Text" {
+            set "m_DefaultTranslation" "..."
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "GoodwillTowards"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "AnimosityTowards"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+}
