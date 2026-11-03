@@ -70,6 +70,9 @@ clone "UnitLeaderTemplate" from="squad_leader.<parent>" id="squad_leader.<charac
     set "PerkTrees" index=0 "perk_tree.<character>"
     set "Slot" asset="<character>/slot"
     set "BadgeMini" asset="<character>/badge_mini"
+    set "FactionBackground" asset="factions/background_<faction>_1180x1040"
+    set "BigBackground" asset="factions/background_<faction>_972x906"
+    set "SlotFactionBackground" asset="factions/background_<faction>_162x162"
     ...
     set "HiringSelectBarkSound" {
         set "bankId" "wmgfl_tactical_barks_<character>_va"
@@ -111,8 +114,24 @@ Several portrait/badge fields exist on both `UnitLeaderTemplate` and `EntityTemp
 - `UnitLeaderTemplate.SlotBadge` / `BadgeDragged`: hire-slot + drag visuals.
 - `UnitLeaderTemplate.Badge` / `BadgeWhite`: dead for Infantry. Don't bother setting.
 - `EntityTemplate.PreviewMapIcon`: also dead in tested screens.
+- `UnitLeaderTemplate.FactionBackground` (1180x1040), `BigBackground` (972x906) and `SlotFactionBackground` (162x162): the faction disc behind the portraits. A clone inherits its parent's (`sy` gives the pirate skull), so every doll sets her own faction's set from `factions/background_<faction>_<size>`.
 
 The full bestiary lives in [`../../AGENTS.md`](../../AGENTS.md) under "Sprite slots".
+
+## Making the sprites
+
+`scripts/doll/make_doll_sprites.py` builds a doll's sprites from GFL2 client art, copying how the hand-made roster sprites were cut. Export the art from the CN client with AssetStudio (see `AGENTS.md` "Sourcing from the GFL2 client"): `Avatar_Whole_<Name>SSR` is the full-body art (`SSR01`, `SSR02` and so on are her outfits) and `Avatar_Head_<Name>SSR` is the head icon used to find the head.
+
+- `--whole --head --span` writes `bark`, `slot`, `slot_inactive` and the three `stand_look_*` textures. `--span` is her canon span from the height policy, which picks her size class in the stand image.
+- `--outfit <folder> --whole <that outfit's art>` writes the outfit's `Icon`, `IconEquipment` and `IconSkillBar` under `sprites/<character>/armor/<folder>/`.
+- `--emblem <image>` writes the five emblem sprites. `--cut-background` removes a light paper or table backdrop around an outlined emblem. `badge_dragged` carries a small copy of `bark`, so run the portraits first.
+
+Placement is drawn from the spread measured across the roster, seeded by the doll's name, so reruns are stable and the set keeps the roster's slightly uneven hand placement. Two things need a look on every doll:
+
+- **The head box.** `Avatar_Head` is a render of the 3D model, not a crop of the art, so the match lands near the face but can sit off on a tilted pose, and it usually fails on outfit art with scenery. On a good box the bark crop shows the whole head with the chin clear of the bottom edge. Pass `--head-box x,y,size` (source pixels, hair top to just below the chin, chin about three quarters down) to correct it.
+- **Anything raised above the head.** The stand image lines up the top of the figure across the roster. A hand, lamp or weapon held high would push the doll down, so pass `--figure-top <source y>` at the top of her head: she is placed from there and the raised part fades out above.
+
+`scripts/doll/make_faction_backgrounds.py` builds the three faction backgrounds per faction from GFL2's `Img_CampLogo_*` faction logos (`data/faction_logos/`, faction names in the `CharacterBelongData` table). Its table maps each faction to a logo and a colour, with an optional logo scale and sideways shift for a narrow logo the portraits would hide. A doll in a faction without a set needs a new table row.
 
 ## armor.kdl (transmog outfits)
 
