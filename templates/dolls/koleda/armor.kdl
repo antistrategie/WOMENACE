@@ -3,13 +3,13 @@ clone "ArmorTemplate" from="armor.player_fatigues" id="armor.koleda_default" {
         set "m_Supplies" 0
     }
     set "Title" {
-        set "m_DefaultTranslation" "Outfit"
+        set "m_DefaultTranslation" "Last Year's Snow"
     }
     set "ShortName" {
         set "m_DefaultTranslation" "Field Outfit"
     }
     set "Description" {
-        set "m_DefaultTranslation" "[PLACEHOLDER] This is Koleda's everyday outfit."
+        set "m_DefaultTranslation" "Thanks to Alva's meticulous care, Koleda's new frame has been dressed in a new outfit that strongly resembles her attire from days past. Even if her internals are completely different, she's still the same person."
     }
     set "Icon" asset="koleda/armor/default/Icon"
     set "IconEquipment" asset="koleda/armor/default/IconEquipment"
@@ -30,7 +30,10 @@ clone "ArmorTemplate" from="armor.player_fatigues" id="armor.koleda_spooms" {
         set "m_DefaultTranslation" "Swimsuit"
     }
     set "Description" {
-        set "m_DefaultTranslation" "[PLACEHOLDER] Splish splash!"
+        set "m_DefaultTranslation" """
+            "Are you still unhappy about losing that volleyball match all those years back, Commander? Hehe, that's alright... I'll gladly accept your challenge again~"
+            Koleda's smile widens as she leisurely awaits your response.
+            """
     }
     set "Icon" asset="koleda/armor/spooms/Icon"
     set "IconEquipment" asset="koleda/armor/spooms/IconEquipment"
