@@ -132,6 +132,19 @@ public sealed class SsrImprintSystem : JiangyuSystem
                 new SkillImprint { SkillId = "active.alva_ssr_frost_echo" },
             },
         },
+        new Entry
+        {
+            // Springfield's SSR rifle. No stat lever: the imprint is Taryz Strike, which only Springfield
+            // can use (TaryzCommandHandler gates and hides it through IsOwnerWielding).
+            OwnerTag = "wmgfl_springfield",
+            OwnerName = "Springfield",
+            BonusText = new LocalisedText(
+                "WOMENACE::ui/ssr_imprint/wmgfl_springfield", "Taryz Strike: order Taryz to attack, dealing <link=\"wmgfl_hydro\">Hydro</link> damage."),
+            Skills = new[]
+            {
+                new SkillImprint { SkillId = "active.springfield_ssr_taryz_strike" },
+            },
+        },
     };
 
     // Match by base id OR any calibration rank of it (base_rN), so a calibrated SSR is still treated as

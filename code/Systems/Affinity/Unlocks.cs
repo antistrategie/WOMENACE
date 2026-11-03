@@ -108,6 +108,7 @@ public static class Unlocks
         ["wmgfl_springfield"] = new[]
         {
             new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.springfield_fragrance" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_springfield/lv2", "Outfit: Enjoy the Fragrance") },
+            new Entry { Level = 3, Feature = Feature.Weapon, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_springfield/lv3", "SSR Weapon: Radiance") },
             new Entry { Level = 4, Feature = Feature.Skins, Armors = new[] { "armor.springfield_swimsuit" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_springfield/lv4", "Outfit: Stirring Mermaid") },
         },
         ["wmgfl_robella"] = new[]

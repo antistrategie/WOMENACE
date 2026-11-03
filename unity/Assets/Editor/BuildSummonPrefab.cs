@@ -20,12 +20,21 @@ namespace Womenace.EditorTools
     // Like the skybot, the model hangs under a scale-1 root at a fixed hover
     // height, with a box collider on the model node for hits and selection.
     //
+    // A summon that attacks gets an -attackClip: the skill's Shoot_Single
+    // trigger plays it once from hover or flight, then the summon returns to
+    // its hover. -muzzleBone names the rig bone the shot leaves from, and
+    // -muzzleOffset places the "muzzle" transform in that bone's local space.
+    // The muzzle faces the summon's forward in the hover pose, so a muzzle
+    // flash and a projectile leave towards the target the summon faces.
+    //
     //   Unity -batchmode -quit -projectPath unity/ \
     //     -executeMethod Womenace.EditorTools.BuildSummonPrefab.Build \
     //     -prefab Assets/Prefabs/springfield/taryz/main.prefab \
     //     -fbxPath Assets/Authored/springfield/taryz/raw.fbx \
     //     -arriveClip c_SpringfieldSSR01_Eagle_slg_Born -idleClip c_SpringfieldSSR01_Eagle_slg_Idle \
-    //     -moveClip c_SpringfieldSSR01_Eagle_slg_Run -hoverHeight 2.2
+    //     -moveClip c_SpringfieldSSR01_Eagle_slg_Run -hoverHeight 2.2 \
+    //     -attackClip c_SpringfieldSSR01_Eagle_slg_StandFire \
+    //     -muzzleBone HeadEnd_M -muzzleOffset -0.0673,0.0464,0
     public static class BuildSummonPrefab
     {
         // aco.recon_skybot's parameters, names and types as the game's driver writes them.
@@ -46,6 +55,12 @@ namespace Womenace.EditorTools
         // The skybot's own movement threshold (BT_Leaning_Movement leaves below it).
         private const float MoveSpeedThreshold = 0.2f;
 
+        // Skill.PlayAnimation fires this trigger for AnimationType ShootSingle.
+        private const string AttackTrigger = "Shoot_Single";
+
+        // The engine finds a shot's origin by this exact transform name.
+        private const string MuzzleName = "muzzle";
+
         public static void Build()
         {
             var args = Environment.GetCommandLineArgs();
@@ -56,11 +71,22 @@ namespace Womenace.EditorTools
             }
             var prefabPath = Arg("-prefab") ?? throw new InvalidOperationException("-prefab is required.");
             var fbxPath = Arg("-fbxPath") ?? throw new InvalidOperationException("-fbxPath is required.");
-            var hover = float.Parse(Arg("-hoverHeight") ?? "2.2", System.Globalization.CultureInfo.InvariantCulture);
-            Build(prefabPath, fbxPath, Arg("-arriveClip"), Arg("-idleClip"), Arg("-moveClip"), hover);
+            var invariant = System.Globalization.CultureInfo.InvariantCulture;
+            var hover = float.Parse(Arg("-hoverHeight") ?? "2.2", invariant);
+            var muzzleBone = Arg("-muzzleBone");
+            var muzzleOffset = Vector3.zero;
+            if (Arg("-muzzleOffset") is { } offset)
+            {
+                var parts = offset.Split(',').Select(p => float.Parse(p, invariant)).ToArray();
+                if (parts.Length != 3) throw new InvalidOperationException("-muzzleOffset takes x,y,z.");
+                muzzleOffset = new Vector3(parts[0], parts[1], parts[2]);
+            }
+            Build(prefabPath, fbxPath, Arg("-arriveClip"), Arg("-idleClip"), Arg("-moveClip"), Arg("-attackClip"),
+                hover, muzzleBone, muzzleOffset);
         }
 
-        private static void Build(string prefabPath, string fbxPath, string arriveName, string idleName, string moveName, float hover)
+        private static void Build(string prefabPath, string fbxPath, string arriveName, string idleName, string moveName,
+            string attackName, float hover, string muzzleBone, Vector3 muzzleOffset)
         {
             LoopClips(fbxPath, idleName, moveName);
             var clips = AssetDatabase.LoadAllAssetsAtPath(fbxPath).OfType<AnimationClip>()
@@ -71,9 +97,10 @@ namespace Womenace.EditorTools
             var arrive = Find(arriveName);
             var idle = Find(idleName) ?? throw new InvalidOperationException("-idleClip is required.");
             var move = Find(moveName) ?? idle;
+            var attack = Find(attackName);
 
             var dir = System.IO.Path.GetDirectoryName(prefabPath).Replace('\\', '/');
-            var controller = BuildController(dir + "/summon.controller", arrive, idle, move);
+            var controller = BuildController(dir + "/summon.controller", arrive, idle, move, attack);
 
             // Edited as an unpacked scene instance: an AnimationClip sampled onto
             // LoadPrefabContents' preview copy does not survive the save.
@@ -103,6 +130,21 @@ namespace Womenace.EditorTools
                 // saved pose is the hover idle's first frame.
                 idle.SampleAnimation(model, 0f);
 
+                // A rerun replaces the socket rather than stacking a second one,
+                // which the engine's first-match lookup would never reach.
+                foreach (var stale in model.GetComponentsInChildren<Transform>(true).Where(t => t.name == MuzzleName).ToArray())
+                    UnityEngine.Object.DestroyImmediate(stale.gameObject);
+                if (muzzleBone != null)
+                {
+                    var bone = model.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == muzzleBone)
+                        ?? throw new InvalidOperationException("-muzzleBone '" + muzzleBone + "' not in " + prefabPath);
+                    var muzzle = new GameObject(MuzzleName).transform;
+                    muzzle.SetParent(bone, false);
+                    muzzle.localPosition = muzzleOffset;
+                    muzzle.rotation = model.transform.rotation;
+                    muzzle.localScale = new Vector3(1f / bone.lossyScale.x, 1f / bone.lossyScale.y, 1f / bone.lossyScale.z);
+                }
+
                 // Skinned bounds only refresh on render, so the box is measured
                 // off the posed vertices.
                 {
@@ -129,7 +171,9 @@ namespace Womenace.EditorTools
                 }
 
                 PrefabUtility.SaveAsPrefabAsset(wrapper, prefabPath);
-                Debug.Log($"Womenace BuildSummonPrefab: {prefabPath} hovering at {hover} m, controller {AssetDatabase.GetAssetPath(controller)}, clips arrive={arrive?.name} idle={idle.name} move={move.name}");
+                var socket = model.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == MuzzleName);
+                Debug.Log($"Womenace BuildSummonPrefab: {prefabPath} hovering at {hover} m, controller {AssetDatabase.GetAssetPath(controller)}, clips arrive={arrive?.name} idle={idle.name} move={move.name} attack={attack?.name}"
+                    + (socket != null ? $", muzzle under {socket.parent.name} at {wrapper.transform.InverseTransformPoint(socket.position)} (root space)" : ""));
             }
             finally
             {
@@ -157,7 +201,8 @@ namespace Womenace.EditorTools
             AssetDatabase.ImportAsset(fbxPath, ImportAssetOptions.ForceUpdate | ImportAssetOptions.ForceSynchronousImport);
         }
 
-        private static AnimatorController BuildController(string path, AnimationClip arrive, AnimationClip idle, AnimationClip move)
+        private static AnimatorController BuildController(string path, AnimationClip arrive, AnimationClip idle, AnimationClip move,
+            AnimationClip attack)
         {
             AssetDatabase.DeleteAsset(path);
             var ac = AnimatorController.CreateAnimatorControllerAtPath(path);
@@ -193,6 +238,21 @@ namespace Womenace.EditorTools
             var toHover = moveState.AddTransition(hoverState);
             toHover.hasExitTime = false; toHover.duration = 0.25f;
             toHover.AddCondition(AnimatorConditionMode.Less, MoveSpeedThreshold, "Speed");
+
+            if (attack != null)
+            {
+                ac.AddParameter(AttackTrigger, AnimatorControllerParameterType.Trigger);
+                var attackState = sm.AddState("Attack");
+                attackState.motion = attack;
+                foreach (var from in new[] { hoverState, moveState })
+                {
+                    var strike = from.AddTransition(attackState);
+                    strike.hasExitTime = false; strike.duration = 0.1f;
+                    strike.AddCondition(AnimatorConditionMode.If, 0f, AttackTrigger);
+                }
+                var done = attackState.AddTransition(hoverState);
+                done.hasExitTime = true; done.exitTime = 1f; done.duration = 0.2f;
+            }
             return ac;
         }
     }

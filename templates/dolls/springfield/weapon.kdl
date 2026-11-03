@@ -97,3 +97,94 @@ clone "SkillTemplate" from="active.fire_battle_rifle_tier_1_aimed_fire_marksman"
     set "ExecutingElement" enum="ExecutingElementType" "OneAtRandomExceptSpecial"
     set "IsDeploymentRequired" #false
 }
+
+// SSR weapon
+clone "WeaponTemplate" from="specialweapon.generic_designated_marksman_rifle_tier1" id="weapon.springfield_ssr" {
+    append "Tags" "wmgfl_doll_weapon"
+    append "Tags" "jy_no_sell"
+    set "Title" {
+        set "m_DefaultTranslation" "Radiance"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Bolt-Action Rifle"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "A high-performance rifle assigned to Springfield. Based on the M1903, it has been further improved in terms of carrying convenience and firing speed. Pierce through all adversity, to carve out a brighter future for those you deem important."
+    }
+
+    set "Model" asset="weapon/springfield_ssr/main"
+    set "Icon" asset="weapon/springfield_ssr/Icon"
+    set "IconEquipment" asset="weapon/springfield_ssr/IconEquipment"
+    set "IconEquipmentDisabled" asset="weapon/springfield_ssr/IconEquipmentDisabled"
+    set "IconSkillBar" asset="weapon/springfield_ssr/IconSkillBar"
+    set "IconSkillBarDisabled" asset="weapon/springfield_ssr/IconSkillBarDisabled"
+
+    set "AccuracyBonus" 15.0
+    set "AccuracyDropoff" -2.0
+    set "Damage" 24.0
+    set "DamageDropoff" 1.2
+    set "DamageToArmorDurability" 25.0
+    set "DamageToArmorDurabilityDropoff" 0.0
+    set "ArmorPenetration" 50.0
+    set "ArmorPenetrationDropoff" 0.0
+    set "Suppression" 12.0
+    set "MinRange" 1
+    set "IdealRange" 1
+    set "MaxRange" 11
+    set "DeployCosts" {
+        set "m_Supplies" 20
+    }
+
+    set "BlackMarketMaxQuantity" 0
+
+    clear "SkillsGranted"
+    append "SkillsGranted" "active.springfield_ssr_shot"
+    append "SkillsGranted" "active.springfield_ssr_taryz_strike"
+}
+
+clone "SkillTemplate" from="active.fire_dmr" id="active.springfield_ssr_shot" {
+    set "Title" {
+        set "m_DefaultTranslation" "Shoot"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Fire a single round dealing <link=\"wmgfl_hydro\">Hydro</link> damage. Damage increases with distance to the target."
+        clear "m_Placeholders"
+    }
+    set "Repetitions" 1
+    set "EventHandlers" index=0 {
+        set "ElementsHit" 2
+    }
+    append "EventHandlers" type="WOMENACE:ElementalDamage" {
+        set "Element" "Hydro"
+        set "AmountPerHit" 25.0
+    }
+}
+
+clone "SkillTemplate" from="active.fire_dmr" id="active.springfield_ssr_taryz_strike" {
+    // Springfield aims, Taryz fires. TaryzStrikeSystem replaces this skill's use with Taryz's own
+    // strike, and the TaryzCommand handler checks the target from Taryz's tile. Range and line of
+    // fire here are wide open so the check is Taryz's alone.
+    set "Title" {
+        set "m_DefaultTranslation" "Eagle's Vigilance"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Order Taryz to attack a target, dealing <link=\"wmgfl_hydro\">Hydro</link> damage. Requires Taryz to be deployed."
+        clear "m_Placeholders"
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "Taryz attacks a target."
+    }
+    set "Icon" asset="springfield/skills/taryz_strike"
+    set "IconDisabled" asset="springfield/skills/taryz_strike_disabled"
+    set "ActionPointCost" 30
+    set "IsLimitedUses" #false
+    set "UsesDisplayTemplate" #null
+    set "Repetitions" 1
+    set "IsLineOfFireNeeded" #false
+    set "IsOverridingRanges" #true
+    set "MinRange" 1
+    set "IdealRange" 1
+    set "MaxRange" 40
+    clear "EventHandlers"
+    append "EventHandlers" type="WOMENACE:TaryzCommand" {}
+}

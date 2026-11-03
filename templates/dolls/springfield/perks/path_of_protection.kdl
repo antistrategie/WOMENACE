@@ -110,6 +110,7 @@ clone "EntityTemplate" from="player_recon_falcon_skybot" id="player_springfield_
         set "y" 1.0
     }
     set "ScaleOffsetSquadLeader" 0.0
+    append "Skills" "active.springfield_taryz_strike"
 }
 
 // The Falcon skybot's flight, turning like the vanilla dragonfly so a bird faces where she flies.
@@ -172,6 +173,26 @@ clone "SoundBank" from="weapons_soundbank" id="wmgfl_springfield_taryz_bank" {
         set "fixedPitch" 1.0
         append "variations" {
             set "clip" asset="springfield/taryz/taryz_mark_01"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "taryz_strike"
+        set "fixedVolume" 1.0
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="springfield/taryz/taryz_strike_01"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "taryz_strike_distant"
+        set "fixedVolume" 1.0
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="springfield/taryz/taryz_strike_distant_01"
         }
     }
     append "busIndices" 0

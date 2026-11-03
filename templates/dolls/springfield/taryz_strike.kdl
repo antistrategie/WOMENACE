@@ -1,0 +1,103 @@
+clone "SkillTemplate" from="active.fire_pistol" id="active.springfield_taryz_strike" {
+    // Taryz's own strike, fired for her by Springfield's SSR Taryz Strike (TaryzStrikeSystem).
+    // Taryz takes no turns, so it is hidden from any skill bar.
+    set "IsHidden" #true
+    set "Title" {
+        set "m_DefaultTranslation" "Taryz Strike"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Taryz attacks a target, dealing <link=\"wmgfl_hydro\">Hydro</link> damage."
+        clear "m_Placeholders"
+    }
+    set "Icon" asset="springfield/skills/taryz_strike"
+    set "IconDisabled" asset="springfield/skills/taryz_strike_disabled"
+    clear "Tags"
+    append "Tags" "projectile"
+    set "ActionPointCost" 20
+    set "IsLimitedUses" #false
+    set "UsePistolAnimation" #false
+    set "AnimationType" enum="AnimationType" "ShootSingle"
+    set "Repetitions" 1
+    set "IsRemovedAfterCombat" #true
+    set "MinRange" 1
+    set "IdealRange" 4
+    set "MaxRange" 8
+    // the pistol parent looks for "muzzle5", which Taryz lacks, and falls back to her feet
+    set "MuzzleType" enum="MuzzleType" "Muzzle"
+    set "MuzzleEffect" asset="springfield/taryz/strike_muzzle"
+    set "MuzzleEffectOverrides2" #null
+    set "ProjectileData" type="StandardProjectileData" {
+        set "Prefab" asset="springfield/taryz/strike_projectile"
+        set "MaxTravelHeightMult" 1.0
+    }
+    set "DefaultImpactEffect" asset="springfield/taryz/strike_impact"
+    set "ImpactOnSurface" index=0 {
+        set "ImpactEffect" asset="springfield/taryz/strike_impact"
+    }
+    set "ImpactOnSurface" index=1 {
+        set "ImpactEffect" asset="springfield/taryz/strike_impact"
+    }
+    set "ImpactOnSurface" index=2 {
+        set "ImpactEffect" asset="springfield/taryz/strike_impact"
+    }
+    set "ImpactOnSurface" index=3 {
+        set "ImpactEffect" asset="springfield/taryz/strike_impact"
+    }
+    set "ImpactOnSurface" index=4 {
+        set "ImpactEffect" asset="springfield/taryz/strike_impact"
+    }
+    set "ImpactOnSurface" index=5 {
+        set "ImpactEffect" asset="springfield/taryz/strike_impact"
+    }
+    set "ImpactOnSurface" index=6 {
+        set "ImpactEffect" asset="springfield/taryz/strike_impact"
+    }
+    set "ImpactOnSurface" index=7 {
+        set "ImpactEffect" asset="springfield/taryz/strike_impact"
+    }
+    set "ImpactOnSurface" index=8 {
+        set "ImpactEffect" asset="springfield/taryz/strike_impact"
+    }
+    set "ImpactOnSurface" index=9 {
+        set "ImpactEffect" asset="springfield/taryz/strike_impact"
+    }
+    set "ImpactOnSurface" index=10 {
+        set "ImpactEffect" asset="springfield/taryz/strike_impact"
+    }
+    set "ImpactOnSurface" index=11 {
+        set "ImpactEffect" asset="springfield/taryz/strike_impact"
+    }
+    set "ImpactOnSurface" index=12 {
+        set "ImpactEffect" asset="springfield/taryz/strike_impact"
+    }
+    set "ImpactOnSurface" index=13 {
+        set "ImpactEffect" asset="springfield/taryz/strike_impact"
+    }
+    // The burst lands about 0.32 s into Taryz's StandFire clip.
+    set "DelayAfterAnimationTrigger" 0.3
+    clear "SoundsOnAttack"
+    append "SoundsOnAttack" {
+        set "bankId" "wmgfl_springfield_taryz_bank"
+        set "itemId" "taryz_strike"
+    }
+    clear "SoundsOnAttackFar"
+    append "SoundsOnAttackFar" {
+        set "bankId" "wmgfl_springfield_taryz_bank"
+        set "itemId" "taryz_strike_distant"
+    }
+    set "EventHandlers" index=0 {
+        set "Damage" 16.0
+        set "DamageDropoff" 0.0
+        set "ArmorPenetration" 30.0
+        set "ArmorPenetrationDropoff" 0.0
+        set "DamageToArmorDurability" 12.0
+        set "DamageToArmorDurabilityDropoff" 0.0
+        set "AccuracyBonus" 20.0
+        set "AccuracyDropoff" -2.0
+        set "Suppression" 4.0
+    }
+    append "EventHandlers" type="WOMENACE:ElementalDamage" {
+        set "Element" "Hydro"
+        set "AmountPerHit" 18.0
+    }
+}
