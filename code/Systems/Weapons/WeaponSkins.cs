@@ -32,6 +32,8 @@ public static class WeaponSkins
             () => Locale.Text("WOMENACE::ui/weapon_skins/clockwork_guard", "Clockwork Guard")),
         new WeaponSkin("black_mask", WeaponClass.MachineGun,
             () => Locale.Text("WOMENACE::ui/weapon_skins/black_mask", "Black Mask")),
+        new WeaponSkin("wooden_path", WeaponClass.Handgun,
+            () => Locale.Text("WOMENACE::ui/weapon_skins/wooden_path", "Wooden Path")),
     };
 
     public static IEnumerable<WeaponSkin> Available(ProcurementState unlocks, WeaponClass weaponClass)
