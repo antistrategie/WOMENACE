@@ -101,7 +101,7 @@ internal static class Program
             var prefabs = Path.Combine(repo, "unity", "Assets", "Prefabs");
             foreach (var path in Directory.GetFiles(prefabs, "main.prefab", SearchOption.AllDirectories).OrderBy(p => p, StringComparer.Ordinal))
             {
-                var names = Regex.Matches(File.ReadAllText(path), @"m_Name: (.*)").Select(m => m.Groups[1].Value.Trim()).ToHashSet(StringComparer.Ordinal);
+                var names = Regex.Matches(File.ReadAllText(path), @"m_Name: (.*)").Select(m => Skeleton.YamlName(m.Groups[1].Value)).ToHashSet(StringComparer.Ordinal);
                 var match = SpringBodyProfiles.Match(names);
                 if (match != null)
                     _outfits.TryAdd(match, Path.GetRelativePath(prefabs, Path.GetDirectoryName(path)!).Replace('\\', '/'));
@@ -192,6 +192,19 @@ internal sealed class Skeleton
 
     private static readonly Regex Document = new(@"^--- !u!(\d+) &(-?\d+)", RegexOptions.Multiline);
 
+    // Unity writes a name holding non-ASCII characters as a double-quoted YAML
+    // scalar with \u escapes ("\u4E2DCape1"), and one holding YAML punctuation
+    // single-quoted. The live rig reads the Transform's real name.
+    internal static string YamlName(string raw)
+    {
+        raw = raw.Trim();
+        if (raw.Length >= 2 && raw[0] == '"' && raw[^1] == '"')
+            return Regex.Unescape(raw[1..^1]);
+        if (raw.Length >= 2 && raw[0] == '\'' && raw[^1] == '\'')
+            return raw[1..^1].Replace("''", "'");
+        return raw;
+    }
+
     internal static Skeleton Load(string path)
     {
         var text = File.ReadAllText(path);
@@ -206,7 +219,7 @@ internal sealed class Skeleton
             var type = matches[m].Groups[1].Value;
             var id = matches[m].Groups[2].Value;
             if (type == "1")
-                names[id] = Regex.Match(body, @"m_Name: (.*)").Groups[1].Value.Trim();
+                names[id] = YamlName(Regex.Match(body, @"m_Name: (.*)").Groups[1].Value);
             else if (type == "4")
             {
                 var go = Regex.Match(body, @"m_GameObject: \{fileID: (-?\d+)\}").Groups[1].Value;

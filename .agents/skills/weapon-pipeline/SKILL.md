@@ -67,6 +67,10 @@ Config file shape (one JSON per weapon under `scripts/.config/`):
 }
 ```
 
+An optional `"attach_points"` map (empty name to reference node name, default `{"muzzle": "muzzle", "weapon_hand_l": "weapon_hand_l"}`) seeds the empties from a reference whose nodes carry other names. A vanilla pistol names them `muzzle5` and `weapon_hand_l_pistol`, and one reference node can seed several empties.
+
+An optional `"mesh_offset"` (glTF-space `[x, y, z]`, applied after centring) moves the mesh against the Hand_R origin, for a source whose origin is not at the grip.
+
 The reference glTF is the vanilla weapon's mesh + attach-points, exported once via:
 
 ```bash
@@ -89,7 +93,7 @@ The `--path-id` comes from a search, and `import-prefab` is what makes the refer
 
 **Don't apply transform to the empties**: they have no geometry, so apply zeroes the position. Save the GLB and re-bake without applying. The mesh transform can be applied if you moved the mesh, but the empties cannot.
 
-**Mirrored rotation gotcha**: glTF round-trips can sometimes flip the empty's rotation around the X axis (e.g. quaternion `(+0.597, +0.253, +0.761, +0.025)` instead of the reference's `(-0.597, +0.253, +0.761, -0.025)`). Manifests in-game as the left hand grip rotated 180° around the gun barrel. Patch the rotation directly in the GLB (modify the JSON chunk, fix the chunk length headers) before re-baking. See `scripts/render_weapon.py` for a working GLB-mutation example.
+**Mirrored rotation gotcha**: `bake_weapon.py` seeds each empty with the reference's rotation, though the export may negate the whole quaternion (`q` and `-q` are the same rotation, so compare up to overall sign). A rotation that differs from the intended one by the sign of x and w only (e.g. `(+0.597, +0.253, +0.761, +0.025)` against the reference's `(-0.597, +0.253, +0.761, -0.025)`) is mirrored about X and puts the left hand 180° around the barrel. `scripts/weapon/fix_hand_grip.py` negates x and w in the GLB, so run it only on a rotation that has that exact mismatch, then re-bake.
 
 ## 3. Unity bake
 

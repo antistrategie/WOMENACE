@@ -78,6 +78,13 @@ TRANSLUCENT_OVERRIDES = {
     # painted at about 75% alpha on sheets they share with the opaque bikini,
     # which keeps its own materials.
     "springfield/swimsuit": {"SkirtOutWear", "TopOutWear"},
+    # Welrod's spectacles, worn with both outfits. The client carries no _trans_
+    # mesh for her: it draws the lenses through c_WelrodSSR01_glass_effect. The
+    # repack's Glasses material samples a white panel at 10% alpha on the cloth2
+    # _da sheet, which drawn opaque covers her eyes. The frame stays opaque on
+    # GlassesFrame.
+    "welrod/default": {"Glasses"},
+    "welrod/welwyn_mist": {"Glasses"},
 }
 
 # First match wins, so the specific parts come before the general ones. Matching

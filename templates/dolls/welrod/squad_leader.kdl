@@ -1,0 +1,220 @@
+clone "TagTemplate" from="unique" id="wmgfl_welrod"
+
+clone "SpeakerTemplate" from="sy" id="wmgfl_welrod_speaker" {
+    set "Tags" "wmgfl_welrod pirate_sl female infantry waybacker wmgfl_class_hg"
+    set "Nickname" {
+        set "m_DefaultTranslation" "Welrod"
+    }
+    set "Forename" {
+        set "m_DefaultTranslation" "Welrod"
+    }
+    set "Surname" {
+        set "m_DefaultTranslation" ""
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            Name: Welrod MkII
+
+            Proficiency: Crowd Control
+
+            Birth: Unknown
+
+            Age: Classified
+
+            Affiliation(s): H.I.D.E. 404 Team B
+            """
+    }
+
+    set "BarkImage" asset="welrod/bark"
+    set "StandLookLeftImage" asset="welrod/stand_look_left"
+    set "StandLookRightImage" asset="welrod/stand_look_right"
+    set "StandLookRightInactiveImage" asset="welrod/stand_look_right_inactive"
+}
+
+clone "EntityTemplate" from="player_squad.sy" id="player_squad.welrod" {
+    append "Tags" "wmgfl_welrod"
+    set "Title" {
+        set "m_DefaultTranslation" "H.I.D.E 404 Team B"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Welrod usually speaks in a self-centered manner and can seem somewhat harsh towards her teammates. In reality, she deeply values her partners and strives to help everyone. She is particularly confident in her judgment, enjoys judging right and wrong, and will take action to uphold her sense of justice. She is kind-hearted but not good at expressing her concern for others. She finds this frustrating and needs her partners' understanding and tolerance. When her feigned strength is exposed, she reveals an unexpectedly adorable side."
+    }
+
+    set "Badge" asset="welrod/badge_mini"
+    set "BadgeWhite" asset="welrod/badge_mini"
+    clear "Items"
+    append "Items" "armor.player_fatigues"
+    append "Items" "weapon.welrod"
+
+    set "Scale" {
+        set "x" 1.0
+        set "y" 1.0
+    }
+    set "OverrideScaleForSquadLeader" #false
+}
+
+clone "UnitLeaderTemplate" from="squad_leader.sy" id="squad_leader.welrod" {
+    set "FactionBackground" asset="factions/background_404_team_b_1180x1040"
+    set "BigBackground" asset="factions/background_404_team_b_972x906"
+    set "SlotFactionBackground" asset="factions/background_404_team_b_162x162"
+    set "InfantryUnitTemplate" "player_squad.welrod"
+    set "SpeakerTemplate" "wmgfl_welrod_speaker"
+    set "CustomHead" #null
+    set "UnitTitle" {
+        set "m_DefaultTranslation" "Tactical Doll"
+    }
+    set "UnitDescription" {
+        set "m_DefaultTranslation" "Welrod usually speaks in a self-centered manner and can seem somewhat harsh towards her teammates. In reality, she deeply values her partners and strives to help everyone. She is particularly confident in her judgment, enjoys judging right and wrong, and will take action to uphold her sense of justice. She is kind-hearted but not good at expressing her concern for others. She finds this frustrating and needs her partners' understanding and tolerance. When her feigned strength is exposed, she reveals an unexpectedly adorable side."
+    }
+
+    set "InitialAttributes" index=0 100
+    set "InitialAttributes" index=1 75
+    set "InitialAttributes" index=2 80
+    set "InitialAttributes" index=3 100
+    set "InitialAttributes" index=4 100
+    set "InitialAttributes" index=5 20
+    set "InitialAttributes" index=6 100
+
+    set "QualityLevel" 3
+    set "GrowthPotential" 5
+    set "FixedSupplyCost" 100
+    set "PromotionCostMult" 0.8
+    set "SquaddieTax" 25
+    set "Rarity" 5
+
+    set "InitialPerk" "perk.covert_ops"
+    set "PerkTrees" index=0 "perk_tree.welrod"
+
+    set "Slot" asset="welrod/slot"
+    set "SlotInactive" asset="welrod/slot_inactive"
+    set "SlotBadge" asset="welrod/slot_badge"
+
+    set "BadgeDragged" asset="welrod/badge_dragged"
+    set "BigBadge" asset="welrod/big_badge"
+    set "BadgeUnitWindow" asset="welrod/badge_unit_window"
+    set "BadgeMini" asset="welrod/badge_mini"
+
+    set "HiringSelectBarkSound" {
+        set "bankId" "wmgfl_tactical_barks_welrod_va"
+        set "itemId" "Series_Chosen_Auto_Series_Tone_Positive_007"
+    }
+    set "HiredBarkSound" {
+        set "bankId" "wmgfl_tactical_barks_welrod_va"
+        set "itemId" "Series_Up_001"
+    }
+
+    set "PromotionBarkSounds" index=0 {
+        set "PerkTier" 1
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_welrod_va"
+            set "itemId" "Series_Up_001"
+        }
+    }
+    set "PromotionBarkSounds" index=1 {
+        set "PerkTier" 2
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_welrod_va"
+            set "itemId" "Series_Up_003"
+        }
+    }
+    set "PromotionBarkSounds" index=2 {
+        set "PerkTier" 3
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_welrod_va"
+            set "itemId" "Series_Up_004"
+        }
+    }
+    set "PromotionBarkSounds" index=3 {
+        set "PerkTier" 4
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_welrod_va"
+            set "itemId" "Series_Up_005"
+        }
+    }
+
+    clear "EmotionalStateResponses"
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Eager"
+        set "Text" {
+            set "m_DefaultTranslation" "I'm in top form right now."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_welrod_va"
+            set "itemId" "Series_Up_005"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Determined"
+        set "Text" {
+            set "m_DefaultTranslation" "The way I see it, when the law fails to punish true villains, someone's got to step up and make sure justice is done."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_welrod_va"
+            set "itemId" "Series_Daily_003"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Overconfident"
+        set "Text" {
+            set "m_DefaultTranslation" "Is something the matter, Commander? As 404 Team B's best thinker, I'm busy helping everyone to refine their action plans."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_welrod_va"
+            set "itemId" "Single_Friendliness_001"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Euphoric"
+        set "Text" {
+            set "m_DefaultTranslation" "This is just the beginning."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_welrod_va"
+            set "itemId" "Series_Up_001"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Hesitant"
+        set "Text" {
+            set "m_DefaultTranslation" "I have a few suggestions to make about Vector's mission plan... Huh? This is Klukai's plan? Then... never mind."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_welrod_va"
+            set "itemId" "Series_Daily_002"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Frustrated"
+        set "Text" {
+            set "m_DefaultTranslation" "Zero brain cells."
+        }
+        set "Sound" {
+            set "bankId" "wmgfl_tactical_barks_welrod_va"
+            set "itemId" "Series_Skill01_Single_Skill_001"
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Disheartened"
+        set "Text" {
+            set "m_DefaultTranslation" "..."
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Miserable"
+        set "Text" {
+            set "m_DefaultTranslation" "..."
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "GoodwillTowards"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "AnimosityTowards"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+}

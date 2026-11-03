@@ -3,7 +3,7 @@ using Jiangyu.Sdk;
 
 namespace WOMENACE.Code;
 
-public enum WeaponClass { None, AssaultRifle, Smg, Rifle, MachineGun, Shotgun, Blade }
+public enum WeaponClass { None, AssaultRifle, Smg, Rifle, MachineGun, Shotgun, Blade, Handgun }
 
 // Shared weapon taxonomy for proficiency, workshop ingredients and shop presentation.
 public static class WeaponClasses
@@ -21,6 +21,8 @@ public static class WeaponClasses
             GunParts, 5, new[] { "machinegun", "chaingun", "minigun", "repeater" }),
         new(WeaponClass.Shotgun, "SG", "shotgun", new LocalisedText("WOMENACE::ui/proficiency/class_shotgun", "shotguns"),
             GunParts, 3, new[] { "shotgun", "sweeper" }),
+        new(WeaponClass.Handgun, "HG", "hg", new LocalisedText("WOMENACE::ui/proficiency/class_hg", "handguns"),
+            GunParts, 6, new[] { "pistol", "handgun" }),
         new(WeaponClass.Blade, "BLD", "blade", new LocalisedText("WOMENACE::ui/proficiency/class_blade", "blades"),
             new[] { "blank", "hilt" }, 0, new[] { "sword", "blade", "melee" }),
     };
@@ -94,6 +96,8 @@ public static class WeaponClasses
         ["Minigun"] = WeaponClass.MachineGun,
         ["Shotgun"] = WeaponClass.Shotgun,
         ["Sweeper"] = WeaponClass.Shotgun,
+        ["Pistol"] = WeaponClass.Handgun,
+        ["Handgun"] = WeaponClass.Handgun,
         ["Sword"] = WeaponClass.Blade,
     };
 

@@ -1,0 +1,74 @@
+clone "ConversationTemplate" from="JeanSy/morale_recovery" id="Welrod/morale_recovery" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=1 type="HasOneTag" {
+            set "Tags" "wmgfl_welrod"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_welrod_va"
+                        set "itemId" "Series_Up_005"
+                    }
+                    set "RoleGuid" "Recovered"
+                    set "Text" "I'm in top form right now."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/morale_wavering" id="Welrod/morale_wavering" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=1 type="HasOneTag" {
+            set "Tags" "wmgfl_welrod"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_welrod_va"
+                        set "itemId" "Series_Dying_Series_Tone_Negative_002"
+                    }
+                    set "RoleGuid" "Wavering"
+                    set "Text" "A dangerous disadvantage."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/squaddie_death_bleed" id="Welrod/squaddie_death_bleed" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=1 type="HasOneTag" {
+            set "Tags" "wmgfl_welrod"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_welrod_va"
+                        set "itemId" "Series_Die_Series_Tone_Negative_001"
+                    }
+                    set "RoleGuid" "Victim"
+                    set "Text" "The truth lies before us."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}

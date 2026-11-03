@@ -22,9 +22,11 @@ Pipeline:
   4. Build a Principled BSDF material with the three textures wired into
      BaseColor / Normal / Roughness+Metallic. This is for Blender preview
      only; the Unity bake replaces it with the manifest's material.
-  5. Read the reference weapon glTF, extract `muzzle` and `weapon_hand_l`
-     node translations + rotations.
-  6. Create two Empty objects at those positions, parented to the mesh root.
+  5. Read the reference weapon glTF, extract the attach-point node
+     translations + rotations (`muzzle` and `weapon_hand_l` by default, or
+     the config's `attach_points` map).
+  6. Create an Empty per attach point at those positions, parented to the
+     mesh root.
   7. Export as GLB with textures embedded, and copy the source textures
      beside it for the Unity bake to pick up.
 
@@ -63,6 +65,8 @@ class WeaponConfig:
     mesh_basename: str
     centre_axes: list[str]
     flip_uv_v: bool
+    attach_points: dict[str, str]
+    mesh_offset: tuple[float, float, float]
 
     @staticmethod
     def load(path: Path) -> "WeaponConfig":
@@ -84,6 +88,19 @@ class WeaponConfig:
             mesh_basename=str(data["mesh_basename"]),
             centre_axes=[a.upper() for a in data.get("centre_axes", ["X"])],
             flip_uv_v=bool(data.get("flip_uv_v", True)),
+            # Empty name -> reference node it is seeded from. A reference whose
+            # attach points carry other names (a pistol's `muzzle5` and
+            # `weapon_hand_l_pistol`) maps them here, and one reference node
+            # may seed several empties.
+            attach_points=dict(
+                data.get(
+                    "attach_points",
+                    {"muzzle": "muzzle", "weapon_hand_l": "weapon_hand_l"},
+                )
+            ),
+            # glTF-space shift applied after centring, to seat the gun's grip
+            # on the Hand_R origin where the reference's grip sits.
+            mesh_offset=tuple(float(c) for c in data.get("mesh_offset", [0.0, 0.0, 0.0])),
         )
 
 
@@ -198,6 +215,14 @@ def centre_origin(mesh_obj: bpy.types.Object, axes: list[str]) -> None:
         v.co.z += shift[2]
 
 
+def offset_mesh(mesh_obj: bpy.types.Object, offset: tuple[float, float, float]) -> None:
+    """Shift the mesh by a glTF-space (X=right, Y=up, Z=forward) offset."""
+    gx, gy, gz = offset
+    shift = mathutils.Vector((gx, -gz, gy))
+    for v in mesh_obj.data.vertices:
+        v.co += shift
+
+
 def rename_mesh(mesh_obj: bpy.types.Object, basename: str) -> None:
     mesh_obj.name = f"{basename}_LOD0"
     if mesh_obj.data is not None:
@@ -278,22 +303,27 @@ class AttachPoint:
     rotation: tuple[float, float, float, float]  # quaternion (x, y, z, w)
 
 
-def read_reference_attach_points(gltf_path: Path) -> list[AttachPoint]:
-    """Extract `muzzle` and `weapon_hand_l` node TRS from the reference glTF.
-    These are the attach points the MENACE runtime queries on weapon prefabs
-    for muzzle-flash spawn position and left-hand IK target."""
+def read_reference_attach_points(
+    gltf_path: Path, mapping: dict[str, str]
+) -> list[AttachPoint]:
+    """Extract the attach-point node TRS from the reference glTF, one empty per
+    `mapping` entry (empty name -> reference node name). `muzzle` and
+    `weapon_hand_l` are the attach points the MENACE runtime queries on weapon
+    prefabs for muzzle-flash spawn position and left-hand IK target."""
     if not gltf_path.exists():
         raise SystemExit(f"Reference glTF not found: {gltf_path}")
     data = json.loads(gltf_path.read_text(encoding="utf-8"))
-    wanted = ("muzzle", "weapon_hand_l")
+    nodes = {node.get("name", ""): node for node in data.get("nodes", [])}
     found: list[AttachPoint] = []
-    for node in data.get("nodes", []):
-        name = node.get("name", "")
-        if name in wanted:
-            t = tuple(node.get("translation", [0.0, 0.0, 0.0]))
-            r = tuple(node.get("rotation", [0.0, 0.0, 0.0, 1.0]))
-            found.append(AttachPoint(name=name, translation=t, rotation=r))
-    missing = [n for n in wanted if not any(p.name == n for p in found)]
+    missing: list[str] = []
+    for empty_name, source_name in mapping.items():
+        node = nodes.get(source_name)
+        if node is None:
+            missing.append(source_name)
+            continue
+        t = tuple(node.get("translation", [0.0, 0.0, 0.0]))
+        r = tuple(node.get("rotation", [0.0, 0.0, 0.0, 1.0]))
+        found.append(AttachPoint(name=empty_name, translation=t, rotation=r))
     if missing:
         print(f"[warn] reference glTF missing attach point(s): {missing}")
     return found
@@ -302,11 +332,11 @@ def read_reference_attach_points(gltf_path: Path) -> list[AttachPoint]:
 def _gltf_quat_to_blender(q_gltf: tuple[float, float, float, float]) -> mathutils.Quaternion:
     """Convert a glTF quaternion (x, y, z, w) in Y-up space to a Blender
     quaternion in Z-up space. Same axis-swap Blender's glTF importer applies
-    for orientation: rotate by -90° around X to map Y-up → Z-up, then
+    for orientation: rotate by +90° around X to map Y-up → Z-up (glTF +Y to Blender +Z), then
     conjugate the source rotation by that change-of-basis."""
     qx, qy, qz, qw = q_gltf
     q = mathutils.Quaternion((qw, qx, qy, qz))
-    q_change = mathutils.Quaternion((1.0, 0.0, 0.0), math.radians(-90.0))
+    q_change = mathutils.Quaternion((1.0, 0.0, 0.0), math.radians(90.0))
     return q_change @ q @ q_change.inverted()
 
 
@@ -417,6 +447,9 @@ def main() -> None:
     if cfg.centre_axes:
         centre_origin(mesh_obj, cfg.centre_axes)
         print(f"[info] centred mesh on axes: {cfg.centre_axes}")
+    if any(cfg.mesh_offset):
+        offset_mesh(mesh_obj, cfg.mesh_offset)
+        print(f"[info] offset mesh by glTF {cfg.mesh_offset}")
     rename_mesh(mesh_obj, cfg.mesh_basename)
 
     build_preview_material(cfg, mesh_obj)
@@ -428,7 +461,7 @@ def main() -> None:
     root = create_prefab_root(cfg.mesh_basename + "_root")
     mesh_obj.parent = root
 
-    points = read_reference_attach_points(cfg.reference_weapon_gltf)
+    points = read_reference_attach_points(cfg.reference_weapon_gltf, cfg.attach_points)
     print(f"[info] reference attach points: {[p.name for p in points]}")
     create_attach_point_empties(root, points)
 

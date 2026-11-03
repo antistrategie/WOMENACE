@@ -52,6 +52,8 @@ clone "TagTemplate" from="unique" id="wmgfl_class_blade"
 
 clone "TagTemplate" from="unique" id="wmgfl_class_shotgun"
 
+clone "TagTemplate" from="unique" id="wmgfl_class_hg"
+
 patch "StrategyConfig" "strategy_config" {
     append "InitialPickableUnitLeaders" "squad_leader.koleda_foot"
     append "InitialPickableUnitLeaders" "squad_leader.voymastina"
@@ -99,6 +101,7 @@ patch "DossierItemTemplate" "dossier.squad_leader" {
     append "m_UnlockedLeaders" "squad_leader.asteria"
     append "m_UnlockedLeaders" "squad_leader.mechty"
     append "m_UnlockedLeaders" "squad_leader.alva"
+    append "m_UnlockedLeaders" "squad_leader.welrod"
 }
 
 patch "DossierItemTemplate" "dossier.pilot" {

@@ -1,0 +1,115 @@
+clone "ConversationTemplate" from="JeanSy/missed_cover" id="Welrod/missed_cover" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=1 type="HasOneTag" {
+            set "Tags" "wmgfl_welrod"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_welrod_va"
+                        set "itemId" "Series_Up_002"
+                    }
+                    set "RoleGuid" "Attacker"
+                    set "Text" "I need more clues."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/missed_open" id="Welrod/missed_open" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=1 type="HasOneTag" {
+            set "Tags" "wmgfl_welrod"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="ACTION" {
+            set "m_SerAction" type="SetFlag" {
+                set "FlagName" "welrod_missed_played"
+                set "FlagValue" #true
+            }
+        }
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_welrod_va"
+                        set "itemId" "Series_Up_002"
+                    }
+                    set "RoleGuid" "Attacker"
+                    set "Text" "I need more clues."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/moving_finished" id="Welrod/moving_finished" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=1 type="HasOneTag" {
+            set "Tags" "wmgfl_welrod"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_welrod_va"
+                        set "itemId" "Series_Set_Fall_Series_Tone_Positive_005"
+                    }
+                    set "RoleGuid" "Entity"
+                    set "Text" "A perfect location."
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}
+
+clone "ConversationTemplate" from="JeanSy/taking_fire" id="Welrod/taking_fire" {
+    set "Active" #true
+    set "Roles" index=0 {
+        set "m_SerializedRequirements" index=1 type="HasOneTag" {
+            set "Tags" "wmgfl_welrod"
+        }
+    }
+    set "Nodes" {
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" type="VARIATION" {
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_welrod_va"
+                        set "itemId" "Series_Hitted_Series_HittedLast"
+                    }
+                    set "RoleGuid" "Damaged"
+                    set "Text" "Ugh!"
+                }
+            }
+            append "Variations" {
+                append "m_SerializedNodes" type="SAY" {
+                    set "Sound" {
+                        set "bankId" "wmgfl_tactical_barks_welrod_va"
+                        set "itemId" "Series_Shield_Broken_Series_Tone_Negative_003"
+                    }
+                    set "RoleGuid" "Damaged"
+                    set "Text" "Urgh!"
+                }
+            }
+        }
+        append "m_SerializedNodes" type="EMPTY" {}
+    }
+}

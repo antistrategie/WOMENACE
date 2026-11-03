@@ -1,0 +1,44 @@
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.welrod_default" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
+    set "Title" {
+        set "m_DefaultTranslation" "Beautiful Enigma"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Field Outfit"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Welrod in her usual outfit. Filled with urban style, it showcases her intellectual charm. The over-the-shoulder coat is Welrod's trademark, which she wears to each and every crime scene."
+    }
+    set "Icon" asset="welrod/armor/default/Icon"
+    set "IconEquipment" asset="welrod/armor/default/IconEquipment"
+    set "IconSkillBar" asset="welrod/armor/default/IconSkillBar"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_transmog"
+    append "Tags" "jy_no_sell"
+}
+
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.welrod_welwyn_mist" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
+    set "Title" {
+        set "m_DefaultTranslation" "Welwyn Mist"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Classic Outfit"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            "It isn't my style to cling to the past. Is there some special operation which needs me to put on this outfit... Although, I don't mind if you just want to see me in it."
+            She drapes her coat over her shoulders with grace and aplomb, flashing you a nostaligic smile as she awaits your command.
+            """
+    }
+    set "Icon" asset="welrod/armor/welwyn_mist/Icon"
+    set "IconEquipment" asset="welrod/armor/welwyn_mist/IconEquipment"
+    set "IconSkillBar" asset="welrod/armor/welwyn_mist/IconSkillBar"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_transmog"
+    append "Tags" "jy_no_sell"
+}

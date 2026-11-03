@@ -362,6 +362,78 @@ clone "CommodityTemplate" from="commodity.construct_weapon_parts" id="commodity.
     set "MinCampaignProgress" 0
 }
 
+clone "CommodityTemplate" from="commodity.construct_weapon_parts" id="commodity.wmgfl_part_hg_barrel" {
+    set "Title" {
+        set "m_DefaultTranslation" "HG Barrel"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Weapon Part"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Used to assemble HG weapons."
+    }
+    append "Tags" "jy_no_sell"
+    set "Icon" asset="workshop/barrel"
+    set "TradeValue" 0
+    set "Rarity" 0
+    set "BlackMarketMaxQuantity" 0
+    set "MinCampaignProgress" 0
+}
+
+clone "CommodityTemplate" from="commodity.construct_weapon_parts" id="commodity.wmgfl_part_hg_receiver" {
+    set "Title" {
+        set "m_DefaultTranslation" "HG Receiver"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Weapon Part"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Used to assemble HG weapons."
+    }
+    append "Tags" "jy_no_sell"
+    set "Icon" asset="workshop/receiver"
+    set "TradeValue" 0
+    set "Rarity" 0
+    set "BlackMarketMaxQuantity" 0
+    set "MinCampaignProgress" 0
+}
+
+clone "CommodityTemplate" from="commodity.construct_weapon_parts" id="commodity.wmgfl_part_hg_grip" {
+    set "Title" {
+        set "m_DefaultTranslation" "HG Grip"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Weapon Part"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Used to assemble HG weapons."
+    }
+    append "Tags" "jy_no_sell"
+    set "Icon" asset="workshop/grip"
+    set "TradeValue" 0
+    set "Rarity" 0
+    set "BlackMarketMaxQuantity" 0
+    set "MinCampaignProgress" 0
+}
+
+clone "CommodityTemplate" from="commodity.construct_weapon_parts" id="commodity.wmgfl_part_hg_sights" {
+    set "Title" {
+        set "m_DefaultTranslation" "HG Sight"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Weapon Part"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Used to assemble HG weapons."
+    }
+    append "Tags" "jy_no_sell"
+    set "Icon" asset="workshop/sights"
+    set "TradeValue" 0
+    set "Rarity" 0
+    set "BlackMarketMaxQuantity" 0
+    set "MinCampaignProgress" 0
+}
+
 clone "CommodityTemplate" from="commodity.construct_weapon_parts" id="commodity.wmgfl_part_bld_blank" {
     set "Title" {
         set "m_DefaultTranslation" "BLD Blade Blank"

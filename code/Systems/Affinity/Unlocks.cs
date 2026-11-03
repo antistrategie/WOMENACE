@@ -97,6 +97,10 @@ public static class Unlocks
             new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.lenna_vitality_magic" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_lenna/lv2", "Outfit: Vitality Magic") },
             new Entry { Level = 4, Feature = Feature.Skins, Armors = new[] { "armor.lenna_flying_phantom" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_lenna/lv4", "Outfit: Flying Phantom") },
         },
+        ["wmgfl_welrod"] = new[]
+        {
+            new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.welrod_welwyn_mist" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_welrod/lv2", "Outfit: Welwyn Mist") },
+        },
         ["wmgfl_helen"] = new[]
         {
             new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.helen_starlit_waltz" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_helen/lv2", "Outfit: Starlit Waltz") },
