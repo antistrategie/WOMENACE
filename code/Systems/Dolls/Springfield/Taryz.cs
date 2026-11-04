@@ -23,8 +23,9 @@ public sealed partial class TaryzSupport : SkillEventHandlerTemplate
     public SkillTemplate FirstDeploy;
     public SkillTemplate Spent;
 
-    // share of each element's maximum hitpoints restored per heal
-    public float HealFraction = 0.25f;
+    // share of each element's maximum hitpoints restored per heal, capped per element at HealMax
+    public float HealFraction = 0.5f;
+    public int HealMax = 25;
     public int HealRange = 3;
     public int HealTargets = 1;
     public int MarkRange = 8;
@@ -43,6 +44,7 @@ public sealed partial class TaryzSupport : SkillEventHandlerTemplate
         FirstDeploy = FirstDeploy,
         Spent = Spent,
         HealFraction = HealFraction,
+        HealMax = HealMax,
         HealRange = HealRange,
         HealTargets = HealTargets,
         MarkRange = MarkRange,
@@ -62,6 +64,7 @@ public sealed partial class TaryzSupportHandler : SkillEventHandler
     public SkillTemplate FirstDeploy;
     public SkillTemplate Spent;
     public float HealFraction;
+    public int HealMax;
     public int HealRange;
     public int HealTargets;
     public int MarkRange;
@@ -146,7 +149,8 @@ public sealed partial class TaryzSupportHandler : SkillEventHandler
                 if (element == null || element.GetHitpoints() <= 0)
                     continue;
                 var max = element.GetHitpointsMax();
-                var healed = Math.Min(max, element.GetHitpoints() + (int)Math.Ceiling(max * HealFraction));
+                var amount = Math.Min(HealMax, (int)Math.Ceiling(max * HealFraction));
+                var healed = Math.Min(max, element.GetHitpoints() + amount);
                 element.SetHitpoints(healed);
             }
             ally.UpdateHitpoints();

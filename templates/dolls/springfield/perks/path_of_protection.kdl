@@ -13,13 +13,14 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.springfield_path_of_protect
 
 
             <style="Highlight">• Grants the skill 'Deploy Taryz'. Taryz can be moved within $1 tiles of Springfield and can be shot down.</style>
-            <style="Highlight">• At the end of Springfield's turn, Taryz heals the most wounded allied squad within $2 tiles by $3% of its hitpoints.</style>
-            <style="Highlight">• At the end of Springfield's turn, Taryz marks up to $4 visible enemies within $5 tiles as 'Designated Target' for $6 rounds.</style>
+            <style="Highlight">• At the end of Springfield's turn, Taryz heals each element of the most wounded allied squad within $2 tiles by $3% of its maximum hitpoints, up to $4.</style>
+            <style="Highlight">• At the end of Springfield's turn, Taryz marks up to $5 visible enemies within $6 tiles as 'Designated Target' for $7 rounds.</style>
             """
         clear "m_Placeholders"
         append "m_Placeholders" bind="SkillTemplate" "active.springfield_taryz_command_move" path="MaxRange"
         append "m_Placeholders" bind="PerkTemplate" "perk.springfield_path_of_protection" path="EventHandlers[2].HealRange"
         append "m_Placeholders" bind="PerkTemplate" "perk.springfield_path_of_protection" path="EventHandlers[2].HealFraction" format="percent"
+        append "m_Placeholders" bind="PerkTemplate" "perk.springfield_path_of_protection" path="EventHandlers[2].HealMax"
         append "m_Placeholders" bind="PerkTemplate" "perk.springfield_path_of_protection" path="EventHandlers[2].MarkTargets"
         append "m_Placeholders" bind="PerkTemplate" "perk.springfield_path_of_protection" path="EventHandlers[2].MarkRange"
         append "m_Placeholders" bind="SkillTemplate" "effect.designated_target" path="EventHandlers[0].Lifetime"
@@ -44,7 +45,8 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.springfield_path_of_protect
         set "Mark" "effect.designated_target"
         set "FirstDeploy" "effect.springfield_taryz_deployed"
         set "Spent" "effect.springfield_taryz_spent"
-        set "HealFraction" 0.3
+        set "HealFraction" 0.5
+        set "HealMax" 25
         set "HealRange" 3
         set "HealTargets" 1
         set "MarkRange" 8
