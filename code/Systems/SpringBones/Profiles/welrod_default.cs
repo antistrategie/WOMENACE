@@ -24,7 +24,7 @@ internal static partial class SpringBodyProfiles
             SpringPresets.Accessory(
                 "EarPendants>EarPendants_End"
             ),
-            SpringPresets.Skirt(
+            WelrodCoat(
                 "Cape1.L>Cape11.L",
                 "Cape1.R>Cape11.R",
                 "Cape13.L>Cape18.L",
@@ -35,4 +35,18 @@ internal static partial class SpringBodyProfiles
         },
         Colliders = HumanoidColliders(1.350f),
     };
+
+    // Her coat's columns run ten bones and more, so the Skirt preset's soft tip under a
+    // firmer root sends every turn rippling down them. An even stiffness root to tip moves
+    // each column as one panel, and the extra drag settles it instead of letting it wave.
+    // Both outfits' capes use it.
+    internal static SpringChainSpec WelrodCoat(params string[] roots)
+    {
+        var spec = SpringPresets.Skirt(roots);
+        spec.Name = "coat";
+        spec.Stiffness = 2f;
+        spec.TipStiffness = 2f;
+        spec.Drag = 0.6f;
+        return spec;
+    }
 }

@@ -20,7 +20,7 @@ internal static partial class SpringBodyProfiles
             SpringPresets.Ribbon(
                 "Tie_MF01>Tie_MF06"
             ),
-            SpringPresets.Skirt(
+            WelrodCoat(
                 "CapeA2.L>CapeA10.L",
                 "CapeA2.R>CapeA10.R",
                 "CapeB1.L>CapeB8.L",
