@@ -168,8 +168,9 @@ internal sealed partial class ProcurementView
         _previous.SetEnabled(_homePage > 0);
         _next.SetEnabled(_homePage + 1 < pages);
         _specials.Clear();
+        const int specialColumns = 3;
         foreach (var entries in Catalogue.Entries.Where(entry => entry.Reward.Section == ProcurementSection.Special)
-            .OrderByDescending(entry => State.Available(entry.Reward)).Chunk(3))
+            .OrderByDescending(entry => State.Available(entry.Reward)).Chunk(specialColumns))
         {
             var row = Element("wm-proc-special-row wm-proc-row", _specials);
             foreach (var entry in entries)
@@ -183,6 +184,9 @@ internal sealed partial class ProcurementView
                 card.EnableInClassList("wm-proc-claimed", !State.Available(entry.Reward));
                 row.Add(card);
             }
+            // a short last row keeps the full rows' column widths: hidden cells fill it
+            for (var column = entries.Length; column < specialColumns; column++)
+                Element("wm-proc-special-card wm-proc-row wm-proc-pool-spacer", row, PickingMode.Ignore);
             row.ElementAt(row.childCount - 1).AddToClassList("wm-proc-column-end");
         }
         if (_specials.childCount > 0)
