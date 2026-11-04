@@ -5,7 +5,6 @@ using Il2CppInterop.Runtime.InteropTypes;
 using Il2CppMenace.Items;
 using Il2CppMenace.Tactical;
 using Il2CppMenace.Tactical.Skills;
-using Il2CppStem;
 using Jiangyu.Sdk;
 using UnityEngine;
 
@@ -47,8 +46,8 @@ public sealed class RailgunCarrySystem : JiangyuSystem
     private const string RailgunId = "specialweapon.asteria_railgun";
     private const string StowedNodeName = "railgun_stowed";
     private const string RifleNodeName = "railgun_carry_rifle";
-    private const string MuzzleName = "muzzle";
-    private const string HandLName = "weapon_hand_l";
+    private const string MuzzleName = SpecialWeaponCarry.MuzzleName;
+    private const string HandLName = SpecialWeaponCarry.HandLName;
     private const string ParkedSuffix = "_railgun_parked";
 
     // The deploy swap lands a beat into the kneel, when her hand reaches the back;
@@ -58,8 +57,7 @@ public sealed class RailgunCarrySystem : JiangyuSystem
     private const float StowSwapDelay = 1.4f;
 
     // The unfold clank from her GFL2 ult, played as the transformation starts in
-    // either direction. Bank and item resolve the same way the loader resolves the
-    // KDL's string ids: FNV-1a over UTF-8, reinterpreted signed.
+    // either direction.
     private const string SoundBankId = "wmgfl_weapons_railgun_addition_bank";
     private const string DeploySoundId = "railgun_deploy";
 
@@ -108,30 +106,7 @@ public sealed class RailgunCarrySystem : JiangyuSystem
     {
         try
         {
-            var element = (info.Instance as Il2CppObjectBase)?.TryCast<Il2CppUI.PrefabControllers.ArmoryElement>();
-            if (element == null)
-                return;
-            var rig = SceneQuery.FindNamed(element.gameObject, "asteria_railgun_rig");
-            if (rig == null)
-                return; // not a railgun carrier preview
-            var handGun = rig.parent;
-            if (handGun != null)
-                handGun.localScale = Vector3.zero;
-            if (SceneQuery.FindNamed(element.gameObject, RifleNodeName) != null)
-                return; // refresh call, already dressed
-
-            var leader = info.Args != null && info.Args.Count > 0
-                ? (info.Args[0] as Il2CppObjectBase)?.TryCast<Il2CppMenace.Strategy.BaseUnitLeader>()
-                : null;
-            var rifleTemplate = (leader?.GetItems()?.GetItemAtSlot(ItemSlot.InfantryWeapon)?.GetTemplate()
-                as Il2CppObjectBase)?.TryCast<WeaponTemplate>();
-            var model = WeaponSkinSystem.ModelFor(leader?.GetItems(), ItemSlot.InfantryWeapon, rifleTemplate);
-            if (model == null || handGun == null || handGun.parent == null)
-                return;
-            var rifle = UnityEngine.Object.Instantiate(model, handGun.parent, false);
-            rifle.name = RifleNodeName;
-            rifle.transform.localPosition = Vector3.zero;
-            rifle.transform.localRotation = Quaternion.identity;
+            SpecialWeaponCarry.DressPreview(info, "asteria_railgun_rig", RifleNodeName);
         }
         catch (Exception ex)
         {
@@ -150,7 +125,7 @@ public sealed class RailgunCarrySystem : JiangyuSystem
                 return;
             if (info.Args[0] is not int elementIndex || elementIndex != 0)
                 return;
-            Prune();
+            SpecialWeaponCarry.Prune(_carriers, c => c.Element);
 
             var items = (info.Args[1] as Il2CppObjectBase)?.TryCast<ItemContainer>();
             var special = items?.GetItemAtSlot(ItemSlot.InfantrySpecial);
@@ -173,7 +148,7 @@ public sealed class RailgunCarrySystem : JiangyuSystem
                 RailgunMuzzle = SceneQuery.FindNamed(handGun, MuzzleName),
                 RailgunHandL = SceneQuery.FindNamed(handGun, HandLName),
             };
-            AttachRifle(element, items, carrier);
+            AttachRifle(items, carrier);
             _carriers[element.Pointer] = carrier;
             Apply(carrier, deployed: false);
             Context.Log.Debug($"railgun carry: dressed carrier (stowed={carrier.Stowed != null}, "
@@ -185,32 +160,17 @@ public sealed class RailgunCarrySystem : JiangyuSystem
         }
     }
 
-    // The squad's own rifle in the carrier's hands while the railgun is on the back.
-    // Mounted through the engine's own socket primitive, then found by name; if the
-    // socket resolution ever fails, the special socket's parent (the same hand bone)
-    // is the fallback.
-    private void AttachRifle(Element element, ItemContainer items, Carrier carrier)
+    // The squad's own rifle in the carrier's hands while the railgun is on the back, our
+    // own copy on the railgun's hand socket (see SpecialWeaponCarry for why not the
+    // engine's AttachPrefab).
+    private void AttachRifle(ItemContainer items, Carrier carrier)
     {
-        var rifleTemplate = (items.GetItemAtSlot(ItemSlot.InfantryWeapon)?.GetTemplate()
-            as Il2CppObjectBase)?.TryCast<WeaponTemplate>();
-        var model = WeaponSkinSystem.ModelFor(items, ItemSlot.InfantryWeapon, rifleTemplate);
-        if (model == null)
-            return;
-
-        element.AttachPrefab(model, VisualAlterationSlot.Hand_R.GetAttachmentPointName());
-        var rifle = SceneQuery.FindNamed(element.m_Mesh?.gameObject, model.name + "(Clone)")?.gameObject;
-        if (rifle == null && carrier.HandGun != null && carrier.HandGun.transform.parent != null)
-        {
-            rifle = UnityEngine.Object.Instantiate(model, carrier.HandGun.transform.parent, false);
-            rifle.transform.localPosition = Vector3.zero;
-            rifle.transform.localRotation = Quaternion.identity;
-        }
+        var rifle = SpecialWeaponCarry.MountSquadWeapon(items, carrier.HandGun?.transform.parent, RifleNodeName);
         if (rifle == null)
         {
             Context.Log.Warn("railgun carry: could not mount the carrier's rifle");
             return;
         }
-        rifle.name = RifleNodeName;
         carrier.Rifle = rifle;
         carrier.RifleMuzzle = SceneQuery.FindNamed(rifle, MuzzleName);
         carrier.RifleHandL = SceneQuery.FindNamed(rifle, HandLName);
@@ -259,9 +219,7 @@ public sealed class RailgunCarrySystem : JiangyuSystem
 
     private IEnumerator SwapAfterDelay(Actor actor, Carrier carrier, bool deployed, int seq)
     {
-        var delay = deployed ? DeploySwapDelay : StowSwapDelay;
-        for (var waited = 0f; waited < delay; waited += Time.deltaTime)
-            yield return null;
+        yield return SpecialWeaponCarry.Wait(deployed ? DeploySwapDelay : StowSwapDelay);
         if (carrier.Seq != seq)
             yield break; // the stance flipped again during the delay
         if (actor == null || !actor.IsAlive())
@@ -273,24 +231,9 @@ public sealed class RailgunCarrySystem : JiangyuSystem
     // runs hidden until the swap lands), so the clank plays immediately, from the
     // carrier's position.
     private void PlayDeployClank(Carrier carrier)
-    {
-        try
-        {
-            var sound = SoundManager.GetSoundInstance(new ID(SoundIds.FromName(SoundBankId), SoundIds.FromName(DeploySoundId)));
-            // m_Mesh is null on transmogged doll bodies, so the weapon itself is the anchor
-            var at = carrier.HandGun != null ? carrier.HandGun.transform : carrier.Element?.transform;
-            if (sound == null || at == null)
-            {
-                Context.Log.Warn($"railgun carry: deploy clank not played (sound={(sound != null)}, anchor={(at != null)})");
-                return;
-            }
-            sound.Play3D(at.position);
-        }
-        catch (Exception ex)
-        {
-            Context.Log.Warn($"railgun carry: deploy sound failed: {ex.GetType().Name}: {ex.Message}");
-        }
-    }
+        => SpecialWeaponCarry.PlaySound(SoundBankId, DeploySoundId,
+            carrier.HandGun != null ? carrier.HandGun.transform : carrier.Element?.transform,
+            message => Context.Log.Warn("railgun carry: " + message));
 
     private void Apply(Carrier carrier, bool deployed)
     {
@@ -333,67 +276,19 @@ public sealed class RailgunCarrySystem : JiangyuSystem
         rifle.name = deployed ? name + "_rifle_parked" : name;
     }
 
-    // Standing, the carrier joins the squad's volleys. AllButSpecial is the rifle
-    // volley's element filter, and the engine only excludes element 0 because the
-    // special slot is occupied; with the rifle in hand the exclusion is wrong, so the
-    // carrier is appended. Deployed (or dead) the vanilla exclusion stands, which is
-    // exactly the ask: only the squaddies shoot the rifle then. Random-pick filters are
-    // left alone: their result is an already-chosen element, not a roster.
+    // Standing, the carrier joins the squad's volleys with the rifle in her hands;
+    // deployed, the vanilla exclusion stands and only the squaddies shoot the rifle.
     private void OnGetExecutingElements(PatchInfo info)
     {
         try
         {
-            if (info.Args == null || info.Args.Count < 1)
-                return;
-            var type = info.Args[0] switch
-            {
-                ExecutingElementType t => t,
-                int i => (ExecutingElementType)i,
-                _ => ExecutingElementType.All,
-            };
-            if (type != ExecutingElementType.AllButSpecial)
-                return;
-
-            var skill = (info.Instance as Il2CppObjectBase)?.TryCast<Skill>();
-            var actor = skill?.GetActor();
-            var element = actor?.GetElement(0);
-            if (element == null || !_carriers.TryGetValue(element.Pointer, out _))
-                return;
-            if (actor.GetStance() == ActorStance.Deployed || !element.IsAlive())
-                return;
-
-            var result = info.Result as Il2CppSystem.Collections.Generic.List<int>;
-            if (result != null && !result.Contains(0))
-                result.Add(0);
+            SpecialWeaponCarry.JoinVolley(info, (actor, element) =>
+                _carriers.TryGetValue(element.Pointer, out var carrier) && carrier.Rifle != null
+                && actor.GetStance() != ActorStance.Deployed);
         }
         catch (Exception ex)
         {
             Context.Log.Warn($"railgun carry: volley roster failed: {ex.GetType().Name}: {ex.Message}");
         }
-    }
-
-
-    // Wrappers outlive their mission; entries whose element died with its scene are
-    // dropped whenever a new carrier registers.
-    private void Prune()
-    {
-        List<IntPtr> stale = null;
-        foreach (var (key, carrier) in _carriers)
-        {
-            var dead = false;
-            try
-            {
-                dead = carrier.Element == null || carrier.Element.WasCollected;
-            }
-            catch
-            {
-                dead = true;
-            }
-            if (dead)
-                (stale ??= new List<IntPtr>()).Add(key);
-        }
-        if (stale != null)
-            foreach (var key in stale)
-                _carriers.Remove(key);
     }
 }
