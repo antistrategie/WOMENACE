@@ -64,13 +64,37 @@ Persisted cross-system state belongs in `Context.State.Get<T>()`. Reusable rules
 - A KDL file never starts with a comment. The formatter drops the first node of such a file and everything after it, and format and compile both pass. Put the comment inside the first block.
 - Generated KDL (voice conversations, a spine from a CSV) is generated once. After that it is hand-edited in place, never regenerated.
 
-## Commands
+## Tooling
 
-- `mise compile` builds templates, code, and bundles into `compiled/`.
-- `mise deploy` deploys the compiled mod to MENACE.
-- `mise format` formats KDL and C#.
-- `mise lint` verifies the C# project without modifying it.
-- `jiangyu unity sync` refreshes Jiangyu-managed Unity Editor scripts.
+Install locations differ on every machine. Find the game, Jiangyu and editor paths on the machine you are working on and never copy them from this repository.
+
+- **Jiangyu CLI.** It does all compilation and deployment:
+  - `jiangyu compile` builds templates, code and bundles into `compiled/`. It is a dev build, so the `*.Dev.cs` dev verbs are included. `jiangyu compile --release` leaves them out, and that is the build that ships.
+  - `jiangyu deploy` copies `compiled/` into the game's Mods folder. `jiangyu package --output <dir>` zips it as `WOMENACE-<version>.zip`. Neither one compiles, so run compile first.
+  - `jiangyu templates` provides `index`, `search`, `query`, `inspect`, `baseline audit` and `format` for reading game templates offline (see Inspecting MENACE).
+  - `jiangyu code sync` writes the gitignored `code/local.props` (game folder and SDK folder) from Jiangyu's global config. `jiangyu unity sync` refreshes the Jiangyu-managed Unity Editor scripts.
+- **mise.** The tasks in `mise.toml` (`compile`, `deploy`, `format`, `lint`, `test`) wrap the CLI. They assume a Jiangyu checkout next to this one at `../jiangyu`, built in Debug, which `JIANGYU_DIR` and `JIANGYU_BUILD` override. Without that layout, call the CLI directly and read the `test` task for the test projects it runs.
+- **.NET 10 SDK.** `dotnet build code/WOMENACE.Code.csproj -c Release` compiles the code against the installed game's interop assemblies in `MelonLoader/Il2CppAssemblies/`, which is the quickest check for game API breaks. Add `-p:JiangyuDev=true` to include the dev verbs. `dotnet format` with `JiangyuDev=true` set in the environment formats and lints them.
+- **MENACE with MelonLoader and the Jiangyu loader.** `jiangyu loader deploy --variant dev` installs the dev loader, which carries a TCP bridge and the dev verbs.
+- **`scripts/bridge.py`.** This client drives a running dev build. It finds the bridge through `<game>/UserData/jiangyu-bridge.json`. Dev verbs are called as `verb "<Class>.<Method>" --args '[...]' --mutate`, with class names taken from `code/Dev/` (for example `ProcurementDev.Curio` or `Weapons.Give`).
+- **Logs.**
+  - `<game>/MelonLoader/Latest.log` carries loader and mod output, and older runs are in `MelonLoader/Logs/`. Its `Template self-check` line counts patch ops that no longer match the game.
+  - Unity's `Player.log` is under `AppData/LocalLow/Overhype Studios/Menace/`, inside the Proton prefix on Linux. It records engine-side exceptions.
+- **Unity Editor.** The exact version named in `unity/ProjectSettings/ProjectVersion.txt` is required, because compile refuses any other. The mod's editor tools under `unity/Assets/Editor/` run in batch mode through `-executeMethod`.
+- **Blender and Python.** These run the `scripts/` pipelines. Python scripts run through `uv run` and use numpy, OpenCV and UnityPy.
+- **GFL2 extraction.** It uses AssetStudio and the VoyExport host (see the pipeline skills and Sourcing from the GFL2 client).
+- **Reading game code.** Use an IL decompiler such as ILSpy, or `System.Reflection.Metadata` or AsmResolver, for signatures and fields in the interop assemblies. Use the Cpp2IL dump and a disassembler for method bodies (see Inspecting MENACE).
+
+## After a MENACE update
+
+1. Boot the game once with the mod and read `Latest.log`: the `Game Version` line, the `Template self-check` counts, and any `[WARNING]` that names a template patch.
+2. Rebuild the code against the new interop assemblies. A clean compile does not prove the shipped DLL works. An old build calls the old signatures, and a missing method throws when its caller is JIT-compiled, which disables the whole calling method. Resolve every game member reference in the built DLL against the new assemblies, for example with a short AsmResolver program.
+3. Check that every string-registered Harmony target still exists (`Context.Patches.Prefix("Il2Cpp...", "<Method>", ...)`). The compiler cannot see them.
+4. Run `jiangyu templates index`, then `jiangyu templates baseline audit` for template field changes. Event handler types are not in that baseline. `jiangyu templates query <Handler>` shows a handler's current fields.
+5. Check description placeholder paths (`path="EventHandlers[n]..."`) into any handler whose fields changed. Placeholders resolve when the text is shown and render as `?` once the path is gone, and nothing reports it at boot.
+6. Ship with `jiangyu compile --release` and then `jiangyu package`. Before shipping, check that the DLL carries no dev verb classes.
+
+If the Unity version changed, compile is blocked until the matching editor is installed. If no mods load and `Latest.log` is tiny, MelonLoader has mixed stale Cpp2IL output with the new game. Delete `MelonLoader/Dependencies/Il2CppAssemblyGenerator/Cpp2IL/cpp2il_out` and boot again.
 
 Run verification in proportion to the change. At minimum, compile after KDL, C#, prefab, shader, or asset-reference changes. Build and exercise the relevant in-game path for runtime patches or UI changes.
 
