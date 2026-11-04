@@ -108,10 +108,15 @@ public sealed class WeaponSkinSystem : JiangyuSystem
                 if (weapon == null)
                     continue;
                 // Matching both the socket and source prefab preserves another item's
-                // visual precedence, including paired primary and special weapons.
-                if (!(weapon.VisualAlterationSlot == visualSlot && weapon.Model == original)
-                    && !(weapon.VisualAlterationSlotSecondary == visualSlot && weapon.ModelSecondary == original))
+                // visual precedence, including paired primary and special weapons. A skin is
+                // one gun: a special with two models carries it in the hand (ModelSecondary)
+                // and keeps its back model (the machine guns' ammo backpack) vanilla.
+                var primary = weapon.VisualAlterationSlot == visualSlot && weapon.Model == original;
+                var secondary = weapon.VisualAlterationSlotSecondary == visualSlot && weapon.ModelSecondary == original;
+                if (!primary && !secondary)
                     continue;
+                if (primary && weapon.ModelSecondary != null)
+                    return;
                 var skin = SelectionFor(items, itemSlot, weapon);
                 var model = LoadModel(skin);
                 if (model != null)
