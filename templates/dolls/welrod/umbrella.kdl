@@ -135,9 +135,11 @@ clone "SkillTemplate" from="effect.special_weapon_disabled" id="effect.wmgfl_umb
         set "MaxHpPct" 0.25
     }
     append "EventHandlers" type="ChangeProperty" {
-        set "PropertyType" enum="EntityPropertyType" "SuppressionImpactMult"
-        set "Amount" 0
-        set "AmountMult" 0.0
+        append "Properties" {
+            set "PropertyType" enum="EntityPropertyType" "SuppressionImpactMult"
+            set "Amount" 0
+            set "AmountMult" 0.0
+        }
     }
     append "EventHandlers" type="DisableSkills" {
         set "HideDisabledSkills" #false
