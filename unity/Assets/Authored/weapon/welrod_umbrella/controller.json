@@ -1,0 +1,81 @@
+{
+  "parameters": [
+    {
+      "name": "UmbrellaOpen",
+      "type": "Bool"
+    }
+  ],
+  "states": [
+    {
+      "name": "Stowed",
+      "clip": "stow",
+      "loop": true,
+      "default": true
+    },
+    {
+      "name": "Deploying",
+      "clip": "deploy"
+    },
+    {
+      "name": "Deployed",
+      "clip": "deployed",
+      "loop": true
+    },
+    {
+      "name": "Stowing",
+      "clip": "stowing"
+    }
+  ],
+  "transitions": [
+    {
+      "from": "Stowed",
+      "to": "Deploying",
+      "conditions": [
+        [
+          "UmbrellaOpen",
+          "If"
+        ]
+      ]
+    },
+    {
+      "from": "Deploying",
+      "to": "Deployed",
+      "exitTime": 1.0
+    },
+    {
+      "from": "Deploying",
+      "to": "Stowing",
+      "conditions": [
+        [
+          "UmbrellaOpen",
+          "IfNot"
+        ]
+      ]
+    },
+    {
+      "from": "Deployed",
+      "to": "Stowing",
+      "conditions": [
+        [
+          "UmbrellaOpen",
+          "IfNot"
+        ]
+      ]
+    },
+    {
+      "from": "Stowing",
+      "to": "Stowed",
+      "exitTime": 1.0
+    },
+    {
+      "from": "Stowing",
+      "to": "Deploying",
+      "conditions": [
+        [
+          "UmbrellaOpen",
+          "If"
+        ]
+      ]
+    }
+  ]
+}

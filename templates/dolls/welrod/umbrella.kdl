@@ -1,0 +1,160 @@
+// Welrod's umbrella: a special weapon any doll can carry. Open, the holder plants it in
+// front of the squad: the squad cannot move, its holder does not fire, no single attack
+// takes more than a quarter of the squad's hitpoints, explosions do 60% less damage and
+// suppression does not touch it.
+// The squaddies kneel behind it and keep shooting (UmbrellaCarrySystem).
+//
+// The open state is its own effect, not the Deployed stance: it cannot be opened while
+// deployed or pinned down, and the stance's Deploy is disabled while it is open. Opening
+// and closing both cost AP.
+
+clone "WeaponTemplate" from="specialweapon.rocket_launcher_tier1_pal" id="specialweapon.welrod_umbrella" {
+    append "Tags" "wmgfl_doll_weapon"
+    append "Tags" "jy_no_sell"
+    set "Title" {
+        set "m_DefaultTranslation" "Umbrella"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Shield"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "A black umbrella with a reinforced canopy. While unassuming, it can provide considerable defensive capabilites when opened."
+    }
+    set "Model" asset="weapon/welrod_umbrella_back/main"
+    set "ModelSecondary" asset="weapon/welrod_umbrella/main"
+    set "Icon" asset="weapon/welrod_umbrella/Icon"
+    set "IconEquipment" asset="weapon/welrod_umbrella/IconEquipment"
+    set "IconEquipmentDisabled" asset="weapon/welrod_umbrella/IconEquipmentDisabled"
+    set "IconSkillBar" asset="weapon/welrod_umbrella/IconSkillBar"
+    set "IconSkillBarDisabled" asset="weapon/welrod_umbrella/IconSkillBarDisabled"
+    set "AnimSize" enum="AnimWeaponSize" "Normal"
+    set "AnimGrip" enum="AnimWeaponGrip" "Horizontal"
+    clear "SkillsGranted"
+    append "SkillsGranted" "active.wmgfl_umbrella_open"
+    append "SkillsGranted" "active.wmgfl_umbrella_close"
+
+    set "MinRange" 0
+    set "IdealRange" 0
+    set "MaxRange" 0
+    set "AccuracyBonus" 0.0
+    set "AccuracyDropoff" 0.0
+    set "Damage" 0.0
+    set "ArmorPenetration" 0.0
+    set "DamageToArmorDurability" 0.0
+    set "Suppression" 0.0
+
+    set "BlackMarketMaxQuantity" 0
+}
+
+// The open/close pair, built like Makiatto's Interception toggles: SwitchBetweenSkills shows
+// one at a time, Open adds the effect and Close removes it. Open is a clone of the stance's
+// Deploy for its cost. RequireStance greys it out while deployed or pinned down (vanilla's
+// ChangeStance gate would hide it instead).
+clone "SkillTemplate" from="active.stance.deploy" id="active.wmgfl_umbrella_open" {
+    set "Title" {
+        set "m_DefaultTranslation" "Open Umbrella"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Open the umbrella in front of the squad. While it is open, the squad takes $1% less damage from explosions, cannot lose more than $2% <link=\"hitpoints\">Hitpoints</link> from a single attack and is immune to <link=\"suppression\">Suppression</link>. While open, the squad can not move."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_umbrella_open" path="EventHandlers[5].AbsorbDamagePct"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_umbrella_open" path="EventHandlers[1].MaxHpPct" format="percent"
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" ""
+    }
+    set "Icon" asset="welrod/skills/umbrella"
+    set "IconDisabled" asset="welrod/skills/umbrella_disabled"
+    set "ActionPointCost" 20
+    // Deploy's own KeyBind (SelectStanceSkill, the X key) would come with the clone; Auto
+    // gives it a number like the other skills
+    set "KeyBind" enum="KeyBindPlayerSetting" "Auto"
+    clear "Tags"
+    clear "EventHandlers"
+    append "EventHandlers" type="WOMENACE:RequireStance" {
+        set "Stance" enum="ActorStance" "Default"
+    }
+    append "EventHandlers" type="SwitchBetweenSkills" {
+        set "IsVisibleAtStart" #true
+        set "SwitchWithSkill" "active.wmgfl_umbrella_close"
+        set "Mode" enum="DeactivateMode" "Hide"
+    }
+    append "EventHandlers" type="AddSkill" {
+        set "Event" enum="AddEvent" "OnUse"
+        set "SkillToAdd" "effect.wmgfl_umbrella_open"
+    }
+}
+
+clone "SkillTemplate" from="active.wmgfl_umbrella_open" id="active.wmgfl_umbrella_close" {
+    set "Title" {
+        set "m_DefaultTranslation" "Close Umbrella"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Close the umbrella and get ready to move."
+        clear "m_Placeholders"
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" ""
+    }
+    clear "EventHandlers"
+    append "EventHandlers" type="SwitchBetweenSkills" {
+        set "IsVisibleAtStart" #false
+        set "SwitchWithSkill" "active.wmgfl_umbrella_open"
+        set "Mode" enum="DeactivateMode" "Hide"
+    }
+    append "EventHandlers" type="RemoveSkill" {
+        set "Event" enum="RemoveTrigger" "OnUse"
+        append "SkillsToRemove" "effect.wmgfl_umbrella_open"
+    }
+}
+
+// The open umbrella. SetAnimatorBool raises UmbrellaOpen on the squad's animators, which the
+// umbrella's own controller declares (it unfolds on true, folds on false), and its add and
+// remove are what UmbrellaCarrySystem hooks for the hand swap and the kneel.
+clone "AnimatorParameterNameTemplate" from="BoolDisabled" id="BoolUmbrellaOpen" {
+    set "ParameterName" "UmbrellaOpen"
+}
+
+clone "SkillTemplate" from="effect.special_weapon_disabled" id="effect.wmgfl_umbrella_open" {
+    set "Title" {
+        set "m_DefaultTranslation" "Umbrella Open"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Takes $1% less damage from explosions. Cannot lose more than $2% <link=\"hitpoints\">Hitpoints</link> from a single attack. Immune to <link=\"suppression\">Suppression</link>. Can not move."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_umbrella_open" path="EventHandlers[5].AbsorbDamagePct"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_umbrella_open" path="EventHandlers[1].MaxHpPct" format="percent"
+    }
+    set "Icon" asset="welrod/effects/umbrella_open"
+    set "Order" enum="SkillOrder" "First"
+    clear "EventHandlers"
+    append "EventHandlers" type="ChangeMovementCost" {
+        set "IsRooted" #true
+    }
+    append "EventHandlers" type="LimitMaxHpLoss" {
+        set "MaxHpPct" 0.25
+    }
+    append "EventHandlers" type="ChangeProperty" {
+        set "PropertyType" enum="EntityPropertyType" "SuppressionImpactMult"
+        set "Amount" 0
+        set "AmountMult" 0.0
+    }
+    append "EventHandlers" type="DisableSkills" {
+        set "HideDisabledSkills" #false
+        set "SkillFilter" type="SpecificSkillsFilter" {
+            append "TargetSkills" "active.stance.deploy"
+        }
+    }
+    append "EventHandlers" type="SetAnimatorBool" {
+        set "Parameter" "BoolUmbrellaOpen"
+    }
+    // what sets it apart from Deploy: cover from what falls from above. RequiredTags must
+    // all match (ContainsAllTags), so one tag: area of effect covers the mortars,
+    // artillery, frag grenades and rocket barrages, and the 25% cap takes the rest
+    append "EventHandlers" type="IgnoreDamage" {
+        set "ChanceToApply" 100
+        set "AbsorbDamagePct" 60
+        clear "RequiredTags"
+        append "RequiredTags" enum="TagType" "AREA_OF_EFFECT"
+    }
+}

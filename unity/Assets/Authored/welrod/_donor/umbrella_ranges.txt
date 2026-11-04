@@ -1,0 +1,17 @@
+# The umbrella's carrier clips, cut from Welrod's GFL2 ultimate (60 fps takes).
+# Reach: hand goes behind her, the umbrella appears in it at take frame 46.
+Reach=UltraSkill_God_Pre:16:55
+# Swing: brings it round to the front (skips the flourish between 56 and 117).
+Swing=UltraSkill_God_Pre:118:140
+# Open: thrusts it out, it snaps open around frames 5-10, and settles (her spine and off
+# arm are still moving until about frame 21).
+Open=UltraSkill_God_Main:1:21
+# Raise: the settled thrust again, which TuneUmbrellaHold holds, then eases up into the
+# upright hold (its state plays slowed).
+Raise=UltraSkill_God_Main:22:64
+# Hold: arm out, umbrella open, held still; the loop pose blend closes the last few
+# degrees of drift between its ends.
+Hold=UltraSkill_God_Main:22:64:loop
+# Fold, then Stow: folds it and puts it away (hidden at take frame 91).
+Fold=UltraSkill_God_Main:67:80
+Stow=UltraSkill_God_Main:80:91

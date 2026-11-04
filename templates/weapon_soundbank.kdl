@@ -357,3 +357,30 @@ clone "SoundBank" from="weapons_soundbank" id="wmgfl_weapons_railgun_addition_ba
     }
     append "busIndices" 0
 }
+
+// Welrod's umbrella: the canopy snapping open and folding shut, from her GFL2 combat bank
+// (C_SSR01_Welrod: the pop out of Skill02, Buff_Break whole). Played by UmbrellaCarrySystem.
+clone "SoundBank" from="weapons_soundbank" id="wmgfl_weapons_umbrella_addition_bank" {
+    clear "sounds"
+    clear "busIndices"
+
+    append "sounds" {
+        set "name" "umbrella_open"
+        set "fixedVolume" 1.2
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="weapons/umbrella/umbrella_open_01"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "umbrella_close"
+        set "fixedVolume" 1.2
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="weapons/umbrella/umbrella_close_01"
+        }
+    }
+    append "busIndices" 0
+}

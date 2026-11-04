@@ -15,6 +15,7 @@ public sealed class ProcurementCatalogue
     private static readonly (string Id, int Limit)[] SpecialItems =
     {
         ("specialweapon.asteria_railgun", 1),
+        ("specialweapon.welrod_umbrella", 1),
         ("vehicle.koleda_car", 1),
         ("accessory.wmgfl_remolding_support", 1),
         ("accessory.wmgfl_remolding_sentinel", 1),

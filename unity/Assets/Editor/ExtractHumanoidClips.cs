@@ -99,6 +99,11 @@ namespace Womenace.EditorTools
             var outDir = Arg("-outDir", null);
             var stripPrefix = Arg("-stripPrefix", string.Empty);
             var humanMapPath = Arg("-humanMap", null);
+            // Optional: cut named clips out of takes instead of extracting every take
+            // whole. One "Name=Take:first:last[:loop]" per line (Take after stripPrefix,
+            // frames at the take's own rate). Root motion is baked into the pose, since
+            // a soldier's Animator is rooted and would discard it.
+            var rangesPath = Arg("-ranges", null);
             if (string.IsNullOrEmpty(fbxPath) || string.IsNullOrEmpty(outDir))
             {
                 Debug.LogError("ExtractHumanoidClips: -fbx and -outDir are required.");
@@ -222,6 +227,48 @@ namespace Womenace.EditorTools
                 clip.keepOriginalOrientation = true;
                 clip.keepOriginalPositionY = true;
                 clip.keepOriginalPositionXZ = true;
+            }
+            if (!string.IsNullOrEmpty(rangesPath))
+            {
+                var cut = new List<ModelImporterClipAnimation>();
+                foreach (var raw in File.ReadAllLines(rangesPath))
+                {
+                    var line = raw.Trim();
+                    if (line.Length == 0 || line.StartsWith("#") || !line.Contains('='))
+                        continue;
+                    var parts = line.Split('=', 2);
+                    var spec = parts[1].Split(':');
+                    if (spec.Length < 3)
+                    {
+                        Debug.LogError($"ExtractHumanoidClips: range '{line}' is not Name=Take:first:last[:loop].");
+                        EditorApplication.Exit(1);
+                        return;
+                    }
+                    var take = clips.FirstOrDefault(c => c.name == spec[0].Trim());
+                    if (take == null)
+                    {
+                        Debug.LogError($"ExtractHumanoidClips: range '{line}' names no take; takes are {string.Join(", ", clips.Select(c => c.name))}.");
+                        EditorApplication.Exit(1);
+                        return;
+                    }
+                    cut.Add(new ModelImporterClipAnimation
+                    {
+                        name = parts[0].Trim(),
+                        takeName = take.takeName,
+                        firstFrame = float.Parse(spec[1], System.Globalization.CultureInfo.InvariantCulture),
+                        lastFrame = float.Parse(spec[2], System.Globalization.CultureInfo.InvariantCulture),
+                        loopTime = spec.Length > 3 && spec[3].Trim() == "loop",
+                        loopPose = spec.Length > 3 && spec[3].Trim() == "loop",
+                        lockRootRotation = true,
+                        lockRootHeightY = true,
+                        lockRootPositionXZ = true,
+                        keepOriginalOrientation = true,
+                        keepOriginalPositionY = true,
+                        keepOriginalPositionXZ = true,
+                    });
+                }
+                clips = cut.ToArray();
+                Debug.Log($"ExtractHumanoidClips: cutting {clips.Length} clip(s) from {rangesPath}.");
             }
             importer.clipAnimations = clips;
             importer.SaveAndReimport();

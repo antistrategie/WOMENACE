@@ -100,6 +100,7 @@ public static class Unlocks
         ["wmgfl_welrod"] = new[]
         {
             new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.welrod_welwyn_mist" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_welrod/lv2", "Outfit: Welwyn Mist") },
+            new Entry { Level = 7, Feature = Feature.SpecialWeapon, Items = new[] { "specialweapon.welrod_umbrella" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_welrod/lv7", "Special Weapon: Umbrella") },
         },
         ["wmgfl_suomi"] = new[]
         {

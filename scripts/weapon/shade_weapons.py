@@ -26,7 +26,8 @@ reference serves every weapon.
 
 A weapon with moving parts keeps a controller.json beside its raw.glb (the
 Animator spec BakeWeapon -controller reads); its presence is what makes the
-bake build the Animator.
+bake build the Animator. A post_bake.txt beside it lists editor methods run
+after its bake, for weapons that add to the baked prefab.
 
     python3 scripts/weapon/shade_weapons.py
     python3 scripts/weapon/shade_weapons.py --bake
@@ -152,6 +153,20 @@ def bake(weapon_dir, manifest_path, editor):
     if result.returncode != 0:
         raise SystemExit(f"bake failed for {name} ({result.returncode}). "
                          f"Unity's own log is the place to look, not this output.")
+    # A weapon that adds to its baked prefab (the umbrella's carrier controller) lists the
+    # editor methods that do it in post_bake.txt, one per line; the bake rebuilds the
+    # prefab from raw.glb, so they run after every bake.
+    post = weapon_dir / "post_bake.txt"
+    if post.is_file():
+        for method in (line.strip() for line in post.read_text().splitlines()):
+            if not method or method.startswith("#"):
+                continue
+            step = subprocess.run([str(editor), "-batchmode", "-nographics", "-quit",
+                                   "-buildTarget", "StandaloneWindows64", "-projectPath", "unity",
+                                   "-executeMethod", method], capture_output=True, text=True)
+            if step.returncode != 0:
+                raise SystemExit(f"post-bake {method} failed for {name} ({step.returncode}).")
+            print(f"  {name}: post-bake {method}", file=sys.stderr)
 
 
 def main():
