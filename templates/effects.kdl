@@ -45,7 +45,7 @@ clone "SkillTemplate" from="effect.bleeding" id="effect.wmgfl_shock" {
     set "Description" {
         set "m_DefaultTranslation" "Nervous systems and optics misfire. <link=\"accuracy\">Accuracy</link> reduced by $1% for $2 turns."
         clear "m_Placeholders"
-        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_shock" path="EventHandlers[1].AmountMult" format="reduction-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_shock" path="EventHandlers[1].Properties[0].AmountMult" format="reduction-percent"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_shock" path="EventHandlers[0].Lifetime"
     }
     clear "EventHandlers"
@@ -56,9 +56,11 @@ clone "SkillTemplate" from="effect.bleeding" id="effect.wmgfl_shock" {
     }
     append "EventHandlers" type="ChangeProperty" {
         set "Trigger" enum="UpdateEvent" "OnUpdate"
-        set "PropertyType" enum="EntityPropertyType" "AccuracyMult"
-        set "Amount" 0
-        set "AmountMult" 0.85
+        append "Properties" {
+            set "PropertyType" enum="EntityPropertyType" "AccuracyMult"
+            set "Amount" 0
+            set "AmountMult" 0.85
+        }
     }
     append "EventHandlers" type="DisplayText" {
         set "Event" enum="DisplayEvent" "OnAdded"
@@ -75,7 +77,7 @@ clone "SkillTemplate" from="effect.bleeding" id="effect.wmgfl_freeze" {
     set "Description" {
         set "m_DefaultTranslation" "Frost seizes servos and joints. <link=\"action_points\">Action Points</link> reduced by $1% for $2 turns."
         clear "m_Placeholders"
-        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_freeze" path="EventHandlers[1].AmountMult" format="reduction-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_freeze" path="EventHandlers[1].Properties[0].AmountMult" format="reduction-percent"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_freeze" path="EventHandlers[0].Lifetime"
     }
     clear "EventHandlers"
@@ -86,9 +88,11 @@ clone "SkillTemplate" from="effect.bleeding" id="effect.wmgfl_freeze" {
     }
     append "EventHandlers" type="ChangeProperty" {
         set "Trigger" enum="UpdateEvent" "OnUpdate"
-        set "PropertyType" enum="EntityPropertyType" "ActionPointsMult"
-        set "Amount" 0
-        set "AmountMult" 0.75
+        append "Properties" {
+            set "PropertyType" enum="EntityPropertyType" "ActionPointsMult"
+            set "Amount" 0
+            set "AmountMult" 0.75
+        }
     }
     append "EventHandlers" type="DisplayText" {
         set "Event" enum="DisplayEvent" "OnAdded"
@@ -137,7 +141,7 @@ clone "SkillTemplate" from="effect.bleeding" id="effect.wmgfl_hydro" {
     set "Description" {
         set "m_DefaultTranslation" "Waterlogged and exposed. Cover counts $1 tier worse for $2 turns."
         clear "m_Placeholders"
-        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_hydro" path="EventHandlers[1].Amount" format="magnitude"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_hydro" path="EventHandlers[1].Properties[0].Amount" format="magnitude"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_hydro" path="EventHandlers[0].Lifetime"
     }
     clear "EventHandlers"
@@ -148,9 +152,11 @@ clone "SkillTemplate" from="effect.bleeding" id="effect.wmgfl_hydro" {
     }
     append "EventHandlers" type="ChangeProperty" {
         set "Trigger" enum="UpdateEvent" "OnUpdate"
-        set "PropertyType" enum="EntityPropertyType" "CoverTypeOffset"
-        set "Amount" -1
-        set "AmountMult" 1.0
+        append "Properties" {
+            set "PropertyType" enum="EntityPropertyType" "CoverTypeOffset"
+            set "Amount" -1
+            set "AmountMult" 1.0
+        }
     }
     append "EventHandlers" type="DisplayText" {
         set "Event" enum="DisplayEvent" "OnAdded"

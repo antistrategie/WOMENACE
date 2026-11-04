@@ -32,7 +32,7 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.mechty_let_me_sleep" {
         append "m_Placeholders" bind="PerkTemplate" "perk.mechty_let_me_sleep" path="EventHandlers[0].BonusPerStack" format="percent"
         append "m_Placeholders" bind="PerkTemplate" "perk.mechty_let_me_sleep" path="EventHandlers[0].DetectionPerStack"
         append "m_Placeholders" bind="PerkTemplate" "perk.mechty_let_me_sleep" path="EventHandlers[0].MaxStacks"
-        append "m_Placeholders" bind="SkillTemplate" "effect.mechty_slack_off" path="EventHandlers[1].AmountMult" format="reduction-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.mechty_slack_off" path="EventHandlers[1].Properties[0].AmountMult" format="reduction-percent"
     }
 
     set "Icon" asset="mechty/perks/let_me_sleep"
@@ -76,7 +76,7 @@ clone "SkillTemplate" from="effect.off_balance" id="effect.mechty_slack_off" {
     set "Description" {
         set "m_DefaultTranslation" "This unit had to get up and has lost its rhythm. It has $1% reduced <link=\"accuracy\">Accuracy</link> until the end of the turn."
         clear "m_Placeholders"
-        append "m_Placeholders" bind="SkillTemplate" "effect.mechty_slack_off" path="EventHandlers[1].AmountMult" format="reduction-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.mechty_slack_off" path="EventHandlers[1].Properties[0].AmountMult" format="reduction-percent"
     }
     set "EventHandlers" index=2 {
         set "LocaKey" "mechty_slack_off"

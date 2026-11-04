@@ -27,7 +27,7 @@ patch "TextTooltipsConfig" "text_tooltips_config" {
         set "TooltipText" {
             set "m_DefaultTranslation" "Electric Phase damage builds up on the target. Once it reaches 20% of their max <link=\"hitpoints\">Hitpoints</link> they are Electrified, reducing <link=\"accuracy\">Accuracy</link> by $1% for $2 turns. Build-up is ignored while the charge lasts."
             clear "m_Placeholders"
-            append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_shock" path="EventHandlers[1].AmountMult" format="reduction-percent"
+            append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_shock" path="EventHandlers[1].Properties[0].AmountMult" format="reduction-percent"
             append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_shock" path="EventHandlers[0].Lifetime"
         }
     }
@@ -39,7 +39,7 @@ patch "TextTooltipsConfig" "text_tooltips_config" {
         set "TooltipText" {
             set "m_DefaultTranslation" "Freeze Phase damage builds up on the target. Once it reaches 20% of their max <link=\"hitpoints\">Hitpoints</link> they are Frozen, reducing <link=\"action_points\">Action Points</link> by $1% for $2 turns. Build-up is ignored while the frost lasts."
             clear "m_Placeholders"
-            append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_freeze" path="EventHandlers[1].AmountMult" format="reduction-percent"
+            append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_freeze" path="EventHandlers[1].Properties[0].AmountMult" format="reduction-percent"
             append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_freeze" path="EventHandlers[0].Lifetime"
         }
     }
@@ -63,7 +63,7 @@ patch "TextTooltipsConfig" "text_tooltips_config" {
         set "TooltipText" {
             set "m_DefaultTranslation" "Hydro Phase damage builds up on the target. Once it reaches 20% of their max <link=\"hitpoints\">Hitpoints</link> they are Drenched and their cover counts $1 tier worse for $2 turns. Build-up is ignored while they stay soaked."
             clear "m_Placeholders"
-            append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_hydro" path="EventHandlers[1].Amount" format="magnitude"
+            append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_hydro" path="EventHandlers[1].Properties[0].Amount" format="magnitude"
             append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_hydro" path="EventHandlers[0].Lifetime"
         }
     }
@@ -77,7 +77,7 @@ patch "TextTooltipsConfig" "text_tooltips_config" {
         set "TooltipText" {
             set "m_DefaultTranslation" "<link=\"accuracy\">Accuracy</link> increased by $1%."
             clear "m_Placeholders"
-            append "m_Placeholders" bind="SkillTemplate" "effect.soppo_hunter_form" path="EventHandlers[0].AmountMult" format="bonus-percent"
+            append "m_Placeholders" bind="SkillTemplate" "effect.soppo_hunter_form" path="EventHandlers[0].Properties[0].AmountMult" format="bonus-percent"
         }
     }
     append "Tooltips" {
@@ -88,7 +88,7 @@ patch "TextTooltipsConfig" "text_tooltips_config" {
         set "TooltipText" {
             set "m_DefaultTranslation" "Damage dealt increased by $1%."
             clear "m_Placeholders"
-            append "m_Placeholders" bind="SkillTemplate" "effect.soppo_feral_form" path="EventHandlers[0].AmountMult" format="bonus-percent"
+            append "m_Placeholders" bind="SkillTemplate" "effect.soppo_feral_form" path="EventHandlers[0].Properties[0].AmountMult" format="bonus-percent"
         }
     }
 

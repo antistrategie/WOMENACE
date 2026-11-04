@@ -192,14 +192,16 @@ clone "SkillTemplate" from="effect.bleeding" id="effect.soppo_hunter_form" {
     set "Description" {
         set "m_DefaultTranslation" "<link=\"accuracy\">Accuracy</link> increased by $1%."
         clear "m_Placeholders"
-        append "m_Placeholders" bind="SkillTemplate" "effect.soppo_hunter_form" path="EventHandlers[0].AmountMult" format="bonus-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.soppo_hunter_form" path="EventHandlers[0].Properties[0].AmountMult" format="bonus-percent"
     }
     clear "EventHandlers"
     append "EventHandlers" type="ChangeProperty" {
         set "Trigger" enum="UpdateEvent" "OnUpdate"
-        set "PropertyType" enum="EntityPropertyType" "AccuracyMult"
-        set "Amount" 0
-        set "AmountMult" 1.15
+        append "Properties" {
+            set "PropertyType" enum="EntityPropertyType" "AccuracyMult"
+            set "Amount" 0
+            set "AmountMult" 1.15
+        }
     }
 }
 
@@ -211,13 +213,15 @@ clone "SkillTemplate" from="effect.bleeding" id="effect.soppo_feral_form" {
     set "Description" {
         set "m_DefaultTranslation" "Damage dealt increased by $1%."
         clear "m_Placeholders"
-        append "m_Placeholders" bind="SkillTemplate" "effect.soppo_feral_form" path="EventHandlers[0].AmountMult" format="bonus-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.soppo_feral_form" path="EventHandlers[0].Properties[0].AmountMult" format="bonus-percent"
     }
     clear "EventHandlers"
     append "EventHandlers" type="ChangeProperty" {
         set "Trigger" enum="UpdateEvent" "OnUpdate"
-        set "PropertyType" enum="EntityPropertyType" "DamageMult"
-        set "Amount" 0
-        set "AmountMult" 1.1
+        append "Properties" {
+            set "PropertyType" enum="EntityPropertyType" "DamageMult"
+            set "Amount" 0
+            set "AmountMult" 1.1
+        }
     }
 }

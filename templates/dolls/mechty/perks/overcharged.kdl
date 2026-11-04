@@ -14,7 +14,7 @@ clone "PerkTemplate" from="perk.overload_vehicle" id="perk.mechty_overcharged" {
         set "m_DefaultTranslation" "+$1 AP and -$2 AP move cost this turn and the next on ACTIVATION, but stunned afterwards."
         clear "m_Placeholders"
         append "m_Placeholders" bind="SkillTemplate" "effect.mechty_overcharged" path="EventHandlers[2].ActionPoints"
-        append "m_Placeholders" bind="SkillTemplate" "effect.mechty_overcharged" path="EventHandlers[4].Amount" format="magnitude"
+        append "m_Placeholders" bind="SkillTemplate" "effect.mechty_overcharged" path="EventHandlers[4].Properties[0].Amount" format="magnitude"
     }
     set "Description" {
         set "m_DefaultTranslation" """
@@ -25,7 +25,7 @@ clone "PerkTemplate" from="perk.overload_vehicle" id="perk.mechty_overcharged" {
             """
         clear "m_Placeholders"
         append "m_Placeholders" bind="SkillTemplate" "effect.mechty_overcharged" path="EventHandlers[2].ActionPoints"
-        append "m_Placeholders" bind="SkillTemplate" "effect.mechty_overcharged" path="EventHandlers[4].Amount" format="magnitude"
+        append "m_Placeholders" bind="SkillTemplate" "effect.mechty_overcharged" path="EventHandlers[4].Properties[0].Amount" format="magnitude"
     }
 
     clear "SoundsOnUse"
@@ -55,7 +55,7 @@ clone "SkillTemplate" from="effect.overload" id="effect.mechty_overcharged" {
         set "m_DefaultTranslation" "This unit is running on an energy drink. +$1 <link=\"action_points\">AP</link> and -$2 <link=\"action_points\">AP</link> movement cost per tile. It will be stunned when the effect wears off."
         clear "m_Placeholders"
         append "m_Placeholders" bind="SkillTemplate" "effect.mechty_overcharged" path="EventHandlers[2].ActionPoints"
-        append "m_Placeholders" bind="SkillTemplate" "effect.mechty_overcharged" path="EventHandlers[4].Amount" format="magnitude"
+        append "m_Placeholders" bind="SkillTemplate" "effect.mechty_overcharged" path="EventHandlers[4].Properties[0].Amount" format="magnitude"
     }
     // The turn it is drunk in and the next: the AP burst on use and one raised refill.
     set "EventHandlers" index=0 {
@@ -79,9 +79,11 @@ clone "SkillTemplate" from="effect.overload" id="effect.mechty_overcharged" {
     }
     append "EventHandlers" type="ChangeProperty" {
         set "Trigger" enum="UpdateEvent" "OnUpdate"
-        set "PropertyType" enum="EntityPropertyType" "AdditionalMovementCost"
-        set "Amount" -5
-        set "AmountMult" 1.0
+        append "Properties" {
+            set "PropertyType" enum="EntityPropertyType" "AdditionalMovementCost"
+            set "Amount" -5
+            set "AmountMult" 1.0
+        }
     }
 }
 
