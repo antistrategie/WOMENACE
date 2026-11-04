@@ -15,9 +15,9 @@ clone "ShipUpgradeTemplate" from="oci.wmgfl_fairy_lodge" id="oci.wmgfl_parachute
             • Gain the Offmap Ability "Parachute Fairy" which drops a Doll squad on any tile on the map, reducing its <link="accuracy">Accuracy</link> by $1%, Damage by $2% and <link="defense">Defence</link> by $3% for $4 turns.</style>
             """
         clear "m_Placeholders"
-        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_drop_shock" path="EventHandlers[1].AmountMult" format="reduction-percent"
-        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_drop_shock" path="EventHandlers[2].AmountMult" format="reduction-percent"
-        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_drop_shock" path="EventHandlers[3].AmountMult" format="reduction-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_drop_shock" path="EventHandlers[1].Properties[0].AmountMult" format="reduction-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_drop_shock" path="EventHandlers[2].Properties[0].AmountMult" format="reduction-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_drop_shock" path="EventHandlers[3].Properties[0].AmountMult" format="reduction-percent"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_drop_shock" path="EventHandlers[0].Lifetime"
     }
     set "UnlockType" enum="ShipUpgradeUnlockType" "EventOnly"
@@ -45,17 +45,17 @@ clone "SkillTemplate" from="offmap.shield_projector" id="offmap.wmgfl_parachute_
     set "Description" {
         set "m_DefaultTranslation" "A fairy drops the selected Doll squad anywhere on the map, even into unscouted ground. The landing reduces its <link=\"accuracy\">Accuracy</link> by $1%, Damage by $2% and <link=\"defense\">Defence</link> by $3% for $4 turns."
         clear "m_Placeholders"
-        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_drop_shock" path="EventHandlers[1].AmountMult" format="reduction-percent"
-        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_drop_shock" path="EventHandlers[2].AmountMult" format="reduction-percent"
-        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_drop_shock" path="EventHandlers[3].AmountMult" format="reduction-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_drop_shock" path="EventHandlers[1].Properties[0].AmountMult" format="reduction-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_drop_shock" path="EventHandlers[2].Properties[0].AmountMult" format="reduction-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_drop_shock" path="EventHandlers[3].Properties[0].AmountMult" format="reduction-percent"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_drop_shock" path="EventHandlers[0].Lifetime"
     }
     set "ShortDescription" {
         set "m_DefaultTranslation" "Teleports the selected Doll squad to any tile. <link=\"accuracy\">Accuracy</link> reduced by $1%, Damage by $2% and <link=\"defense\">Defence</link> by $3% for $4 turns."
         clear "m_Placeholders"
-        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_drop_shock" path="EventHandlers[1].AmountMult" format="reduction-percent"
-        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_drop_shock" path="EventHandlers[2].AmountMult" format="reduction-percent"
-        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_drop_shock" path="EventHandlers[3].AmountMult" format="reduction-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_drop_shock" path="EventHandlers[1].Properties[0].AmountMult" format="reduction-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_drop_shock" path="EventHandlers[2].Properties[0].AmountMult" format="reduction-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_drop_shock" path="EventHandlers[3].Properties[0].AmountMult" format="reduction-percent"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_drop_shock" path="EventHandlers[0].Lifetime"
     }
     set "TargetsAllowed" enum="SkillTarget" "EmptyTile"
@@ -74,9 +74,9 @@ clone "SkillTemplate" from="effect.bleeding" id="effect.wmgfl_drop_shock" {
     set "Description" {
         set "m_DefaultTranslation" "<link=\"accuracy\">Accuracy</link> reduced by $1%, Damage by $2% and <link=\"defense\">Defence</link> by $3% for $4 turns."
         clear "m_Placeholders"
-        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_drop_shock" path="EventHandlers[1].AmountMult" format="reduction-percent"
-        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_drop_shock" path="EventHandlers[2].AmountMult" format="reduction-percent"
-        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_drop_shock" path="EventHandlers[3].AmountMult" format="reduction-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_drop_shock" path="EventHandlers[1].Properties[0].AmountMult" format="reduction-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_drop_shock" path="EventHandlers[2].Properties[0].AmountMult" format="reduction-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_drop_shock" path="EventHandlers[3].Properties[0].AmountMult" format="reduction-percent"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_drop_shock" path="EventHandlers[0].Lifetime"
     }
     clear "EventHandlers"
@@ -87,21 +87,27 @@ clone "SkillTemplate" from="effect.bleeding" id="effect.wmgfl_drop_shock" {
     }
     append "EventHandlers" type="ChangeProperty" {
         set "Trigger" enum="UpdateEvent" "OnUpdate"
-        set "PropertyType" enum="EntityPropertyType" "AccuracyMult"
-        set "Amount" 0
-        set "AmountMult" 0.4
+        append "Properties" {
+            set "PropertyType" enum="EntityPropertyType" "AccuracyMult"
+            set "Amount" 0
+            set "AmountMult" 0.4
+        }
     }
     append "EventHandlers" type="ChangeProperty" {
         set "Trigger" enum="UpdateEvent" "OnUpdate"
-        set "PropertyType" enum="EntityPropertyType" "DamageMult"
-        set "Amount" 0
-        set "AmountMult" 0.4
+        append "Properties" {
+            set "PropertyType" enum="EntityPropertyType" "DamageMult"
+            set "Amount" 0
+            set "AmountMult" 0.4
+        }
     }
     append "EventHandlers" type="ChangeProperty" {
         set "Trigger" enum="UpdateEvent" "OnUpdate"
-        set "PropertyType" enum="EntityPropertyType" "DefenseMult"
-        set "Amount" 0
-        set "AmountMult" 0.4
+        append "Properties" {
+            set "PropertyType" enum="EntityPropertyType" "DefenseMult"
+            set "Amount" 0
+            set "AmountMult" 0.4
+        }
     }
     append "EventHandlers" type="DisplayText" {
         set "Event" enum="DisplayEvent" "OnAdded"
@@ -127,9 +133,9 @@ clone "ShipUpgradeTemplate" from="oci.wmgfl_parachute_fairy" id="oci.wmgfl_enhan
             • Gain the Offmap Ability "Enhanced Parachute Fairy" which drops a Doll squad on any tile on the map, reducing its <link="accuracy">Accuracy</link> by $1%, Damage by $2% and <link="defense">Defence</link> by $3% for $4 turns.</style>
             """
         clear "m_Placeholders"
-        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_drop_shock" path="EventHandlers[1].AmountMult" format="reduction-percent"
-        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_drop_shock" path="EventHandlers[2].AmountMult" format="reduction-percent"
-        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_drop_shock" path="EventHandlers[3].AmountMult" format="reduction-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_drop_shock" path="EventHandlers[1].Properties[0].AmountMult" format="reduction-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_drop_shock" path="EventHandlers[2].Properties[0].AmountMult" format="reduction-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_drop_shock" path="EventHandlers[3].Properties[0].AmountMult" format="reduction-percent"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_drop_shock" path="EventHandlers[0].Lifetime"
     }
     set "OciPointsCosts" 90
@@ -154,17 +160,17 @@ clone "SkillTemplate" from="offmap.wmgfl_parachute_fairy" id="offmap.wmgfl_enhan
     set "Description" {
         set "m_DefaultTranslation" "A fairy drops the selected Doll squad anywhere on the map, even into unscouted ground. The landing reduces its <link=\"accuracy\">Accuracy</link> by $1%, Damage by $2% and <link=\"defense\">Defence</link> by $3% for $4 turns."
         clear "m_Placeholders"
-        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_drop_shock" path="EventHandlers[1].AmountMult" format="reduction-percent"
-        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_drop_shock" path="EventHandlers[2].AmountMult" format="reduction-percent"
-        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_drop_shock" path="EventHandlers[3].AmountMult" format="reduction-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_drop_shock" path="EventHandlers[1].Properties[0].AmountMult" format="reduction-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_drop_shock" path="EventHandlers[2].Properties[0].AmountMult" format="reduction-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_drop_shock" path="EventHandlers[3].Properties[0].AmountMult" format="reduction-percent"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_drop_shock" path="EventHandlers[0].Lifetime"
     }
     set "ShortDescription" {
         set "m_DefaultTranslation" "Teleports the selected Doll squad to any tile. <link=\"accuracy\">Accuracy</link> reduced by $1%, Damage by $2% and <link=\"defense\">Defence</link> by $3% for $4 turns."
         clear "m_Placeholders"
-        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_drop_shock" path="EventHandlers[1].AmountMult" format="reduction-percent"
-        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_drop_shock" path="EventHandlers[2].AmountMult" format="reduction-percent"
-        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_drop_shock" path="EventHandlers[3].AmountMult" format="reduction-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_drop_shock" path="EventHandlers[1].Properties[0].AmountMult" format="reduction-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_drop_shock" path="EventHandlers[2].Properties[0].AmountMult" format="reduction-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_drop_shock" path="EventHandlers[3].Properties[0].AmountMult" format="reduction-percent"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_drop_shock" path="EventHandlers[0].Lifetime"
     }
     clear "EventHandlers"
@@ -177,18 +183,24 @@ clone "SkillTemplate" from="effect.wmgfl_drop_shock" id="effect.wmgfl_enhanced_d
     set "Description" {
         set "m_DefaultTranslation" "Rattled by the drop. <link=\"accuracy\">Accuracy</link> reduced by $1%, Damage by $2% and <link=\"defense\">Defence</link> by $3% for $4 turns."
         clear "m_Placeholders"
-        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_drop_shock" path="EventHandlers[1].AmountMult" format="reduction-percent"
-        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_drop_shock" path="EventHandlers[2].AmountMult" format="reduction-percent"
-        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_drop_shock" path="EventHandlers[3].AmountMult" format="reduction-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_drop_shock" path="EventHandlers[1].Properties[0].AmountMult" format="reduction-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_drop_shock" path="EventHandlers[2].Properties[0].AmountMult" format="reduction-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_drop_shock" path="EventHandlers[3].Properties[0].AmountMult" format="reduction-percent"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_enhanced_drop_shock" path="EventHandlers[0].Lifetime"
     }
     set "EventHandlers" index=1 {
-        set "AmountMult" 0.6
+        set "Properties" index=0 {
+            set "AmountMult" 0.6
+        }
     }
     set "EventHandlers" index=2 {
-        set "AmountMult" 0.6
+        set "Properties" index=0 {
+            set "AmountMult" 0.6
+        }
     }
     set "EventHandlers" index=3 {
-        set "AmountMult" 0.6
+        set "Properties" index=0 {
+            set "AmountMult" 0.6
+        }
     }
 }

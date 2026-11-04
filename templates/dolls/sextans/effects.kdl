@@ -59,15 +59,19 @@ clone "SkillTemplate" from="effect.bleeding" id="effect.sextans_holy_blood_mark"
     clear "EventHandlers"
     append "EventHandlers" type="ChangeProperty" {
         set "Trigger" enum="UpdateEvent" "OnUpdate"
-        set "PropertyType" enum="EntityPropertyType" "CriticalChance"
-        set "Amount" 10
-        set "AmountMult" 0.0
+        append "Properties" {
+            set "PropertyType" enum="EntityPropertyType" "CriticalChance"
+            set "Amount" 10
+            set "AmountMult" 0.0
+        }
     }
     append "EventHandlers" type="ChangeProperty" {
         set "Trigger" enum="UpdateEvent" "OnUpdate"
-        set "PropertyType" enum="EntityPropertyType" "CriticalDamageMult"
-        set "Amount" 0
-        set "AmountMult" 0.15
+        append "Properties" {
+            set "PropertyType" enum="EntityPropertyType" "CriticalDamageMult"
+            set "Amount" 0
+            set "AmountMult" 0.15
+        }
     }
     append "EventHandlers" type="LifetimeLimit" {
         set "Event" enum="LifetimeType" "OnTurnEnd"
