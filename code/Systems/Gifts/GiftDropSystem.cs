@@ -12,8 +12,9 @@ namespace WOMENACE.Code;
 // event (TacticalManager.InvokeOnDeath, which carries the killer) rather than the data-driven
 // EntityTemplate.Loot path: that path shares the gear-loot gather, so gifts there would perturb the
 // gear economy and compete with gear for the lootable-enemy cap. Kills are recorded during the
-// mission and rolled as the mission-result screen builds, under the same lootable-enemy cap and
-// loot-chance bonus vanilla applies to its own loot (see LootableEnemyCap and LootDropChanceBonus),
+// mission and rolled as the mission-result screen builds, under the same lootable-enemy cap,
+// loot-chance bonus and Extended Campaign halving vanilla applies to its own loot (see
+// LootableEnemyCap, LootDropChanceBonus and LootDropChanceMult),
 // weighted by the enemy's tier. The gifts are appended to the result's loot list, which the native
 // flow shows and banks into the inventory the gift modal reads.
 public sealed class GiftDropSystem : JiangyuSystem
@@ -196,11 +197,12 @@ public sealed class GiftDropSystem : JiangyuSystem
             var rescueFairies = _enhancedRescueFairy == null ? 0
                 : state.ShipUpgrades?.GetInstallsCount(_enhancedRescueFairy) ?? 0;
             var chanceBonus = 10 * rescueFairies + LootDropChanceBonus(state);
+            var chanceMult = LootDropChanceMult(state);
 
             var gifts = new List<CommodityTemplate>();
             foreach (var kill in rolling)
             {
-                var dropChance = Math.Min(100, kill.Tier.DropChance + chanceBonus);
+                var dropChance = Math.Min(100, UnityEngine.Mathf.RoundToInt((kill.Tier.DropChance + chanceBonus) * chanceMult));
                 foreach (var gift in GiftCatalog.All())
                 {
                     if (gift.Rarity < kill.Tier.MinRarity || gift.Rarity > kill.Tier.MaxRarity)
@@ -221,7 +223,7 @@ public sealed class GiftDropSystem : JiangyuSystem
             }
             foreach (var gift in gifts)
                 loot.Add(gift);
-            Context.Log.Info($"gift drop: rolled {rolling.Count} of {recorded} kill(s) (cap {(cap == int.MaxValue ? "unlimited" : cap.ToString())}, bonus {chanceBonus}%), delivered {gifts.Count} gift(s) via the mission-result screen");
+            Context.Log.Info($"gift drop: rolled {rolling.Count} of {recorded} kill(s) (cap {(cap == int.MaxValue ? "unlimited" : cap.ToString())}, bonus {chanceBonus}%, mult {chanceMult}), delivered {gifts.Count} gift(s) via the mission-result screen");
         }
         catch (Exception ex) { Context.Log.Warn($"gift result-delivery failed: {ex.Message}"); }
     }
@@ -246,6 +248,12 @@ public sealed class GiftDropSystem : JiangyuSystem
     // as flat percentage points to each loot entry's drop chance before rolling it.
     private static int LootDropChanceBonus(StrategyState state)
         => state.GetGlobalDifficulty()?.LootDropChanceBonus ?? 0;
+
+    // The new-game Extended Campaign option, under which vanilla halves each loot entry's drop
+    // chance (bonus included) before rolling it (TacticalState.OnFinished). Gifts are halved the
+    // same way, so affinity keeps pace with a campaign that runs about twice as long.
+    private static float LootDropChanceMult(StrategyState state)
+        => state.IsLongWar() ? 0.5f : 1f;
 
     private static Tier TierFor(int armyPointCost)
     {
