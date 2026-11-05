@@ -1,0 +1,36 @@
+clone "PerkTemplate" from="perk.steady_gun" id="perk.suomi_avalanche" {
+    // Avalanche, Suomi's tier 1 perk in both forms: WOMENACE:Avalanche builds Freeze on every hit,
+    // an attack's amount split across its repetitions, and raises her damage against Frozen targets.
+    set "Title" {
+        set "m_DefaultTranslation" "Avalanche"
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "Attacks build Freeze. +$1% DMG against Frozen targets."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="PerkTemplate" "perk.suomi_avalanche" path="EventHandlers[0].FrozenDamageMult" format="bonus-percent"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            “Targets engaged by Suomi consistently report a sudden drop in temperature, followed shortly by a sudden drop in everything else.”
+
+              – Griffin Field Medical Report
+
+
+            <style="Highlight">• Every attack builds $1 <link="wmgfl_freeze">Freeze</link> on the target, split between its repetitions.
+            • +$2% Damage against Frozen targets.</style>
+            """
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="PerkTemplate" "perk.suomi_avalanche" path="EventHandlers[0].BuildUpPerAttack"
+        append "m_Placeholders" bind="PerkTemplate" "perk.suomi_avalanche" path="EventHandlers[0].FrozenDamageMult" format="bonus-percent"
+    }
+
+    set "Icon" asset="suomi/perks/avalanche"
+    set "IconDisabled" asset="suomi/perks/avalanche_inactive"
+    set "PerkIcon" asset="suomi/perks/avalanche"
+
+    clear "EventHandlers"
+    append "EventHandlers" type="WOMENACE:Avalanche" {
+        set "BuildUpPerAttack" 24.0
+        set "FrozenDamageMult" 1.2
+    }
+}

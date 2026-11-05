@@ -1,0 +1,35 @@
+clone "PerkTemplate" from="perk.steady_gun" id="perk.suomi_wintry_bastion" {
+    // Wintry Bastion, Suomi's tier 4 perk in both forms: an aura (WOMENACE:AuraGrant) that gives
+    // her and every ally within its radius Shelter (effect.wmgfl_shelter).
+    set "Title" {
+        set "m_DefaultTranslation" "Wintry Bastion"
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "This unit and allies within $1 tiles gain Shelter, $2% damage reduction."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="PerkTemplate" "perk.suomi_wintry_bastion" path="EventHandlers[0].Radius"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_shelter" path="EventHandlers[0].Properties[0].AmountMult" format="reduction-percent"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            I once got lost in a snowstorm and was rescued by the cutest girl you've ever seen. The moment we reached shelter, she put on death metal at full volume and started chugging vodka. I went back out into the snowstorm.
+
+
+            <style="Highlight">• This unit and allies within $1 tiles gain Shelter: $2% <link="damage_reduction">Damage Reduction</link>.</style>
+            """
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="PerkTemplate" "perk.suomi_wintry_bastion" path="EventHandlers[0].Radius"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_shelter" path="EventHandlers[0].Properties[0].AmountMult" format="reduction-percent"
+    }
+
+    set "Icon" asset="suomi/perks/wintry_bastion"
+    set "IconDisabled" asset="suomi/perks/wintry_bastion_inactive"
+    set "PerkIcon" asset="suomi/perks/wintry_bastion"
+
+    clear "EventHandlers"
+    append "EventHandlers" type="WOMENACE:AuraGrant" {
+        set "Effect" ref="SkillTemplate" "effect.wmgfl_shelter"
+        set "Radius" 5
+        set "IncludeSelf" #true
+    }
+}

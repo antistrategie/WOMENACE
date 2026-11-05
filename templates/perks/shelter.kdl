@@ -1,0 +1,23 @@
+// Shelter, a damage reduction status handed out by auras (WOMENACE:AuraGrant). Suomi's Wintry
+// Bastion grants it, and other Dolls' perks can grant the same status.
+clone "SkillTemplate" from="effect.solid_grouping" id="effect.wmgfl_shelter" {
+    set "Icon" asset="suomi/effects/shelter"
+    set "Title" {
+        set "m_DefaultTranslation" "Shelter"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "$1% <link=\"damage_reduction\">Damage Reduction</link>."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_shelter" path="EventHandlers[0].Properties[0].AmountMult" format="reduction-percent"
+    }
+    set "IsRemovedAfterCombat" #true
+    clear "EventHandlers"
+    append "EventHandlers" type="ChangeProperty" {
+        set "Trigger" enum="UpdateEvent" "OnUpdate"
+        append "Properties" {
+            set "PropertyType" enum="EntityPropertyType" "DamageSustainedMult"
+            set "Amount" 0
+            set "AmountMult" 0.9
+        }
+    }
+}

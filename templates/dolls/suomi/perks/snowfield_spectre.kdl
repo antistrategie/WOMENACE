@@ -1,0 +1,55 @@
+clone "PerkTemplate" from="perk.steady_gun" id="perk.suomi_snowfield_spectre" {
+    // Snowfield Spectre, Suomi's starting perk in both forms. The status it adds carries
+    // WOMENACE:SnowfieldSpectre, which keeps snow weather off her and raises her attacks from
+    // snow tiles.
+    set "Title" {
+        set "m_DefaultTranslation" "Snowfield Spectre"
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "Ignores snow weather. +$1% ACC and +$2% DMG when attacking from snow."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.suomi_snowfield_spectre" path="EventHandlers[0].AccuracyMult" format="bonus-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.suomi_snowfield_spectre" path="EventHandlers[0].DamageMult" format="bonus-percent"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            Every snowbound army has a story about something in the drifts that nobody ever manages to see. The yeti has terrible PR and no confirmed kills. Suomi has excellent PR and quite a few.
+
+
+            <style="Highlight">• This unit is not affected by snowfall or snowstorms.
+            • +$1% <link="accuracy">Accuracy</link> and +$2% Damage when attacking from a snow tile.</style>
+            """
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.suomi_snowfield_spectre" path="EventHandlers[0].AccuracyMult" format="bonus-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.suomi_snowfield_spectre" path="EventHandlers[0].DamageMult" format="bonus-percent"
+    }
+
+    set "Icon" asset="suomi/perks/snowfield_spectre"
+    set "IconDisabled" asset="suomi/perks/snowfield_spectre_inactive"
+    set "PerkIcon" asset="suomi/perks/snowfield_spectre"
+
+    clear "EventHandlers"
+    append "EventHandlers" type="AddSkill" {
+        set "Event" enum="AddEvent" "OnMissionStart"
+        set "SkillToAdd" "effect.suomi_snowfield_spectre"
+    }
+}
+
+clone "SkillTemplate" from="effect.solid_grouping" id="effect.suomi_snowfield_spectre" {
+    set "Icon" asset="suomi/effects/snowfield_spectre"
+    set "Title" {
+        set "m_DefaultTranslation" "Snowfield Spectre"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Standing on snow. +$1% <link=\"accuracy\">Accuracy</link> and +$2% Damage."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.suomi_snowfield_spectre" path="EventHandlers[0].AccuracyMult" format="bonus-percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.suomi_snowfield_spectre" path="EventHandlers[0].DamageMult" format="bonus-percent"
+    }
+    set "IsRemovedAfterCombat" #true
+    clear "EventHandlers"
+    append "EventHandlers" type="WOMENACE:SnowfieldSpectre" {
+        set "AccuracyMult" 1.15
+        set "DamageMult" 1.15
+    }
+}

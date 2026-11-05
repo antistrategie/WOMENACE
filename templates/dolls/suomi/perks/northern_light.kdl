@@ -1,0 +1,55 @@
+clone "PerkTemplate" from="perk.steady_gun" id="perk.suomi_northern_light" {
+    // Northern Light, Suomi's tier 2 perk in both forms: an aura (WOMENACE:AuraGrant) that gives
+    // her and every ally within its radius effect.suomi_northern_light, which lifts the night
+    // effect while they stay in range.
+    set "Title" {
+        set "m_DefaultTranslation" "Northern Light"
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "This unit and allies within $1 tiles ignore night penalties."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="PerkTemplate" "perk.suomi_northern_light" path="EventHandlers[0].Radius"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            Diogenes wandered Athens in broad daylight with a lantern, looking for an honest man, and never found one. Suomi carries hers at night and has a much easier time of it, since everyone she is looking for is trying to shoot her.
+
+
+            <style="Highlight">• This unit and allies within $1 tiles are not affected by night.</style>
+            """
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="PerkTemplate" "perk.suomi_northern_light" path="EventHandlers[0].Radius"
+    }
+
+    set "Icon" asset="suomi/perks/northern_light"
+    set "IconDisabled" asset="suomi/perks/northern_light_inactive"
+    set "PerkIcon" asset="suomi/perks/northern_light"
+
+    clear "EventHandlers"
+    append "EventHandlers" type="WOMENACE:AuraGrant" {
+        set "Effect" ref="SkillTemplate" "effect.suomi_northern_light"
+        set "Radius" 3
+        set "LightConditionSkill" ref="SkillTemplate" "effect.light.night"
+        set "IncludeSelf" #true
+    }
+}
+
+clone "SkillTemplate" from="effect.solid_grouping" id="effect.suomi_northern_light" {
+    set "Icon" asset="suomi/effects/northern_light"
+    set "Title" {
+        set "m_DefaultTranslation" "Northern Light"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Lit by Suomi's lantern. Not affected by night."
+    }
+    set "IsRemovedAfterCombat" #true
+    clear "EventHandlers"
+    // The flag keeps the night off a unit the game sets up inside the aura. A unit that already
+    // carries the night effect has it stripped while it stays in range.
+    append "EventHandlers" type="SetEntityFlag" {
+        set "Flag" enum="EntityFlags" "ImmuneToLightEffect"
+    }
+    append "EventHandlers" type="WOMENACE:SuppressSkill" {
+        set "Suppressed" ref="SkillTemplate" "effect.light.night"
+    }
+}
