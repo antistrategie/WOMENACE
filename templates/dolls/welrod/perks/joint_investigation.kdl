@@ -1,0 +1,72 @@
+clone "PerkTemplate" from="perk.steady_gun" id="perk.welrod_joint_investigation" {
+    // Joint Investigation, Welrod's tier 2 perk: JointInvestigationSystem raises Intelligence for
+    // each mission of an operation she deploys on and takes it back when the operation ends. The
+    // perk also hands her the questioning skill each mission.
+    set "Title" {
+        set "m_DefaultTranslation" "Joint Investigation"
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "+$1 Intelligence per mission this operation. Question civilians to reveal enemies."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="PerkTemplate" "perk.welrod_joint_investigation" path="EventHandlers[0].IntelPerMission"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            Holmes paid a gang of street children a shilling a day to watch every corner of London for him. Welrod has found most civilians will do the same for free, provided she asks nicely and the alternative is getting caught in the crossfire.
+
+
+            <style="Highlight">• Each mission this unit deploys on raises Intelligence by $1 until the operation ends.
+            • Grants the skill 'Joint Investigation'. Question a civilian to reveal the position of $2 enemies. Each civilian can be questioned once.</style>
+            """
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="PerkTemplate" "perk.welrod_joint_investigation" path="EventHandlers[0].IntelPerMission"
+        append "m_Placeholders" bind="SkillTemplate" "active.welrod_joint_investigation" path="EventHandlers[0].Reveals"
+    }
+
+    set "Icon" asset="welrod/perks/joint_investigation"
+    set "IconDisabled" asset="welrod/perks/joint_investigation_inactive"
+    set "PerkIcon" asset="welrod/perks/joint_investigation"
+
+    clear "EventHandlers"
+    append "EventHandlers" type="WOMENACE:JointInvestigation" {
+        set "IntelPerMission" 2
+    }
+    append "EventHandlers" type="AddSkill" {
+        set "Event" enum="AddEvent" "OnMissionStart"
+        set "SkillToAdd" "active.welrod_joint_investigation"
+    }
+}
+
+clone "SkillTemplate" from="offmap.shield_projector" id="active.welrod_joint_investigation" {
+    set "Title" {
+        set "m_DefaultTranslation" "Joint Investigation"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Question a civilian to reveal the position of $1 enemies. Each civilian can be questioned once."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "active.welrod_joint_investigation" path="EventHandlers[0].Reveals"
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "Questions a civilian, revealing $1 enemies."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "active.welrod_joint_investigation" path="EventHandlers[0].Reveals"
+    }
+    set "Icon" asset="welrod/skills/joint_investigation"
+    set "IconDisabled" asset="welrod/skills/joint_investigation_disabled"
+    set "TargetsAllowed" enum="SkillTarget" "All"
+    set "ActionPointCost" 40
+    set "HideApCosts" #false
+    set "ExecutingElement" enum="ExecutingElementType" "SpecialOnly"
+    set "IsLimitedUses" #false
+    set "IsStacking" #false
+    set "IsRemovedAfterCombat" #true
+    set "IsOverridingRanges" #true
+    set "MinRange" 1
+    set "IdealRange" 1
+    set "MaxRange" 2
+    clear "Tags"
+    clear "EventHandlers"
+    append "EventHandlers" type="WOMENACE:Interrogate" {
+        set "Reveals" 2
+    }
+}

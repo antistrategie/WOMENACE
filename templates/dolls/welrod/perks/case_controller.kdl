@@ -1,0 +1,52 @@
+clone "PerkTemplate" from="perk.steady_gun" id="perk.welrod_case_controller" {
+    // Case Controller, Welrod's starting perk: she gets nothing from cover and has no critical
+    // chance of her own, but her squad is much harder to kill.
+    set "Title" {
+        set "m_DefaultTranslation" "Case Controller"
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "No cover protection, no base CRIT. +$1% HP and $2% damage reduction."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="PerkTemplate" "perk.welrod_case_controller" path="EventHandlers[0].Properties[0].AmountMult" format="bonus-percent"
+        append "m_Placeholders" bind="PerkTemplate" "perk.welrod_case_controller" path="EventHandlers[0].Properties[1].AmountMult" format="reduction-percent"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            Why is she so SMALL? Why is she standing in the open? Why is she still standing? Field reports on Welrod tend to raise more questions than they answer.
+
+
+            <style="Highlight">• +$1% <link="hitpoints">Hitpoints</link> and $2% <link="damage_reduction">Damage Reduction</link>.
+            • This unit gains no protection from cover and has no <link="critical_chance">Critical Chance</link> of its own.</style>
+            """
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="PerkTemplate" "perk.welrod_case_controller" path="EventHandlers[0].Properties[0].AmountMult" format="bonus-percent"
+        append "m_Placeholders" bind="PerkTemplate" "perk.welrod_case_controller" path="EventHandlers[0].Properties[1].AmountMult" format="reduction-percent"
+    }
+
+    set "Icon" asset="welrod/perks/case_controller"
+    set "IconDisabled" asset="welrod/perks/case_controller_inactive"
+    set "PerkIcon" asset="welrod/perks/case_controller"
+
+    clear "EventHandlers"
+    append "EventHandlers" type="ChangeProperty" {
+        set "Trigger" enum="UpdateEvent" "OnUpdate"
+        append "Properties" {
+            set "PropertyType" enum="EntityPropertyType" "HitpointsPerElementMult"
+            set "Amount" 0
+            set "AmountMult" 1.5
+        }
+        append "Properties" {
+            set "PropertyType" enum="EntityPropertyType" "DamageSustainedMult"
+            set "Amount" 0
+            set "AmountMult" 0.8
+        }
+        append "Properties" {
+            set "PropertyType" enum="EntityPropertyType" "CoverEffectivenessMult"
+            set "Amount" 0
+            set "AmountMult" 0.0
+        }
+    }
+    append "EventHandlers" type="WOMENACE:SetCriticalChance" {
+        set "Value" 0
+    }
+}

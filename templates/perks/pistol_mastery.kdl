@@ -1,0 +1,37 @@
+clone "PerkTemplate" from="perk.steady_gun" id="perk.wmgfl_pistol_mastery" {
+    // Pistol Mastery, the handgun Dolls' perk: WOMENACE:PistolMastery raises critical chance,
+    // damage and armour penetration on attacks made with a handgun.
+    set "Title" {
+        set "m_DefaultTranslation" "Pistol Mastery"
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "With a pistol: +$1% CRIT, +$2% DMG and +$3% Armour Pen."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="PerkTemplate" "perk.wmgfl_pistol_mastery" path="EventHandlers[0].CriticalChanceBonus"
+        append "m_Placeholders" bind="PerkTemplate" "perk.wmgfl_pistol_mastery" path="EventHandlers[0].DamageMult" format="bonus-percent"
+        append "m_Placeholders" bind="PerkTemplate" "perk.wmgfl_pistol_mastery" path="EventHandlers[0].ArmorPenetrationMult" format="bonus-percent"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            A pistol is only a sidearm in the wrong hands.
+
+
+            <style="Highlight">• Attacks with a pistol gain +$1% <link="critical_chance">Critical Chance</link>, +$2% Damage and +$3% <link="armor_penetration">Armour Penetration</link>.</style>
+            """
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="PerkTemplate" "perk.wmgfl_pistol_mastery" path="EventHandlers[0].CriticalChanceBonus"
+        append "m_Placeholders" bind="PerkTemplate" "perk.wmgfl_pistol_mastery" path="EventHandlers[0].DamageMult" format="bonus-percent"
+        append "m_Placeholders" bind="PerkTemplate" "perk.wmgfl_pistol_mastery" path="EventHandlers[0].ArmorPenetrationMult" format="bonus-percent"
+    }
+
+    set "Icon" asset="perks/pistol_mastery"
+    set "IconDisabled" asset="perks/pistol_mastery_inactive"
+    set "PerkIcon" asset="perks/pistol_mastery"
+
+    clear "EventHandlers"
+    append "EventHandlers" type="WOMENACE:PistolMastery" {
+        set "CriticalChanceBonus" 30
+        set "DamageMult" 1.5
+        set "ArmorPenetrationMult" 2.0
+    }
+}
