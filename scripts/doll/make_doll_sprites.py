@@ -31,7 +31,8 @@ model rather than a crop of the art, so it lands near the face but can sit off o
 unusual pose. Check the bark crop: on a good match the box runs from the top of the hair to
 just below the chin (chin about three quarters down). Pass --head-box to correct it.
 
-Badges, from an emblem image (--emblem, with --cut-background for one photographed on paper):
+Badges, from an emblem image (--emblem, with --cut-background for one photographed on paper,
+--emblem-scale for one that reads too large at the full fit):
 
     sprites/<doll>/badge_mini.png              48x48
     sprites/<doll>/slot_badge.png              54x54
@@ -402,7 +403,11 @@ def main():
                     "script makes armor/<outfit>/ Icon, IconEquipment and IconSkillBar")
     ap.add_argument("--emblem", help="the doll's emblem image, makes the badge sprites (needs bark.png and stand_look_right.png)")
     ap.add_argument("--cut-background", action="store_true", help="remove a light backdrop around the emblem")
+    ap.add_argument("--emblem-scale", type=float, default=1.0, help="shrink the emblem inside its fit boxes, "
+                    "for a wide or text-heavy emblem that reads larger than the roster's at the full fit")
     args = ap.parse_args()
+    if not 0 < args.emblem_scale <= 1:
+        ap.error("--emblem-scale shrinks the emblem: give a value above 0 and at most 1")
 
     if args.whole and args.outfit:
         outfit_icons(args)
@@ -414,6 +419,12 @@ def main():
             emblem = cut_background(emblem)
         ys, xs = np.where(emblem[..., 3] > 12)
         emblem = emblem[ys.min():ys.max() + 1, xs.min():xs.max() + 1]
+        if args.emblem_scale < 1.0:
+            # A transparent margin, so every box fit lands at this fraction of its full size.
+            h, w = emblem.shape[:2]
+            ph = round(h * (1 / args.emblem_scale - 1) / 2)
+            pw = round(w * (1 / args.emblem_scale - 1) / 2)
+            emblem = cv2.copyMakeBorder(emblem, ph, ph, pw, pw, cv2.BORDER_CONSTANT, value=(0, 0, 0, 0))
         sprites = ASSETS / "sprites" / args.doll
         bark = load_rgba(sprites / "bark.png")
         stand = load_rgba(ASSETS / "textures" / args.doll / "stand_look_right.png")

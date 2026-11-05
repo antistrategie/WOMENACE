@@ -107,6 +107,11 @@ public static class Unlocks
             new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.suomi_sparkling_ocean" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_suomi/lv2", "Outfit: Sparkling Ocean") },
             new Entry { Level = 4, Feature = Feature.Skins, Armors = new[] { "armor.suomi_fluffy_korvatunturi" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_suomi/lv4", "Outfit: Fluffy Korvatunturi") },
         },
+        ["wmgfl_nemesis"] = new[]
+        {
+            new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.nemesis_galaxy_interpretation" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_nemesis/lv2", "Outfit: Galaxy Interpretation") },
+            new Entry { Level = 4, Feature = Feature.Skins, Armors = new[] { "armor.nemesis_training" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_nemesis/lv4", "Outfit: Training Outfit") },
+        },
         ["wmgfl_helen"] = new[]
         {
             new Entry { Level = 2, Feature = Feature.Skins, Armors = new[] { "armor.helen_starlit_waltz" }, Title = new LocalisedText("WOMENACE::ui/affinity/wmgfl_helen/lv2", "Outfit: Starlit Waltz") },

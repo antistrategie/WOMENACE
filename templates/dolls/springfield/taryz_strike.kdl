@@ -1,6 +1,6 @@
 clone "SkillTemplate" from="active.fire_pistol" id="active.springfield_taryz_strike" {
     // Taryz's own strike, fired for her by Springfield's SSR Taryz Strike (TaryzStrikeSystem).
-    // Taryz takes no turns, so it is hidden from any skill bar.
+    // Hidden from any skill bar.
     set "IsHidden" #true
     set "Title" {
         set "m_DefaultTranslation" "Taryz Strike"
@@ -17,7 +17,7 @@ clone "SkillTemplate" from="active.fire_pistol" id="active.springfield_taryz_str
     set "IsLimitedUses" #false
     set "UsePistolAnimation" #false
     set "AnimationType" enum="AnimationType" "ShootSingle"
-    set "Repetitions" 1
+    set "Repetitions" 2
     set "IsRemovedAfterCombat" #true
     set "MinRange" 1
     set "IdealRange" 4
@@ -86,11 +86,11 @@ clone "SkillTemplate" from="active.fire_pistol" id="active.springfield_taryz_str
         set "itemId" "taryz_strike_distant"
     }
     set "EventHandlers" index=0 {
-        set "Damage" 16.0
+        set "Damage" 30.0
         set "DamageDropoff" 0.0
-        set "ArmorPenetration" 30.0
+        set "ArmorPenetration" 60.0
         set "ArmorPenetrationDropoff" 0.0
-        set "DamageToArmorDurability" 12.0
+        set "DamageToArmorDurability" 30.0
         set "DamageToArmorDurabilityDropoff" 0.0
         set "AccuracyBonus" 20.0
         set "AccuracyDropoff" -2.0
@@ -98,6 +98,8 @@ clone "SkillTemplate" from="active.fire_pistol" id="active.springfield_taryz_str
     }
     append "EventHandlers" type="WOMENACE:ElementalDamage" {
         set "Element" "Hydro"
-        set "AmountPerHit" 18.0
+        set "AmountPerHit" 25.0
     }
+    // Taryz's own AI never takes this shot. Only Springfield's SSR command fires it.
+    append "EventHandlers" type="WOMENACE:TaryzStrikeGate" {}
 }

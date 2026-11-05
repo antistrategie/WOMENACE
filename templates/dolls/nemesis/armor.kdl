@@ -1,0 +1,62 @@
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.nemesis_default" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
+    set "Title" {
+        set "m_DefaultTranslation" "Blazar Startrail"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Field Outfit"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Nemesis in her usual outfit. The path of the stars has been decided. The stargazer no longer questions the course of destiny, but seeks the shining path forward in person."
+    }
+    set "Icon" asset="nemesis/armor/default/Icon"
+    set "IconEquipment" asset="nemesis/armor/default/IconEquipment"
+    set "IconSkillBar" asset="nemesis/armor/default/IconSkillBar"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_transmog"
+    append "Tags" "jy_no_sell"
+}
+
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.nemesis_galaxy_interpretation" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
+    set "Title" {
+        set "m_DefaultTranslation" "Galaxy Interpretation"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Classic Outfit"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Nemesis' typical outfit. The night sky inscribes the path of the stars, but where is the astrologer's destiny written?"
+    }
+    set "Icon" asset="nemesis/armor/galaxy_interpretation/Icon"
+    set "IconEquipment" asset="nemesis/armor/galaxy_interpretation/IconEquipment"
+    set "IconSkillBar" asset="nemesis/armor/galaxy_interpretation/IconSkillBar"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_transmog"
+    append "Tags" "jy_no_sell"
+}
+
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.nemesis_training" {
+    set "DeployCosts" {
+        set "m_Supplies" 0
+    }
+    set "Title" {
+        set "m_DefaultTranslation" "Training Outfit"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Combat Gear"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Nemesis' training outfit. Although it's standard issue on the Elmo, the dark fabric makes Nemesis appear even more enigmatic."
+    }
+    set "Icon" asset="nemesis/armor/training/Icon"
+    set "IconEquipment" asset="nemesis/armor/training/IconEquipment"
+    set "IconSkillBar" asset="nemesis/armor/training/IconSkillBar"
+    set "SquadLeaderMode" enum="SquadLeaderModelMode" "SameAsOthers"
+    append "OnlyEquipableBy" "wmgfl_transmog"
+    append "Tags" "jy_no_sell"
+}

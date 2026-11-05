@@ -1,0 +1,37 @@
+clone "PerkTemplate" from="perk.steady_gun" id="perk.nemesis_startrail_insight" {
+    // Star Rail Insight, Nemesis's tier 2 foresight perk: StartrailInsightSystem reads the next
+    // actions of the enemies closest to her at the start of every allied unit's turn and shows
+    // them as a vision. The description says plainly that each read goes stale as that unit acts.
+    set "Title" {
+        set "m_DefaultTranslation" "Star Rail Insight"
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "At the start of each allied unit's turn, see what the $1 closest enemies will do next."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="PerkTemplate" "perk.nemesis_startrail_insight" path="EventHandlers[0].MaxEnemies"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            “Destiny's course is becoming apparent.”
+
+              – Black Swan
+
+
+            <style="Highlight">• At the start of each allied unit's turn, foresees the next action of the $1 closest enemies your units have detected.
+            • An afterimage shows where an enemy will move and a unit an enemy is likely to attack is marked.
+            • The vision is not updated by your actions during the turn. Since enemies react to what you do, they may act differently from what was foreseen.</style>
+            """
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="PerkTemplate" "perk.nemesis_startrail_insight" path="EventHandlers[0].MaxEnemies"
+    }
+
+    set "Icon" asset="nemesis/perks/startrail_insight"
+    set "IconDisabled" asset="nemesis/perks/startrail_insight_inactive"
+    set "PerkIcon" asset="nemesis/perks/startrail_insight"
+
+    clear "EventHandlers"
+    append "EventHandlers" type="WOMENACE:StartrailInsight" {
+        set "MaxEnemies" 10
+        set "AttackShare" 0.25
+    }
+}

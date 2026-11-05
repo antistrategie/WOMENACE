@@ -61,6 +61,11 @@ TRANSLUCENT_OVERRIDES = {
     # alpha sheet, which the repack names c_AlvaSSR0101_slg_cloth2_da with no
     # marker. The frame stays opaque on Cloth2-GlassesFrame.
     "alva/antje": {"Glasses"},
+    # The cn client draws her clear plastic strap pieces as
+    # c_NemesisGnosisSSR01_slg_cloth5_trans_lod0, which the repack names Cth5-Plastic.
+    # Its cloth3_trans sheer layer is not in the repack, and the small cloth2_trans
+    # piece shares Cth2-Hat with opaque parts, so it stays opaque.
+    "nemesis/default": {"Cth5-Plastic"},
     # The wedding dress. The cn client draws cloth1_trans + cloth1_trans1
     # (the sheer cape and the sash), cloth2_trans (the under-skirt) and
     # cloth3_trans (over-skirt, sheer sleeves and the glass slippers in one
@@ -102,6 +107,9 @@ PART_RULES = [
     # through to the part it was copied from.
     ("outline", "outline"),
     ("*hair*", "hair"),
+    # A respirator or veil worn over the face is a costume part on the cloth
+    # sheet, not face skin, so it is matched before the face rule claims it.
+    ("*facemask*", "cloth"),
     # Mouth and eye-white are welded into the face: they share vertices with it,
     # so leaving them on the game's shader draws a line around each. Measured
     # solid (mouth, teeth and tongue export opaque; the eye-white's alpha is 255

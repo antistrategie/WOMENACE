@@ -1,0 +1,30 @@
+clone "PerkTemplate" from="perk.steady_gun" id="perk.nemesis_divination" {
+    // Divination, Nemesis's starting perk: DivinationSystem gives her attacks fixed dice per
+    // target each round and swaps them in at the hit and penetration rolls, so the aiming
+    // preview shows exactly what will happen.
+    set "Title" {
+        set "m_DefaultTranslation" "Divination"
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "While aiming, see whether this unit's attack will hit and how much damage it will deal."
+        clear "m_Placeholders"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            “I can still see through the fine gaps... the lingering radiance of the past. In that ancient fortress, my kin and friends... they once accompanied me. The shades of the deceased swirl around...”
+
+              – Nemesis
+
+
+            <style="Highlight">• While aiming, shows whether this unit's attack will hit and how much damage it will deal.</style>
+            """
+        clear "m_Placeholders"
+    }
+
+    set "Icon" asset="nemesis/perks/divination"
+    set "IconDisabled" asset="nemesis/perks/divination_inactive"
+    set "PerkIcon" asset="nemesis/perks/divination"
+
+    clear "EventHandlers"
+    append "EventHandlers" type="WOMENACE:Divination" {}
+}

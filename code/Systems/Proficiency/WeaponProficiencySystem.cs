@@ -18,10 +18,11 @@ namespace WOMENACE.Code;
 // WeaponClasses owns classification. Proficiency owns the affinity accuracy curve, shared with
 // the affinity badge popover.
 //
-// The bonus lands on the leader's EntityProperties.Accuracy (rebuilt from base on each
-// UpdatePropertiesBasedOnAttributes, so a flat add never accumulates), which is the accuracy the
-// shot rolls against. The stat panels display base accuracy, so the armoury and in-mission panels
-// are patched to add the bonus to the Accuracy row. The weapon tooltip carries a "<Doll> Weapon
+// The bonus lands on the properties each attack is built with (SkillContainer.BuildPropertiesForUse,
+// a fresh copy per attack, so a flat add never accumulates), which is the accuracy the hit chance
+// shows and the shot rolls against. The leader's own current properties would not hold it: the
+// skill container rebuilds them from base on every update. The stat panels display base accuracy,
+// so the armoury and in-mission panels are patched to add the bonus to the Accuracy row. The weapon tooltip carries a "<Doll> Weapon
 // Proficiency" line, green when the weapon matches her class and greyed when it does not.
 public sealed class WeaponProficiencySystem : JiangyuSystem
 {
@@ -43,13 +44,18 @@ public sealed class WeaponProficiencySystem : JiangyuSystem
     // panel's Update so the GetAccuracy postfix knows to add it. 0 at all other times.
     private int _armouryStatsBonus;
 
+    private static WeaponProficiencySystem _instance;
+
+    // The bonus a leader currently earns, for the dev report (Rifles.Report).
+    internal static int BonusFor(BaseUnitLeader leader) => _instance?.BonusForLeader(leader) ?? 0;
+
+    internal static int LevelFor(BaseUnitLeader leader) => _instance == null ? 0 : Affinity.LevelFor(_instance.Context, leader);
+
     public override void OnInit()
     {
-        // Add the bonus to the leader's freshly recomputed properties. Both concrete leaders run
-        // this: SquadLeader for a normal doll, Pilot for Voymastina's mech form. Recomputed from
-        // base each call, so a flat add here never stacks.
-        Context.Patches.Postfix("Il2CppMenace.Strategy.SquadLeader", "UpdatePropertiesBasedOnAttributes", OnLeaderPropsRebuilt);
-        Context.Patches.Postfix("Il2CppMenace.Strategy.Pilot", "UpdatePropertiesBasedOnAttributes", OnLeaderPropsRebuilt);
+        _instance = this;
+        // Add the bonus to each attack's properties as they are built.
+        Context.Patches.Postfix("Il2CppMenace.Tactical.Skills.SkillContainer", "BuildPropertiesForUse", OnAttackBuilt);
 
         // The visible incentive: a proficiency line on the weapon tooltip, plus the bonus folded into
         // the unit-window Accuracy stat (which otherwise shows only base accuracy).
@@ -70,19 +76,35 @@ public sealed class WeaponProficiencySystem : JiangyuSystem
         Context.Patches.Postfix("Il2CppMenace.UI.Strategy.UnitWindow", "Refresh", OnWindowChanged);
     }
 
-    private void OnLeaderPropsRebuilt(PatchInfo info)
+    private int _bonusFrame = -1;
+    private readonly Dictionary<IntPtr, int> _bonusByActor = new();
+
+    private void OnAttackBuilt(PatchInfo info)
     {
         try
         {
-            var leader = (info.Instance as Il2CppSystem.Object)?.TryCast<BaseUnitLeader>();
-            var bonus = BonusForLeader(leader);
-            if (bonus <= 0)
+            if (info.Result is not EntityProperties props || info.Args is not { Count: > 0 } args
+                || (args[0] as Il2CppSystem.Object)?.TryCast<Il2CppMenace.Tactical.Skills.Skill>() is not { } skill
+                || !skill.IsAttack())
                 return;
-            var props = leader.GetCurrentProperties();
-            if (props != null)
+            // Only the player's side can field a doll, so every AI evaluation stops here.
+            var actor = skill.GetActor();
+            if (actor == null || !actor.IsPlayerOrPlayerAI())
+                return;
+            // Attacks are built for every hovered tile and preview, so each actor's bonus is
+            // worked out once a frame.
+            var frame = UnityEngine.Time.frameCount;
+            if (frame != _bonusFrame)
+            {
+                _bonusFrame = frame;
+                _bonusByActor.Clear();
+            }
+            if (!_bonusByActor.TryGetValue(actor.Pointer, out var bonus))
+                _bonusByActor[actor.Pointer] = bonus = BonusForLeader(actor.TryCast<UnitActor>()?.GetLeader());
+            if (bonus > 0)
                 props.Accuracy += bonus;
         }
-        catch (Exception ex) { Context.Log.Warn($"proficiency: leader props failed: {ex.Message}"); }
+        catch (Exception ex) { Context.Log.Warn($"proficiency: attack props failed: {ex.Message}"); }
     }
 
     // The accuracy bonus a leader currently earns: her affinity-scaled amount if she is a proficiency
@@ -104,8 +126,8 @@ public sealed class WeaponProficiencySystem : JiangyuSystem
         return Proficiency.AccuracyBonusForLevel(Affinity.LevelFor(Context, Affinity.KeyForTag(tag)));
     }
 
-    // The unit-window stats panel reads the leader's BASE properties for the Accuracy row, so the
-    // combat bonus (which lives on current properties) is invisible there. Arm the bonus for the span
+    // The unit-window stats panel reads the leader's properties for the Accuracy row, so the
+    // combat bonus (which lives on each attack's properties) is invisible there. Arm the bonus for the span
     // of the panel's ShowPanel; OnGetAccuracy adds it to the one accuracy read it makes, so the shown
     // number matches the accuracy she fights with. No label match, so it holds in every language.
     private void OnArmouryStatsPre(PatchInfo info)

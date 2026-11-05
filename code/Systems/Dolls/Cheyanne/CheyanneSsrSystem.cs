@@ -13,7 +13,7 @@ namespace WOMENACE.Code;
 // hits it, with no manual re-application anywhere.
 //
 // The chain walks nearest-hostile-first from the aimed tile: each link looks
-// for the closest living hostile within BounceRange of the previous link that
+// for the closest living hostile within Range of the previous link that
 // the chain has not already touched. Ties break toward the weaker target, so a
 // crowded chain finishes wounded enemies rather than spreading evenly.
 //
@@ -22,9 +22,9 @@ namespace WOMENACE.Code;
 // that goes on to hurt three things you cannot see is the fantasy, and the
 // damage numbers coming back out of the dark are the reward for taking it.
 //
-// How far that chain reaches depends on who is holding the rifle, and the two
-// cases do not share a floor. Anyone else gets the weapon's own fixed ricochet.
-// In Cheyanne's hands the ricochet IS her aim-trainer score: it starts at zero
+// How many links the chain makes depends on who is holding the rifle, and the
+// two cases do not share a floor. Every link jumps at most Range tiles.
+// Anyone else gets the weapon's own fixed ricochet. In Cheyanne's hands the ricochet IS her aim-trainer score: it starts at zero
 // bounces and she earns every one of them, so a bad round is a plain single
 // shot and a perfect round beats what the weapon does for anybody else.
 //
@@ -38,19 +38,18 @@ internal static class BounceChain
     // The fixed ricochet anyone else carrying the rifle gets. The weapon does
     // this much on its own, with no trainer and nothing to earn.
     public const int BaseBounces = 2;
-    public const int BaseRange = 3;
 
-    // The aim trainer's exchange rate. Every hit is worth PointsPerHit, a
-    // bounce costs PointsPerBounce and a tile of reach costs PointsPerTile,
-    // and there is NO ceiling: a monster round buys a monster shot. In her
-    // hands the ricochet is the trainer's points and nothing else, scaled
-    // from zero, so a round she scores nothing on ricochets nowhere.
-    // The trainer's exchange rate, tuned against real play so an average
-    // round beats the loaner rifle's fixed chain and a bad one does not.
-    // Bounces and reach scale at the same rate, uncapped.
+    // How far one link can jump, the same for everyone.
+    public const int Range = 2;
+
+    // The aim trainer's exchange rate. Every hit is worth PointsPerHit and a
+    // bounce costs PointsPerBounce, with no ceiling, so a monster round buys a
+    // long chain. In her hands the bounces are the trainer's points and nothing
+    // else, scaled from zero, so a round she scores nothing on ricochets
+    // nowhere. The rate is tuned against real play so an average round beats
+    // the loaner rifle's fixed chain and a bad one does not.
     public const int PointsPerHit = 5;
     public const int PointsPerBounce = 10;
-    public const int PointsPerTile = 10;
 
     internal readonly record struct Shot(int Bounces, int Range);
 
@@ -60,22 +59,13 @@ internal static class BounceChain
         // score as "the base shot" is what wrongly gave her a floor of three
         // free bounces before the trainer had said anything.
         if (!CheyanneAimSystem.IsOwner(attacker))
-            return new Shot(BaseBounces, BaseRange);
+            return new Shot(BaseBounces, Range);
         return ForPoints(CheyanneAimSystem.PointsFor(attacker));
     }
 
     // What a round's points buy, with no actor to read them off. The trainer's
     // results card shows the player exactly this before the shot goes off.
-    // Reach floors at one tile the moment there is any bounce at all, because
-    // a bounce with zero reach could never find a target.
-    public static Shot ForPoints(int points)
-    {
-        var bounces = Math.Max(0, points) / PointsPerBounce;
-        var range = Math.Max(0, points) / PointsPerTile;
-        if (bounces > 0 && range < 1)
-            range = 1;
-        return new Shot(bounces, range);
-    }
+    public static Shot ForPoints(int points) => new(Math.Max(0, points) / PointsPerBounce, Range);
 
     // Walks the chain from the aimed tile and hands every link to `add`,
     // returning how many links there are, the primary included.

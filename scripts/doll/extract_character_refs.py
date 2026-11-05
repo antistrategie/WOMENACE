@@ -39,8 +39,8 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).parent))
 from bake_ramp_png import bake, write_meta, write_png                 # noqa: E402
 
-TDOLLHOUSE = Path.home() / "dev/github.com/antistrategie/tdollhouse"
-SHADERDUMP = Path.home() / "dev/github.com/antistrategie/tdollhouse-re/shaderdump/bin/Release/ShaderDump.dll"
+TDOLLHOUSE = Path.home() / "dev/github.com/zuccherocafe/tdollhouse"
+SHADERDUMP = Path.home() / "dev/github.com/zuccherocafe/tdollhouse-re/shaderdump/bin/Release/ShaderDump.dll"
 MAPS = Path.home() / "gfl2-extract/maps"
 
 CLIENTS = {

@@ -201,6 +201,12 @@ namespace Womenace.EditorTools
                         var main = particles.main;
                         main.scalingMode = ParticleSystemScalingMode.Hierarchy;
                     }
+                    // The game's effect pool (PooledParticleEffect.OnSpawn) logs an error for a
+                    // one-shot effect whose root system does not stop with Destroy. A looping
+                    // effect (a projectile) is stopped by its owner instead.
+                    var rootMain = root.GetComponent<ParticleSystem>().main;
+                    if (!rootMain.loop)
+                        rootMain.stopAction = ParticleSystemStopAction.Destroy;
                     var renderers = root.GetComponentsInChildren<Renderer>(true);
                     if (renderers.Any(r => r.sharedMaterials.Length == 0 || r.sharedMaterials.Any(m => m == null)))
                         throw new InvalidOperationException("Null renderer material in " + effect.name);

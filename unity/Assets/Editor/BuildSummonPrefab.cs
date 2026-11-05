@@ -60,6 +60,7 @@ namespace Womenace.EditorTools
 
         // The engine finds a shot's origin by this exact transform name.
         private const string MuzzleName = "muzzle";
+        private const string DustName = "dust01";
 
         public static void Build()
         {
@@ -144,6 +145,13 @@ namespace Womenace.EditorTools
                     muzzle.rotation = model.transform.rotation;
                     muzzle.localScale = new Vector3(1f / bone.lossyScale.x, 1f / bone.lossyScale.y, 1f / bone.lossyScale.z);
                 }
+
+                // The skybot's element animator spawns its movement dust at a "dust01"
+                // child (DustEffectsAnimatorComp) and logs an error when there is none,
+                // so the summon carries one on the ground under its hover.
+                foreach (var stale in wrapper.GetComponentsInChildren<Transform>(true).Where(t => t.name == DustName).ToArray())
+                    UnityEngine.Object.DestroyImmediate(stale.gameObject);
+                new GameObject(DustName).transform.SetParent(wrapper.transform, false);
 
                 // Skinned bounds only refresh on render, so the box is measured
                 // off the posed vertices.

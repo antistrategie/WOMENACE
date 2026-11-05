@@ -319,8 +319,6 @@ internal static class CheyanneAimTrainer
             // that need more than two.
             rows.Add(Row(
                 Locale.Text("WOMENACE::ui/aim/ricochets", "ricochets"), $"{shot.Bounces}"));
-            rows.Add(Row(
-                Locale.Text("WOMENACE::ui/aim/reach", "tiles of reach"), $"{shot.Range}"));
             if (_shots > 0)
                 rows.Add(Row(
                     Locale.Format("WOMENACE::ui/aim/accuracy", "accuracy ({0} of {1})", _hits, _shots),

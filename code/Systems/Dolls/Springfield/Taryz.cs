@@ -9,7 +9,7 @@ namespace WOMENACE.Code;
 // she moves by command (the vanilla Falcon skybot's shape), and this handler, carried by the
 // perk, does Taryz's work at the end of each of Springfield's turns: it heals the most wounded
 // allied squad near Taryz and marks the nearest enemies in Taryz's sight with the vanilla
-// Designated Target effect. The drone itself takes no turns, so its owner's turn drives it.
+// Designated Target effect, on Springfield's turn rather than Taryz's own.
 //
 // The handler also counts deploys. The first plants FirstDeploy on Springfield and the next
 // plants Spent, which the deploy skill's LimitUsability reads. Both markers are status effects

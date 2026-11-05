@@ -49,6 +49,7 @@ FACTIONS = {
     "doll_community": ("DollCom.png", (95, 175, 232)),
     "pol03": ("POL03.png", (60, 175, 95)),
     "42lab": ("42LAB.png", (40, 185, 190)),
+    "groza": ("Groza.png", (236, 230, 70)),
 }
 
 # Vanilla 1180x1040: disc centre and radius, alpha plane a*x + b*y + c (normalised), strength

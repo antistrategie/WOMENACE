@@ -1,0 +1,52 @@
+clone "PerkTemplate" from="perk.steady_gun" id="perk.nemesis_constellation" {
+    // Constellation, Nemesis's tier 3 perk: ConstellationSystem gives every rifle Doll on her side
+    // effect.nemesis_constellation while she is alive in the mission.
+    set "Title" {
+        set "m_DefaultTranslation" "Constellation"
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "Rifle Dolls get +$1 ACC and +$2% DMG for each other rifle Doll in the battle."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.nemesis_constellation" path="EventHandlers[0].AccuracyPerDoll"
+        append "m_Placeholders" bind="SkillTemplate" "effect.nemesis_constellation" path="EventHandlers[0].DamagePerDoll" format="percent"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            No star makes a constellation on its own.
+
+
+            <style="Highlight">• While this unit is alive, every rifle Doll on your side gets +$1 <link="accuracy">Accuracy</link> and +$2% Damage for each other living rifle Doll in the battle.</style>
+            """
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.nemesis_constellation" path="EventHandlers[0].AccuracyPerDoll"
+        append "m_Placeholders" bind="SkillTemplate" "effect.nemesis_constellation" path="EventHandlers[0].DamagePerDoll" format="percent"
+    }
+
+    set "Icon" asset="nemesis/perks/constellation"
+    set "IconDisabled" asset="nemesis/perks/constellation_inactive"
+    set "PerkIcon" asset="nemesis/perks/constellation"
+
+    clear "EventHandlers"
+    append "EventHandlers" type="WOMENACE:Constellation" {
+        set "Effect" ref="SkillTemplate" "effect.nemesis_constellation"
+    }
+}
+
+clone "SkillTemplate" from="effect.solid_grouping" id="effect.nemesis_constellation" {
+    set "Icon" asset="nemesis/effects/constellation"
+    set "Title" {
+        set "m_DefaultTranslation" "Constellation"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "+$1 <link=\"accuracy\">Accuracy</link> and +$2% Damage for each other living rifle Doll in the battle."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.nemesis_constellation" path="EventHandlers[0].AccuracyPerDoll"
+        append "m_Placeholders" bind="SkillTemplate" "effect.nemesis_constellation" path="EventHandlers[0].DamagePerDoll" format="percent"
+    }
+    set "IsRemovedAfterCombat" #true
+    clear "EventHandlers"
+    append "EventHandlers" type="WOMENACE:ConstellationBonus" {
+        set "AccuracyPerDoll" 5
+        set "DamagePerDoll" 0.05
+    }
+}

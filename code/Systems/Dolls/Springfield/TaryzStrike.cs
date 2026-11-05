@@ -10,11 +10,13 @@ namespace WOMENACE.Code;
 // Taryz Strike, the imprint skill on Springfield's SSR rifle. Springfield aims it like a shot, but
 // Taryz takes it: the target is checked from Taryz's tile, the hit chance and the aim line come
 // from her, and on use Springfield's skill never runs. Springfield pays the AP and Taryz fires her
-// own hidden strike skill (animation, projectile, damage and Hydro all hers). Taryz takes no turns,
-// so the shot is fired the way Makiatto's Interception fires off-turn: Skill.Use with
-// Free | IgnoreUsabilityCheck.
+// own hidden strike skill (animation, projectile, damage and Hydro all hers). The shot is fired
+// the way Makiatto's Interception fires off-turn: Skill.Use with Free | IgnoreUsabilityCheck.
 //
-// The command skill is Springfield's alone (IsOwnerWielding) and needs her Taryz deployed.
+// The command skill is Springfield's alone (IsOwnerWielding) and needs her Taryz deployed. Taryz
+// is the Falcon skybot's kind of unit, an allied AI with its own turns, so her strike carries
+// TaryzStrikeGate: it is usable only while the command checks or fires it, and her own AI never
+// takes the shot.
 [JiangyuType("TaryzCommand")]
 public sealed partial class TaryzCommand : SkillEventHandlerTemplate
 {
@@ -68,13 +70,30 @@ public sealed partial class TaryzCommandHandler : SkillEventHandler
         {
             var (taryz, strike) = TaryzStrikeSystem.StrikeOf(GetActor());
             var from = taryz?.GetTile();
-            return strike != null && from != null && _targetTile != null && strike.IsUsableOn(_targetTile, from);
+            if (strike == null || from == null || _targetTile == null)
+                return false;
+            TaryzStrikeSystem.Commanding = true;
+            try { return strike.IsUsableOn(_targetTile, from); }
+            finally { TaryzStrikeSystem.Commanding = false; }
         }
         catch
         {
             return false;
         }
     }
+}
+
+// On Taryz's strike: unusable unless Springfield's Taryz Strike is checking or firing it.
+[JiangyuType("TaryzStrikeGate")]
+public sealed partial class TaryzStrikeGate : SkillEventHandlerTemplate
+{
+    public override SkillEventHandler Create() => new TaryzStrikeGateHandler();
+}
+
+[JiangyuType("TaryzStrikeGateHandler")]
+public sealed partial class TaryzStrikeGateHandler : SkillEventHandler
+{
+    public override bool IsUsable() => TaryzStrikeSystem.Commanding;
 }
 
 public sealed class TaryzStrikeSystem : JiangyuSystem
@@ -85,6 +104,9 @@ public sealed class TaryzStrikeSystem : JiangyuSystem
     private const string MuzzleName = "muzzle";
 
     private bool _redrawing;
+
+    // Set while Springfield's command checks or fires Taryz's strike (TaryzStrikeGate).
+    internal static bool Commanding;
 
     public override void OnInit()
     {
@@ -181,7 +203,10 @@ public sealed class TaryzStrikeSystem : JiangyuSystem
             owner.SetActionPoints(owner.GetActionPoints() - cost, false);
             owner.SetAiming(false, null);
             Aim(taryz, strike, tile);
-            var fired = strike.Use(tile, UsageParameter.Free | UsageParameter.IgnoreUsabilityCheck);
+            bool fired;
+            Commanding = true;
+            try { fired = strike.Use(tile, UsageParameter.Free | UsageParameter.IgnoreUsabilityCheck); }
+            finally { Commanding = false; }
             if (!fired)
             {
                 taryz.SetAiming(false, null);

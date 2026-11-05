@@ -19,7 +19,7 @@ namespace WOMENACE.Code;
 //   Sortie.Launch  -> launch the prepped mission, once its preview has landed
 //   Sortie.Skills  -> an actor's skills as the engine judges them, with lifetime and cooldown counters
 //   Sortie.Use     -> use one of the active actor's skills on a tile through its own Use
-//   Sortie.EndRound -> end the player's round and let the enemy phase run
+//   Sortie.EndTurn  -> end the active unit's turn and hand over to the next actor
 //
 // Named Sortie, not Mission: the verb runner matches class short names
 // case-insensitively and the SDK's own Mission class would shadow it.
@@ -136,10 +136,10 @@ public static class Sortie
         return new { actor = actor.GetTemplate()?.GetID(), count = rows.Count, skills = string.Join("\n", rows) };
     }
 
-    // End the player's round, what the End Turn button does, so a bridge-driven test can
-    // let the enemy phase run and reach the next round without a hand on the mouse.
+    // End the active unit's turn, what the End Turn button does. Turns alternate unit by unit,
+    // so this hands over to the next actor (often one enemy), not to the next round.
     [MutatingVerb]
-    public static object EndRound()
+    public static object EndTurn()
     {
         var state = Il2CppMenace.States.TacticalState.Get();
         if (state == null || !TacticalManager.IsMissionRunning())
