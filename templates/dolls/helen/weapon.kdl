@@ -51,10 +51,10 @@ clone "SkillTemplate" from="active.fire_combat_shotgun_tier_1" id="active.fire_h
 
 clone "SkillTemplate" from="active.fire_battle_rifle_tier_1_aimed_fire_marksman" id="active.fire_helen_dp12_slugshot" {
     set "Title" {
-        set "m_DefaultTranslation" "Slug Shot"
+        set "m_DefaultTranslation" "Sabot Shot"
     }
     set "Description" {
-        set "m_DefaultTranslation" "Switch to slug round and fire an accurate volley with higher penetration to target beyond normal range."
+        set "m_DefaultTranslation" "Switch to sabot rounds and fire an accurate, high-velocity shot with high penetration and little loss of accuracy or damage over distance, to target beyond normal range."
     }
     clear "SoundsOnAttack"
     append "SoundsOnAttack" {
@@ -75,13 +75,16 @@ clone "SkillTemplate" from="active.fire_battle_rifle_tier_1_aimed_fire_marksman"
         set "itemId" "sg_single_distant"
     }
     set "Uses" 16
-    set "MaxRange" 6
-    set "IdealRange" 4
+    set "MaxRange" 7
+    set "IdealRange" 5
     set "IsOverridingRanges" #true
     set "EventHandlers" index=0 {
         set "AccuracyBonus" 20.0
+        set "AccuracyDropoffMult" 0.4
         set "ArmorPenetrationMult" 3.5
-        set "DamageMult" 1.5
+        set "ArmorPenetrationDropoffMult" 0.4
+        set "DamageMult" 1.2
+        set "DamageDropoffMult" 0.5
         set "ElementsHitPercentage" 0.0
     }
     set "IsDeploymentRequired" #false
