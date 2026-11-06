@@ -16,7 +16,8 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.nemesis_divination" {
               – Nemesis
 
 
-            <style="Highlight">• While aiming, shows whether this unit's attack will hit and how much damage it will deal.</style>
+            <style="Highlight">• While aiming, shows whether this unit's attack will hit and how much damage it will deal to the target.
+            • Attacks that strike random tiles, such as strafing fire, cannot be foreseen. This was going to be supported, until we read the strafing code and decided some futures are better left unseen.</style>
             """
         clear "m_Placeholders"
     }

@@ -45,7 +45,7 @@ clone "WeaponTemplate" from="weapon.generic_smg_tier1_ppp" id="weapon.suomi" {
 
 clone "SkillTemplate" from="active.fire_smg_tier1_burst" id="active.fire_suomi_kp31" {
     set "Repetitions" 4
-    set "Uses" 38
+    set "Uses" 25
     clear "SoundsOnAttack"
     append "SoundsOnAttack" {
         set "bankId" "wmgfl_weapons_smg_addition_bank"
@@ -67,7 +67,9 @@ clone "SkillTemplate" from="active.fire_smg_tier1_burst" id="active.fire_suomi_k
 }
 
 clone "SkillTemplate" from="active.fire_smg_tier_1_tap_fire" id="active.fire_suomi_kp31_tap" {
-    set "Uses" 38
+    set "Uses" 25
+    set "MaxRange" 8
+    set "IdealRange" 5
     clear "SoundsOnAttack"
     append "SoundsOnAttack" {
         set "bankId" "wmgfl_weapons_smg_addition_bank"

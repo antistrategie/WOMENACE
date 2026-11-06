@@ -1,0 +1,47 @@
+// British Pluck, Welrod's take on Pirate's Luck: the same status (Defence against the first attack
+// each round, its condition carried over from effect.pirates_luck) at a higher multiplier.
+clone "SkillTemplate" from="effect.pirates_luck" id="effect.welrod_british_pluck" {
+    set "Icon" asset="welrod/effects/british_pluck"
+    set "Title" {
+        set "m_DefaultTranslation" "British Pluck"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "+$1% <link=\"defense\">Defence</link> against the First Attack each Round."
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.welrod_british_pluck" path="EventHandlers[0].Properties[0].AmountMult" format="bonus-percent"
+    }
+    set "EventHandlers" index=0 {
+        set "Properties" index=0 {
+            set "AmountMult" 1.8
+        }
+    }
+}
+
+clone "PerkTemplate" from="perk.pirates_luck" id="perk.welrod_british_pluck" {
+    set "Title" {
+        set "m_DefaultTranslation" "British Pluck"
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "+$1% DEF vs. the First Attack each Round"
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.welrod_british_pluck" path="EventHandlers[0].Properties[0].AmountMult" format="bonus-percent"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            Welrod treats incoming fire the way the British treat rain, as a passing inconvenience that goes away if ignored with enough dignity. It works far more often than it has any right to.
+
+
+            <style="Highlight">• +$1% <link="defense">Defence</link> against the First Attack each Round.</style>
+            """
+        clear "m_Placeholders"
+        append "m_Placeholders" bind="SkillTemplate" "effect.welrod_british_pluck" path="EventHandlers[0].Properties[0].AmountMult" format="bonus-percent"
+    }
+
+    set "Icon" asset="welrod/perks/british_pluck"
+    set "IconDisabled" asset="welrod/perks/british_pluck_inactive"
+    set "PerkIcon" asset="welrod/perks/british_pluck"
+
+    set "EventHandlers" index=0 {
+        set "SkillToAdd" "effect.welrod_british_pluck"
+    }
+}

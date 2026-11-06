@@ -4,7 +4,7 @@ using Jiangyu.Sdk;
 
 namespace WOMENACE.Code;
 
-// An aura a perk carries: every unit allied with the owner within Radius tiles carries Effect, a
+// An aura a perk or status carries: every unit allied with the owner within Radius tiles carries Effect, a
 // status the aura adds and removes as units move. RequiredSkill, when set, limits it to units that
 // carry that skill. LightConditionSkill, when set, limits the whole aura to missions whose light
 // condition applies that skill (Suomi's Northern Light works only at night, so it sets the night
@@ -38,12 +38,13 @@ public sealed partial class AuraGrantHandler : SkillEventHandler
     public SkillTemplate LightConditionSkill;
     public bool IncludeSelf = true;
     private Actor _actor;
+    private bool _removed;
 
     // GetActor can be null when the perk is added at mission start, so the owner is registered
     // on the first update with a live actor.
     public override void OnUpdate(EntityProperties _properties)
     {
-        if (_actor != null)
+        if (_actor != null || _removed)
             return;
         var actor = GetActor();
         if (actor == null || !actor.IsAlive())
@@ -56,11 +57,22 @@ public sealed partial class AuraGrantHandler : SkillEventHandler
     // the first update.
     public override void OnTurnStart()
     {
-        if (_actor != null && _actor.IsAlive())
+        if (_actor != null && !_removed && _actor.IsAlive())
             AuraSystem.Register(_actor, this);
     }
 
     public override void OnDeath() => AuraSystem.Unregister(this);
+
+    // An aura on a status (the open umbrella) ends with the status. Removal can be deferred while
+    // the container dispatches, so the flag keeps a late update from registering it again.
+    public override void OnAdded() => _removed = false;
+
+    public override void OnRemoved()
+    {
+        _removed = true;
+        _actor = null;
+        AuraSystem.Unregister(this);
+    }
 
     public override void OnMissionFinished()
     {

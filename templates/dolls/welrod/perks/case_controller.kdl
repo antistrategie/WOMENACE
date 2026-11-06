@@ -5,10 +5,11 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.welrod_case_controller" {
         set "m_DefaultTranslation" "Case Controller"
     }
     set "ShortDescription" {
-        set "m_DefaultTranslation" "No cover protection, no base CRIT. +$1% HP and $2% damage reduction."
+        set "m_DefaultTranslation" "No cover protection, no base CRIT. +$1% HP, $2% damage reduction and $3% less suppression."
         clear "m_Placeholders"
         append "m_Placeholders" bind="PerkTemplate" "perk.welrod_case_controller" path="EventHandlers[0].Properties[0].AmountMult" format="bonus-percent"
         append "m_Placeholders" bind="PerkTemplate" "perk.welrod_case_controller" path="EventHandlers[0].Properties[1].AmountMult" format="reduction-percent"
+        append "m_Placeholders" bind="PerkTemplate" "perk.welrod_case_controller" path="EventHandlers[0].Properties[2].AmountMult" format="reduction-percent"
     }
     set "Description" {
         set "m_DefaultTranslation" """
@@ -16,11 +17,13 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.welrod_case_controller" {
 
 
             <style="Highlight">• +$1% <link="hitpoints">Hitpoints</link> and $2% <link="damage_reduction">Damage Reduction</link>.
+            • Takes $3% less <link="suppression">Suppression</link>.
             • This unit gains no protection from cover and has no <link="critical_chance">Critical Chance</link> of its own.</style>
             """
         clear "m_Placeholders"
         append "m_Placeholders" bind="PerkTemplate" "perk.welrod_case_controller" path="EventHandlers[0].Properties[0].AmountMult" format="bonus-percent"
         append "m_Placeholders" bind="PerkTemplate" "perk.welrod_case_controller" path="EventHandlers[0].Properties[1].AmountMult" format="reduction-percent"
+        append "m_Placeholders" bind="PerkTemplate" "perk.welrod_case_controller" path="EventHandlers[0].Properties[2].AmountMult" format="reduction-percent"
     }
 
     set "Icon" asset="welrod/perks/case_controller"
@@ -38,7 +41,12 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.welrod_case_controller" {
         append "Properties" {
             set "PropertyType" enum="EntityPropertyType" "DamageSustainedMult"
             set "Amount" 0
-            set "AmountMult" 0.8
+            set "AmountMult" 0.5
+        }
+        append "Properties" {
+            set "PropertyType" enum="EntityPropertyType" "SuppressionImpactMult"
+            set "Amount" 0
+            set "AmountMult" 0.5
         }
         append "Properties" {
             set "PropertyType" enum="EntityPropertyType" "CoverEffectivenessMult"

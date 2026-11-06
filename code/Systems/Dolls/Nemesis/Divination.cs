@@ -184,6 +184,29 @@ public sealed class DivinationSystem : JiangyuSystem
 
     internal static bool IsSeer(Actor actor) => actor != null && Seers.Contains(actor.Pointer);
 
+    // An attack whose outcome on the aimed tile can be read ahead. Skill.Use picks the tiles an
+    // attack lands on before any hit roll (Skill.QueryTargetTiles), and two kinds pick by chance.
+    // A strafe over tiles the player chooses (SkillAoEType.SelectTilesOnUse, the tripod minigun)
+    // draws the tile for each shot as it fires. One tile at random from the attack's area
+    // (OneTileRandomly, the tripod ATGM, and CenterWithCustomChanceOtherwiseRandomly) can land
+    // beside the aimed target whenever that area holds more than one tile. Those attacks are
+    // neither foreseen nor fated and roll as they would for anyone.
+    internal static bool IsForeseeable(Skill skill, Tile from, Tile tile)
+    {
+        if (!skill.IsAttack())
+            return false;
+        var type = skill.GetTemplate()?.TryCast<SkillTemplate>()?.AoEType;
+        if (type == SkillAoEType.SelectTilesOnUse)
+            return false;
+        if (type != SkillAoEType.OneTileRandomly && type != SkillAoEType.CenterWithCustomChanceOtherwiseRandomly)
+            return true;
+        if (from == null || tile == null)
+            return false;
+        var area = new Il2CppSystem.Collections.Generic.List<Tile>();
+        skill.GetAoeTiles(from, tile, area, false);
+        return area.Count <= 1;
+    }
+
     // The fate for this skill on this tile this round, drawn on first sight and kept.
     internal static FatedRolls FateFor(Skill skill, Tile tile)
     {
@@ -209,7 +232,7 @@ public sealed class DivinationSystem : JiangyuSystem
         var foresight = new Foresight { Target = tile?.GetEntity() };
         var from = actor?.GetTile();
         // Nothing is foreseen for an attack that cannot be made: out of range, no line of fire.
-        if (actor == null || skill == null || tile == null || from == null || !skill.IsAttack() || !skill.IsUsableOn(tile, from))
+        if (actor == null || skill == null || tile == null || from == null || !IsForeseeable(skill, from, tile) || !skill.IsUsableOn(tile, from))
             return null;
         var rng = TacticalManager.GetRandom();
         var saved = rng == null ? default : (rng.m_S0, rng.m_S1, rng.m_S2, rng.m_S3);
@@ -333,7 +356,7 @@ public sealed class DivinationSystem : JiangyuSystem
             var actor = (skill?.GetEntity() as Il2CppObjectBase)?.TryCast<Actor>();
             // Only her next attack replaces the one being resolved. Skills used in between, such
             // as reactions to her shot, leave its fate in place.
-            if (skill == null || tile == null || !skill.IsAttack() || !IsSeer(actor))
+            if (skill == null || tile == null || !IsSeer(actor) || !IsForeseeable(skill, actor.GetTile(), tile))
                 return;
             End();
             _active = FateFor(skill, tile);
@@ -419,7 +442,7 @@ public sealed class DivinationSystem : JiangyuSystem
             _aimedTile = tile?.Pointer ?? IntPtr.Zero;
             var skill = (info.Instance as Il2CppSystem.Object)?.TryCast<Il2CppMenace.States.SkillAction>()?.GetSkill();
             var actor = (skill?.GetEntity() as Il2CppObjectBase)?.TryCast<Actor>();
-            if (tile == null || skill == null || !skill.IsAttack() || !IsSeer(actor) || tile.GetEntity() == null)
+            if (tile == null || skill == null || !IsSeer(actor) || tile.GetEntity() == null || !IsForeseeable(skill, actor.GetTile(), tile))
             {
                 ClearLabel();
                 return;

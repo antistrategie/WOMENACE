@@ -15,7 +15,7 @@ public static class Weapons
 
     private static readonly Dictionary<string, Il2CppMenace.Items.WeaponTemplate> GiveCache = new(StringComparer.Ordinal);
 
-    // Mint owned instances of any weapon into shared stock, for testing equip
+    // Mint owned instances of any weapon or accessory into shared stock, for testing equip
     // surfaces without the black market.
     [MutatingVerb]
     public static object Give(string weaponId, int count = 1)
@@ -26,10 +26,14 @@ public static class Weapons
         var owned = Jiangyu.Game.Strategy.Inventory.Owned;
         if (owned == null)
             return new { error = "no strategy state / owned items" };
-        var template = Templates.Resolve<Il2CppMenace.Items.WeaponTemplate>(
+        // Weapons first, then accessories (grenades, charges), which share the owned-item stock.
+        Il2CppMenace.Items.BaseItemTemplate template = Templates.Resolve<Il2CppMenace.Items.WeaponTemplate>(
             weaponId, GiveCache, msg => context.Log.Warn($"weapons: {msg}"));
+        template ??= Templates.Exists<Il2CppMenace.Items.AccessoryTemplate>(weaponId)
+            ? Templates.ById<Il2CppMenace.Items.AccessoryTemplate>(weaponId)
+            : null;
         if (template == null)
-            return new { error = $"unknown weapon template '{weaponId}'" };
+            return new { error = $"unknown weapon or accessory template '{weaponId}'" };
         var minted = 0;
         for (var i = 0; i < Math.Clamp(count, 0, 20); i++)
             if (owned.AddItem(template, false, false) != null)

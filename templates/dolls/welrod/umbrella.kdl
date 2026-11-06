@@ -1,7 +1,8 @@
 // Welrod's umbrella: a special weapon any doll can carry. Open, the holder plants it in
 // front of the squad: the squad cannot move, its holder does not fire, no single attack
-// takes more than a quarter of the squad's hitpoints, explosions do 60% less damage and
-// suppression does not touch it.
+// takes more than a quarter of the squad's hitpoints, explosions do 60% less damage,
+// suppression does not touch it and every ally within two tiles carries Shelter
+// (effect.wmgfl_shelter, through WOMENACE:AuraGrant).
 // The squaddies kneel behind it and keep shooting (UmbrellaCarrySystem).
 //
 // The open state is its own effect, not the Deployed stance: it cannot be opened while
@@ -55,10 +56,12 @@ clone "SkillTemplate" from="active.stance.deploy" id="active.wmgfl_umbrella_open
         set "m_DefaultTranslation" "Open Umbrella"
     }
     set "Description" {
-        set "m_DefaultTranslation" "Open the umbrella in front of the squad. While it is open, the squad takes $1% less damage from explosions, cannot lose more than $2% <link=\"hitpoints\">Hitpoints</link> from a single attack and is immune to <link=\"suppression\">Suppression</link>. While open, the squad can not move."
+        set "m_DefaultTranslation" "Open the umbrella in front of the squad. While it is open, the squad takes $1% less damage from explosions, cannot lose more than $2% <link=\"hitpoints\">Hitpoints</link> from a single attack and is immune to <link=\"suppression\">Suppression</link>. The squad and allies within $3 tiles gain Shelter, $4% <link=\"damage_reduction\">Damage Reduction</link>. While open, the squad can not move."
         clear "m_Placeholders"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_umbrella_open" path="EventHandlers[5].AbsorbDamagePct"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_umbrella_open" path="EventHandlers[1].MaxHpPct" format="percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_umbrella_open" path="EventHandlers[6].Radius"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_shelter" path="EventHandlers[0].Properties[0].AmountMult" format="reduction-percent"
     }
     set "ShortDescription" {
         set "m_DefaultTranslation" ""
@@ -120,10 +123,12 @@ clone "SkillTemplate" from="effect.special_weapon_disabled" id="effect.wmgfl_umb
         set "m_DefaultTranslation" "Umbrella Open"
     }
     set "Description" {
-        set "m_DefaultTranslation" "Takes $1% less damage from explosions. Cannot lose more than $2% <link=\"hitpoints\">Hitpoints</link> from a single attack. Immune to <link=\"suppression\">Suppression</link>. Can not move."
+        set "m_DefaultTranslation" "Takes $1% less damage from explosions. Cannot lose more than $2% <link=\"hitpoints\">Hitpoints</link> from a single attack. Immune to <link=\"suppression\">Suppression</link>. This unit and allies within $3 tiles gain Shelter, $4% <link=\"damage_reduction\">Damage Reduction</link>. Can not move."
         clear "m_Placeholders"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_umbrella_open" path="EventHandlers[5].AbsorbDamagePct"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_umbrella_open" path="EventHandlers[1].MaxHpPct" format="percent"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_umbrella_open" path="EventHandlers[6].Radius"
+        append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_shelter" path="EventHandlers[0].Properties[0].AmountMult" format="reduction-percent"
     }
     set "Icon" asset="welrod/effects/umbrella_open"
     set "Order" enum="SkillOrder" "First"
@@ -158,5 +163,11 @@ clone "SkillTemplate" from="effect.special_weapon_disabled" id="effect.wmgfl_umb
         set "AbsorbDamagePct" 60
         clear "RequiredTags"
         append "RequiredTags" enum="TagType" "AREA_OF_EFFECT"
+    }
+    // the canopy shelters whoever stands close, the squad and its neighbours alike
+    append "EventHandlers" type="WOMENACE:AuraGrant" {
+        set "Effect" ref="SkillTemplate" "effect.wmgfl_shelter"
+        set "Radius" 2
+        set "IncludeSelf" #true
     }
 }

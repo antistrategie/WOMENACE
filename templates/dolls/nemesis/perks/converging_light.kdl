@@ -1,6 +1,4 @@
 clone "PerkTemplate" from="perk.steady_gun" id="perk.nemesis_converging_light" {
-    // Converging Light, Nemesis's tier 4 perk: ConvergingLightSystem notes her permanent death
-    // and rolls the chance when the operation ends, putting her back on the roster on a success.
     set "Title" {
         set "m_DefaultTranslation" "Converging Light"
     }
@@ -14,8 +12,8 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.nemesis_converging_light" {
             Nemesis has seen every way this mission can end, including the ones where she does not walk out. She has also seen the one where she walks back in, and would rather nobody made a fuss about it.
 
 
-            <style="Highlight">• When this unit is killed in action, it has a $1% chance to return to the roster when the operation ends.
-            • There is no limit to how often it can return.</style>
+            <style="Highlight">• When Nemesis is killed in action, she has a $1% chance to return to the roster when the operation ends.
+            • There is no limit to how often she can return.</style>
             """
         clear "m_Placeholders"
         append "m_Placeholders" bind="PerkTemplate" "perk.nemesis_converging_light" path="EventHandlers[0].Chance"
@@ -27,6 +25,6 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.nemesis_converging_light" {
 
     clear "EventHandlers"
     append "EventHandlers" type="WOMENACE:ConvergingLight" {
-        set "Chance" 60
+        set "Chance" 65
     }
 }
