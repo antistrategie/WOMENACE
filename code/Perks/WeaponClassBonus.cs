@@ -52,11 +52,7 @@ public sealed partial class WeaponClassBonusHandler : SkillEventHandler
         {
             if (_skill == null || _properties == null || !_skill.IsAttack())
                 return;
-            var weapon = _skill.GetItem()?.GetTemplate()?.TryCast<WeaponTemplate>();
-            if (weapon == null || (Slot != ItemSlot.None && weapon.SlotType != Slot))
-                return;
-            var inClass = WeaponClasses.Classify(weapon) == WeaponClasses.FromCode(WeaponClass);
-            if (inClass == Invert)
+            if (!WeaponClassMatch.Matches(_skill, WeaponClass, Invert, Slot))
                 return;
             _properties.AccuracyMult *= AccuracyMult;
             _properties.DamageMult *= DamageMult;
@@ -67,5 +63,20 @@ public sealed partial class WeaponClassBonusHandler : SkillEventHandler
         {
             Log.Warn($"weapon class bonus: pre-attack failed: {ex.GetType().Name}: {ex.Message}");
         }
+    }
+}
+
+// The test WeaponClassBonus and WeaponClassFilter share: the skill's weapon is of the class (or,
+// with invert, outside it) and, when a slot is given, equips into that slot. A skill with no
+// weapon never matches.
+internal static class WeaponClassMatch
+{
+    public static bool Matches(Skill skill, string weaponClass, bool invert, ItemSlot slot)
+    {
+        var weapon = skill?.GetItem()?.GetTemplate()?.TryCast<WeaponTemplate>();
+        if (weapon == null || (slot != ItemSlot.None && weapon.SlotType != slot))
+            return false;
+        var inClass = WeaponClasses.Classify(weapon) == WeaponClasses.FromCode(weaponClass);
+        return inClass != invert;
     }
 }
