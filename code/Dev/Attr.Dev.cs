@@ -32,4 +32,24 @@ public static class Attr
         + $" crit={UnitLeaderAttributes.GetCriticalChanceAsFloat(value):0.##}"
         + $" def={UnitLeaderAttributes.GetDefenseMultAsFloat(value):0.##}"
         + $" hp={UnitLeaderAttributes.GetHitpointsPerElement(value)}";
+
+    // Rolls growth on a throwaway attribute set built from a leader template, with every trigger
+    // set a few times over, and reports each attribute before and after. Nothing saved is touched.
+    public static string Roll(string leaderId, int triggers = 5, int growthPotential = 10)
+    {
+        var template = Templates.ById<UnitLeaderTemplate>(leaderId);
+        if (template == null)
+            return $"no leader template {leaderId}";
+        var attributes = new UnitLeaderAttributes(template);
+        var before = attributes.GetAllCopy();
+        var set = attributes.m_Triggers;
+        for (var i = 0; i < set.Length; i++)
+            set[i] = (byte)triggers;
+        var deltas = attributes.RollForAttributeIncreases(growthPotential, new Il2CppMenace.Tools.PseudoRandom(Environment.TickCount), true);
+        var after = attributes.GetAllCopy();
+        var rows = new List<string>();
+        for (var i = 0; i < before.Length; i++)
+            rows.Add($"{(UnitLeaderAttribute)i}: {before[i]:0.#} -> {after[i]:0.#} (delta {deltas[i]:0.#})");
+        return string.Join(" | ", rows);
+    }
 }
