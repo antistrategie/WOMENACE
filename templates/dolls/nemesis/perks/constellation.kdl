@@ -5,7 +5,7 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.nemesis_constellation" {
         set "m_DefaultTranslation" "Constellation"
     }
     set "ShortDescription" {
-        set "m_DefaultTranslation" "Rifle Dolls get +$1 ACC and +$2% DMG for each other rifle Doll in the battle."
+        set "m_DefaultTranslation" "+$1 ACC / +$2% DMG to ALL rifle Dolls for each other rifle Doll in the battle."
         clear "m_Placeholders"
         append "m_Placeholders" bind="SkillTemplate" "effect.nemesis_constellation" path="EventHandlers[0].AccuracyPerDoll"
         append "m_Placeholders" bind="SkillTemplate" "effect.nemesis_constellation" path="EventHandlers[0].DamagePerDoll" format="percent"
@@ -15,7 +15,10 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.nemesis_constellation" {
             Connect the dots. Then shoot them.
 
 
-            <style="Highlight">• While this unit is alive, every rifle Doll on your side gets +$1 <link="accuracy">Accuracy</link> and +$2% Damage for each other living rifle Doll in the battle.</style>
+            <style="Highlight">• +$1 <link="accuracy">Accuracy</link> and +$2% Damage to ALL rifle Dolls on your side for each other living rifle Doll in the battle.
+
+
+            ** Only while the SL is alive. **</style>
             """
         clear "m_Placeholders"
         append "m_Placeholders" bind="SkillTemplate" "effect.nemesis_constellation" path="EventHandlers[0].AccuracyPerDoll"

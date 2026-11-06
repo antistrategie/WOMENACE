@@ -14,9 +14,10 @@ clone "PerkTemplate" from="perk.unique_rewa_revel_in_slaughter" id="perk.voymast
               – BT-7274
 
 
-            <style="Highlight">• <link="voymastina_target_lock">Target Lock</link>: Dread Ultimatum hits mark enemies. Her next Pile Bunker against a marked enemy consumes the mark for +$1% <link="hitpoint_damage">Hitpoint damage</link>.</style>
-            <style="Highlight">  • Marks last until the end of Sinbreaker's next turn.</style>
-            <style="Highlight">• <link="voymastina_energy_thief">Energy Thief</link>: her first Pile Bunker execution each turn restores $2% of maximum <link="armor_durability">armour durability</link>, or all durability if the destroyed unit is a vehicle.</style>
+            <style="Highlight">• <link="voymastina_target_lock">Target Lock</link>: Dread Ultimatum hits mark enemies. Her next Pile Bunker against a marked enemy consumes the mark for +$1% <link="hitpoint_damage">Hitpoint Damage</link>.
+              - Marks last until the end of Sinbreaker's next turn.
+
+            • <link="voymastina_energy_thief">Energy Thief</link>: her first Pile Bunker execution each turn restores $2% of maximum <link="armor_durability">Armour Durability</link>, or all of it if the destroyed unit is a vehicle.</style>
             """
         clear "m_Placeholders"
         append "m_Placeholders" bind="PerkTemplate" "perk.voymastina_monarch" path="EventHandlers[0].TargetLockBonus" format="percent"
@@ -47,7 +48,7 @@ clone "PerkTemplate" from="perk.tankbuster" id="perk.voymastina_arc_rounds" {
             The first round tests the plating. The second finds the seam. The third makes room for something less subtle.
 
 
-            <style="Highlight">• Dread Ultimatum gains +$1 <link="armor_penetration">armour penetration</link> and deals $2x <link="armor_damage">armour-durability damage</link> with every round.</style>
+            <style="Highlight">• Dread Ultimatum gains +$1 <link="armor_penetration">Armour Penetration</link> and deals $2x <link="armor_damage">Armour Durability Damage</link> with every round.</style>
             """
         clear "m_Placeholders"
         append "m_Placeholders" bind="PerkTemplate" "perk.voymastina_arc_rounds" path="EventHandlers[0].Penetration"
@@ -77,7 +78,7 @@ clone "PerkTemplate" from="perk.shieldwall" id="perk.voymastina_breach_guard" {
             Getting close is the easy part. Staying there is a matter of bracing the frame, locking the joints, and letting the enemy discover what did not break.
 
 
-            <style="Highlight">• Using Pile Bunker against an enemy reduces incoming hull <link="hitpoint_damage">Hitpoint damage</link> by $1% until the start of Sinbreaker's next turn.</style>
+            <style="Highlight">• Using Pile Bunker against an enemy reduces incoming hull <link="hitpoint_damage">Hitpoint Damage</link> by $1% until the start of Sinbreaker's next turn.</style>
             """
         clear "m_Placeholders"
         append "m_Placeholders" bind="PerkTemplate" "perk.voymastina_breach_guard" path="EventHandlers[0].DamageMultiplier" format="reduction-percent"

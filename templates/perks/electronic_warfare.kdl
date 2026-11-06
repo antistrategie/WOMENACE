@@ -6,7 +6,7 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.wmgfl_electronic_warfare" {
         set "m_DefaultTranslation" "Electronic Warfare"
     }
     set "ShortDescription" {
-        set "m_DefaultTranslation" "Grants a hacking attack that disables a machine for $1 turn."
+        set "m_DefaultTranslation" "ACTIVATE: Hack a vehicle or other machine, disabling it for $1 turn."
         clear "m_Placeholders"
         append "m_Placeholders" bind="SkillTemplate" "effect.disabled" path="EventHandlers[0].Lifetime"
     }
@@ -15,8 +15,7 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.wmgfl_electronic_warfare" {
             Every network has a back door. Most of them were left open on purpose, by people who assumed nobody would think to try the handle.
 
 
-            <style="Highlight">• Grants the skill 'Electronic Warfare'. Initiate a hacker attack that disables a vehicle or other machine for $1 turn.</style>
-            <style="Highlight">• Costs $2 <link="action_points">AP</link>, needs a line of fire and reaches $3 tiles.</style>
+            <style="Highlight">• ACTIVATE: Hack a vehicle or other machine within $3 tiles, disabling it for $1 turn. Costs $2 <link="action_points">AP</link> and needs a line of fire.</style>
             """
         clear "m_Placeholders"
         append "m_Placeholders" bind="SkillTemplate" "effect.disabled" path="EventHandlers[0].Lifetime"

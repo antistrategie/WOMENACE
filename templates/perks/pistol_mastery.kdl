@@ -1,5 +1,5 @@
 clone "PerkTemplate" from="perk.steady_gun" id="perk.wmgfl_pistol_mastery" {
-    // Pistol Mastery, the handgun Dolls' perk: WOMENACE:PistolMastery raises critical chance,
+    // Pistol Mastery, the handgun Dolls' perk: WOMENACE:WeaponClassBonus raises critical chance,
     // damage and armour penetration on attacks made with a handgun.
     set "Title" {
         set "m_DefaultTranslation" "Pistol Mastery"
@@ -29,7 +29,8 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.wmgfl_pistol_mastery" {
     set "PerkIcon" asset="perks/pistol_mastery"
 
     clear "EventHandlers"
-    append "EventHandlers" type="WOMENACE:PistolMastery" {
+    append "EventHandlers" type="WOMENACE:WeaponClassBonus" {
+        set "WeaponClass" "HG"
         set "CriticalChanceBonus" 30
         set "DamageMult" 1.5
         set "ArmorPenetrationMult" 2.0

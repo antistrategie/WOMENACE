@@ -6,7 +6,7 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.nemesis_divination" {
         set "m_DefaultTranslation" "Divination"
     }
     set "ShortDescription" {
-        set "m_DefaultTranslation" "While aiming, see whether this unit's attack will hit and how much damage it will deal."
+        set "m_DefaultTranslation" "While aiming, see whether the attack will HIT and how much DMG it deals."
         clear "m_Placeholders"
     }
     set "Description" {
@@ -16,8 +16,10 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.nemesis_divination" {
               – Nemesis
 
 
-            <style="Highlight">• While aiming, shows whether this unit's attack will hit and how much damage it will deal to the target.
-            • Attacks that strike random tiles, such as strafing fire, cannot be foreseen. This was going to be supported, until we read the strafing code and decided some futures are better left unseen.</style>
+            <style="Highlight">• While aiming, shows whether the SL's attack will HIT and how much Damage it will deal.
+
+
+            ** Attacks that strike random tiles, such as strafing fire, cannot be foreseen. This was going to be supported, until we read the strafing code and decided some futures are better left unseen. **</style>
             """
         clear "m_Placeholders"
     }

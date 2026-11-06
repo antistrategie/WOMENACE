@@ -3,7 +3,7 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.nemesis_converging_light" {
         set "m_DefaultTranslation" "Converging Light"
     }
     set "ShortDescription" {
-        set "m_DefaultTranslation" "When killed in action, $1% chance to return to the roster when the operation ends."
+        set "m_DefaultTranslation" "$1% chance to return to the roster after the operation if KILLED IN ACTION."
         clear "m_Placeholders"
         append "m_Placeholders" bind="PerkTemplate" "perk.nemesis_converging_light" path="EventHandlers[0].Chance"
     }
@@ -12,8 +12,10 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.nemesis_converging_light" {
             Nemesis has seen every way this mission can end, including the ones where she does not walk out. She has also seen the one where she walks back in, and would rather nobody made a fuss about it.
 
 
-            <style="Highlight">• When Nemesis is killed in action, she has a $1% chance to return to the roster when the operation ends.
-            • There is no limit to how often she can return.</style>
+            <style="Highlight">• When KILLED IN ACTION, the SL has a $1% chance to return to the roster when the operation ends.
+
+
+            ** There is no limit to how often she can return. **</style>
             """
         clear "m_Placeholders"
         append "m_Placeholders" bind="PerkTemplate" "perk.nemesis_converging_light" path="EventHandlers[0].Chance"

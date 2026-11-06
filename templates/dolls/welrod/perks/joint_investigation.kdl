@@ -6,7 +6,7 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.welrod_joint_investigation"
         set "m_DefaultTranslation" "Joint Investigation"
     }
     set "ShortDescription" {
-        set "m_DefaultTranslation" "+$1 Intelligence per mission this operation. Question civilians to reveal enemies."
+        set "m_DefaultTranslation" "+$1 Intelligence per mission this operation. ACTIVATE: Question a civilian to reveal enemies."
         clear "m_Placeholders"
         append "m_Placeholders" bind="PerkTemplate" "perk.welrod_joint_investigation" path="EventHandlers[0].IntelPerMission"
     }
@@ -15,8 +15,9 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.welrod_joint_investigation"
             Holmes paid a gang of street children a shilling a day to watch every corner of London for him. Welrod has found most civilians will do the same for free, provided she asks nicely and the alternative is getting caught in the crossfire.
 
 
-            <style="Highlight">• Each mission this unit deploys on raises Intelligence by $1 until the operation ends.
-            • Grants the skill 'Joint Investigation'. Question a civilian to reveal the position of $2 enemies. Each civilian can be questioned once.</style>
+            <style="Highlight">• +$1 Intelligence for each mission the SL deploys on, until the operation ends.
+
+            • ACTIVATE: Question a civilian to reveal $2 enemies. Each civilian can only be questioned ONCE.</style>
             """
         clear "m_Placeholders"
         append "m_Placeholders" bind="PerkTemplate" "perk.welrod_joint_investigation" path="EventHandlers[0].IntelPerMission"

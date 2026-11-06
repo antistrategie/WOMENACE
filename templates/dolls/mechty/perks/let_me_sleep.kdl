@@ -22,7 +22,7 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.mechty_let_me_sleep" {
               – Mechty, on being ordered to hold position
 
 
-            <style="Highlight">• +$1% damage, +$1% <link="accuracy">Accuracy</link> and -$2 <link="detection">Detection</link> for each turn the SL ends WITHOUT moving.
+            <style="Highlight">• +$1% Damage, +$1% <link="accuracy">Accuracy</link> and -$2 <link="detection">Detection</link> for each turn the SL ends WITHOUT moving.
 
             • Moving resets the stacks and leaves the SL Slacking Off: -$4% <link="accuracy">Accuracy</link> for the rest of the turn.
 
@@ -57,7 +57,7 @@ clone "SkillTemplate" from="effect.bleeding" id="effect.mechty_let_me_sleep" {
         set "m_DefaultTranslation" "Let Me Sleep"
     }
     set "Description" {
-        set "m_DefaultTranslation" "This unit has settled in. +$1% damage, +$1% <link=\"accuracy\">Accuracy</link> and -$2 <link=\"detection\">Detection</link> per stack."
+        set "m_DefaultTranslation" "This unit has settled in. +$1% Damage, +$1% <link=\"accuracy\">Accuracy</link> and -$2 <link=\"detection\">Detection</link> per stack."
         clear "m_Placeholders"
         append "m_Placeholders" bind="PerkTemplate" "perk.mechty_let_me_sleep" path="EventHandlers[0].BonusPerStack" format="percent"
         append "m_Placeholders" bind="PerkTemplate" "perk.mechty_let_me_sleep" path="EventHandlers[0].DetectionPerStack"

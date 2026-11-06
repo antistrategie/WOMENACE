@@ -6,7 +6,7 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.suomi_snowfield_spectre" {
         set "m_DefaultTranslation" "Snowfield Spectre"
     }
     set "ShortDescription" {
-        set "m_DefaultTranslation" "Ignores snow weather. +$1% ACC and +$2% DMG when attacking from snow."
+        set "m_DefaultTranslation" "Immune to snow weather. +$1% ACC / +$2% DMG when attacking from snow."
         clear "m_Placeholders"
         append "m_Placeholders" bind="SkillTemplate" "effect.suomi_snowfield_spectre" path="EventHandlers[0].AccuracyMult" format="bonus-percent"
         append "m_Placeholders" bind="SkillTemplate" "effect.suomi_snowfield_spectre" path="EventHandlers[0].DamageMult" format="bonus-percent"
@@ -16,8 +16,9 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.suomi_snowfield_spectre" {
             Every snowbound army has a story about something in the drifts that nobody ever manages to see. The yeti has terrible PR and no confirmed kills. Suomi has excellent PR and quite a few.
 
 
-            <style="Highlight">• This unit is not affected by snowfall or snowstorms.
-            • +$1% <link="accuracy">Accuracy</link> and +$2% Damage when attacking from a snow tile.</style>
+            <style="Highlight">• Immune to Snowfall and Snowstorm.
+
+            • +$1% <link="accuracy">Accuracy</link> and +$2% Damage when attacking from a SNOW tile.</style>
             """
         clear "m_Placeholders"
         append "m_Placeholders" bind="SkillTemplate" "effect.suomi_snowfield_spectre" path="EventHandlers[0].AccuracyMult" format="bonus-percent"

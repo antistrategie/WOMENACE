@@ -26,3 +26,4 @@ public sealed partial class SetCriticalChanceHandler : SkillEventHandler
             _properties.CriticalChance = Value;
     }
 }
+

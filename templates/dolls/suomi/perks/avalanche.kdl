@@ -5,7 +5,7 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.suomi_avalanche" {
         set "m_DefaultTranslation" "Avalanche"
     }
     set "ShortDescription" {
-        set "m_DefaultTranslation" "Attacks build Freeze. +$1% DMG against Frozen targets."
+        set "m_DefaultTranslation" "Attacks build Freeze. +$1% DMG vs. Frozen targets."
         clear "m_Placeholders"
         append "m_Placeholders" bind="PerkTemplate" "perk.suomi_avalanche" path="EventHandlers[0].FrozenDamageMult" format="bonus-percent"
     }
@@ -16,8 +16,9 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.suomi_avalanche" {
               – Griffin Field Medical Report
 
 
-            <style="Highlight">• Every attack builds $1 <link="wmgfl_freeze">Freeze</link> on the target, split between its repetitions.
-            • +$2% Damage against Frozen targets.</style>
+            <style="Highlight">• Every attack builds $1 <link="wmgfl_freeze">Freeze</link> on the target, split across its repetitions.
+
+            • +$2% Damage against FROZEN targets.</style>
             """
         clear "m_Placeholders"
         append "m_Placeholders" bind="PerkTemplate" "perk.suomi_avalanche" path="EventHandlers[0].BuildUpPerAttack"

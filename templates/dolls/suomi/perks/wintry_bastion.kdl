@@ -5,7 +5,7 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.suomi_wintry_bastion" {
         set "m_DefaultTranslation" "Wintry Bastion"
     }
     set "ShortDescription" {
-        set "m_DefaultTranslation" "This unit and allies within $1 tiles gain Shelter, $2% damage reduction."
+        set "m_DefaultTranslation" "The SL and allies within $1 tiles gain +$2% DR."
         clear "m_Placeholders"
         append "m_Placeholders" bind="PerkTemplate" "perk.suomi_wintry_bastion" path="EventHandlers[0].Radius"
         append "m_Placeholders" bind="SkillTemplate" "effect.wmgfl_shelter" path="EventHandlers[0].Properties[0].AmountMult" format="reduction-percent"
@@ -15,7 +15,7 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.suomi_wintry_bastion" {
             I once got lost in a snowstorm and was rescued by the cutest girl you've ever seen. The moment we reached shelter, she put on death metal at full volume and started chugging vodka. I went back out into the snowstorm.
 
 
-            <style="Highlight">• This unit and allies within $1 tiles gain Shelter: $2% <link="damage_reduction">Damage Reduction</link>.</style>
+            <style="Highlight">• The SL and allies within $1 tiles gain Shelter: +$2% <link="damage_reduction">Damage Reduction</link>.</style>
             """
         clear "m_Placeholders"
         append "m_Placeholders" bind="PerkTemplate" "perk.suomi_wintry_bastion" path="EventHandlers[0].Radius"

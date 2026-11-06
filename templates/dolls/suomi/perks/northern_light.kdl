@@ -6,7 +6,7 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.suomi_northern_light" {
         set "m_DefaultTranslation" "Northern Light"
     }
     set "ShortDescription" {
-        set "m_DefaultTranslation" "This unit and allies within $1 tiles ignore night penalties."
+        set "m_DefaultTranslation" "The SL and allies within $1 tiles ignore Night penalties."
         clear "m_Placeholders"
         append "m_Placeholders" bind="PerkTemplate" "perk.suomi_northern_light" path="EventHandlers[0].Radius"
     }
@@ -15,7 +15,7 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.suomi_northern_light" {
             Diogenes wandered Athens in broad daylight with a lantern, looking for an honest man, and never found one. Suomi carries hers at night and has a much easier time of it, since everyone she is looking for is trying to shoot her.
 
 
-            <style="Highlight">• This unit and allies within $1 tiles are not affected by night.</style>
+            <style="Highlight">• The SL and allies within $1 tiles are NOT affected by Night.</style>
             """
         clear "m_Placeholders"
         append "m_Placeholders" bind="PerkTemplate" "perk.suomi_northern_light" path="EventHandlers[0].Radius"

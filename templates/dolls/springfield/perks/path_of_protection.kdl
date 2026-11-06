@@ -12,9 +12,11 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.springfield_path_of_protect
             “She gives her enemies bullets and serves her friends coffee.”
 
 
-            <style="Highlight">• Grants the skill 'Deploy Taryz'. Taryz can be moved anywhere within Springfield's range and can be shot down.</style>
-            <style="Highlight">• At the end of Springfield's turn, Taryz heals each element of the most wounded allied squad within $1 tiles by $2% of its maximum hitpoints, up to $3.</style>
-            <style="Highlight">• At the end of Springfield's turn, Taryz marks up to $4 visible enemies within $5 tiles as 'Designated Target' for $6 rounds.</style>
+            <style="Highlight">• ACTIVATE: Deploy Taryz. Taryz can be moved anywhere within Springfield's range and can be shot down.
+
+            • At the end of Springfield's turn, Taryz:
+              - Heals each element of the most wounded allied squad within $1 tiles by $2% of its maximum <link="hitpoints">Hitpoints</link>, up to $3.
+              - Marks up to $4 visible enemies within $5 tiles as 'Designated Target' for $6 rounds.</style>
             """
         clear "m_Placeholders"
         append "m_Placeholders" bind="PerkTemplate" "perk.springfield_path_of_protection" path="EventHandlers[2].HealRange"

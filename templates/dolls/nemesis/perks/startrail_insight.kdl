@@ -6,7 +6,7 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.nemesis_startrail_insight" 
         set "m_DefaultTranslation" "Star Rail Insight"
     }
     set "ShortDescription" {
-        set "m_DefaultTranslation" "At the start of each allied unit's turn, see what the $1 closest enemies will do next."
+        set "m_DefaultTranslation" "See the next action of the $1 closest enemies at the start of each allied turn."
         clear "m_Placeholders"
         append "m_Placeholders" bind="PerkTemplate" "perk.nemesis_startrail_insight" path="EventHandlers[0].MaxEnemies"
     }
@@ -17,9 +17,12 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.nemesis_startrail_insight" 
               – Black Swan
 
 
-            <style="Highlight">• At the start of each allied unit's turn, foresees the next action of the $1 closest enemies your units have detected.
-            • An afterimage shows where an enemy will move and a unit an enemy is likely to attack is marked.
-            • The vision is not updated by your actions during the turn. Since enemies react to what you do, they may act differently from what was foreseen.</style>
+            <style="Highlight">• At the start of each allied unit's turn, foresees the next action of the $1 closest detected enemies.
+
+            • Afterimages show where enemies will move. Units they are likely to attack are marked.
+
+
+            ** The vision does NOT update during the turn. Enemies react to what you do, so they may act differently. **</style>
             """
         clear "m_Placeholders"
         append "m_Placeholders" bind="PerkTemplate" "perk.nemesis_startrail_insight" path="EventHandlers[0].MaxEnemies"

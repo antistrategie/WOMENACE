@@ -12,9 +12,11 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.makiatto_overwatch" {
             Heroes never di- Oh, wrong Overwatch.
 
 
-            <style="Highlight">• Grants the skill 'Interception' for the Squad Weapon, and for the Special Weapon if one is equipped. Each can be toggled on or off.</style>
-            <style="Highlight">• While on, <link="action_points">AP</link> left at the end of the turn is kept and used to fire on enemies that end their move in range and line of sight.</style>
-            <style="Highlight">• Interception shots cost $1% less <link="action_points">AP</link> and need at least $2% Chance to Hit.</style>
+            <style="Highlight">• Grants 'Interception' for the Squad Weapon, and for the Special Weapon if one is equipped. Each can be toggled on or off.
+
+            • While on, <link="action_points">AP</link> left at the end of the turn is kept and used to fire on enemies that end their move in range and line of sight.
+
+            • Interception shots cost $1% less <link="action_points">AP</link> and need at least $2% Chance to Hit.</style>
             """
         clear "m_Placeholders"
         append "m_Placeholders" bind="PerkTemplate" "perk.makiatto_overwatch" path="EventHandlers[0].ApDiscount" format="percent"
