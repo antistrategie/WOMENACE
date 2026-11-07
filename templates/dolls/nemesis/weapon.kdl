@@ -20,22 +20,22 @@ clone "WeaponTemplate" from="weapon.generic_battle_rifle_tier1_crowbar_marksman"
     set "IconSkillBar" asset="weapon/nemesis/IconSkillBar"
     set "IconSkillBarDisabled" asset="weapon/nemesis/IconSkillBarDisabled"
 
-    set "AccuracyBonus" 10.0
+    set "AccuracyBonus" 20.0
     set "AccuracyDropoff" -11.0
-    set "ArmorPenetration" 105.0
-    set "ArmorPenetrationDropoff" -0.94
+    set "ArmorPenetration" 109.0
+    set "ArmorPenetrationDropoff" -0.6
 
-    set "Damage" 23.0
-    set "DamageDropoff" -0.55
-    set "DamageToArmorDurability" 55.0
-    set "DamageToArmorDurabilityDropoff" -0.31
+    set "Damage" 32.0
+    set "DamageDropoff" -0.35
+    set "DamageToArmorDurability" 66.0
+    set "DamageToArmorDurabilityDropoff" -0.2
 
     set "MaxRange" 13
-    set "IdealRange" 10
-    set "Suppression" 12.0
+    set "IdealRange" 11
+    set "Suppression" 9.0
 
     set "DeployCosts" {
-        set "m_Supplies" 25
+        set "m_Supplies" 30
     }
 
     set "BlackMarketMaxQuantity" 0
@@ -64,7 +64,7 @@ clone "SkillTemplate" from="active.fire_battle_rifle_tier_1_aimed_fire_marksman"
         set "itemId" "rf_shot_distant"
     }
     set "ActionPointCost" 60
-    set "Uses" 5
+    set "Uses" 6
     set "EventHandlers" index=0 {
         set "AccuracyBonus" 0.0
         set "DamageMult" 1.0
@@ -95,7 +95,7 @@ clone "SkillTemplate" from="active.fire_battle_rifle_tier_1_aimed_fire_marksman"
         set "itemId" "rf_shot_distant"
     }
     set "ActionPointCost" 40
-    set "Uses" 5
+    set "Uses" 6
     set "ExecutingElement" enum="ExecutingElementType" "OneAtRandomExceptSpecial"
     set "IsOverridingRanges" #false
     set "IsDeploymentRequired" #false
