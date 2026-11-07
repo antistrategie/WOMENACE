@@ -435,7 +435,7 @@ public sealed class StartrailInsightSystem : JiangyuSystem
             // ally is no threat.
             var pickedAttack = picked?.TryCast<SkillBehavior>() is { } sb && sb.m_Skill != null && sb.m_Skill.IsAttack() ? sb : null;
             var victimTile = pickedAttack?.m_TargetTile ?? strongest?.GetHighestScoredTarget().Target;
-            if (victimTile?.GetActor() is { } victim && victim.Pointer != actor.Pointer)
+            if (TileActors.TargetOn(victimTile) is { } victim && victim.Pointer != actor.Pointer)
             {
                 vision.Victim = victim;
                 if (pickedAttack == null && strongest != null)
@@ -774,7 +774,7 @@ public sealed class StartrailInsightSystem : JiangyuSystem
         if (b.TryCast<SkillBehavior>() is { } sb)
         {
             var tile = sb.m_TargetTile;
-            var who = tile?.GetActor();
+            var who = TileActors.TargetOn(tile);
             return $"{name} {sb.m_Skill?.GetID() ?? "?"} at {Pos(tile)}{(who != null ? " on " + who.GetTemplate()?.GetID() : "")}";
         }
         if (b.TryCast<Move>() is { } move)

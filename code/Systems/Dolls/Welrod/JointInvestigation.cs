@@ -51,7 +51,7 @@ public sealed partial class InterrogateHandler : SkillEventHandler
     {
         try
         {
-            return InReach(_targetTile) && JointInvestigationSystem.CanQuestion(_targetTile?.GetActor());
+            return InReach(_targetTile) && JointInvestigationSystem.CanQuestion(TileActors.TargetOn(_targetTile));
         }
         catch
         {
@@ -73,7 +73,7 @@ public sealed partial class InterrogateHandler : SkillEventHandler
     {
         try
         {
-            var witness = _targetTile?.GetActor();
+            var witness = TileActors.TargetOn(_targetTile);
             if (_user == null || !InReach(_targetTile) || !JointInvestigationSystem.CanQuestion(witness))
                 return;
             JointInvestigationSystem.Question(witness, _user, Reveals);

@@ -81,7 +81,7 @@ public sealed partial class ReinforceSquaddieHandler : SkillEventHandler
     {
         actor = null;
         fromPool = false;
-        var candidate = tile?.GetActor()?.TryCast<UnitActor>();
+        var candidate = TileActors.ActorOn(tile)?.TryCast<UnitActor>();
         var leader = candidate?.GetLeader();
         if (candidate == null || leader == null || !candidate.IsAlive())
             return Squaddies.INVALID_SQUADDIE_ID;

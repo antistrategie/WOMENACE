@@ -52,7 +52,7 @@ public sealed partial class AvalancheHandler : SkillEventHandler
         {
             if (_skill == null || _properties == null || !_skill.IsAttack())
                 return;
-            var victim = _overrideTargetEntity?.TryCast<Actor>() ?? _targetTile?.GetActor();
+            var victim = _overrideTargetEntity?.TryCast<Actor>() ?? TileActors.TargetOn(_targetTile);
             if (victim != null && ElementsSystem.HasLiveEffect(victim, Freeze))
                 _properties.DamageMult *= FrozenDamageMult;
         }
