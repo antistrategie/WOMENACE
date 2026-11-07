@@ -1,11 +1,11 @@
 clone "PerkTemplate" from="perk.steady_gun" id="perk.welrod_case_controller" {
     // Case Controller, Welrod's starting perk: she gets nothing from cover, has no critical chance at all
-    // of her own, but squad weapons other than pistols cost more AP and she is much harder to kill.
+    // of her own, but squad weapons other than handguns cost more AP and she is much harder to kill.
     set "Title" {
         set "m_DefaultTranslation" "Case Controller"
     }
     set "ShortDescription" {
-        set "m_DefaultTranslation" "+$1% HP / +$2% DR / -$3% Suppression taken. NO cover, NO CRIT, +$4 AP cost for non-pistol Squad Weapons."
+        set "m_DefaultTranslation" "+$1% HP / +$2% DR / -$3% Suppression taken. NO cover, NO CRIT, +$4 AP cost for non-handgun Squad Weapons."
         clear "m_Placeholders"
         append "m_Placeholders" bind="PerkTemplate" "perk.welrod_case_controller" path="EventHandlers[0].Properties[0].AmountMult" format="bonus-percent"
         append "m_Placeholders" bind="PerkTemplate" "perk.welrod_case_controller" path="EventHandlers[0].Properties[1].AmountMult" format="reduction-percent"
@@ -21,7 +21,7 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.welrod_case_controller" {
 
             • -$3% <link="suppression">Suppression</link> taken.
 
-            • Squad Weapons other than pistols cost +$4 AP to use.
+            • Squad Weapons other than handguns cost +$4 AP to use.
 
             • The SL gains NO protection from cover and has NO <link="critical_chance">Critical Chance</link>.</style>
             """
@@ -47,7 +47,7 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.welrod_case_controller" {
         append "Properties" {
             set "PropertyType" enum="EntityPropertyType" "DamageSustainedMult"
             set "Amount" 0
-            set "AmountMult" 0.5
+            set "AmountMult" 0.25
         }
         append "Properties" {
             set "PropertyType" enum="EntityPropertyType" "SuppressionImpactMult"
@@ -63,7 +63,7 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.welrod_case_controller" {
     append "EventHandlers" type="WOMENACE:SetCriticalChance" {
         set "Value" 0
     }
-    // Its skill filter (squad weapons other than pistols) is installed by WeaponClassFilterSystem.
+    // Its skill filter (squad weapons other than handguns) is installed by WeaponClassFilterSystem.
     append "EventHandlers" type="ChangeActionPointCost" {
         set "CostDelta" 20
     }

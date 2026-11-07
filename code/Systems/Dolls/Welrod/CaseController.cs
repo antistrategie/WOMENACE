@@ -7,7 +7,7 @@ namespace WOMENACE.Code;
 
 // Sets the owner's critical chance to a fixed value. Welrod's Case Controller sets it to zero. The
 // handler sets it as her properties are rebuilt, and SetCriticalChanceSystem sets it again on each
-// attack once every handler has run, so attack-time bonuses (Pistol Mastery) cannot add to it.
+// attack once every handler has run, so attack-time bonuses (Handgun Mastery) cannot add to it.
 [JiangyuType("SetCriticalChance")]
 public sealed partial class SetCriticalChance : SkillEventHandlerTemplate
 {

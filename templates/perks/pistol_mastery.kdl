@@ -1,11 +1,11 @@
 clone "PerkTemplate" from="perk.steady_gun" id="perk.wmgfl_pistol_mastery" {
-    // Pistol Mastery, the handgun Dolls' perk: WOMENACE:WeaponClassBonus raises critical chance,
+    // Handgun Mastery, the handgun Dolls' perk: WOMENACE:WeaponClassBonus raises critical chance,
     // damage and armour penetration on attacks made with a handgun.
     set "Title" {
-        set "m_DefaultTranslation" "Pistol Mastery"
+        set "m_DefaultTranslation" "Handgun Mastery"
     }
     set "ShortDescription" {
-        set "m_DefaultTranslation" "With a pistol: +$1% CRIT, +$2% DMG and +$3% Armour Pen."
+        set "m_DefaultTranslation" "With a handgun: +$1% CRIT, +$2% DMG and +$3% Armour Pen."
         clear "m_Placeholders"
         append "m_Placeholders" bind="PerkTemplate" "perk.wmgfl_pistol_mastery" path="EventHandlers[0].CriticalChanceBonus"
         append "m_Placeholders" bind="PerkTemplate" "perk.wmgfl_pistol_mastery" path="EventHandlers[0].DamageMult" format="bonus-percent"
@@ -13,10 +13,10 @@ clone "PerkTemplate" from="perk.steady_gun" id="perk.wmgfl_pistol_mastery" {
     }
     set "Description" {
         set "m_DefaultTranslation" """
-            A pistol is only a sidearm in the wrong hands.
+            A handgun is only a sidearm in the wrong hands.
 
 
-            <style="Highlight">• Attacks with a pistol gain +$1% <link="critical_chance">Critical Chance</link>, +$2% Damage and +$3% <link="armor_penetration">Armour Penetration</link>.</style>
+            <style="Highlight">• Attacks with a handgun gain +$1% <link="critical_chance">Critical Chance</link>, +$2% Damage and +$3% <link="armor_penetration">Armour Penetration</link>.</style>
             """
         clear "m_Placeholders"
         append "m_Placeholders" bind="PerkTemplate" "perk.wmgfl_pistol_mastery" path="EventHandlers[0].CriticalChanceBonus"
