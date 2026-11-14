@@ -7,6 +7,11 @@ clone "ModularVehicleTemplate" from="modular_vehicle_medium_walker" id="modular_
 }
 
 clone "EntityTemplate" from="enemy.vehicle_rogue_army_mercenary_medium_walker" id="enemy.wmgfl_titan_support" {
+    // The model has none of the points vanilla spawns these effects at, and vanilla logs an
+    // error for each one it looks for.
+    set "ExhaustRevEffect" #null
+    set "ExhaustIdleEffect" #null
+    set "MovementEffectOverrides2" #null
     set "Title" {
         set "m_DefaultTranslation" "Temblor Titan"
     }

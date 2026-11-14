@@ -38,6 +38,11 @@ public static class Transmog
         if (characterTag == null || !characterTag.StartsWith("wmgfl_", StringComparison.Ordinal))
             return null;
         var id = $"armor.{characterTag["wmgfl_".Length..]}_default";
+        // A tag of ours that names no character (a mech's, a marker's) is probed here too, and the
+        // game's loader logs an error for every id it does not hold, so it is asked only for an
+        // id the registry is seen to have.
+        if (!DefaultProbeCache.ContainsKey(id) && !Templates.Exists<ArmorTemplate>(id))
+            return null;
         return Templates.Resolve(id, DefaultProbeCache) != null ? id : null;
     }
 

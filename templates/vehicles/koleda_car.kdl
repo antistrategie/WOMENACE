@@ -92,6 +92,11 @@ clone "SkillTemplate" from="active.mod.minigun_strafing" id="active.sinner_mg" {
 }
 
 clone "EntityTemplate" from="player_vehicle.modular_light_troop_carrier" id="player_vehicle.koleda_car" {
+    // The model has none of the points vanilla spawns these effects at, and vanilla logs an
+    // error for each one it looks for.
+    set "ExhaustRevEffect" #null
+    set "ExhaustIdleEffect" #null
+    set "MovementEffectOverrides2" #null
     set "Title" {
         set "m_DefaultTranslation" "The Sinner"
     }
