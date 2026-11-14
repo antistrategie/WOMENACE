@@ -17,8 +17,8 @@ public sealed partial class StrategyDiorama
     private static readonly Vector2 PlanetSlotMiddle = new(0.65f, 0.49f);
     // A card's width on the planet for a marker of vanilla's usual width, in metres, at the
     // distance the view's own place is from the planet's middle. Further cards are larger.
-    private const float PlanetCardWidth = 1.1f;
-    private const float PlanetCardDistance = 6.2f;
+    private const float PlanetCardWidth = 1.47f;
+    private const float PlanetCardDistance = 5.3f;
     private const float PlanetCardNearScale = 0.9f;
     private const float PlanetCardFarScale = 1.7f;
     // The room kept between two cards' boxes and between a box and the picture's edge, as parts
@@ -102,10 +102,16 @@ public sealed partial class StrategyDiorama
         {
             var spot = planet.OnSphere(box.Left + box.Lead, box.Foot, out _);
             var surface = planet.InRoom(spot);
+            // The chibi's own place on the surface: at the left of the card's icon as the
+            // view starts, clear of it by a part of her height. It is a place on the globe, so
+            // she keeps to the ground as the camera goes round and the card turns to face it.
+            var height = box.Width * box.Size.y / box.Size.x;
+            var chibiAcross = box.Left + box.Lead - (box.Width * CardIconCentre / box.Size.x + height * ChibiToCard * (0.5f + ChibiBeside)) / sectionWide;
             var marker = new Marker
             {
                 Poi = pois[box.Index],
                 Spot = N(spot),
+                ChibiSpot = N(planet.OnSphere(chibiAcross, box.Foot, out _)),
                 Surface = N(surface),
                 Across = box.Left + box.Lead,
                 Width = box.Width,
@@ -172,14 +178,14 @@ public sealed partial class StrategyDiorama
         }
     }
 
-    // The chibi on the planet: at the left of the selected mission's card with her feet on the
-    // surface, walking the shortest way round the globe to a newly selected one. Solid, so a
+    // The chibi on the planet: on her place beside the selected mission's card with her feet on
+    // the surface, walking the shortest way round the globe to a newly selected one. Solid, so a
     // bright planet does not wash her out.
     private void MovePlanetChibi(PlanetShape planet, Marker selected)
     {
         // She comes with her card.
         if (!_chibiPlaced || selected.Open < 1f)
-            (_chibiSpot, _chibiTall, _chibiPlaced) = (selected.Spot, selected.ChibiTall, true);
+            (_chibiSpot, _chibiTall, _chibiPlaced) = (selected.ChibiSpot, selected.ChibiTall, true);
         if (selected.Open < 1f)
         {
             _chibi.SetActive(false);
@@ -187,10 +193,10 @@ public sealed partial class StrategyDiorama
         }
         // Her way left, as the straight line between the two places: an angle between two
         // directions this close is not measured finely enough to tell when she has arrived.
-        var left = NVector3.Distance(_chibiSpot, selected.Spot) * PlanetRadius;
+        var left = NVector3.Distance(_chibiSpot, selected.ChibiSpot) * PlanetRadius;
         var walking = left > 0.01f;
         var before = planet.InRoom(_chibiSpot);
-        _chibiSpot = walking ? RoundGlobe(_chibiSpot, selected.Spot, MathF.Min(1f, ChibiSpeed * PlanetStep / left)) : selected.Spot;
+        _chibiSpot = walking ? RoundGlobe(_chibiSpot, selected.ChibiSpot, MathF.Min(1f, ChibiSpeed * PlanetStep / left)) : selected.ChibiSpot;
         var grows = Time.unscaledDeltaTime * ChibiGrowth;
         _chibiTall += Math.Clamp(selected.ChibiTall - _chibiTall, -grows, grows);
         var surface = planet.InRoom(_chibiSpot);
@@ -202,11 +208,10 @@ public sealed partial class StrategyDiorama
             if (MathF.Abs(across) > 0.0005f)
                 _chibiFacesLeft = across < 0f;
         }
-        // At the left of the card's icon, a touch nearer the camera than the surface.
-        var beside = -selected.Width * CardIconCentre / selected.Box.x - _chibiTall * (0.5f + ChibiBeside);
+        // On her place, a touch nearer the camera than the surface.
         _chibiTransform.localRotation = turn;
         _chibiTransform.localScale = new Vector3(_chibiTall, _chibiTall, 1f);
-        _chibiTransform.localPosition = new Vector3(surface.X + beside * cos - ChibiNearer * sin, surface.Y + _chibiTall / 2f, surface.Z - beside * sin - ChibiNearer * cos);
+        _chibiTransform.localPosition = new Vector3(surface.X - ChibiNearer * sin, surface.Y + _chibiTall / 2f, surface.Z - ChibiNearer * cos);
         ShowChibiFrame(walking, plate: 1f);
     }
 

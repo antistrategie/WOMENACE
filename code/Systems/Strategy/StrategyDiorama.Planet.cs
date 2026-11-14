@@ -51,7 +51,7 @@ public sealed partial class StrategyDiorama
 
     // From the table's right-hand side, looking across it at the planet, the lens shifted so
     // the planet stands left of the selected mission's panel.
-    private static readonly Framing PlanetFraming = new(new Vector3(-11.5f, 2.3f, -5.0f), new Vector3(-14.5f, 1.4f, 0.2f), 55f, 0.11f);
+    private static readonly Framing PlanetFraming = new(new Vector3(-11.95f, 2.17f, -4.22f), new Vector3(-14.5f, 1.4f, 0.2f), 55f, 0.11f);
 
     private static readonly Color PlanetEdgeTint = new(0.45f, 0.95f, 1f);
 

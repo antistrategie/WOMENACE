@@ -18,7 +18,7 @@ public sealed partial class StrategyDiorama
     private const float PlanetOrbitTurnOn = 40f;
     private const float PlanetOrbitTiltMin = 0f;
     private const float PlanetOrbitTiltMax = 20f;
-    private const float PlanetOrbitNearest = 4f;
+    private const float PlanetOrbitNearest = 3.4f;
     // The camera keeps this far from any surface of the room.
     private const float PlanetOrbitClearance = 0.5f;
 

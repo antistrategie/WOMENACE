@@ -27,7 +27,7 @@ public sealed partial class StrategyDiorama
     private const float CardIconCentre = 20f;
 
     // A card's width in the room.
-    private const float CardWorldWidth = 2.05f;
+    private const float CardWorldWidth = 2.72f;
     private const float CardFarScale = 1.5f;
     private const float CardIntensity = 2f;
     private const float CardHoverIntensity = 2.8f;

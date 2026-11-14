@@ -30,7 +30,7 @@ public sealed partial class StrategyDiorama
     // Mission select: straight down the table from higher up, tilted down so the whole table is
     // in view, and shifted left of the selected mission's panel, with room beside each mission's
     // icon for its name. Much higher and the camera is in the ceiling.
-    private static readonly Framing MissionFraming = new(new Vector3(-8.6f, 3.6f, 0f), new Vector3(-14.2f, -0.3f, 0f), 55f, 0.11f);
+    private static readonly Framing MissionFraming = new(new Vector3(-9.44f, 3.0f, 0f), new Vector3(-14.2f, -0.3f, 0f), 55f, 0.11f);
 
     // The system map: across the table from its left side, level with the star system standing
     // over it.

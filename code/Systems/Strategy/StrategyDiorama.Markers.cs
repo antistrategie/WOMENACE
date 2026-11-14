@@ -33,6 +33,8 @@ public sealed partial class StrategyDiorama
         // picture that is, its card's width and height in metres, and its marker's box.
         public NVector3 Spot;
         public NVector3 Surface;
+        // Where the chibi stands beside it, on the unit globe.
+        public NVector3 ChibiSpot;
         public float Across;
         public float Width;
         public float Height;
