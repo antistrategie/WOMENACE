@@ -26,7 +26,8 @@ public sealed partial class StrategyDiorama
 
     private static readonly Color32 PrepGround = new(8, 20, 30, 255);
     private static readonly Color32 PrepGrid = new(26, 58, 84, 255);
-    private static readonly Color32 PrepRoad = new(40, 70, 96, 255);
+    private static readonly Color32 PrepRoad = new(86, 106, 128, 255);
+    private static readonly Color32 PrepRough = new(44, 96, 124, 255);
     private static readonly Color32 PrepZone = new(120, 92, 30, 255);
     private static readonly Color32 PrepZoneGrid = new(215, 170, 70, 255);
     private static readonly Color32 PrepZoneRefused = new(40, 34, 24, 255);
@@ -243,6 +244,7 @@ public sealed partial class StrategyDiorama
         var heights = new float[sizeX, sizeZ];
         var names = new string[sizeX, sizeZ];
         var roads = new bool[sizeX, sizeZ];
+        var rough = new bool[sizeX, sizeZ];
         for (var z = 0; z < sizeZ; z++)
         {
             for (var x = 0; x < sizeX; x++)
@@ -250,7 +252,12 @@ public sealed partial class StrategyDiorama
                 var tile = tiles.GetTile(x, z);
                 roads[x, z] = preview.HasRoad(x, z);
                 if (tile.GetEntityType() != EntityType.Structure)
+                {
+                    // Ground with nothing built on it that no squad can stand on, which vanilla's
+                    // own map shades the same as a structure.
+                    rough[x, z] = !tile.IsValidDeployPosition();
                     continue;
+                }
                 names[x, z] = tile.m_EntityTemplate != null ? tile.m_EntityTemplate.name : "";
                 heights[x, z] = PrepHeight(names[x, z]);
             }
@@ -283,6 +290,7 @@ public sealed partial class StrategyDiorama
 
         // How bright a tile's lines are: 2 in the zone, 1 in its refused part, 0 elsewhere.
         int Lit(int x, int z) => x < 0 || z < 0 || !zone[x, z] ? 0 : refused[x, z] ? 1 : 2;
+        bool Road(int x, int z) => x >= 0 && z >= 0 && roads[x, z] && !zone[x, z] && heights[x, z] <= 0f;
 
         // The sheet's texture: a block of pixels per tile, and above the map one more row of blocks
         // holding the wall's shade from its foot to its top.
@@ -293,7 +301,9 @@ public sealed partial class StrategyDiorama
             for (var x = 0; x < sizeX; x++)
             {
                 var built = heights[x, z] > 0f;
-                var fill = built ? PrepRoof : zone[x, z] ? (refused[x, z] ? PrepZoneRefused : PrepZone) : roads[x, z] ? PrepRoad : PrepGround;
+                var road = Road(x, z);
+                var hatched = !built && !zone[x, z] && !road && rough[x, z];
+                var fill = built ? PrepRoof : zone[x, z] ? (refused[x, z] ? PrepZoneRefused : PrepZone) : road ? PrepRoad : PrepGround;
                 for (var j = 0; j < p; j++)
                 {
                     for (var i = 0; i < p; i++)
@@ -309,7 +319,10 @@ public sealed partial class StrategyDiorama
                         // far and right ones: a line is the brightest of the tiles it lies between.
                         var lit = !edge || built ? 0 : Math.Max(Math.Max(Lit(x, z), i == 0 ? Lit(x - 1, z) : 0),
                             Math.Max(j == 0 ? Lit(x, z - 1) : 0, i == 0 && j == 0 ? Lit(x - 1, z - 1) : 0));
-                        var pixel = edge ? (built ? PrepRoofEdge : lit == 2 ? PrepZoneGrid : lit == 1 ? PrepZoneRefusedGrid : PrepGrid) : fill;
+                        // A road is one strip: no line is drawn between two of its tiles.
+                        var within = road && lit == 0 && (i > 0 || Road(x - 1, z)) && (j > 0 || Road(x, z - 1)) && (i > 0 || j > 0 || Road(x - 1, z - 1));
+                        var pixel = edge && !within ? (built ? PrepRoofEdge : lit == 2 ? PrepZoneGrid : lit == 1 ? PrepZoneRefusedGrid : PrepGrid)
+                            : hatched && (i + j) % 4 == 0 ? PrepRough : fill;
                         // An objective's area is lit a little and outlined where it ends.
                         if (objective[x, z])
                         {

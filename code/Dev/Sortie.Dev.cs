@@ -207,6 +207,26 @@ public static class Sortie
         return name;
     }
 
+    // Writes the map picture vanilla's prep screen draws to a PNG at a Windows path.
+    public static object MapTexture(string path)
+    {
+        var source = Prep(ActiveScreen())?.m_MapTexture;
+        if (source == null)
+            return new { error = "no map texture" };
+        var rt = UnityEngine.RenderTexture.GetTemporary(source.width, source.height, 0);
+        UnityEngine.Graphics.Blit(source, rt);
+        var active = UnityEngine.RenderTexture.active;
+        UnityEngine.RenderTexture.active = rt;
+        var copy = new UnityEngine.Texture2D(source.width, source.height, UnityEngine.TextureFormat.RGBA32, false);
+        copy.ReadPixels(new UnityEngine.Rect(0, 0, source.width, source.height), 0, 0);
+        copy.Apply();
+        UnityEngine.RenderTexture.active = active;
+        UnityEngine.RenderTexture.ReleaseTemporary(rt);
+        File.WriteAllBytes(path, (byte[])UnityEngine.ImageConversion.EncodeToPNG(copy));
+        UnityEngine.Object.Destroy(copy);
+        return new { path, source.width, source.height };
+    }
+
     // What the prep screen's generated preview holds, and how long one pass over its tiles takes.
     // With a path, writes the grid as text: one line per row, each tile "elevation:entity type:road".
     public static object PreviewProbe(string dumpPath = "")
