@@ -275,6 +275,17 @@ internal static class SpringSolver
         Relay(chain, origin, scale);
     }
 
+    // Both thighs swung at least this far from straight down the body is a seat: a stride or a
+    // kneel swings one of them so far, and the combat crouch neither.
+    private const float SeatedThighAngle = 65f;
+
+    private static bool Seated(in SpringBodyPose pose)
+    {
+        var down = -pose.Up;
+        return AngleBetween(pose.KneeLeft - pose.HipLeft, down) >= SeatedThighAngle
+            && AngleBetween(pose.KneeRight - pose.HipRight, down) >= SeatedThighAngle;
+    }
+
     // How far into a kneel the deeper-bent knee is, by the angle between
     // thigh and shin. The combat stance bends the knees about 50 degrees and
     // a stride mostly up to 95, while the deployed kneel folds one to 135.
@@ -948,6 +959,12 @@ internal static class SpringSolver
                 if (spec.Sag > 0f)
                     SagTargets(chain, origin, scale);
                 DriveWithLegs(chain, pose, origin, scale, spec.LegDrive);
+                // Seated, the thighs lie under the garment and often across each other. Its
+                // shape already rides them (DriveWithLegs), and what the legs would add is a
+                // push out of one thigh into the other and back, every step, which never
+                // comes to rest. The garment takes no push from the legs in a seat.
+                if (Seated(pose))
+                    groups &= ~SpringColliderGroup.Legs;
             }
 
             // Layered garments keep their target shapes apart: a chain under
