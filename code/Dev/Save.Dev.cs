@@ -20,6 +20,23 @@ public static class Save
         return new { ok = true, loading = state.GetFilePath() };
     }
 
+    // Load a save by its file name without extension ("auto_20261107_104450").
+    [MutatingVerb]
+    public static object Load(string file)
+    {
+        var states = SaveSystem.GetSortedSaveStates();
+        for (var i = 0; states != null && i < states.Count; i++)
+        {
+            var s = states[i];
+            if (s != null && System.IO.Path.GetFileNameWithoutExtension(s.GetFilePath().Replace('\\', '/')) == file)
+            {
+                SaveSystem.Load(s);
+                return new { ok = true, loading = s.GetFilePath() };
+            }
+        }
+        return new { error = "no save named " + file };
+    }
+
     // Write a manual save now, for persistence round-trips (write, LoadLatest, compare).
     [MutatingVerb]
     public static object Write(string name = "jiangyu_dev")
