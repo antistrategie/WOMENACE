@@ -131,6 +131,23 @@ Placement is drawn from the spread measured across the roster, seeded by the dol
 - **The head box.** `Avatar_Head` is a render of the 3D model, not a crop of the art, so the match lands near the face but can sit off on a tilted pose, and it usually fails on outfit art with scenery. On a good box the bark crop shows the whole head with the chin clear of the bottom edge. Pass `--head-box x,y,size` (source pixels, hair top to just below the chin, chin about three quarters down) to correct it.
 - **Anything raised above the head.** The stand image lines up the top of the figure across the roster. A hand, lamp or weapon held high would push the doll down, so pass `--figure-top <source y>` at the top of her head: she is placed from there and the raised part fades out above.
 
+### The chibi
+
+Each doll has a chibi that stands on the map in mission preparation, playing her waiting loop. `scripts/doll/chibi_frames.py` builds it from the doll's animated chibi in the GFL2 client, which is a Spine rig, not a finished image. It needs the installed client (not an AssetStudio export) and Chromium, Chrome or Edge.
+
+```bash
+uv run scripts/doll/chibi_frames.py <Rig> <doll> --bundles <client>/GF2_Exilium_Data/LocalCache/Data/AssetBundles_Windows
+```
+
+- `<Rig>` is the client's internal name for the doll in the outfit she wears by default, which is not always her display name. `--list` prints every rig in the client, and a doll with several outfits has a rig for each.
+- `--info` prints a rig's skins and animations. Every doll's rig carries the same set: `wait` is the standing loop with her weapon out, which is the default here. `idle` is the same without the weapon.
+- The first run walks every pack file of the client to find the rigs, which takes a few minutes. The result is kept in the script's work folder, so later runs start at once. After a client update, delete `rigs.json` there.
+- The output is `sprites/<doll>/chibi_wait.png`: forty frames in a grid, six across. The game loads it by the doll's tag (`<doll>__chibi_wait`), so the file name is the only wiring. Nothing goes in the KDL.
+
+Every doll's sheet has the same grid, the same frame size and the same ground line, and each figure is as tall as a frame allows, so the game holds no numbers per doll. Check the sheet's first frame against another doll's: the figures should be the same height with their feet on the same line. A pose wider than a frame (a very long weapon held level) is the one case where a doll is drawn smaller, to fit it.
+
+A doll without a sheet stands as her unit badge instead, so a new doll works before her chibi is made.
+
 `scripts/doll/make_faction_backgrounds.py` builds the three faction backgrounds per faction from GFL2's `Img_CampLogo_*` faction logos (`data/faction_logos/`, faction names in the `CharacterBelongData` table). Its table maps each faction to a logo and a colour, with an optional logo scale and sideways shift for a narrow logo the portraits would hide. A doll in a faction without a set needs a new table row.
 
 ## armor.kdl (transmog outfits)

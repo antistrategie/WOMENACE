@@ -41,6 +41,12 @@ SHADER = "Womenace/DollToon"
 # Routing from an alpha histogram is what put the car's wheels on a blended
 # shader.
 TRANSPARENT_SHADER = "Womenace/DollToonTrans"
+# The face skin's own shader: Womenace/DollToon plus GFL2's hair-to-face band, which the face
+# carries through the stencil and so needs its own queue after the hair.
+FACE_SHADER = "Womenace/DollToonFace"
+# Hair's own shader: Womenace/DollToon plus the pass that casts GFL2's hair-to-face band, which no
+# other material should pay for.
+HAIR_SHADER = "Womenace/DollToonHair"
 TRANSPARENT_MARKER = "ubertrans"
 
 # The marker test reads the game's own texture naming, and a PMX repack can
@@ -135,7 +141,7 @@ PART_RULES = [
     # Matched anywhere in the name, not only at the front: a port taken from the
     # game's own model rather than from a PMX names its materials after their
     # textures, so the face arrives as c_SextansSSR01_slg_face_d.
-    ("*face*", "face"),
+    ("*face*", "faceskin"),
     # The game's three-material eye stack. Each layer takes its own shader because
     # a blend mode is fixed per pass: the eyeball is opaque, the darkening layer
     # multiplies, the highlight adds.
@@ -182,6 +188,7 @@ PART_RAMPS = {
     # skin's. It reaches that ramp by the FaceSDF sweep rather than by N dot L,
     # off the lookup coordinates bake_face_sdf_uv.py reconstructs.
     "face": ("ramp_skin.png",),
+    "faceskin": ("ramp_skin.png",),
     # emotion stays on the game's shader: the overlays are parked out of sight.
 }
 
@@ -273,15 +280,15 @@ def sibling_assignments(doll_dir, material, base_texture, inverted):
     set a float. Reported rather than wired silently: an unflagged _smo renders
     every rough surface glossy and every gloss surface matte.
     """
+    # GFL2 names a sheet's maps after its colour sheet less _d or _da. A colour
+    # sheet the repack renamed without either suffix keeps its whole stem, and its
+    # maps are installed under that.
     stem = Path(base_texture).stem
-    suffix = None
-    for candidate in ("_d", "_da"):
-        if stem.endswith(candidate):
-            suffix = candidate
+    root = stem
+    for suffix in ("_d", "_da"):
+        if stem.endswith(suffix):
+            root = stem[: -len(suffix)]
             break
-    if suffix is None:
-        return []
-    root = stem[: -len(suffix)]
 
     found = []
     for prop, wanted in SIBLING_MAPS:
@@ -348,8 +355,15 @@ def resolve(doll_dir):
                              + " or ".join(str(d) for d in ramps_dirs))
         # Ramps live under Assets/, and the bake takes project-relative paths.
         rel = str(ramp_asset).split("unity/", 1)[-1]
-        shader_pairs.append(
-            f"{name}={TRANSPARENT_SHADER if name in translucent else SHADER}")
+        if name in translucent:
+            shader = TRANSPARENT_SHADER
+        elif part == "faceskin":
+            shader = FACE_SHADER
+        elif part == "hair":
+            shader = HAIR_SHADER
+        else:
+            shader = SHADER
+        shader_pairs.append(f"{name}={shader}")
         texture_triples.append(f"{name}:_RampMap={rel}")
         # Normal and RMO maps, when the source ships them beside the base map.
         base = bases.get(name)
@@ -360,7 +374,7 @@ def resolve(doll_dir):
         # The face shades from its SDF sweep rather than N dot L. The map is
         # shared: the game binds one across some thirty face materials, which
         # works because every GFL2 face unwraps the same way.
-        if part == "face":
+        if part in ("face", "faceskin"):
             sdf = Path("Assets/Authored/shared/face_sdf.png")
             if not (doll_dir.parents[1] / "shared" / "face_sdf.png").is_file():
                 raise SystemExit(f"face SDF map missing: {sdf}")

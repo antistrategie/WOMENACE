@@ -38,9 +38,22 @@ Shader "Womenace/DollToonTrans"
         _MatCapUVOffset ("MatCap UV Offset", Range(-0.2, 0.2)) = 0.025
         _BaseTint ("Base Tint", Color) = (1, 1, 1, 1)
         _IblIntensity ("IBL Intensity", Range(0, 4)) = 0.6038
+        // How much of the key (directional) light reaches this renderer, 1 everywhere but where
+        // the strategy diorama hands a doll its room's light probe occlusion of the sun.
+        [HideInInspector] _KeyOcclusion ("Key Occlusion", Float) = 1
+        // The way a window's light comes to a doll the strategy diorama lights by it (xyz), in
+        // place of the sun's (w above a half).
+        [HideInInspector] _KeyDirection ("Key Direction", Vector) = (0, 0, 0, 0)
+        // Set by the strategy diorama on a doll standing in a GFL2 room: GFL2's own ramp and
+        // ambient, and the room's reflection probe in place of the sky.
+        [HideInInspector] _RoomLit ("Room Lit", Float) = 0
+        [HideInInspector] _UseRoomReflection ("Use Room Reflection", Float) = 0
+        [HideInInspector][NoScaleOffset] _RoomReflection ("Room Reflection", Cube) = "black" {}
         _UseBlendTex ("Use FaceSDF", Float) = 0
         _SdfMap ("Face SDF (R sweep, A selector)", 2D) = "black" {}
         _BlendSmoothness ("FaceSDF Penumbra", Range(0.001, 1)) = 0.1
+        _FaceSpecIntensity ("Face Glint Intensity", Float) = 1
+        _SpecUVYOffset ("Face Glint V Offset", Float) = 0
         // Below this coverage a texel casts no shadow. Half, because the sheet
         // around a decal is fully clear and the mark itself nearly opaque.
         _ShadowClip ("Shadow Caster Clip", Range(0, 1)) = 0.5

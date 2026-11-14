@@ -64,6 +64,19 @@ public static class Workshop
         return new { ok = result.Item1, error = result.Item2 };
     }
 
+    // Pick the nth blueprint on the open Workshop, whether or not it can be afforded, to see
+    // what Assemble shows for it.
+    [MutatingVerb]
+    public static object PickBlueprint(int index)
+    {
+        var screen = Il2CppMenace.UI.UIManager.Get()?.GetActiveScreen()?.TryCast<Il2CppMenace.UI.Strategy.WorkshopUIScreen>();
+        var list = screen?.m_SortedAvailableBlueprints;
+        if (list == null || index < 0 || index >= list.Count)
+            return new { error = $"no blueprint {index} of {list?.Count ?? 0}" };
+        screen.SetSelectedBlueprint(list[index]);
+        return new { ok = true, of = list.Count, makes = list[index]?.GetCraftingResult()?.GetID() };
+    }
+
     [MutatingVerb]
     public static object DisassemblyView()
     {

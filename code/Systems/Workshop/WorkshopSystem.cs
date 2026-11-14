@@ -32,6 +32,21 @@ public sealed class WorkshopSystem : JiangyuSystem
         Context.Patches.Postfix("Il2CppMenace.Strategy.OwnedItems", "AddItem", 3, OnItemAdded);
     }
 
+    // Whether the Workshop is taking weapons apart, and not assembling them.
+    internal bool Disassembling => _disassembly.IsActive;
+
+    internal void SetDisassembling(bool on)
+    {
+        if (_disassembly.IsActive != on)
+            _disassembly.SetMode(on);
+    }
+
+    // The weapon the Workshop is working on: the one picked to take apart, or what the picked
+    // blueprint makes.
+    internal Il2CppMenace.Items.BaseItemTemplate WorkedOn(WorkshopUIScreen screen) => _disassembly.IsActive
+        ? _disassembly.Selected?.GetTemplate()
+        : screen?.m_SelectedBlueprint?.GetCraftingResult();
+
     public override void OnUnload()
     {
         if (ReferenceEquals(Instance, this))

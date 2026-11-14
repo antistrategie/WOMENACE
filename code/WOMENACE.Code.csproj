@@ -42,6 +42,40 @@
       <HintPath>$(GameAssembliesDir)/UnityEngine.ScreenCaptureModule.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <!-- HDRP camera data and volumes for the strategy diorama's own camera, which the game's
+         DisplaySettings.ApplyToAllCameras expects every camera to carry. -->
+    <!-- VideoPlayer, for the mission select planet video on the strategy diorama's holotable. -->
+    <Reference Include="UnityEngine.VideoModule">
+      <HintPath>$(GameAssembliesDir)/UnityEngine.VideoModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- ParticleSystem, for inspecting the strategy diorama's room effects. -->
+    <Reference Include="UnityEngine.ParticleSystemModule">
+      <HintPath>$(GameAssembliesDir)/UnityEngine.ParticleSystemModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- Physics.Raycast, for clicking 3D props in the strategy diorama. -->
+    <Reference Include="UnityEngine.PhysicsModule">
+      <HintPath>$(GameAssembliesDir)/UnityEngine.PhysicsModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- The game's Jura SDF font asset, applied to mod UI that does not inherit it. -->
+    <Reference Include="UnityEngine.TextCoreTextEngineModule">
+      <HintPath>$(GameAssembliesDir)/UnityEngine.TextCoreTextEngineModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.ImageConversionModule">
+      <HintPath>$(GameAssembliesDir)/UnityEngine.ImageConversionModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Unity.RenderPipelines.Core.Runtime">
+      <HintPath>$(GameAssembliesDir)/Unity.RenderPipelines.Core.Runtime.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Unity.RenderPipelines.HighDefinition.Runtime">
+      <HintPath>$(GameAssembliesDir)/Unity.RenderPipelines.HighDefinition.Runtime.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
   </ItemGroup>
 
 </Project>

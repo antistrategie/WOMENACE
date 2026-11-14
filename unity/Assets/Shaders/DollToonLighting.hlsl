@@ -46,6 +46,8 @@ TEXTURE2D(_SpecularMap);
 SAMPLER(sampler_SpecularMap);
 TEXTURE2D(_SdfMap);
 SAMPLER(sampler_SdfMap);
+TEXTURECUBE(_RoomReflection);
+SAMPLER(sampler_RoomReflection);
 
 CBUFFER_START(UnityPerMaterial)
     float4 _BaseMap_ST;
@@ -58,6 +60,12 @@ CBUFFER_START(UnityPerMaterial)
     float _UseBlendTex;
     float _BlendSmoothness;
     float _IblIntensity;
+    float _KeyOcclusion;
+    float _RoomLit;
+    float4 _KeyDirection;
+    float _UseRoomReflection;
+    float _FaceSpecIntensity;
+    float _SpecUVYOffset;
 CBUFFER_END
 
 #define RAMP_V_MAIN_DIFFUSE 0.125
@@ -129,6 +137,10 @@ bool GetKeyLight(out float3 L, out float3 colour)
     // light is its negation.
     L = -light.forward;
     colour = light.color;
+    // A doll the strategy diorama lights from a window takes the key from the way that
+    // light comes (xyz, towards it) in place of the sun's own way.
+    if (_KeyDirection.w > 0.5)
+        L = normalize(_KeyDirection.xyz);
     return true;
 }
 
@@ -148,13 +160,15 @@ bool GetKeyLight(out float3 L, out float3 colour)
 // weighted by 1 - U, so the dark end takes the full amount, the
 // terminator part of it, and the lit end keeps the gradient's warmth.
 // Same-luminance grey moves the shadow's hue and not its brightness.
+// A doll in a GFL2 room has that ambient (its light probes), so it takes
+// the ramp unmixed, as GFL2 does.
 float3 RampDiffuse(float u)
 {
     float x = saturate(max(1e-4, u));
     float3 band = SAMPLE_TEXTURE2D_LOD(_RampMap, sampler_RampMap,
         float2(x, RAMP_V_MAIN_DIFFUSE), 0).rgb;
     float grey = dot(band, float3(0.2126, 0.7152, 0.0722));
-    return lerp(band, grey.xxx, 0.5 * (1.0 - x));
+    return lerp(band, grey.xxx, 0.5 * (1.0 - _RoomLit) * (1.0 - x));
 }
 
 // Height-correlated Smith visibility, already carrying 1/(4 NoL NoV) so
@@ -234,6 +248,18 @@ float3 GgxSpecular(float3 albedo, float roughness, float metallic,
 // the factor the encoding exists to undo. HDRP does not pre-expose this
 // texture either, so the exposure multiply at the end of the fragment applies
 // to it exactly as it does to the lights and the probe.
+// Karis's mobile env-BRDF: two fitted polynomials standing in for the
+// split-sum scale and bias, which is the approximation the spec names.
+float3 EnvBrdfScale(float3 F0, float roughness, float NoV)
+{
+    const float4 c0 = float4(-1.0, -0.0275, -0.572, 0.022);
+    const float4 c1 = float4(1.0, 0.0425, 1.04, -0.04);
+    float4 r = roughness * c0 + c1;
+    float a004 = min(r.x * r.x, exp2(-9.28 * NoV)) * r.x + r.y;
+    float2 ab = float2(-1.04, 1.04) * a004 + r.zw;
+    return F0 * ab.x + ab.y;
+}
+
 float3 IblSpecular(float3 albedo, float roughness, float metallic,
                    float3 N, float3 viewDirWS)
 {
@@ -243,17 +269,14 @@ float3 IblSpecular(float3 albedo, float roughness, float metallic,
 
     // Clamped as HDRP clamps its own sky reads, because an unbounded sky
     // texel reaching a float16 target arrives as an infinity.
+    // In a GFL2 room the room's reflection probe, as GFL2 samples unity_SpecCube0. Its cubes are
+    // GFL2's raw HDR data, so the decode multiplier _IblIntensity stands for is 1.
+    if (_UseRoomReflection > 0.5)
+        return SAMPLE_TEXTURECUBE_LOD(_RoomReflection, sampler_RoomReflection, R, 6.0 * roughness).rgb
+            * EnvBrdfScale(F0, roughness, NoV);
     float3 env = ClampToFloat16Max(SampleSkyTexture(R, 6.0 * roughness, 0).rgb);
 
-    // Karis's mobile env-BRDF: two fitted polynomials standing in for the
-    // split-sum scale and bias, which is the approximation the spec names.
-    const float4 c0 = float4(-1.0, -0.0275, -0.572, 0.022);
-    const float4 c1 = float4(1.0, 0.0425, 1.04, -0.04);
-    float4 r = roughness * c0 + c1;
-    float a004 = min(r.x * r.x, exp2(-9.28 * NoV)) * r.x + r.y;
-    float2 ab = float2(-1.04, 1.04) * a004 + r.zw;
-
-    return env * (F0 * ab.x + ab.y) * _IblIntensity;
+    return env * EnvBrdfScale(F0, roughness, NoV) * _IblIntensity;
 }
 
 float WrapMod2(float x) { return 2.0 * frac(x * 0.5 + 2.0); }
@@ -278,7 +301,7 @@ float WrapMod2(float x) { return 2.0 * frac(x * 0.5 + 2.0); }
 //    2D pair before building baseU.
 //  - Both thresholds are remapped before any comparison. Listings derived
 //    from the third-party writeup omit this.
-float FaceSdf(float2 sdfUV, float3 lightWS)
+float FaceSdf(float2 sdfUV, float3 lightWS, out float faceSdfRaw, out float2 lightCompass)
 {
     // Two independent frame corrections, which happen to compose into a
     // single negation. Applying either alone leaves the other visible, and
@@ -330,7 +353,30 @@ float FaceSdf(float2 sdfUV, float3 lightWS)
     float result1 = (wr1 < 1.0) ? valA : valB;
     float faceSDF = (wr2 < 1.0) ? min(result1, valC) : max(result1, valB);
 
+    faceSdfRaw = faceSDF;
+    lightCompass = faceLightDir2D;
     return faceSDF * yFactor;
+}
+
+// The face's nose glint, from the spec's FaceSDF section (uber :476505-476570). The SDF map's G
+// and B channels are landmark masks over the nose bridge and philtrum. A compass blended 85%
+// toward the camera and 15% toward the key picks the side (U mirrored to the camera's side) and a
+// frontality gate, V slides against camera height, and the result fades as either the camera or
+// the key leaves the front of the face. The camera is resolved into the same corrected object
+// frame FaceSdf uses, a single negation. The return value goes beside the ramp diffuse, inside
+// the key colour multiply.
+float FaceGlint(float2 sdfUV, float3 N, float3 viewDirWS, float faceSdfRaw, float2 lightCompass)
+{
+    float3 cameraOS = -TransformWorldToObject(float3(0.0, 0.0, 0.0));
+    float2 cameraCompass = normalize(cameraOS.xz);
+    float2 compass = normalize(lerp(lightCompass, cameraCompass, 0.85));
+    float gate = clamp(saturate(-compass.y - 0.70710678) * 3.41421356, 0.01, 0.99);
+    float2 uv = float2(compass.x < 0.0 ? 1.0 - sdfUV.x : sdfUV.x,
+        sdfUV.y + viewDirWS.y * _SpecUVYOffset);
+    float4 landmarks = SAMPLE_TEXTURE2D(_SdfMap, sampler_SdfMap, uv);
+    float mask = (landmarks.b >= gate ? 1.0 : 0.0) * (landmarks.g >= 1.0 - gate ? 1.0 : 0.0);
+    float NoV = saturate(dot(N, viewDirWS));
+    return mask * NoV * _FaceSpecIntensity * saturate(2.0 * lightCompass.y - 1.0) * faceSdfRaw;
 }
 
 // Hair specular, which is not GGX and reads no tangent frame. The spc
@@ -376,6 +422,7 @@ float3 PunctualIlluminance(LightData light, float3 positionRWS, out float3 L)
 float3 AdditionalLightsDiffuse(float3 positionRWS, float3 N)
 {
     float3 sum = 0.0;
+    uint renderingLayers = _EnableLightLayers ? GetMeshRenderingLayerMask() : RENDERING_LAYERS_MASK;
     // [loop], not unrolled: the count is a runtime value and a scene can
     // carry dozens of lights, so asking the compiler to unroll it either
     // fails outright or produces an enormous program.
@@ -383,13 +430,21 @@ float3 AdditionalLightsDiffuse(float3 positionRWS, float3 N)
     for (uint i = 0; i < _PunctualLightCount; i++)
     {
         LightData light = _LightDatas[i];
+        // A light kept off this renderer's rendering layers (a GFL2 room light
+        // that does not light characters). With light layers off for the frame,
+        // HDRP matches every renderer to every light, and so does this.
+        if ((light.lightLayers & renderingLayers) == 0)
+            continue;
         float3 L;
         float3 illuminance = PunctualIlluminance(light, positionRWS, L);
         if (all(illuminance <= 0.0))
             continue;
+        // GFL2 scales the band by min(1, NdotL / max(NdotL, eps)), zero on the side facing away.
+        // The ramp's dark end is not black, so without that a light reaches all of the doll.
         float u = saturate(dot(N, L));
+        float x = max(u, 6.103516e-5);
         float3 band = SAMPLE_TEXTURE2D_LOD(_RampMap, sampler_RampMap,
-            float2(max(1e-4, u), RAMP_V_ADDITIONAL), 0).rgb;
+            float2(x, RAMP_V_ADDITIONAL), 0).rgb * min(1.0, u / x);
         sum += band * illuminance;
     }
     return sum / PI;

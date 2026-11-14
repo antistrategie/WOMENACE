@@ -31,7 +31,7 @@ internal sealed partial class ProcurementView
     {
         _pool.Clear();
         var dialog = Element("wm-proc-pool", _pool);
-        ShopVisuals.Surface(dialog, ShopSurface.Dialog);
+        ShopVisuals.Brackets(dialog);
         var header = Element("wm-proc-row wm-proc-between wm-proc-pool-heading", dialog);
         Text(Locale.Text("WOMENACE::ui/procurement/pool_title", "Reward pool"), "wm-proc-title", header);
         header.Add(ShopCurrency.SymbolButton(() => CloseOverlay(_pool), "wm-proc-close", true));
@@ -41,7 +41,8 @@ internal sealed partial class ProcurementView
             var button = Button("", () => OpenPool(section), "wm-proc-pool-tab");
             button.name = "wm-procurement-pool-" + section.ToString().ToLowerInvariant();
             button.EnableInClassList("wm-proc-selected", section == _section);
-            ShopVisuals.Surface(button, ShopSurface.Tab, Colour(section));
+            if (section == _section)
+                ShopVisuals.TabEdge(button, Colour(section));
             Text(ProcurementCatalogue.SectionName(section), "wm-proc-pool-tab-name", button);
             var rate = Text(FormattableString.Invariant($"{Rate(section):0.###}%"), "wm-proc-pool-tab-rate", button);
             if (section == _section)
@@ -117,7 +118,7 @@ internal sealed partial class ProcurementView
                 card.EnableInClassList("wm-proc-pool-equipment", _section is ProcurementSection.Equipment or ProcurementSection.Special);
                 card.EnableInClassList("wm-proc-column-end", column == columns - 1);
                 card.name = "wm-procurement-item-" + entry.Reward.Id;
-                ShopVisuals.Surface(card, ShopSurface.Card, Colour(_section));
+                ShopVisuals.Card(card, Colour(_section));
                 if (portrait)
                     card.AddToClassList("wm-proc-pool-dossier");
                 if (hidden)
@@ -164,7 +165,7 @@ internal sealed partial class ProcurementView
         const int maximum = 99999;
         CloseOverlay(_exchange);
         var dialog = Element("wm-proc-exchange-dialog", _exchange);
-        ShopVisuals.Surface(dialog, ShopSurface.Dialog);
+        ShopVisuals.Brackets(dialog);
         var header = Element("wm-proc-row wm-proc-between", dialog);
         Text(Locale.Text("WOMENACE::ui/procurement/pieces", "Collapse Pieces"), "wm-proc-title", header);
         header.Add(ShopCurrency.SymbolButton(() => CloseOverlay(_exchange), "wm-proc-close", true));

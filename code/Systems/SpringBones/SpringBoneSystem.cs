@@ -51,7 +51,10 @@ public sealed class SpringBoneSystem : JiangyuSystem
     // Bodies drawn at this LOD or closer simulate. The baked LODs switch at
     // 50, 25, 10 and 2 per cent of screen height, so LOD1 is a body filling a
     // quarter of the screen or more.
-    internal static int MaxSimulatedLod { get; set; } = 1;
+    internal static int MaxSimulatedLod { get; set; } = DefaultSimulatedLod;
+    private const int DefaultSimulatedLod = 1;
+
+    internal static void ResetSimulatedLod() => MaxSimulatedLod = DefaultSimulatedLod;
 
     // Set by the Springs.Record dev verb: rigs built afterwards start
     // recording straight away, so a mission loaded later is covered too.
@@ -66,6 +69,8 @@ public sealed class SpringBoneSystem : JiangyuSystem
     {
         // Mod coroutines survive scene loads, so the loops are stopped
         // explicitly rather than orphaned beside fresh ones.
+        // The strategy rooms raise the limit for their few dolls. A mission starts from the default.
+        MaxSimulatedLod = DefaultSimulatedLod;
         StopRoutine(ref _loopHandle);
         StopRoutine(ref _scanHandle);
         _rigs.Clear();

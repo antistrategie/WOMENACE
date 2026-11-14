@@ -8,7 +8,6 @@
 // The open state is its own effect, not the Deployed stance: it cannot be opened while
 // deployed or pinned down, and the stance's Deploy is disabled while it is open. Opening
 // and closing both cost AP.
-
 clone "WeaponTemplate" from="specialweapon.rocket_launcher_tier1_pal" id="specialweapon.welrod_umbrella" {
     append "Tags" "wmgfl_doll_weapon"
     append "Tags" "jy_no_sell"
@@ -21,8 +20,6 @@ clone "WeaponTemplate" from="specialweapon.rocket_launcher_tier1_pal" id="specia
     set "Description" {
         set "m_DefaultTranslation" "A black umbrella with a reinforced canopy. While unassuming, it can provide considerable defensive capabilites when opened."
     }
-    set "Model" asset="weapon/welrod_umbrella_back/main"
-    set "ModelSecondary" asset="weapon/welrod_umbrella/main"
     set "Icon" asset="weapon/welrod_umbrella/Icon"
     set "IconEquipment" asset="weapon/welrod_umbrella/IconEquipment"
     set "IconEquipmentDisabled" asset="weapon/welrod_umbrella/IconEquipmentDisabled"

@@ -144,8 +144,15 @@ Varyings vert(Attributes input)
     return output;
 }
 
+// Dev: 1 paints the hair-to-face band magenta (Diorama.SetGlobal _WmDollDebug).
+float _WmDollDebug;
+
 float4 frag(Varyings input, bool isFrontFace : SV_IsFrontFace) : SV_TARGET
 {
+#ifdef DOLL_FACE_BAND
+    if (_WmDollDebug > 0.5)
+        return float4(GetCurrentExposureMultiplier() * float3(4.0, 0.0, 4.0), 1.0);
+#endif
     // The same normal the prepass and the motion vector pass wrote into
     // the normal buffer, so the occlusion read back below was integrated
     // around the normal this surface actually shades with.
@@ -168,10 +175,16 @@ float4 frag(Varyings input, bool isFrontFace : SV_IsFrontFace) : SV_TARGET
 
     float3 lightWS, keyColour;
     bool hasKey = GetKeyLight(lightWS, keyColour);
+    // A key that comes from a window is not the sun's: the sun's shadow map says nothing of it.
     float shadow = hasKey
-        ? KeyShadowAttenuation(input.positionCS.xy, input.positionRWS, normalWS, lightWS)
+        ? (_KeyDirection.w > 0.5 ? 1.0 : KeyShadowAttenuation(input.positionCS.xy, input.positionRWS, normalWS, lightWS)) * _KeyOcclusion
         : 1.0;
     float ndotl = dot(normalWS, lightWS);
+#ifdef DOLL_FACE_BAND
+    // GFL2's hair-to-face band: the face re-shaded where the hair's offset silhouette marked the
+    // stencil, with the key shut off so the sweep lands on the ramp's dark end.
+    shadow = 0.0;
+#endif
 
     // Specular sits inside the parentheses of the composite, added to
     // albedo and then multiplied by the diffuse ramp, so a surface the
@@ -230,11 +243,19 @@ float4 frag(Varyings input, bool isFrontFace : SV_IsFrontFace) : SV_TARGET
     // (directIntensity = faceSDF * mainShadow * yFactor), and the
     // result indexes the same ramp band the body uses.
     bool useSdf = _UseBlendTex > 0.5;
-    float3 diffuse = RampDiffuse(
-        (useSdf ? FaceSdf(input.uv2, lightWS) : ndotl) * shadow);
+    float faceSdfRaw = 0.0;
+    float2 lightCompass = float2(0.0, 0.0);
+    float sweep = ndotl;
+    float glint = 0.0;
+    if (useSdf)
+    {
+        sweep = FaceSdf(input.uv2, lightWS, faceSdfRaw, lightCompass);
+        glint = FaceGlint(input.uv2, normalWS, viewDirWS, faceSdfRaw, lightCompass) * shadow;
+    }
+    float3 diffuse = RampDiffuse(sweep * shadow);
 
     float3 key = hasKey
-        ? (tinted + specular) * diffuse * keyColour / PI
+        ? ((tinted + specular) * diffuse + glint) * keyColour / PI
         : 0.0;
 
     // Hair sits on top of the ramp diffuse rather than inside it, and
@@ -265,8 +286,11 @@ float4 frag(Varyings input, bool isFrontFace : SV_IsFrontFace) : SV_TARGET
     // away from the key, where ambient is all there is. The RMO map is
     // gentle by design, measuring 234-239 of 255, where screen-space
     // occlusion on a body reading its own bulk as an occluder is not.
+    // A metal takes no diffuse ambient, as GFL2's composite scales it by
+    // 1 - metallic. Only an RMO map carries metallic.
     float3 ambient = tinted * IndirectDiffuse(
-        input.positionRWS, normalWS, (uint2)input.positionCS.xy) * occlusion;
+        input.positionRWS, normalWS, (uint2)input.positionCS.xy) * occlusion
+        * (hasMask ? 1.0 - rmo.g : 1.0);
 
     // Gated on the same mask sentinel GGX uses, and for a sharper reason.
     // A material shipping no RMO map takes the 1x1 placeholder, which read

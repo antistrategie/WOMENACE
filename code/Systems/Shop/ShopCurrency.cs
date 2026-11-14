@@ -44,7 +44,7 @@ internal sealed class ShopCurrency(ShopArtwork artwork)
         var button = new Button();
         button.AddToClassList("wm-shop-symbol-button");
         button.AddToClassList(classes);
-        ShopVisuals.Surface(button, ShopSurface.Button);
+        ShopVisuals.Button(button);
         button.clickable.clicked += (Action)(() => { Sound.Click(); action(); });
         var symbol = Element("wm-shop-symbol", button, PickingMode.Ignore);
         symbol.EnableInClassList("wm-shop-symbol-close", close);

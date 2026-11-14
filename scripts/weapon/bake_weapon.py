@@ -66,6 +66,7 @@ class WeaponConfig:
     centre_axes: list[str]
     flip_uv_v: bool
     attach_points: dict[str, str]
+    left_grip_turn: bool
     mesh_offset: tuple[float, float, float]
 
     @staticmethod
@@ -98,6 +99,9 @@ class WeaponConfig:
                     {"muzzle": "muzzle", "weapon_hand_l": "weapon_hand_l"},
                 )
             ),
+            # Off for the weapons of a rig that skips the converter's palm
+            # calibration, whose left hand suits the reference's rotation as it comes.
+            left_grip_turn=bool(data.get("left_grip_turn", True)),
             # glTF-space shift applied after centring, to seat the gun's grip
             # on the Hand_R origin where the reference's grip sits.
             mesh_offset=tuple(float(c) for c in data.get("mesh_offset", [0.0, 0.0, 0.0])),
@@ -303,8 +307,22 @@ class AttachPoint:
     rotation: tuple[float, float, float, float]  # quaternion (x, y, z, w)
 
 
+# The left hand is put on a weapon by IK, which gives the hand bone the rotation of the
+# `weapon_hand_l` empty. With a vanilla weapon's rotation a doll's hand hangs below the weapon
+# with its fingers pointing down. A quarter turn about the hand's length (the bone's +Y in the
+# glTF's frame) lays its palm against the handguard. As x, y, z, w.
+LEFT_GRIP_TURN_GLTF = (0.0, -math.sin(math.radians(45.0)), 0.0, math.cos(math.radians(45.0)))
+
+
+def turn_left_grip(rotation: tuple[float, float, float, float]) -> tuple[float, float, float, float]:
+    x, y, z, w = rotation
+    tx, ty, tz, tw = LEFT_GRIP_TURN_GLTF
+    q = mathutils.Quaternion((w, x, y, z)) @ mathutils.Quaternion((tw, tx, ty, tz))
+    return (q.x, q.y, q.z, q.w)
+
+
 def read_reference_attach_points(
-    gltf_path: Path, mapping: dict[str, str]
+    gltf_path: Path, mapping: dict[str, str], left_grip_turn: bool = True
 ) -> list[AttachPoint]:
     """Extract the attach-point node TRS from the reference glTF, one empty per
     `mapping` entry (empty name -> reference node name). `muzzle` and
@@ -323,6 +341,8 @@ def read_reference_attach_points(
             continue
         t = tuple(node.get("translation", [0.0, 0.0, 0.0]))
         r = tuple(node.get("rotation", [0.0, 0.0, 0.0, 1.0]))
+        if left_grip_turn and empty_name.startswith("weapon_hand_l"):
+            r = turn_left_grip(r)
         found.append(AttachPoint(name=empty_name, translation=t, rotation=r))
     if missing:
         print(f"[warn] reference glTF missing attach point(s): {missing}")
@@ -461,7 +481,7 @@ def main() -> None:
     root = create_prefab_root(cfg.mesh_basename + "_root")
     mesh_obj.parent = root
 
-    points = read_reference_attach_points(cfg.reference_weapon_gltf, cfg.attach_points)
+    points = read_reference_attach_points(cfg.reference_weapon_gltf, cfg.attach_points, cfg.left_grip_turn)
     print(f"[info] reference attach points: {[p.name for p in points]}")
     create_attach_point_empties(root, points)
 

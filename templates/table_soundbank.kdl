@@ -1,0 +1,176 @@
+clone "SoundBank" from="ui_soundbank" id="wmgfl_table_soundbank" {
+    // The holotable's sounds and the ops room's bed, from GFL2's UI_System, UI_Battle and
+    // BGE_System_CommandRoom banks.
+    clear "sounds"
+    clear "busIndices"
+
+    append "sounds" {
+        set "name" "appear"
+        set "fixedVolume" 0.8
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="table/appear"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "vanish"
+        set "fixedVolume" 0.7
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="table/vanish"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "travel"
+        set "fixedVolume" 0.6
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="table/travel"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "cards"
+        set "fixedVolume" 0.8
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="table/cards"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "select"
+        set "fixedVolume" 0.8
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="table/select"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "token_lift"
+        set "fixedVolume" 0.4
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="table/token_lift"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "token_place"
+        set "fixedVolume" 0.4
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="table/token_place"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "token_refused"
+        set "fixedVolume" 0.4
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="table/token_refused"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "launch"
+        set "fixedVolume" 1.0
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="table/launch"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "count"
+        set "fixedVolume" 0.6
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="table/count"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "trade"
+        set "fixedVolume" 0.9
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="table/trade"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "installed"
+        set "fixedVolume" 0.9
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="table/installed"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "unlocked"
+        set "fixedVolume" 0.9
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="table/unlocked"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "assembled"
+        set "fixedVolume" 0.9
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="table/assembled"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "room"
+        set "fixedVolume" 0.45
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="table/room"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "projector_on"
+        set "fixedVolume" 0.4
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="table/projector_on"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "projector_off"
+        set "fixedVolume" 0.8
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="table/projector_off"
+        }
+    }
+    append "busIndices" 0
+}

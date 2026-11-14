@@ -28,6 +28,10 @@ public static class Shop
     [MutatingVerb]
     public static object Open() => new { ok = ShopSystem.Instance?.Open() == true };
 
+    // Puts some of an item of the showing tab in the basket, which the ops room stands on its table.
+    [MutatingVerb]
+    public static object Pick(string itemId, int count = 1) => new { ok = ShopSystem.Instance?.PickFromDev(itemId, count) == true };
+
     [MutatingVerb]
     public static object Buy(string itemId, int count = 1) => Trade(itemId, count, true);
 
@@ -74,8 +78,6 @@ public static class Shop
             return new { error = "shop is locked or unavailable" };
         if (view == "outfits")
             system.ShowOutfits();
-        else if (view == "affinity")
-            system.ShowAffinity();
         else
             system.SetTab(view != "sell");
         return new { ok = true };
@@ -85,5 +87,18 @@ public static class Shop
     {
         var template = Templates.ById<BaseItemTemplate>(itemId);
         return new { itemId, count = template == null ? 0 : Inventory.Owned?.GetInstanceCount(template) ?? 0 };
+    }
+}
+
+public sealed partial class ShopSystem
+{
+    // Puts an item of the showing tab in the basket, as a click on its tile does.
+    internal bool PickFromDev(string itemId, int count)
+    {
+        if (_catalogue?.Items.ContainsKey(itemId) != true)
+            return false;
+        Selection[itemId] = Selection.GetValueOrDefault(itemId) + count;
+        BuildCatalogue();
+        return true;
     }
 }

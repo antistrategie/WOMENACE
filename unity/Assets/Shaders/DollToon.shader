@@ -63,7 +63,7 @@ Shader "Womenace/DollToon"
         _SpecularMap ("Hair Specular (_spc)", 2D) = "black" {}
         // Off by default: the streak samples _spc with the hair mesh's own
         // TEXCOORD1, and only real coordinates make it mean anything. A ripped
-        // game mesh carries the set natively; a PMX source cannot, so
+        // game mesh carries the set natively. A PMX source cannot, so
         // scripts/doll/transfer_hair_uv.py writes the game's own set into the
         // glTF from the character's dumped hair mesh, and the bake raises this
         // only for hair whose transfer has run. A non-zero value is also what
@@ -74,6 +74,17 @@ Shader "Womenace/DollToon"
 
         // iblColor's intensity. 0.6038 is the value the captured frame runs it at.
         _IblIntensity ("IBL Intensity", Range(0, 4)) = 0.6038
+        // How much of the key (directional) light reaches this renderer, 1 everywhere but where
+        // the strategy diorama hands a doll its room's light probe occlusion of the sun.
+        [HideInInspector] _KeyOcclusion ("Key Occlusion", Float) = 1
+        // The way a window's light comes to a doll the strategy diorama lights by it (xyz), in
+        // place of the sun's (w above a half).
+        [HideInInspector] _KeyDirection ("Key Direction", Vector) = (0, 0, 0, 0)
+        // Set by the strategy diorama on a doll standing in a GFL2 room: GFL2's own ramp and
+        // ambient, and the room's reflection probe in place of the sky.
+        [HideInInspector] _RoomLit ("Room Lit", Float) = 0
+        [HideInInspector] _UseRoomReflection ("Use Room Reflection", Float) = 0
+        [HideInInspector][NoScaleOffset] _RoomReflection ("Room Reflection", Cube) = "black" {}
 
         // FaceSDF. The face takes no N dot L at all: an authored threshold map,
         // swept by the light's compass angle around the character, supplies the
@@ -83,6 +94,8 @@ Shader "Womenace/DollToon"
         _UseBlendTex ("Use FaceSDF", Float) = 0
         _SdfMap ("Face SDF (R sweep, A selector)", 2D) = "black" {}
         _BlendSmoothness ("FaceSDF Penumbra", Range(0.001, 1)) = 0.1
+        _FaceSpecIntensity ("Face Glint Intensity", Float) = 1
+        _SpecUVYOffset ("Face Glint V Offset", Float) = 0
 
 
 
@@ -127,44 +140,7 @@ Shader "Womenace/DollToon"
             #pragma multi_compile _ WRITE_NORMAL_BUFFER
             #pragma multi_compile_fragment _ WRITE_MSAA_DEPTH
 
-            struct DepthVaryings
-            {
-                float4 positionCS : SV_POSITION;
-                float3 normalWS : TEXCOORD0;
-                float4 tangentWS : TEXCOORD1;
-                float2 uv : TEXCOORD2;
-            };
-
-            DepthVaryings vertDepth(Attributes input)
-            {
-                DepthVaryings output;
-                output.positionCS =
-                    TransformWorldToHClip(TransformObjectToWorld(input.positionOS.xyz));
-                output.normalWS = TransformObjectToWorldNormal(input.normalOS);
-                output.tangentWS = float4(
-                    TransformObjectToWorldDir(input.tangentOS.xyz), input.tangentOS.w);
-                output.uv = input.uv * _BaseMap_ST.xy + _BaseMap_ST.zw;
-                return output;
-            }
-
-            void fragDepth(DepthVaryings input, bool isFrontFace : SV_IsFrontFace
-            #ifdef WRITE_MSAA_DEPTH
-                , out float4 outDepthColour : SV_Target0
-            #endif
-            #ifdef WRITE_NORMAL_BUFFER
-                , out float4 outNormalBuffer : DOLL_SV_TARGET_NORMAL_DEPTHPASS
-            #endif
-            )
-            {
-            #ifdef WRITE_MSAA_DEPTH
-                outDepthColour = DollDepthAsColour(input.positionCS);
-            #endif
-            #ifdef WRITE_NORMAL_BUFFER
-                DollWriteNormalBuffer(
-                    DollShadingNormal(input.normalWS, input.tangentWS, input.uv, isFrontFace),
-                    DollPerceptualRoughness(input.uv), outNormalBuffer);
-            #endif
-            }
+            #include "DollDepthPass.hlsl"
             ENDHLSL
         }
 
@@ -234,7 +210,6 @@ Shader "Womenace/DollToon"
             HLSLPROGRAM
             #pragma vertex vertMotion
             #pragma fragment fragMotion
-            #include "DollMotionVectors.hlsl"
 
             // This pass feeds the normal buffer too, because it is the pass that
             // replaced the prepass for this renderer. Its target index moves with the
@@ -243,75 +218,7 @@ Shader "Womenace/DollToon"
             #pragma multi_compile _ WRITE_DECAL_BUFFER_AND_RENDERING_LAYER
             #pragma multi_compile_fragment _ WRITE_MSAA_DEPTH
 
-            // The surface attributes this pass needs, plus the previous-frame position
-            // stream. Declared here rather than on the shared Attributes struct
-            // because TEXCOORD4 is bound only while this pass is drawing.
-            struct MotionAttributes
-            {
-                float4 positionOS : POSITION;
-                float3 normalOS : NORMAL;
-                float4 tangentOS : TANGENT;
-                float2 uv : TEXCOORD0;
-                float3 previousPositionOS : TEXCOORD4;
-            };
-
-            struct MotionVaryings
-            {
-                float4 positionCS : SV_POSITION;
-                float4 currentCS : TEXCOORD0;
-                float4 previousCS : TEXCOORD1;
-                float3 normalWS : TEXCOORD2;
-                float4 tangentWS : TEXCOORD3;
-                float2 uv : TEXCOORD4;
-            };
-
-            // The motion half comes from the shared vertex rather than a second copy
-            // of it, so the two passes cannot drift apart on which projection is
-            // jittered or which frame the previous position belongs to.
-            MotionVaryings vertMotion(MotionAttributes input)
-            {
-                DollMotionAttributes motion;
-                motion.positionOS = input.positionOS;
-                motion.normalOS = input.normalOS;
-                motion.previousPositionOS = input.previousPositionOS;
-                DollMotionVaryings shared_ = DollMotionVertex(motion);
-
-                MotionVaryings output;
-                output.positionCS = shared_.positionCS;
-                output.currentCS = shared_.currentCS;
-                output.previousCS = shared_.previousCS;
-                output.normalWS = TransformObjectToWorldNormal(input.normalOS);
-                output.tangentWS = float4(
-                    TransformObjectToWorldDir(input.tangentOS.xyz), input.tangentOS.w);
-                output.uv = input.uv * _BaseMap_ST.xy + _BaseMap_ST.zw;
-                return output;
-            }
-
-            void fragMotion(MotionVaryings input, bool isFrontFace : SV_IsFrontFace
-            #ifdef WRITE_MSAA_DEPTH
-                , out float4 outDepthColour : SV_Target0
-            #endif
-                , out float4 outMotion : DOLL_SV_TARGET_MOTION
-            #ifdef WRITE_NORMAL_BUFFER
-                , out float4 outNormalBuffer : DOLL_SV_TARGET_NORMAL_MOTIONPASS
-            #endif
-            )
-            {
-                DollMotionVaryings motion;
-                motion.positionCS = input.positionCS;
-                motion.currentCS = input.currentCS;
-                motion.previousCS = input.previousCS;
-                outMotion = DollMotionValue(motion);
-
-            #ifdef WRITE_MSAA_DEPTH
-                outDepthColour = DollDepthAsColour(input.positionCS);
-            #endif
-            #ifdef WRITE_NORMAL_BUFFER
-                DollWriteNormalBuffer(
-                    DollShadingNormal(input.normalWS, input.tangentWS, input.uv, isFrontFace),
-                    DollPerceptualRoughness(input.uv), outNormalBuffer);
-            #endif
-            }
+            #include "DollMotionPass.hlsl"
             ENDHLSL
         }
 

@@ -164,6 +164,11 @@ internal static class SpringChainBuilder
                         ? SpringSolver.Direction(lateral + NVector3.UnitZ)
                         : lateral.LengthSquared() > 0f ? lateral : -NVector3.UnitZ;
                     chain.Outward = NVector3.Transform(outward, inverseHips);
+
+                    // A drooped chain is pushed out on the side its own tip rests on.
+                    var rests = bind.Positions[path[joints.Count]] - bind.Positions[hips];
+                    rests.Y = 0f;
+                    chain.DroopOutward = rests.LengthSquared() > 1e-6f ? NVector3.Transform(SpringSolver.Direction(rests), inverseHips) : chain.Outward;
                 }
                 chains.Add(chain);
             }

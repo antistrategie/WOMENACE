@@ -117,7 +117,8 @@ MUZZLE_IN_GUN = Vector((1.41, 0.0, 0.0))
 # Left-hand grip orientation, copied from rocket_launcher_t1's weapon_hand_l in
 # its glTF (x, y, z, w). Round-trips through the same Y-up swap bake_weapon.py
 # uses, and is the usual suspect when the off-hand sits wrong in game.
-LEFT_HAND_GLTF_QUAT = (-0.13420387, 0.45497218, 0.48862037, -0.73228395)
+# Carries the quarter turn about the hand's length that bake_weapon.py gives every grip point.
+LEFT_HAND_GLTF_QUAT = (0.25061031, 0.83951686, 0.44040324, -0.19608903)
 MUZZLE_SCALE = 1.2  # rocket_launcher_t1 scales its muzzle flash up too
 
 # Gun frame (Weapon_L020 at bind) -> Blender weapon frame.

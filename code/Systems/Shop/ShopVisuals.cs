@@ -5,11 +5,8 @@ using UnityEngine.UIElements;
 
 namespace WOMENACE.Code;
 
-internal enum ShopSurface { Panel, Dialog, Button, Card, Tab }
-
 internal static class ShopVisuals
 {
-    internal static readonly Color Gold = new(.84f, .72f, .44f);
     private static readonly Il2CppStructArray<ushort> QuadIndices = new(new ushort[] { 0, 1, 2, 0, 2, 3 });
     private static readonly Il2CppStructArray<ushort> ShadowIndices = new(new ushort[]
     {
@@ -38,98 +35,122 @@ internal static class ShopVisuals
             element.AddToClassList(name);
     }
 
-    // USS has no gradients or box shadows. Paint them below the content so every
-    // native shop surface keeps the same lighting without covering its labels.
-    internal static VisualElement Surface(VisualElement root, ShopSurface kind, Color? tone = null)
+    // What the stylesheet cannot draw of the shop's surfaces is painted below their content.
+
+    // A dialog's corner brackets, and the shadow under it.
+    internal static void Brackets(VisualElement root)
     {
-        var accent = tone ?? Gold;
+        Painted(root, (context, w, h) =>
+        {
+            var p = context.painter2D;
+            Line(p, Alpha(Wui.Gold, .9f), 2, stackalloc Vector2[] { new(1, 22), new(1, 1), new(22, 1) });
+            Line(p, Alpha(Wui.Gold, .6f), 2, stackalloc Vector2[] { new(w - 22, h - 1), new(w - 1, h - 1), new(w - 1, h - 22) });
+        });
+        Draw(root, context => Shadow(context, context.visualElement.contentRect, 28f));
+    }
+
+    // The chosen reward pool tab's mark: its tier's colour down its edge.
+    internal static void TabEdge(VisualElement root, Color tone)
+    {
+        Painted(root, (context, w, h) =>
+        {
+            Fill(context.painter2D, new Rect(0, 10, 2, h - 20), tone);
+            Gradient(context, new Rect(2, 10, 12, h - 20), Alpha(tone, .1f), Alpha(tone, 0));
+        });
+    }
+
+    // A card's corner tick, its outline under the pointer, and its tier's tint when it has a
+    // tier. A claimed card is grey.
+    internal static void Card(VisualElement root, Color? tone = null)
+    {
         var hovered = false;
-        var primary = root.ClassListContains("wm-shop-primary");
-        var drawing = Draw(root, context =>
+        var drawing = Painted(root, (context, w, h) =>
         {
             var p = context.painter2D;
             var rect = context.visualElement.contentRect;
-            var w = rect.width;
-            var h = rect.height;
-            if (w <= 0 || h <= 0)
-                return;
             var active = hovered && root.enabledInHierarchy;
             var claimed = root.ClassListContains("wm-proc-claimed");
-            if (kind is ShopSurface.Panel or ShopSurface.Dialog)
+            var accent = claimed ? new Color(.55f, .55f, .55f) : tone ?? Wui.Gold;
+            if (tone.HasValue)
+                Gradient(context, rect, Alpha(accent, claimed ? .025f : active ? .16f : .075f), Alpha(accent, .008f));
+            Line(p, Alpha(accent, active ? .6f : .22f), 1, stackalloc Vector2[] { new(w - 10, 5), new(w - 5, 5), new(w - 5, 10) });
+            if (active)
+                Outline(p, rect, Alpha(accent, .42f));
+        });
+        Hovered(root, drawing, over => hovered = over);
+    }
+
+    // A button's wash under the pointer, and the gold of a primary one while it can be pressed.
+    internal static void Button(VisualElement root)
+    {
+        var hovered = false;
+        var primary = root.ClassListContains("wm-shop-primary");
+        var drawing = Painted(root, (context, w, h) =>
+        {
+            var p = context.painter2D;
+            var rect = context.visualElement.contentRect;
+            var active = hovered && root.enabledInHierarchy;
+            if (primary && root.enabledInHierarchy)
             {
-                Gradient(context, rect, kind == ShopSurface.Dialog ? new Color(.075f, .105f, .086f) : new Color(.031f, .043f, .039f),
-                    kind == ShopSurface.Dialog ? new Color(.047f, .075f, .063f) : new Color(.025f, .035f, .03f));
-                Glow(context, new Vector2(w * .86f, 0), w * .44f, Alpha(accent, .075f));
-                Line(p, Alpha(Color.white, .06f), 1, new(1, 1), new(w - 1, 1));
-                if (kind == ShopSurface.Dialog)
-                {
-                    Line(p, Alpha(accent, .9f), 2, stackalloc Vector2[] { new(1, 22), new(1, 1), new(22, 1) });
-                    Line(p, Alpha(accent, .6f), 2, stackalloc Vector2[] { new(w - 22, h - 1), new(w - 1, h - 1), new(w - 1, h - 22) });
-                }
-                else
-                    Gradient(context, new Rect(16, 47, w - 32, 1), Alpha(accent, .35f), Alpha(accent, .035f));
+                Gradient(context, rect, active ? new Color(.93f, .88f, .65f) : new Color(.85f, .74f, .455f),
+                    active ? new Color(.80f, .67f, .39f) : new Color(.74f, .61f, .33f));
+                Line(p, Alpha(Color.white, .25f), 1, new(1, 1), new(w - 1, 1));
+                Sheen(context, rect, Mathf.Repeat(Time.unscaledTime, 9f) / 1.3f);
             }
-            else if (kind == ShopSurface.Tab)
+            else if (active)
+                Fill(p, rect, Alpha(Wui.Gold, .14f));
+        });
+        Hovered(root, drawing, over => hovered = over);
+        if (!primary)
+            return;
+        var shining = false;
+        var enabled = root.enabledInHierarchy;
+        drawing.schedule.Execute(DelegateSupport.ConvertDelegate<Il2CppSystem.Action>(() =>
+        {
+            // Most ticks have nothing to repaint, which is known before the walk up the
+            // tree that says whether the button is shown at all.
+            var now = root.enabledInHierarchy;
+            var next = now && Mathf.Repeat(Time.unscaledTime, 9f) < 1.3f;
+            if (now == enabled && !next && !shining)
+                return;
+            if (!Displayed(root))
+                return;
+            // Its gold comes and goes with whether it can be pressed.
+            if (now != enabled)
             {
-                var selected = root.ClassListContains("wm-shop-tab-active") || root.ClassListContains("wm-proc-selected");
-                if (selected || active)
-                    Gradient(context, rect, Alpha(accent, selected ? .16f : .08f), Alpha(accent, .015f));
-                if (selected && root.ClassListContains("wm-proc-pool-tab"))
-                {
-                    Fill(p, new Rect(0, 10, 2, h - 20), accent);
-                    Gradient(context, new Rect(2, 10, 12, h - 20), Alpha(accent, .1f), Alpha(accent, 0));
-                }
-                else if (selected)
-                    Fill(p, new Rect(0, h - 2, w, 2), Alpha(accent, .9f));
+                enabled = now;
+                drawing.MarkDirtyRepaint();
             }
-            else if (kind == ShopSurface.Card)
-            {
-                var cardAccent = claimed ? new Color(.55f, .55f, .55f) : accent;
-                Gradient(context, rect, Alpha(cardAccent, claimed ? .025f : active ? .16f : .075f), Alpha(cardAccent, .008f));
-                Line(p, Alpha(cardAccent, active ? .6f : .22f), 1, stackalloc Vector2[] { new(w - 10, 5), new(w - 5, 5), new(w - 5, 10) });
-                Line(p, Alpha(Color.white, .035f), 1, new(1, 1), new(w - 1, 1));
-                if (active)
-                    Outline(p, rect, Alpha(cardAccent, .42f));
-            }
-            else
-            {
-                if (primary)
-                {
-                    Gradient(context, rect, active ? new Color(.93f, .88f, .65f) : new Color(.85f, .74f, .455f),
-                        active ? new Color(.80f, .67f, .39f) : new Color(.74f, .61f, .33f));
-                    Line(p, Alpha(Color.white, .25f), 1, new(1, 1), new(w - 1, 1));
-                    if (root.enabledInHierarchy)
-                        Sheen(context, rect, Mathf.Repeat(Time.unscaledTime, 9f) / 1.3f);
-                }
-                else
-                    Gradient(context, rect, Alpha(accent, active ? .12f : .025f), Alpha(accent, active ? .05f : .08f), true);
-            }
+            if (!now)
+                return;
+            if (next || shining)
+                drawing.MarkDirtyRepaint();
+            shining = next;
+        })).Every(33);
+    }
+
+    // A drawing below a surface's content, given the surface's size and never asked to draw
+    // one that has none.
+    private static VisualElement Painted(VisualElement root, Action<MeshGenerationContext, float, float> paint)
+    {
+        var drawing = Draw(root, context =>
+        {
+            var rect = context.visualElement.contentRect;
+            if (rect.width > 0 && rect.height > 0)
+                paint(context, rect.width, rect.height);
         });
         drawing.name = "wm-shop-surface";
         drawing.style.overflow = Overflow.Hidden;
-        if (kind is ShopSurface.Dialog or ShopSurface.Panel)
-            Draw(root, context => Shadow(context, context.visualElement.contentRect, kind == ShopSurface.Dialog ? 28f : 12f));
-        if (kind is ShopSurface.Button or ShopSurface.Card or ShopSurface.Tab)
-        {
-            root.RegisterCallback<PointerEnterEvent>(DelegateSupport.ConvertDelegate<EventCallback<PointerEnterEvent>>(
-                (Action<PointerEnterEvent>)(_ => { hovered = true; drawing.MarkDirtyRepaint(); })));
-            root.RegisterCallback<PointerLeaveEvent>(DelegateSupport.ConvertDelegate<EventCallback<PointerLeaveEvent>>(
-                (Action<PointerLeaveEvent>)(_ => { hovered = false; drawing.MarkDirtyRepaint(); })));
-        }
-        if (kind == ShopSurface.Button && primary)
-        {
-            var shining = false;
-            drawing.schedule.Execute(DelegateSupport.ConvertDelegate<Il2CppSystem.Action>(() =>
-            {
-                if (!Displayed(root) || !root.enabledInHierarchy)
-                    return;
-                var next = Mathf.Repeat(Time.unscaledTime, 9f) < 1.3f;
-                if (next || shining)
-                    drawing.MarkDirtyRepaint();
-                shining = next;
-            })).Every(33);
-        }
         return drawing;
+    }
+
+    // Tells a surface whether the pointer is over it, and has its drawing painted again.
+    private static void Hovered(VisualElement root, VisualElement drawing, Action<bool> set)
+    {
+        root.RegisterCallback<PointerEnterEvent>(DelegateSupport.ConvertDelegate<EventCallback<PointerEnterEvent>>(
+            (Action<PointerEnterEvent>)(_ => { set(true); drawing.MarkDirtyRepaint(); })));
+        root.RegisterCallback<PointerLeaveEvent>(DelegateSupport.ConvertDelegate<EventCallback<PointerLeaveEvent>>(
+            (Action<PointerLeaveEvent>)(_ => { set(false); drawing.MarkDirtyRepaint(); })));
     }
 
     internal static VisualElement Draw(VisualElement parent, Action<MeshGenerationContext> paint, bool behind = true)

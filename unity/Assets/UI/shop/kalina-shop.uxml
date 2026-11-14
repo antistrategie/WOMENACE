@@ -1,9 +1,8 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="../wui/wui.uss" />
     <Style src="../theme.uss" />
-    <Style src="../affinity/affinity.uss" />
     <Style src="kalina-shop.uss" />
     <Style src="procurement.uss" />
-    <ui:VisualElement name="wm-shop-wallet" class="wm-shop-wallet" />
     <ui:VisualElement class="wm-shop-panel">
         <ui:VisualElement name="wm-shop-tabs" class="wm-shop-tabs" />
         <ui:ScrollView name="wm-shop-scroll" mode="Vertical" class="wm-shop-scroll">
@@ -18,7 +17,20 @@
     </ui:VisualElement>
     <ui:VisualElement name="wm-kalina-portrait" class="wm-kalina-portrait" />
     <ui:Label name="wm-kalina-dialogue" class="wm-kalina-dialogue" picking-mode="Ignore" />
-    <ui:VisualElement name="wm-kalina-affinity" class="wm-aff-pop wm-kalina-affinity" />
+    <ui:VisualElement class="wm-kalina-card">
+        <ui:VisualElement name="wm-shop-wallet" class="wm-shop-wallet" />
+        <ui:VisualElement class="wm-kalina-level">
+            <ui:Label name="wm-kalina-level-number" class="wm-kalina-level-number" />
+            <ui:Label name="wm-kalina-level-next" class="wm-kalina-level-next" />
+            <ui:VisualElement class="wm-kalina-level-gap" />
+            <ui:Button name="wm-kalina-outfits-open" class="wm-kalina-outfits-open">
+                <ui:Label name="@WOMENACE::ui/kalina/outfits_open" text="OUTFITS" class="wm-kalina-outfits-open-label" picking-mode="Ignore" />
+            </ui:Button>
+        </ui:VisualElement>
+        <ui:VisualElement class="wm-kalina-level-bar">
+            <ui:VisualElement name="wm-kalina-level-fill" class="wm-kalina-level-fill" />
+        </ui:VisualElement>
+    </ui:VisualElement>
     <ui:VisualElement name="wm-kalina-outfits" class="wm-kalina-outfits">
         <ui:VisualElement name="wm-kalina-outfits-blocker" class="wm-kalina-outfits-blocker" />
         <ui:VisualElement class="wm-kalina-outfit-panel">

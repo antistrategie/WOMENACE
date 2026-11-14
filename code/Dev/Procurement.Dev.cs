@@ -11,6 +11,18 @@ namespace WOMENACE.Code;
 [DevVerb]
 public static class ProcurementDev
 {
+    // Has the current operation generate its missions again, for seeing what is done to a
+    // mission's template as it is generated. The save in memory is changed.
+    [MutatingVerb]
+    public static object Regenerate()
+    {
+        var operation = StrategyState.Get()?.GetCurrentOperation();
+        if (operation == null)
+            return new { error = "no operation" };
+        operation.GenerateMissions(null);
+        return new { ok = true };
+    }
+
     [MutatingVerb]
     public static object Open() => OpenShop() ? Status() : new { error = "shop unavailable" };
 
@@ -150,7 +162,7 @@ internal sealed partial class ProcurementView
         results = _results.IsVisible(),
         home = _home.IsVisible(),
         pool = _pool.IsVisible(),
-        piecesTexture = _artwork.HasTexture(ShopCurrency.Pieces),
+        piecesTexture = _artwork.HasPicture(ShopCurrency.Pieces),
         dossierTextures = Catalogue.Entries.Where(entry => entry.Leader != null)
             .Select(entry => new { id = entry.Reward.Id, loaded = entry.Art != null }).ToArray(),
         soundWarning = _soundWarning,

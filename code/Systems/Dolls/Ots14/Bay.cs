@@ -293,6 +293,26 @@ public static class Bay
         return false;
     }
 
+    // A copy of a weapon that is free to take: one no unit holds and none of the given bay
+    // slots has. Null when every copy is spoken for.
+    public static Item FreeCopy(ItemTemplate template, string[] slots)
+    {
+        if (template == null)
+            return null;
+        var instances = (Jiangyu.Game.Strategy.Inventory.Owned?.GetInstances(template) as Il2CppObjectBase)
+            ?.TryCast<Il2CppSystem.Collections.Generic.List<Item>>();
+        for (var i = 0; instances != null && i < instances.Count; i++)
+        {
+            var candidate = instances[i];
+            var guid = candidate?.GetGuid();
+            if (string.IsNullOrEmpty(guid) || IsEquipped(candidate))
+                continue;
+            if (Array.IndexOf(slots, guid) < 0)
+                return candidate;
+        }
+        return null;
+    }
+
     // Whether the item could go into the slot, without writing anything: the
     // equip UI greys rows with the reason, TrySetSlot enforces on write.
     public static bool CanSlot(ModContext context, int slot, Item item, out string error,

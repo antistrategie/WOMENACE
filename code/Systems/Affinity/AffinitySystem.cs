@@ -53,8 +53,75 @@ public sealed class AffinitySystem : JiangyuSystem
     private int _baseAffinity;
     private bool _modalOpen;
 
+    internal static AffinitySystem Instance { get; private set; }
+
+    // A screen that shows the affinity levels in place (the Squads screen's Affinity tab) marks
+    // its root with this class, and the badge's hover popover stays shut there.
+    internal const string InPlaceClass = "wm-squads";
+
+    // The button such a screen opens the gift flyout with, which the flyout's click-outside lets through.
+    internal const string InPlaceGiftButton = "wm-gift-open";
+
+    // The levels BuildInPlace makes, which is what such a screen hands to Populate. Populate takes
+    // its element out of picking, so it is never handed the buttons standing beside the levels.
+    internal const string InPlaceLevels = "wm-affinity-levels";
+
+    private static bool ShownInPlace(VisualElement window)
+    {
+        for (var e = window; e != null; e = e.parent)
+            if (e.ClassListContains(InPlaceClass))
+                return true;
+        return false;
+    }
+
+    // An affinity level where a screen shows it in large figures: the level, how far along it
+    // is to the next, and a bar of the same. The three elements are named from one prefix
+    // (number, next, fill). A doll's and Kalina's are written here so they read alike.
+    internal static void ShowLevel(VisualElement root, string prefix, int level, bool top, float share)
+    {
+        if (UI.Find(root, UiSelector.Name(prefix + "-number"))?.TryCast<Label>() is { } number)
+            number.text = Locale.Format("WOMENACE::ui/squads/level", "LV {0}", level);
+        if (UI.Find(root, UiSelector.Name(prefix + "-next"))?.TryCast<Label>() is { } next)
+            next.text = top
+                ? Locale.Text("WOMENACE::ui/squads/level_max", "MAX")
+                : Locale.Format("WOMENACE::ui/squads/level_next", "{0}% TO LV {1}", (int)MathF.Floor(share * 100f), level + 1);
+        if (UI.Find(root, UiSelector.Name(prefix + "-fill")) is { } fill)
+            fill.style.width = Length.Percent(share * 100f);
+    }
+
+    // The affinity levels on their own, for a screen that shows them in place: the popover's
+    // template. The caller parents it and fills it with Populate.
+    internal VisualElement BuildInPlace()
+    {
+        var host = Context.Assets.Load<VisualTreeAsset>("affinity/affinity-popover")?.Instantiate();
+        var popover = host != null ? UI.Find(host, UiSelector.Name("affinity-popover")) : null;
+        if (popover == null)
+            return null;
+        // Not the popover: nothing here answers ShowPopover or HidePopover.
+        popover.name = InPlaceLevels;
+        popover.AddToClassList("wm-aff-pop--in-place");
+        return host;
+    }
+
+    // Opens the gift flyout for a window, or shuts it when it is that window's that is open.
+    internal void ToggleGifts(VisualElement window)
+    {
+        try
+        {
+            bool reopenSameWindow = _modalOpen && ReferenceEquals(_activeWindow, window);
+            CloseModal();
+            if (!reopenSameWindow)
+                OpenModal(window);
+        }
+        catch (Exception ex)
+        {
+            Context.Log.Warn($"[gift] toggle failed: {ex.GetType().Name}: {ex.Message}");
+        }
+    }
+
     public override void OnInit()
     {
+        Instance = this;
         // Give the shared model a warn sink so its otherwise-silent leader-resolution catches are
         // diagnosable in the player log.
         Affinity.Warn = msg => Context.Log.Warn(msg);
@@ -230,7 +297,7 @@ public sealed class AffinitySystem : JiangyuSystem
         {
             var popover = UI.Find(window, UiSelector.Name("affinity-popover"));
             var wrapper = popover?.parent;
-            if (popover == null || wrapper == null)
+            if (popover == null || wrapper == null || ShownInPlace(window))
                 return;
             if (!Populate(popover, window))
             {
@@ -296,7 +363,7 @@ public sealed class AffinitySystem : JiangyuSystem
     // Fill the popover for the window's leader: the header level, then one row per affinity level
     // (1..max) carrying that level's rewards. Returns false (no popover) when the window is not one
     // of ours or the doll earns nothing at any level.
-    private bool Populate(VisualElement popover, VisualElement window)
+    internal bool Populate(VisualElement popover, VisualElement window)
     {
         var speakerTags = Affinity.OurSpeakerTags(Affinity.LeaderOf(window));
         var characterTag = Affinity.ParseCharacterTag(speakerTags);
@@ -349,13 +416,13 @@ public sealed class AffinitySystem : JiangyuSystem
     // node), the level number in its own fixed column so every reward line shares one indent, then
     // the level's rewards stacked to the right. The current level's fill stops AT its node, so 0
     // progress reads as "at this level", not "almost at the next".
-    internal static VisualElement BuildLevelRow(int lvl, int current, List<AffinityTooltip.Reward> rewards, int maxLevel = 0)
+    private static VisualElement BuildLevelRow(int lvl, int current, List<AffinityTooltip.Reward> rewards)
     {
         var state = lvl < current ? "done" : lvl == current ? "current" : "locked";
         var row = new VisualElement();
         row.AddToClassList("wm-aff-lvl-row");
         row.AddToClassList("wm-aff-lvl-row--" + state);
-        if (lvl >= (maxLevel > 0 ? maxLevel : Affinity.MaxLevel))
+        if (lvl >= Affinity.MaxLevel)
             row.AddToClassList("wm-aff-lvl-row--last");
 
         var rail = new VisualElement();
@@ -581,7 +648,7 @@ public sealed class AffinitySystem : JiangyuSystem
         if (root != null && root.panel != null && !root.ClassListContains("wm-dismiss-hooked"))
         {
             root.AddToClassList("wm-dismiss-hooked");
-            UI.CloseOnOutsideClick(root, CloseModal, "gift-open");
+            UI.CloseOnOutsideClick(root, CloseModal, "gift-open", InPlaceGiftButton);
         }
         root.SetVisible(false);
     }

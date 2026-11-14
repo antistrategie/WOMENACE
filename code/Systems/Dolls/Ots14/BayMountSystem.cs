@@ -342,6 +342,7 @@ public sealed class BayMountSystem : JiangyuSystem
     {
         var template = Templates.Resolve<WeaponTemplate>(Bay.WeaponId, _weapons,
             msg => Context.Log.Warn($"bay: {msg}"));
+        WeaponModelSystem.Ensure(template);
         var model = template?.ModelSecondary;
         // Unity-null aware: a destroyed/unset reference must not escape as a
         // fake-non-null (the light-mortar EntireModel lesson).
@@ -521,6 +522,7 @@ public sealed class BayMountSystem : JiangyuSystem
                 // Unity-null aware at every step: ?? on interop references
                 // sails past a destroyed/unset fake-null (the light mortar's
                 // EntireModel fields taught this).
+                WeaponModelSystem.Ensure(weapon);
                 var primary = weapon.Model != null ? weapon.Model : null;
                 var secondary = weapon.ModelSecondary != null ? weapon.ModelSecondary : null;
                 var prefab = weapon.VisualAlterationSlot == VisualAlterationSlot.Hand_R_Special && primary != null

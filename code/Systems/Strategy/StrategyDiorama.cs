@@ -1,0 +1,238 @@
+using Jiangyu.Sdk;
+using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.HighDefinition;
+
+namespace WOMENACE.Code;
+
+// The 3D room behind the strategy layer. The strategy layer runs in the MissionPreparation scene,
+// where the UI manager gives each screen its own background prefab and camera. The rooms
+// (StrategyDiorama.Rooms.cs) are spawned far below all of them, with their own camera at the ops
+// room's _CameraAnchor (the source scene's camera pose); StrategyDiorama.Screens.cs decides per
+// screen whether a room or the vanilla background is shown.
+//
+// If anything fails the rooms are removed and the strategy layer stays exactly as vanilla.
+public sealed partial class StrategyDiorama : JiangyuSystem
+{
+    internal static bool Enabled = true;
+    private const int VolumeLayer = 31;
+    // The ops room's camera: GFL2's MainCamera field of view at the room's _CameraAnchor.
+    internal const float RoomFov = 48.6f;
+
+    private static StrategyDiorama _instance;
+    // The ops room, the strategy layer's own set, and the room camera.
+    private GameObject _room;
+    private GameObject _camera;
+    private Transform _anchor;
+
+    public override void OnInit()
+    {
+        _instance = this;
+        HookScreens();
+    }
+
+    public override void OnUnload()
+    {
+        Affinity.Changed -= _squadAffinityChanged;
+        Remove();
+        _instance = null;
+    }
+
+    // A scene change destroys the rooms, the camera and the mirror camera (scene objects) but not
+    // what the diorama made outside the scene, so everything is torn down as on removal.
+    public override void OnSceneLoaded(int buildIndex, string sceneName)
+    {
+        Remove();
+    }
+
+    private const int RoomSimulatedLod = 4;
+
+    private void Spawn()
+    {
+        try
+        {
+            _room = SpawnSet(_ops);
+            if (_room == null)
+                return;
+            // The rooms' few dolls are small on screen and still have their hair and cloth simulated.
+            SpringBoneSystem.MaxSimulatedLod = RoomSimulatedLod;
+            _anchor = _room.transform.Find("_CameraAnchor");
+            if (_anchor == null)
+                throw new InvalidOperationException("the ops room has no _CameraAnchor");
+            SpawnCamera();
+            SpawnDinergate();
+            SpawnRoomDolls();
+            SpawnMirror();
+            ActivateSet(_ops);
+            // The UI manager has already set up the first screen's background by now.
+            ApplyScreenPolicy();
+            Context.Log.Info($"strategy diorama: spawned, camera at depth {_camera.GetComponent<Camera>().depth}, {Camera.allCamerasCount} cameras in scene");
+        }
+        catch (Exception ex)
+        {
+            Context.Log.Warn($"strategy diorama: spawn failed, keeping vanilla: {ex}");
+            Remove();
+        }
+    }
+
+    private void SpawnCamera()
+    {
+        var depth = 0f;
+        foreach (var other in Camera.allCameras)
+            if (other != null)
+                depth = Mathf.Max(depth, other.depth);
+        _camera = new GameObject("WOMENACE_StrategyRoomCamera");
+        _camera.transform.SetPositionAndRotation(_anchor.position, _anchor.rotation);
+        var camera = _camera.AddComponent<Camera>();
+        camera.fieldOfView = RoomFov;
+        camera.nearClipPlane = 0.05f;
+        camera.farClipPlane = 500f;
+        camera.depth = depth + 1f;
+        camera.clearFlags = CameraClearFlags.SolidColor;
+        camera.backgroundColor = Color.black;
+        // The game applies its quality settings to every camera whenever a screen opens and expects
+        // HDRP camera data and a Volume beside each one. The room camera reads volumes on its own
+        // layer only, so neither it nor the game's cameras touch the other's.
+        _camera.layer = VolumeLayer;
+        var hdCamera = _camera.AddComponent<HDAdditionalCameraData>();
+        hdCamera.volumeLayerMask = 1 << VolumeLayer;
+        // Past the end of a set's outdoor scenery a window shows the camera's own background:
+        // the pale of the sky at the horizon, where HDRP's own is a deep blue.
+        hdCamera.clearColorMode = HDAdditionalCameraData.ClearColorMode.Color;
+        hdCamera.backgroundColorHDR = new Color(0.52f, 0.68f, 0.75f);
+        Context.Coroutines.Start(KeepRoomPost(hdCamera));
+
+        // The camera's own volume, under each set's: GFL2's neutral exposure, no sky (reflections
+        // come from the room's probes alone), no HDRP fog (Womenace/BakedScene fogs the room as GFL2
+        // does), no screen-space AO, and the shadow light's settings.
+        var volume = _camera.AddComponent<Volume>();
+        volume.isGlobal = true;
+        volume.priority = 100f;
+        var profile = ScriptableObject.CreateInstance<VolumeProfile>();
+        AddFixedExposure(profile, NeutralExposureEv);
+        SetParameter(AddVolumeComponent<VisualEnvironment>(profile).skyType, 0);
+        SetParameter(AddVolumeComponent<UnityEngine.Rendering.HighDefinition.Fog>(profile).enabled, false);
+        // Off: the AO texture Womenace/BakedScene would read keeps what has left the shot.
+        SetParameter(AddVolumeComponent<ScreenSpaceAmbientOcclusion>(profile).intensity, 0f);
+        SpawnShadowLight(profile);
+        volume.sharedProfile = profile;
+        // The player's anti-aliasing and post quality from the first frame, not only from the next
+        // screen that opens.
+        Il2CppMenace.PlayerSettings.PersistentPlayerSettings.DisplaySettings.ApplyQualitySettings(_camera.GetComponent<Camera>(), volume);
+    }
+
+    // Volume components are created and set as plain objects: the game's IL2CPP build carries no
+    // instance of VolumeProfile.Add<T> or VolumeParameter<T>.Override for most of them.
+    private static T AddVolumeComponent<T>(VolumeProfile profile) where T : VolumeComponent
+    {
+        var component = ScriptableObject.CreateInstance<T>();
+        component.active = true;
+        profile.components.Add(component);
+        return component;
+    }
+
+    private static void SetParameter<T>(VolumeParameter<T> parameter, T value)
+    {
+        parameter.overrideState = true;
+        parameter.value = value;
+    }
+
+    // A fixed exposure (HDRP's default auto exposure would fight every value the rooms carry).
+    private static void AddFixedExposure(VolumeProfile profile, float ev)
+    {
+        var exposure = AddVolumeComponent<Exposure>(profile);
+        SetParameter(exposure.mode, ExposureMode.Fixed);
+        SetParameter(exposure.fixedExposure, ev);
+    }
+
+    private void Remove()
+    {
+        ClearHome();
+        StopRoomBed();
+        RestTableCamera(null);
+        UnstageArmory();
+        ClearMirror();
+        ClearShadowLight();
+        ClearWorkshop();
+        ClearOci();
+        ClearMarket();
+        ShowMachine(0f, 0f, 0f);
+        _pullOn = false;
+        ClearShopCart();
+        ClearSets();
+        if (_camera != null)
+        {
+            DestroyProfile(_camera.GetComponent<Volume>()?.sharedProfile);
+            UnityEngine.Object.Destroy(_camera);
+        }
+        ClearMarkers();
+        ClearPlanet();
+        ReleaseCards();
+        ClearStarMap();
+        ReleaseTableTarget();
+        ClearPrepMap();
+        ReleasePrepTokens();
+        _markerBoard.Clear();
+        SpringBoneSystem.ResetSimulatedLod();
+        // A vanilla background hidden for a room screen comes back with the room gone.
+        if (_hiddenVanilla != null && !_hiddenVanilla.activeSelf)
+            _hiddenVanilla.SetActive(true);
+        _hiddenVanilla = null;
+        _lastShellScreen = null;
+        _dinergate = null;
+        _crew.Clear();
+        _crewSpots.Clear();
+        _crewSeatShifts.Clear();
+        _crewFidgets.Clear();
+        _poseProbe = null;
+        // The next room starts with its own camera.
+        DropShot();
+        StrategyMusicSystem.Rest();
+        _dollRigs.Clear();
+        _dinergateAnimator = null;
+        _room = null;
+        _camera = null;
+        _anchor = null;
+    }
+
+    // A runtime volume profile and its components, which outlive the objects holding them.
+    private static void DestroyProfile(VolumeProfile profile)
+    {
+        if (profile == null)
+            return;
+        foreach (var component in profile.components)
+            if (component != null)
+                UnityEngine.Object.Destroy(component);
+        UnityEngine.Object.Destroy(profile);
+    }
+
+    private static void ReleaseTexture(ref RenderTexture texture)
+    {
+        if (texture != null)
+        {
+            texture.Release();
+            UnityEngine.Object.Destroy(texture);
+        }
+        texture = null;
+    }
+
+    // The game's quality pass (DisplaySettings.ApplyToAllCameras, a struct method the interop cannot
+    // patch) gives every camera custom frame settings with post-processing off whenever a screen
+    // opens: the room would lose its grade, bloom and tonemapping. The room camera keeps HDRP's
+    // defaults, where its own volumes carry the post, checked each frame for as long as it exists.
+    private System.Collections.IEnumerator KeepRoomPost(HDAdditionalCameraData camera)
+    {
+        while (camera != null)
+        {
+            if (camera.customRenderingSettings)
+                camera.customRenderingSettings = false;
+            yield return null;
+        }
+    }
+
+    internal static GameObject Room => _instance?._room;
+    internal static ModContext SystemContext => _instance?.Context;
+
+    internal static Camera RoomCamera => _instance?._camera?.GetComponent<Camera>();
+
+}

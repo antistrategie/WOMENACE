@@ -107,16 +107,28 @@ doll needs its own list. Adding a doll usually means adding no rules at all.
 
 | part | shader | notes |
 |---|---|---|
-| hair, cloth, skin, silkstock, weapon | `DollToon` | ramp per part |
-| face, mouth, teeth, tongue, eyewhite | `DollToon` + face SDF | one material, as they are welded together |
+| cloth, skin, silkstock, weapon | `DollToon` | ramp per part |
+| hair | `DollToonHair` | `DollToon` plus the pass casting the hair-to-face band |
+| face skin (`*face*`) | `DollToonFace` + face SDF | the hair-to-face band and the nose glint |
+| mouth, teeth, tongue, eyewhite, brows, lashes, eyelids | `DollToon` + face SDF | welded to the face, outside the band as GFL2's brows are |
 | eyes, iris, pupil | `DollEye` | opaque eyeball, view-based UV parallax |
 | eyeshadow | `DollEyeShadow` | multiply layer, `Blend DstColor Zero` |
 | eyes+ | `DollEyeHighlight` | additive layer, `Blend One One` |
 | outline | `DollOutline` | inverted hull on its own submesh |
 | emotions | game's shader | inert overlays parked behind the face |
 
-The three shaders that own their pixels (`DollToon`, `DollEye`, `DollOutline`) each carry
-a `MotionVectors` pass out of the shared `DollMotionVectors.hlsl`. The two eye blend
+GFL2's hair-to-face band runs through the stencil, as the game's does. `DollToonFace` tags
+the face's pixels with user bit 64 in its depth and motion vector passes (a skinned doll
+draws only in the latter, which HDRP uses in place of the depth prepass). `DollToonHair`'s
+`HairShadow` pass redraws the hair 7.5 mm lower
+into the stencil only and sets bit 128 on tagged pixels it covers. `DollToonFace` sits at
+`Geometry+1` so the mark is down before it shades, and shades the marked pixels with the
+key shut off. The band and the glint both ride on the key, so a face out of the sun shows
+neither. `_WmDollDebug` at 1 paints the band magenta.
+
+The shaders that own their pixels (`DollToon`, `DollToonHair`, `DollToonFace`, `DollEye`,
+`DollOutline`)
+each carry a `MotionVectors` pass out of the shared `DollMotionVectors.hlsl`. The two eye blend
 layers deliberately do not: they are `ZWrite Off` layers over the eyeball, and the
 eyeball already carries the depth and the motion for those pixels.
 
@@ -321,12 +333,8 @@ against, and filtering across rows blends bands that mean different things.
 
 ## Known gaps
 
-The hair-to-face shadow band is parked: depth cannot separate "fringe in front of
-face" from "fringe in front of hair", both being the same few centimetres, and the
-stencil route did not take in either pass context. The face carries no outline until a
-per-vertex width is baked to zero at its open boundary edges. The face glint is
-unbuilt: the SDF map's G and B channels carry its landmark masks and nothing reads
-them yet.
+The face carries no outline until a per-vertex width is baked to zero at its open
+boundary edges.
 
 An alternate costume takes its character's base-costume ramps, because its own set
 splits across parts a single `ramp_cloth_main` cannot express. Doing better means a

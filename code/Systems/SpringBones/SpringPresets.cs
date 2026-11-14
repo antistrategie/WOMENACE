@@ -6,14 +6,16 @@ namespace WOMENACE.Code;
 internal static class SpringPresets
 {
     // Short strands near the face: stiff and light, with too little travel
-    // to reach the head.
+    // to reach the head. A spring this stiff rings at its own few hertz under
+    // light drag, and an idle's small motions keep it ringing as a quiver, so
+    // the drag is heavy enough that a strand settles within a swing.
     internal static SpringChainSpec ShortHair(params string[] roots) => new()
     {
         Name = "short_hair",
         Roots = roots,
         Stiffness = 3.5f,
         TipStiffness = 2f,
-        Drag = 0.2f,
+        Drag = 0.25f,
         Gravity = 0.05f,
         HitRadius = 0.01f,
         MaxAngle = 15f,
@@ -24,15 +26,17 @@ internal static class SpringPresets
     // Tails and long locks. They already hang in the rest pose, so gravity
     // only adds weight, and a soft tip under a firmer root lets a turn travel
     // down them. Drag and Follow keep a long tail from folding on a sprint
-    // without going stiff.
+    // without going stiff, and the drag is enough that the firm root does not
+    // quiver through an idle.
     internal static SpringChainSpec LongHair(params string[] roots) => new()
     {
         Name = "long_hair",
         Roots = roots,
         Stiffness = 3f,
         TipStiffness = 1.5f,
-        Drag = 0.2f,
+        Drag = 0.35f,
         Gravity = 0.3f,
+        Sag = 1f,
         HitRadius = 0.025f,
         MaxAngle = 25f,
         Follow = 0.8f,
@@ -49,6 +53,7 @@ internal static class SpringPresets
         TipStiffness = 2f,
         Drag = 0.2f,
         Gravity = 0.2f,
+        Sag = 0.3f,
         HitRadius = 0.01f,
         MaxAngle = 18f,
         Follow = 0.4f,
@@ -67,6 +72,7 @@ internal static class SpringPresets
         TipStiffness = 1f,
         Drag = 0.2f,
         Gravity = 0.5f,
+        Sag = 0.8f,
         HitRadius = 0.015f,
         MaxAngle = 45f,
         Follow = 0.6f,
@@ -102,6 +108,19 @@ internal static class SpringPresets
         Colliders = SpringColliderGroup.Body | SpringColliderGroup.Pelvis,
     };
 
+    // A cape's or coat's outer columns that are rigged off the upper arms and were bound hanging
+    // from a T-posed arm. With the arm down at her side their rest shape turns with it and
+    // points out, and the cloth stands out like wings. They hang plumb from wherever the arm
+    // puts them, soft and heavy as draped cloth is: a plumb column with a cape's own firm panel
+    // settings jerks about in a run.
+    internal static SpringChainSpec ArmCape(params string[] roots)
+    {
+        var spec = DrapedRibbon(null, roots);
+        spec.Name = "arm_cape";
+        spec.HangTilt = 0f;
+        return spec;
+    }
+
     // A rigid accessory that swings as a whole: a case, a bag, a holster, a
     // pendant. Usually one link, firm, with a modest swing.
     internal static SpringChainSpec Accessory(params string[] roots) => new()
@@ -112,6 +131,7 @@ internal static class SpringPresets
         TipStiffness = 1.2f,
         Drag = 0.2f,
         Gravity = 0.2f,
+        Sag = 0.4f,
         HitRadius = 0.02f,
         MaxAngle = 25f,
         Follow = 0.4f,

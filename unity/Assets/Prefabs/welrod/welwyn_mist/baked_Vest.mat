@@ -28,15 +28,19 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MaskMap:
-        m_Texture: {fileID: 2800000, guid: cb20d73d9bdcc7158b55a4be0ad90c63, type: 3}
+        m_Texture: {fileID: 2800000, guid: cedb014590c2e725f9cbe358c1a2da14, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _NormalMap:
-        m_Texture: {fileID: 2800000, guid: db614b20a966eb361a0c94d2b885916c, type: 3}
+        m_Texture: {fileID: 2800000, guid: 5a724f2e49354f4a49dabfa05b97a971, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _RampMap:
         m_Texture: {fileID: 2800000, guid: 2965888d5064430185329c78be35faae, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _RoomReflection:
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SdfMap:
@@ -51,12 +55,15 @@ Material:
     m_Floats:
     - _BlendSmoothness: 0.1
     - _IblIntensity: 0.6038
+    - _KeyOcclusion: 1
     - _MaskRoughnessInverted: 0
     - _MatCapIntensity: 0
     - _MatCapUVOffset: 0.025
     - _NormalScale: 1
     - _OcclusionStrength: 1
+    - _RoomLit: 0
     - _UseBlendTex: 0
+    - _UseRoomReflection: 0
     m_Colors:
     - _BaseTint: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []

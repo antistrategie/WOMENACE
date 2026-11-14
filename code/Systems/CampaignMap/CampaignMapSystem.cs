@@ -51,6 +51,15 @@ public sealed class CampaignMapSystem : JiangyuSystem
     private VisualElement _container;
     private VisualElement _chibi;
     private VisualElement _selectedPoi;  // last node the game selected
+
+    // The chibi's frames and their rates, for the strategy shell's figure on the holotable.
+    internal static Texture2D[] WaitFrames { get; private set; }
+    internal static Texture2D[] MoveFrames { get; private set; }
+    internal const int WaitFramesPerSecond = WaitFps;
+    internal const int MoveFramesPerSecond = MoveFps;
+
+    // The mission marker the game last selected, for the strategy shell's holotable markers.
+    internal static IntPtr SelectedPoi { get; private set; }
     private VisualElement _currentPoi;   // node the chibi is resting on
     private VisualElement _targetPoi;    // node the chibi is walking toward (may change mid-walk)
     private Vector2 _chibiFoot;          // the chibi's live foot position, in container space
@@ -169,6 +178,7 @@ public sealed class CampaignMapSystem : JiangyuSystem
         if (target == null)
             return;
         _selectedPoi = target;
+        SelectedPoi = target.Pointer;
         if (_container == null || _chibi == null)
             return;
         _targetPoi = target;
@@ -363,6 +373,7 @@ public sealed class CampaignMapSystem : JiangyuSystem
         _framesLoaded = true;
         _waitFrames = LoadSequence("wait_", WaitFrameCount);
         _moveFrames = LoadSequence("move_", MoveFrameCount);
+        (WaitFrames, MoveFrames) = (_waitFrames, _moveFrames);
         if (_waitFrames == null || _moveFrames == null)
             Context.Log.Warn("campaign map: chibi frames missing from the bundle");
         return _waitFrames != null && _moveFrames != null;

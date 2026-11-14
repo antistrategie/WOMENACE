@@ -52,6 +52,17 @@ internal sealed class SpringChainSpec
     // Multiple of real gravity.
     public float Gravity;
 
+    // How far the target shape droops under its own weight, as the fall of the
+    // tip over the chain's length (1 drops the tip of a level chain by the
+    // chain's length). The droop grows with the square of the distance down the
+    // chain, so the root keeps its rest direction and the tip hangs. The springs
+    // pull each particle toward a point fixed to the body part the chain hangs
+    // from, and Gravity moves every particle by the same small amount against
+    // them, so without this a long chain turns with a tilted head or a leaning
+    // body as a stiff board, its tip held up as firmly as its root. A chain
+    // that already hangs plumb is unchanged by it.
+    public float Sag;
+
     // Collision radius of each particle, in metres.
     public float HitRadius;
 

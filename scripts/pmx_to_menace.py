@@ -34,7 +34,7 @@ import math
 import re
 import sys
 from dataclasses import dataclass, field
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 
 try:
     import bpy  # type: ignore
@@ -849,7 +849,7 @@ def pose_arm_chains_and_bake(
     bpy.ops.object.mode_set(mode="POSE")
 
     rotated = 0
-    hand_reference_frames: dict[str, tuple["mathutils.Vector", "mathutils.Vector"]] = {}
+    rest_frames: dict[str, tuple["mathutils.Vector", "mathutils.Vector"]] = {}
     for chain in chain_bones:
         for bone_name in chain:
             basis = _resolve_bone_basis(bone_name, reference_tpose, frame, apply_y=False)
@@ -868,22 +868,37 @@ def pose_arm_chains_and_bake(
                 (target_x.y, target_y.y, target_z.y),
                 (target_x.z, target_y.z, target_z.z),
             ))
-            # The RIGHT hand gets a palm-down roll on top of the axis alignment
-            # for the MESH BAKE ONLY. MMD wrist axes sit rolled relative to
-            # the palm compared to the vanilla rig, so without this the palm
-            # GEOMETRY bakes in rolled and every retargeted animation shows it
-            # (rifle held palm-up). The bone's REST frame is restored to the
-            # reference basis in edit mode after the bake (mesh stays put):
-            # the humanoid retarget, the grafted Hand_*_Socket the weapon
-            # rides, and the left-hand IK contract all read that frame.
-            # RIGHT hand only. The left hand is deliberately NOT palm-calibrated:
-            # it is IK-slaved to each weapon's weapon_hand_l empty, and the raw
-            # MMD wrist roll under the reference-basis alignment is what those
-            # empties were authored and verified against. Calibrating the left to
-            # world-down showed thumb-under grips in game, world-up showed the
-            # palm facing away, and the uncalibrated original was correct.
+            # The upper arms and forearms swing to the T-pose and no more. Matching
+            # the whole reference basis, roll and all, turns the mesh about the limb by
+            # however far the MMD bone's roll sits from the reference's, which is about
+            # a quarter turn, one way on the left arm and the other on the right: a
+            # stripe modelled along the top of a sleeve bakes onto its front or back.
+            # The swing is taken from where the bone stands now (its parent's pose
+            # carried it), so each segment keeps the twist it was modelled with, and
+            # the two arms stay each other's mirror. The bone's REST frame is set to
+            # the reference basis in edit mode after the bake, as a rolled hand's is.
+            # A rig that skips the palm calibration (it animates by its own clips, or
+            # has no finger bones to measure) keeps its arms as they land, which its
+            # hands were matched to.
             side = "L" if bone_name.endswith("_L") else "R"
-            if bone_name == "Hand_R" and palm_locals and side in palm_locals:
+            if palm_locals and side in palm_locals and bone_name.startswith(("UpperArm_", "LowerArm_")):
+                current = pmx_pb.matrix.to_3x3().normalized()
+                swing = current.col[1].normalized().rotation_difference(target_y)
+                m = swing.to_matrix() @ current
+                rest_frames[bone_name] = (target_y.copy(), target_z.copy())
+            # Each hand gets a palm-down roll on top of the axis alignment for the
+            # MESH BAKE ONLY. MMD wrist axes sit rolled relative to the palm compared
+            # to the vanilla rig, so without this the palm GEOMETRY bakes in rolled and
+            # every retargeted animation shows it (a rifle held palm-up). The bone's REST frame is restored to the
+            # reference basis in edit mode after the bake (mesh stays put): the
+            # humanoid retarget, the grafted Hand_*_Socket the weapon rides, and the
+            # left-hand IK contract all read that frame.
+            # The left hand is IK-slaved to each weapon's weapon_hand_l empty, whose
+            # rotation is the hand BONE's. Those empties are seeded from the vanilla
+            # weapon of the same class, and with the palm down that seed puts the
+            # thumb under the weapon. Each weapon's empty carries a quarter turn about
+            # the hand's length that sets the hold right (scripts/weapon/bake_weapon.py).
+            if bone_name in ("Hand_R", "Hand_L") and palm_locals and side in palm_locals:
                 palm_world = m @ mathutils.Vector(palm_locals[side])
                 axis = target_y.normalized()
                 down = mathutils.Vector((0.0, 0.0, -1.0))
@@ -891,7 +906,7 @@ def pose_arm_chains_and_bake(
                 dw = down - down.dot(axis) * axis
                 if pw.length > 1e-6 and dw.length > 1e-6:
                     angle = math.atan2(axis.dot(pw.cross(dw)), pw.dot(dw))
-                    hand_reference_frames[bone_name] = (target_y.copy(), target_z.copy())
+                    rest_frames[bone_name] = (target_y.copy(), target_z.copy())
                     m = mathutils.Matrix.Rotation(angle, 3, axis) @ m
                     print(f"[info] palm-down roll on {bone_name} (mesh bake): {math.degrees(angle):+.1f} deg")
             pmx_pb.matrix = mathutils.Matrix.Translation(head) @ m.to_4x4()
@@ -921,15 +936,15 @@ def pose_arm_chains_and_bake(
     bpy.ops.pose.armature_apply()
     bpy.ops.object.mode_set(mode="OBJECT")
 
-    # Restore each palm-rolled hand bone's REST frame to the reference
-    # basis. The palm roll above exists only so the bake carries the palm
-    # geometry to world-down. The bone itself must keep the reference frame:
-    # the avatar the humanoid retarget uses, the Hand_*_Socket the weapon
-    # parents under, and the weapon_hand_l IK orientations are all defined
-    # against it. Edit-mode roll changes move no geometry.
-    if hand_reference_frames:
+    # Restore the REST frame of each bone whose mesh was baked off the reference
+    # basis (a palm-rolled hand, a left arm segment swung without its roll) to that
+    # basis. The bake carried the geometry where it belongs. The bone itself must
+    # keep the reference frame: the avatar the humanoid retarget uses, the
+    # Hand_*_Socket the weapon parents under, and the weapon_hand_l IK orientations
+    # are all defined against it. Edit-mode roll changes move no geometry.
+    if rest_frames:
         bpy.ops.object.mode_set(mode="EDIT")
-        for bone_name, (ref_y, ref_z) in hand_reference_frames.items():
+        for bone_name, (ref_y, ref_z) in rest_frames.items():
             eb = armature_obj.data.edit_bones.get(bone_name)
             if eb is None:
                 continue
@@ -939,7 +954,7 @@ def pose_arm_chains_and_bake(
                       f"({math.degrees(bone_y.angle(ref_y)):.1f} deg), roll restore may be off")
             eb.align_roll(ref_z)
         bpy.ops.object.mode_set(mode="OBJECT")
-        print(f"[info] restored {len(hand_reference_frames)} hand bone REST frame(s) "
+        print(f"[info] restored {len(rest_frames)} bone REST frame(s) "
               "to the reference basis (mesh unchanged)")
 
     for mesh in mesh_objects:
@@ -1246,6 +1261,76 @@ def make_single_user(objects) -> None:
         print(f"[warn] make_single_user failed: {e}")
 
 
+# The support hand's curl, in degrees at the knuckle and the two joints past it,
+# and the thumb's from its base outwards.
+SUPPORT_HAND_CURL = {
+    "人指": (30.0, 45.0, 25.0),
+    "中指": (35.0, 50.0, 25.0),
+    "薬指": (40.0, 55.0, 30.0),
+    "小指": (45.0, 55.0, 30.0),
+}
+# The thumb closes opposite the fingers, not alongside them: its base swings
+# under the palm (degrees, then how far that way leans towards the palm and
+# across it to the little finger), and its two joints bend its tip on towards
+# the fingertips (degrees each, then the lean towards the fingertips and the palm).
+SUPPORT_HAND_THUMB_BASE = (20.0, (0.7, 0.7))
+SUPPORT_HAND_THUMB_TIP = ((20.0, 25.0), (0.9, 0.3))
+
+
+def _curl_support_hand(armature_obj: "bpy.types.Object", missing: list[str]) -> int:
+    """Curl the left hand's fingers towards its palm. Runs in pose mode and
+    returns the number of bones turned."""
+    bones = armature_obj.pose.bones
+    wrist, index, little = bones.get("手首.L"), bones.get("人指１.L"), bones.get("小指１.L")
+    if wrist is None or index is None or little is None:
+        missing.append("手首.L")
+        return 0
+    origin = wrist.bone.head_local
+    palm = (index.bone.head_local - origin).cross(little.bone.head_local - origin).normalized()
+    # MMD models stand with their palms towards the floor, which signs the
+    # knuckle plane's normal whichever way the hand is wound.
+    if palm.z > 0.0:
+        palm.negate()
+    across = (little.bone.head_local - index.bone.head_local).normalized()
+
+    def curl(names: list[str], way: "mathutils.Vector", angles: tuple[float, ...]) -> int:
+        """Turn a digit's joints, base first, so its tip goes the given way. The
+        joints share one hinge, the one that takes the base joint that way."""
+        base = bones.get(names[0])
+        if base is None:
+            missing.append(names[0])
+            return 0
+        along = base.matrix.to_3x3().col[1].normalized()
+        way = way - way.dot(along) * along
+        if way.length < 1e-6:
+            return 0
+        hinge = along.cross(way.normalized())
+        done = 0
+        for name, degrees in zip(names, angles):
+            pb = bones.get(name)
+            if pb is None:
+                missing.append(name)
+                continue
+            head = pb.matrix.to_translation()
+            pb.matrix = (mathutils.Matrix.Translation(head)
+                         @ mathutils.Matrix.Rotation(math.radians(degrees), 4, hinge)
+                         @ mathutils.Matrix.Translation(-head) @ pb.matrix)
+            # A joint's children are placed from it, so each is settled before the next.
+            bpy.context.view_layer.update()
+            done += 1
+        return done
+
+    turned = 0
+    for finger, angles in SUPPORT_HAND_CURL.items():
+        turned += curl([f"{finger}{joint}.L" for joint in "１２３"], palm, angles)
+    degrees, (to_palm, to_little) = SUPPORT_HAND_THUMB_BASE
+    turned += curl(["親指０.L"], palm * to_palm + across * to_little, (degrees,))
+    reach = wrist.bone.matrix_local.to_3x3().col[1].normalized()
+    angles, (to_tips, to_palm) = SUPPORT_HAND_THUMB_TIP
+    turned += curl(["親指１.L", "親指２.L"], reach * to_tips + palm * to_palm, angles)
+    return turned
+
+
 def apply_fist_pose(
     armature_obj: "bpy.types.Object",
     mesh_objects: list["bpy.types.Object"],
@@ -1271,10 +1356,17 @@ def apply_fist_pose(
     and full-width numerals: 中指１.L, 親指０.R, etc. The thumb is numbered
     0/1/2; the other four fingers are 1/2/3.
 
-    Curl angles per joint approximate a moderate closed fist. They rotate
-    around the bone-local X axis, which is the standard MMD finger-curl
-    axis. Sign is positive for both sides because mmd_tools imports finger
-    bones with consistent local-X orientation across left and right.
+    The RIGHT hand is the trigger hand: a moderate closed fist, turned about each
+    bone's local X, which on that side bends a finger towards the palm.
+
+    The LEFT hand is the support hand, which lies under a handguard or hangs
+    open at her side, so it is a loose curl that deepens from the index finger
+    to the little one, with the thumb brought round opposite the fingers.
+    mmd_tools gives the finger bones of both hands the same local X, so a turn
+    that closes the right hand bends the left one back over the back of the
+    hand. The left is therefore turned about axes measured off the hand
+    itself: each finger towards the palm, the thumb towards the palm and across
+    it.
     """
     NON_THUMB_FINGERS = ["中指", "人指", "小指", "薬指"]
 
@@ -1295,14 +1387,13 @@ def apply_fist_pose(
             print("[info] fist-pose: custom fist_rotations supplied, keep_right_index_extended is ignored")
         rotations = [(name, math.radians(deg)) for name, deg in custom_rotations.items()]
     else:
-        for side in (".L", ".R"):
-            for finger in NON_THUMB_FINGERS:
-                if keep_right_index_extended and finger == "人指" and side == ".R":
-                    continue
-                for joint, deg in zip("１２３", NON_THUMB_ANGLES):
-                    rotations.append((f"{finger}{joint}{side}", math.radians(deg)))
-            for joint, deg in zip("０１２", THUMB_ANGLES):
-                rotations.append((f"親指{joint}{side}", math.radians(deg)))
+        for finger in NON_THUMB_FINGERS:
+            if keep_right_index_extended and finger == "人指":
+                continue
+            for joint, deg in zip("１２３", NON_THUMB_ANGLES):
+                rotations.append((f"{finger}{joint}.R", math.radians(deg)))
+        for joint, deg in zip("０１２", THUMB_ANGLES):
+            rotations.append((f"親指{joint}.R", math.radians(deg)))
 
     clear_selection()
     bpy.context.view_layer.objects.active = armature_obj
@@ -1321,6 +1412,8 @@ def apply_fist_pose(
         rotated += 1
 
     bpy.context.view_layer.update()
+    if not custom_rotations:
+        rotated += _curl_support_hand(armature_obj, missing)
     bpy.ops.object.mode_set(mode="OBJECT")
 
     if missing:
@@ -1423,7 +1516,12 @@ def resolve_texture_path(raw_path: str, pmx_path: Path) -> Path | None:
         resolved = resolve_case_insensitive(r)
         if resolved is not None and resolved.is_file():
             return resolved
-    return None
+    # A repack can name a texture by a path that climbs out of the model's folder and back
+    # into a folder of its own name, which stops resolving once the folder is renamed. The
+    # one file of that name under the model's folder is the texture meant.
+    name = PureWindowsPath(raw_path).name.lower()
+    found = [f for f in pmx_path.parent.rglob("*") if f.is_file() and f.name.lower() == name]
+    return found[0] if len(found) == 1 else None
 
 
 def collect_materials(mesh_objects: list["bpy.types.Object"]) -> list["bpy.types.Material"]:
@@ -3203,10 +3301,22 @@ def keep_body_weights(mesh, blend_path: Path, lod0_name: str, spring_bones: set[
             tree.insert(old.matrix_world @ v.co, v.index)
         tree.balance()
         same_order = len(old_vertices) == len(mesh.data.vertices)
+        # A change to how a limb is posed moves that limb's vertices and nothing
+        # else. With the same vertices in the same order and most of them where
+        # they were, the two are one mesh, and each vertex is its own match
+        # wherever it now stands.
+        if same_order:
+            still = sum(1 for v in mesh.data.vertices
+                        if ((old.matrix_world @ old_vertices[v.index].co) - (mesh.matrix_world @ v.co)).length <= 1e-4)
+            same_mesh = still * 2 > len(old_vertices)
+            if same_mesh and still < len(old_vertices):
+                print(f"[info] keep-body-weights: {len(old_vertices) - still} vertices stand elsewhere than in the approved blend, matched by order")
+        else:
+            same_mesh = False
         matches = []
         for v in mesh.data.vertices:
             at = mesh.matrix_world @ v.co
-            if same_order and ((old.matrix_world @ old_vertices[v.index].co) - at).length <= 1e-4:
+            if same_mesh or (same_order and ((old.matrix_world @ old_vertices[v.index].co) - at).length <= 1e-4):
                 matches.append(v.index)
                 continue
             _, index, distance = tree.find(at)

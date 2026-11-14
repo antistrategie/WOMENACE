@@ -100,7 +100,7 @@ def main():
             if name in LAYERS:
                 if name not in prims:
                     prims[name] = prim
-            elif part_for(name) == "face":
+            elif part_for(name) in ("face", "faceskin"):
                 face_points.append(read_accessor(doc, buf, prim["attributes"]["POSITION"], 3))
     missing = [l for l in LAYERS if l not in prims]
     if missing:

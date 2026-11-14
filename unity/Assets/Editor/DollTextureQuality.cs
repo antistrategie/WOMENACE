@@ -30,7 +30,8 @@ using UnityEngine;
 public static class DollTextureQuality
 {
     private const string Root = "Assets/Authored";
-    private static readonly string[] Excluded = { "/ramps/", "/shared/" };
+    // Scenery and effects set their own sampling from GFL2 (BakeRoom, BuildGfl2Effects).
+    private static readonly string[] Excluded = { "/ramps/", "/shared/", "/environment/", "/effects/" };
 
     [MenuItem("Jiangyu/Raise Doll Texture Quality")]
     public static void Run()
@@ -50,11 +51,30 @@ public static class DollTextureQuality
             var importer = AssetImporter.GetAtPath(path) as TextureImporter;
             if (importer == null) continue;
 
-            var before = $"{importer.textureCompression}/{importer.anisoLevel}/{importer.filterMode}";
+            var before = $"{importer.textureCompression}/{importer.anisoLevel}/{importer.filterMode}/{importer.textureType}/{importer.sRGBTexture}";
             importer.textureCompression = TextureImporterCompression.CompressedHQ;
             importer.anisoLevel = 8;
             importer.filterMode = FilterMode.Trilinear;
-            var after = $"{importer.textureCompression}/{importer.anisoLevel}/{importer.filterMode}";
+            // GFL2's maps, by suffix wherever they sit (normalmap/ or beside a sheet, the two places
+            // doll_shading looks): the normal as a normal map, the RMO or SMO mask as linear data,
+            // the hair specular in sRGB, as GFL2 flags each.
+            var name = Path.GetFileNameWithoutExtension(normalised);
+            if (name.EndsWith("_n"))
+            {
+                importer.textureType = TextureImporterType.NormalMap;
+                importer.sRGBTexture = false;
+            }
+            else if (name.EndsWith("_rmo") || name.EndsWith("_smo"))
+            {
+                importer.textureType = TextureImporterType.Default;
+                importer.sRGBTexture = false;
+            }
+            else if (name.EndsWith("_spc"))
+            {
+                importer.textureType = TextureImporterType.Default;
+                importer.sRGBTexture = true;
+            }
+            var after = $"{importer.textureCompression}/{importer.anisoLevel}/{importer.filterMode}/{importer.textureType}/{importer.sRGBTexture}";
             if (before == after) continue;
 
             importer.SaveAndReimport();

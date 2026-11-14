@@ -72,6 +72,8 @@ public sealed class CalibrationUISystem : JiangyuSystem
         // screen so the absolute fullscreen modal inside it has a full-size containing block, and
         // toggle THIS element's visibility (its child wm-cal-screen fills it via USS).
         _modal = root;
+        // A screen opened again has a new panel, shut, whatever the last one was left as.
+        _open = false;
         UiLayout.Fill(root);
         _list = UI.Find(root, UiSelector.Name("wm-cal-list"));
         _detail = UI.Find(root, UiSelector.Name("wm-cal-detail"));
@@ -121,9 +123,34 @@ public sealed class CalibrationUISystem : JiangyuSystem
         RebuildList();
         RebuildDetail();
         _modal.SetVisible(true);
+        _open = true;
     }
 
-    private void Hide() => _modal?.SetVisible(false);
+    private void Hide()
+    {
+        _modal?.SetVisible(false);
+        _open = false;
+    }
+
+    private bool _open;
+
+    internal void Close() => Hide();
+
+    // Dev: picks the open panel's weapon carried by the doll with this character tag.
+    internal bool DevPick(string characterTag)
+    {
+        var index = _instances.FindIndex(instance => instance.Leader != null && Affinity.CharacterTag(instance.Leader) == characterTag);
+        if (!_open || index < 0)
+            return false;
+        Select(index);
+        return true;
+    }
+
+    // The weapon picked on the calibration panel, and the doll who carries it (none for one in stock).
+    internal CalibrationInstance Picked => _open && _selected >= 0 && _selected < _instances.Count ? _instances[_selected] : null;
+
+    // Whether the calibration panel is up on the Workshop.
+    internal static bool IsOpen => Instance is { _open: true, _modal.panel: not null };
 
     // Collapse stock copies of the same weapon at the same rank into one card (its Count carries
     // the stack size): five stock R0 Twilight Roses are one row, not five. Equipped weapons are

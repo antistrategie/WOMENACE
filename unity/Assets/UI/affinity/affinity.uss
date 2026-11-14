@@ -301,3 +301,25 @@
 .wm-aff-lvl-row--current .wm-aff-unlock--acc { color: rgb(239, 224, 160); }
 
 /* locked levels keep the dim defaults above */
+
+/* The levels shown in place (the Squads screen's Affinity tab): no window of their own */
+.wm-aff-pop--in-place { width: auto; background-color: rgba(0, 0, 0, 0); border-width: 0; padding: 0; }
+/* The screen draws its own heading and level over the levels */
+.wm-aff-pop--in-place .wm-aff-head { display: none; }
+/* In place each level is a box of its own, as the panel's other rows are: no rail, the level's
+   number at the left, a gold edge on the current level, and the shell's colours for the text */
+.wm-aff-pop--in-place .wm-aff-lvl-row { align-items: flex-start; margin-bottom: 3.2px; padding: 5px 8px 5px 8px; background-color: rgb(12, 17, 24); border-width: 0.64px; border-color: rgb(50, 60, 74); }
+/* The same space over the first line as under the last, whatever the row holds */
+.wm-aff-pop--in-place .wm-aff-body { padding: 0; }
+.wm-aff-pop--in-place .wm-aff-num { height: auto; margin: 0; padding: 0; -unity-text-align: upper-left; }
+.wm-aff-pop--in-place .wm-aff-unlock { margin: 0; padding: 0; -unity-text-align: upper-left; }
+.wm-aff-pop--in-place .wm-aff-rail { display: none; }
+.wm-aff-pop--in-place .wm-aff-num { color: rgb(120, 143, 176); }
+.wm-aff-pop--in-place .wm-aff-unlock { color: rgb(120, 143, 176); }
+.wm-aff-pop--in-place .wm-aff-lvl-row--done .wm-aff-num { color: rgb(215, 192, 116); }
+.wm-aff-pop--in-place .wm-aff-lvl-row--done .wm-aff-unlock { color: rgb(225, 225, 225); }
+.wm-aff-pop--in-place .wm-aff-lvl-row--done .wm-aff-unlock--acc { color: rgb(255, 255, 255); }
+.wm-aff-pop--in-place .wm-aff-lvl-row--current { border-color: rgb(215, 192, 116); }
+.wm-aff-pop--in-place .wm-aff-lvl-row--current .wm-aff-num { color: rgb(215, 192, 116); }
+.wm-aff-pop--in-place .wm-aff-lvl-row--current .wm-aff-unlock { color: rgb(255, 255, 255); }
+.wm-aff-pop--in-place .wm-aff-lvl-row--current .wm-aff-unlock--acc { color: rgb(255, 255, 255); }

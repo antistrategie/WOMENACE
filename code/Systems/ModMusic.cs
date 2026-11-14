@@ -9,6 +9,8 @@ namespace WOMENACE.Code;
 // its audio data at boot. A track's clip (music/<name> in the mod bundles) is
 // loaded into its sound the first time it is played, so only a track a
 // session actually hears costs memory.
+// A track is played looped, which repeats its whole clip end to start. One that should go
+// round without a break is cut to exactly one pass of its loop (scripts/music/loop_track.py).
 internal static class ModMusic
 {
     internal const string BankId = "wmgfl_music_bank";

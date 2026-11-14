@@ -147,31 +147,13 @@ public sealed class Ots14BayStockSystem : JiangyuSystem
             var slots = Bay.LoadoutOrNull(Context);
             if (slots == null || Array.IndexOf(slots, guid) < 0)
                 return;
-            info.Result = FreeInstanceOf(result.GetTemplate(), slots);
+            info.Result = Bay.FreeCopy(result.GetTemplate(), slots);
             Context.Log.Debug($"bay: unused-instance lookup redirected off a bay-slotted '{result.GetID()}'");
         }
         catch (Exception ex)
         {
             Context.Log.Warn($"bay unused-instance guard failed: {ex.GetType().Name}: {ex.Message}");
         }
-    }
-
-    private Item FreeInstanceOf(ItemTemplate template, string[] slots)
-    {
-        if (template == null)
-            return null;
-        var instances = (Jiangyu.Game.Strategy.Inventory.Owned?.GetInstances(template) as Il2CppObjectBase)
-            ?.TryCast<Il2CppSystem.Collections.Generic.List<Item>>();
-        for (var i = 0; instances != null && i < instances.Count; i++)
-        {
-            var candidate = instances[i];
-            var guid = candidate?.GetGuid();
-            if (string.IsNullOrEmpty(guid) || Bay.IsEquipped(candidate))
-                continue;
-            if (Array.IndexOf(slots, guid) < 0)
-                return candidate;
-        }
-        return null;
     }
 
     private BaseUnitLeader HerLeader()

@@ -39,19 +39,26 @@ namespace Womenace.EditorTools
         // calibrating muscles against that biases every channel.
         private static int ApplyBindPose(GameObject pose)
         {
-            SkinnedMeshRenderer skin = null;
-            foreach (var r in pose.GetComponentsInChildren<SkinnedMeshRenderer>(true))
-                if (skin == null || r.bones.Length > skin.bones.Length)
-                    skin = r;
-            if (skin == null || skin.sharedMesh == null)
-                return 0;
-            var binds = skin.sharedMesh.bindposes;
-            var bones = skin.bones;
-            var meshMatrix = skin.transform.localToWorldMatrix;
+            // Every skinned mesh gives its bones' bind transforms, the mesh with the most
+            // bones first. A rig whose largest mesh leaves out some limbs (a coat skinned to
+            // the torso and its own bones, the legs on the body mesh) would otherwise keep
+            // those limbs in the exported stance and calibrate them bent.
             var world = new Dictionary<Transform, Matrix4x4>();
-            for (var i = 0; i < bones.Length && i < binds.Length; i++)
-                if (bones[i] != null && !world.ContainsKey(bones[i]))
-                    world[bones[i]] = meshMatrix * binds[i].inverse;
+            foreach (var skin in pose.GetComponentsInChildren<SkinnedMeshRenderer>(true).OrderByDescending(r => r.bones.Length))
+            {
+                if (skin.sharedMesh == null)
+                    continue;
+                var binds = skin.sharedMesh.bindposes;
+                var bones = skin.bones;
+                var meshMatrix = skin.transform.localToWorldMatrix;
+                var before = world.Count;
+                for (var i = 0; i < bones.Length && i < binds.Length; i++)
+                    if (bones[i] != null && !world.ContainsKey(bones[i]))
+                        world[bones[i]] = meshMatrix * binds[i].inverse;
+                Debug.Log($"ExtractHumanoidClips: {skin.name} binds {bones.Length} bone(s), {world.Count - before} not bound by a larger mesh.");
+            }
+            if (world.Count == 0)
+                return 0;
             // parent-first application so each local is computed against the
             // parent's already-applied bind transform
             var applied = 0;
@@ -111,13 +118,60 @@ namespace Womenace.EditorTools
                 return;
             }
 
+            if (!Extract(fbxPath, outDir, stripPrefix, humanMapPath, rangesPath, null))
+            {
+                EditorApplication.Exit(1);
+                return;
+            }
+
+            // Retarget spot-check: sample the extracted Idle muscle clip on the
+            // baked doll prefab and report hand heights. A standing idle puts
+            // hands near thigh height close to the body. Hands out at shoulder
+            // height mean the donor avatar calibrated off an A-pose skeleton
+            // and every clip will play with the arms offset.
+            var validatePrefab = Arg("-validatePrefab", null);
+            if (!string.IsNullOrEmpty(validatePrefab))
+            {
+                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(validatePrefab);
+                var idle = AssetDatabase.LoadAssetAtPath<AnimationClip>($"{outDir}/Idle.anim");
+                if (prefab == null || idle == null)
+                {
+                    Debug.LogWarning("ExtractHumanoidClips: validation skipped (prefab or Idle.anim missing).");
+                }
+                else
+                {
+                    var instance = Object.Instantiate(prefab);
+                    try
+                    {
+                        var animator = instance.GetComponentInChildren<Animator>();
+                        idle.SampleAnimation(animator != null ? animator.gameObject : instance, 0.1f);
+                        foreach (var name in new[] { "Hand_L", "Hand_R", "Head", "Hips" })
+                        {
+                            var t = FindDeep(instance.transform, name);
+                            if (t != null)
+                                Debug.Log($"ExtractHumanoidClips: VALIDATE {name} world=({t.position.x:+0.000;-0.000},{t.position.y:+0.000;-0.000},{t.position.z:+0.000;-0.000})");
+                        }
+                    }
+                    finally
+                    {
+                        Object.DestroyImmediate(instance);
+                    }
+                }
+            }
+            EditorApplication.Exit(0);
+        }
+
+        // Imports one donor FBX as Humanoid and writes its takes as muscle-clip
+        // .anim assets under outDir. takes, when given, keeps only those takes.
+        public static bool Extract(string fbxPath, string outDir, string stripPrefix, string humanMapPath,
+            string rangesPath, ICollection<string> takes)
+        {
             AssetDatabase.Refresh();
             var importer = AssetImporter.GetAtPath(fbxPath) as ModelImporter;
             if (importer == null)
             {
                 Debug.LogError($"ExtractHumanoidClips: no model at '{fbxPath}'.");
-                EditorApplication.Exit(1);
-                return;
+                return false;
             }
 
             importer.animationType = ModelImporterAnimationType.Human;
@@ -228,6 +282,26 @@ namespace Womenace.EditorTools
                 clip.keepOriginalPositionY = true;
                 clip.keepOriginalPositionXZ = true;
             }
+            // Optional: keep only the named takes (after stripPrefix). A take named
+            // *_Loop loops.
+            if (takes != null)
+            {
+                clips = clips.Where(c => takes.Contains(c.name)).ToArray();
+                // Root motion is baked into the pose relative to the body (centre of mass, body
+                // facing, feet on the ground), not the take's original root: GFL2's lobby takes
+                // carry the spot and facing each doll had in its own lobby, which would otherwise
+                // shift and turn her away from wherever she is stood.
+                foreach (var clip in clips)
+                {
+                    clip.loopTime = clip.loopPose = clip.name.EndsWith("_Loop");
+                    clip.lockRootRotation = clip.lockRootHeightY = clip.lockRootPositionXZ = true;
+                    clip.keepOriginalOrientation = false;
+                    clip.keepOriginalPositionXZ = false;
+                    clip.keepOriginalPositionY = false;
+                    clip.heightFromFeet = true;
+                }
+                Debug.Log($"ExtractHumanoidClips: keeping {clips.Length} of {takes.Count} named take(s).");
+            }
             if (!string.IsNullOrEmpty(rangesPath))
             {
                 var cut = new List<ModelImporterClipAnimation>();
@@ -241,15 +315,13 @@ namespace Womenace.EditorTools
                     if (spec.Length < 3)
                     {
                         Debug.LogError($"ExtractHumanoidClips: range '{line}' is not Name=Take:first:last[:loop].");
-                        EditorApplication.Exit(1);
-                        return;
+                        return false;
                     }
                     var take = clips.FirstOrDefault(c => c.name == spec[0].Trim());
                     if (take == null)
                     {
                         Debug.LogError($"ExtractHumanoidClips: range '{line}' names no take; takes are {string.Join(", ", clips.Select(c => c.name))}.");
-                        EditorApplication.Exit(1);
-                        return;
+                        return false;
                     }
                     cut.Add(new ModelImporterClipAnimation
                     {
@@ -280,8 +352,7 @@ namespace Womenace.EditorTools
             if (avatar == null)
             {
                 Debug.LogError("ExtractHumanoidClips: import produced no Avatar.");
-                EditorApplication.Exit(1);
-                return;
+                return false;
             }
             Debug.Log($"ExtractHumanoidClips: avatar isHuman={avatar.isHuman} isValid={avatar.isValid}");
             foreach (var hb in avatar.humanDescription.human)
@@ -303,42 +374,7 @@ namespace Womenace.EditorTools
             }
             AssetDatabase.SaveAssets();
             Debug.Log($"ExtractHumanoidClips: extracted {extracted} clip(s) to {outDir}.");
-
-            // Retarget spot-check: sample the extracted Idle muscle clip on the
-            // baked doll prefab and report hand heights. A standing idle puts
-            // hands near thigh height close to the body. Hands out at shoulder
-            // height mean the donor avatar calibrated off an A-pose skeleton
-            // and every clip will play with the arms offset.
-            var validatePrefab = Arg("-validatePrefab", null);
-            if (!string.IsNullOrEmpty(validatePrefab))
-            {
-                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(validatePrefab);
-                var idle = AssetDatabase.LoadAssetAtPath<AnimationClip>($"{outDir}/Idle.anim");
-                if (prefab == null || idle == null)
-                {
-                    Debug.LogWarning("ExtractHumanoidClips: validation skipped (prefab or Idle.anim missing).");
-                }
-                else
-                {
-                    var instance = Object.Instantiate(prefab);
-                    try
-                    {
-                        var animator = instance.GetComponentInChildren<Animator>();
-                        idle.SampleAnimation(animator != null ? animator.gameObject : instance, 0.1f);
-                        foreach (var name in new[] { "Hand_L", "Hand_R", "Head", "Hips" })
-                        {
-                            var t = FindDeep(instance.transform, name);
-                            if (t != null)
-                                Debug.Log($"ExtractHumanoidClips: VALIDATE {name} world=({t.position.x:+0.000;-0.000},{t.position.y:+0.000;-0.000},{t.position.z:+0.000;-0.000})");
-                        }
-                    }
-                    finally
-                    {
-                        Object.DestroyImmediate(instance);
-                    }
-                }
-            }
-            EditorApplication.Exit(0);
+            return true;
         }
     }
 }

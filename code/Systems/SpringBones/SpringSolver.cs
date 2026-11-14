@@ -129,6 +129,11 @@ internal sealed class SpringChain
     public NVector3 Outward;
     public NVector3 HangDirection = new(0f, -1f, 0f);
 
+    // For SpringChainSpec.Sag: the way the body pushes the drooped shape, in the hips' frame,
+    // flat from the hips towards where the chain's tip rests in the bind pose. Hair down a back
+    // is pushed back and a tail at one side to that side.
+    public NVector3 DroopOutward;
+
     // Each particle's height and radial offset about the body's axis as of
     // its last step, for the layers over and under it. LayerCached is false
     // until the chain has stepped since it was last reset.
@@ -321,6 +326,25 @@ internal static class SpringSolver
         return target + NVector3.Transform(level, swing) - level;
     }
 
+    // Droops the target shape under its weight: each point moved down by Sag
+    // times the square of its distance down the chain over the chain's length,
+    // then the links laid back out at their lengths.
+    private static void SagTargets(SpringChain chain, NVector3 origin, float scale)
+    {
+        var total = 0f;
+        foreach (var j in chain.Joints)
+            total += j.LocalLength * scale;
+        if (total <= 0f)
+            return;
+        var along = 0f;
+        for (var i = 0; i < chain.Targets.Length; i++)
+        {
+            along += chain.Joints[i].LocalLength * scale;
+            chain.Targets[i] += Down * (chain.Spec.Sag * along * along / total);
+        }
+        Relay(chain, origin, scale);
+    }
+
     // Lays the target shape back out at the link lengths from the root, after
     // a correction that moved its points by different amounts.
     private static void Relay(SpringChain chain, NVector3 origin, float scale)
@@ -352,11 +376,13 @@ internal static class SpringSolver
     // side in the bind pose, turned with the hips and laid flat. Cloth tied at
     // the front of the shoulders is held to the front even when a forward lean
     // puts the shoulder behind the hips.
-    private static NVector3 OutwardOf(SpringChain chain, in SpringBodyPose pose)
+    private static NVector3 OutwardOf(SpringChain chain, in SpringBodyPose pose) => OutwardOf(chain.Outward, pose);
+
+    private static NVector3 OutwardOf(NVector3 inHips, in SpringBodyPose pose)
     {
-        if (!pose.Valid || chain.Outward.LengthSquared() < 1e-8f)
+        if (!pose.Valid || inHips.LengthSquared() < 1e-8f)
             return NVector3.Zero;
-        var outward = NVector3.Transform(chain.Outward, pose.HipsRotation);
+        var outward = NVector3.Transform(inHips, pose.HipsRotation);
         outward.Y = 0f;
         return Direction(outward);
     }
@@ -391,9 +417,11 @@ internal static class SpringSolver
     // along its one outward direction. The torso moves with the chain's root,
     // so the push changes smoothly. The legs are cleared like any chain's
     // (ClearLegs).
-    private static void ClearTorso(SpringChain chain, List<SpringCollider> colliders, in SpringBodyPose pose, NVector3 origin, float scale)
+    private static void ClearTorso(SpringChain chain, List<SpringCollider> colliders, in SpringBodyPose pose, NVector3 origin, float scale) =>
+        ClearTorso(chain, colliders, OutwardOf(chain, pose), origin, scale);
+
+    private static void ClearTorso(SpringChain chain, List<SpringCollider> colliders, NVector3 outward, NVector3 origin, float scale)
     {
-        var outward = OutwardOf(chain, pose);
         if (outward.LengthSquared() < 0.5f)
             return;
         var reach = chain.Spec.HitRadius * scale * LegTargetMargin;
@@ -899,11 +927,26 @@ internal static class SpringSolver
             chain.Targets[i] = cursor;
         }
 
+        // A chain hung from the hips is drooped below, once the hips have placed it.
+        if (spec.Sag > 0f && !spec.HangDown && !(pose.Valid && spec.LegDrive > 0f))
+        {
+            SagTargets(chain, origin, scale);
+            // Drooped, the shape can fall into the torso it hangs beside (hair down a back that
+            // leans away). It is moved out, so the springs never pull in: out along one way, as
+            // a hanging chain's is, and that way is the side of the body the chain itself rests
+            // on. A hanging chain's own way (its root's front and side) takes hair down a back
+            // across the body into a curl.
+            if (pose.Valid && (groups & SpringColliderGroup.Body) != 0)
+                ClearTorso(chain, colliders, OutwardOf(chain.DroopOutward, pose), origin, scale);
+        }
+
         if (pose.Valid)
         {
             if (spec.LegDrive > 0f)
             {
                 HangFromHips(chain, pose, scale);
+                if (spec.Sag > 0f)
+                    SagTargets(chain, origin, scale);
                 DriveWithLegs(chain, pose, origin, scale, spec.LegDrive);
             }
 

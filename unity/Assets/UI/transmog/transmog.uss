@@ -116,3 +116,23 @@
     flex-shrink: 0;
     margin-left: 8px;
 }
+
+/* The outfit list shown in place (the Squads screen's Appearance tab): one card to a row */
+.wm-outfit-list--rows { flex-direction: column; flex-wrap: nowrap; }
+/* The modal's card is 298 by 106 and its art is drawn for that shape, so a row keeps the shape at the column's width */
+.wm-outfit-list--rows .wm-outfit-card { width: 100%; height: 109px; margin-right: 0; }
+.wm-outfit-tag { position: absolute; left: 9px; bottom: 8px; padding: 1px 5px; font-size: 7.2px; letter-spacing: 0.7px; color: rgb(120, 143, 176); background-color: rgba(0, 0, 0, 0.8); border-width: 0.64px; border-color: rgb(120, 143, 176); }
+
+/* A hosted row in the Squads panel's style: dark fill, hairline edge, gold edge on the outfit
+   being dressed, white name with who wears it as chips beside it */
+.wm-outfit-list--rows .wm-outfit-card { background-image: none; background-color: rgb(12, 17, 24); border-width: 0.64px; border-color: rgb(67, 83, 106); border-radius: 0; margin-bottom: 6.4px; }
+.wm-outfit-list--rows .wm-outfit-card:hover { border-color: rgb(215, 192, 116); }
+.wm-outfit-list--rows .wm-outfit-card--on { border-width: 1.9px; border-color: rgb(215, 192, 116); }
+.wm-outfit-list--rows .wm-outfit-card #Border { visibility: hidden; }
+.wm-outfit-list--rows .wm-outfit-card #Selected { visibility: hidden; }
+.wm-outfit-card-heading { flex-direction: row; align-items: center; margin-left: 9px; margin-top: 7px; }
+.wm-outfit-list--rows .wm-outfit-card-name { color: rgb(255, 255, 255); font-size: 11.2px; letter-spacing: 0.45px; margin: 0 6px 0 0; }
+.wm-outfit-list--rows .wm-outfit-card-shortname { color: rgb(120, 143, 176); font-size: 8px; }
+.wm-outfit-chip { font-size: 7.2px; letter-spacing: 0.6px; color: rgb(0, 0, 0); padding: 0 3px; margin: 0 3px 0 0; }
+.wm-outfit-chip--leader { background-color: rgb(215, 192, 116); }
+.wm-outfit-chip--links { background-color: rgb(121, 233, 245); }

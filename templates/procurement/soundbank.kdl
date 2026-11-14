@@ -48,4 +48,69 @@ clone "SoundBank" from="ui_soundbank" id="wmgfl_procurement_soundbank" {
         }
     }
     append "busIndices" 0
+
+    // GFL2 UI_Lobby.acb, the capsule machine's pull: the run of a pull of one and of ten, the
+    // capsules landing, and the plainer and the golden stings.
+    append "sounds" {
+        set "name" "machine_one_01"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="procurement/machine_one_01"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "machine_one_02"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="procurement/machine_one_02"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "machine_ten_01"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="procurement/machine_ten_01"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "machine_ten_02"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="procurement/machine_ten_02"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "machine_white_02"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="procurement/machine_white_02"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "machine_golden_01"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="procurement/machine_golden_01"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "machine_golden_02"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="procurement/machine_golden_02"
+        }
+    }
+    append "busIndices" 0
 }

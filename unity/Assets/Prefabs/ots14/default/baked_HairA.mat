@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: baked_HairA
-  m_Shader: {fileID: 4800000, guid: 1b369dd5de6b035faa60de9ecc69caad, type: 3}
+  m_Shader: {fileID: 4800000, guid: 87dfd61ed9db4defbb85b5f0da977df0, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -39,24 +39,31 @@ Material:
         m_Texture: {fileID: 2800000, guid: b73ee45e41774916b210f7f9a578bc7e, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _RoomReflection:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _SdfMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SpecularMap:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: 25f06ee6f8586f7a799b333064764175, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
     - _BlendSmoothness: 0.1
     - _IblIntensity: 0.6038
+    - _KeyOcclusion: 1
     - _MaskRoughnessInverted: 0
     - _MatCapIntensity: 0
     - _MatCapUVOffset: 0.025
     - _NormalScale: 1
     - _OcclusionStrength: 1
+    - _RoomLit: 0
     - _UseBlendTex: 0
+    - _UseRoomReflection: 0
     m_Colors:
     - _BaseTint: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []

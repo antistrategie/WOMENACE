@@ -9,8 +9,7 @@ namespace WOMENACE.Code;
 // Dump reports, for every element on the field, where the hand bones, the weapon
 // socket, the mounted weapon and its weapon_hand_l IK empty actually ARE, so a broken
 // doll and a healthy unit in the same mission can be compared number by number.
-// Every stage that can come up empty reports itself instead of silently dropping the
-// row, because iterating on this verb costs the user a game restart per attempt.
+// Every stage that can come up empty reports itself instead of silently dropping the row.
 //
 //   scripts/bridge.py verb Rig.Dump               every element on the field
 //   scripts/bridge.py verb Rig.Dump '["klukai"]'  only actors whose template id contains the filter
@@ -20,7 +19,7 @@ public static class Rig
     // Every SkinnedMeshRenderer in the scene with arm elevations measured from ITS OWN
     // bones array: the renderer's rig is by construction the one the player sees, wherever
     // the body instance is parented. The element-based Dump measures whatever rig hangs
-    // under Element.gameObject, which live evidence says is NOT always the rendered one.
+    // under Element.gameObject, which is not always the rendered one.
     public static object Smrs(string filter = null)
     {
         var rows = new List<string>();
@@ -50,11 +49,132 @@ public static class Rig
                     case "Hand_R": hR = b; break;
                 }
             }
-            rows.Add($"{path}\n  enabled={smr.enabled} visible={smr.isVisible} bones={(bones == null ? 0 : bones.Length)}"
+            rows.Add($"{path}\n  enabled={smr.enabled} visible={smr.isVisible} layers={smr.renderingLayerMask} bones={(bones == null ? 0 : bones.Length)}"
                 + $" armL={Elev(uL, lL)} armR={Elev(uR, lR)}"
                 + (hR != null ? $" handR@{Fmt(hR.position)}" : ""));
         }
         return string.Join("\n", rows);
+    }
+
+    // Shoots a close-up of one bone of the nth skinned mesh whose path contains the filter. A clone
+    // of the main camera (keeping its HDRP data and volume, free of whatever drives the original)
+    // renders the shot live for a few frames with the UI hidden, the screen is captured, then the
+    // clone is destroyed. An offscreen Render of the armoury camera comes back black. The offset
+    // is in the character's frame (her right, up, her facing), taken from her shoulders because
+    // body roots do not share one facing axis.
+    public static string Closeup(string filter, int nth, string bone, float right, float up, float forward, float fov, string path, bool hideUi = true)
+    {
+        // The strategy room's camera is not tagged MainCamera, so fall back to the deepest
+        // enabled camera, which is the one drawing the screen.
+        var camera = Camera.main;
+        if (camera == null)
+            foreach (var candidate in Camera.allCameras)
+                if (candidate.enabled && (camera == null || candidate.depth > camera.depth))
+                    camera = candidate;
+        if (camera == null)
+            return "no main camera";
+        Transform target = null, shoulderL = null, shoulderR = null;
+        var seen = 0;
+        foreach (var smr in UnityEngine.Object.FindObjectsOfType<SkinnedMeshRenderer>())
+        {
+            var top = smr.transform;
+            var name = smr.name;
+            while (top.parent != null) { top = top.parent; name = top.name + "/" + name; }
+            if (!name.ToLowerInvariant().Contains(filter.ToLowerInvariant()) || smr.bones == null)
+                continue;
+            Transform found = null, l = null, r = null;
+            foreach (var b in smr.bones)
+            {
+                if (b == null) continue;
+                if (b.name == bone) found = b;
+                if (b.name == "UpperArm_L") l = b;
+                if (b.name == "UpperArm_R") r = b;
+            }
+            if (found == null || l == null || r == null || seen++ < nth)
+                continue;
+            (target, shoulderL, shoulderR) = (found, l, r);
+            break;
+        }
+        if (target == null)
+            return $"no {bone} on a mesh matching {filter} (#{nth})";
+        var her = shoulderR.position - shoulderL.position;
+        her.y = 0f;
+        her.Normalize();
+        var facing = Vector3.Cross(her, Vector3.up);
+        var context = StrategyDiorama.SystemContext;
+        if (context == null)
+            return "no context";
+        var position = target.position + her * right + Vector3.up * up + facing * forward;
+        context.Coroutines.Start(Shoot(camera, position, target.position, fov, path, hideUi));
+        return $"shooting {path} at {Fmt(target.position)} facing {Fmt(facing)}";
+    }
+
+    // The strategy room from GFL2's own camera anchor, UI and the Dinergate hidden, for comparing
+    // against a GFL2 capture of the same view.
+    public static string Anchor(string path)
+    {
+        var room = StrategyDiorama.Room;
+        var source = StrategyDiorama.RoomCamera;
+        var anchor = room != null ? room.transform.Find("_CameraAnchor") : null;
+        var context = StrategyDiorama.SystemContext;
+        if (anchor == null || source == null || context == null)
+            return "no room camera";
+        var dinergate = GameObject.Find("WOMENACE_Dinergate");
+        if (dinergate != null)
+            dinergate.SetActive(false);
+        source.transform.SetPositionAndRotation(anchor.position, anchor.rotation);
+        source.fieldOfView = StrategyDiorama.RoomFov;
+        context.Coroutines.Start(ShootThenShow(source, anchor, path, dinergate));
+        return $"shooting {path} from the room anchor";
+    }
+
+    private static System.Collections.IEnumerator ShootThenShow(Camera source, Transform anchor, string path, GameObject hidden)
+    {
+        yield return Shoot(source, anchor.position, anchor.position + anchor.forward, StrategyDiorama.RoomFov, path, true, false);
+        if (hidden != null)
+            hidden.SetActive(true);
+    }
+
+    private static System.Collections.IEnumerator Shoot(Camera source, Vector3 position, Vector3 lookAt, float fov, string path, bool hideUi, bool closeup = true)
+    {
+        var clone = UnityEngine.Object.Instantiate(source.gameObject);
+        clone.name = "WOMENACE_CloseupCamera";
+        var listener = clone.GetComponent<AudioListener>();
+        if (listener != null)
+            UnityEngine.Object.Destroy(listener);
+        // Only the camera and HDRP's data and volume stay: a copied camera controller (the tactical
+        // one) runs on the clone and throws every frame.
+        foreach (var behaviour in clone.GetComponents<MonoBehaviour>())
+        {
+            var type = behaviour.GetIl2CppType().Name;
+            if (type != "HDAdditionalCameraData" && type != "Volume")
+                UnityEngine.Object.DestroyImmediate(behaviour);
+        }
+        var camera = clone.GetComponent<Camera>();
+        camera.depth = source.depth + 50f;
+        // A close-up drops the physical camera (its sensor overrides the field of view) and pulls the
+        // near plane in, since strategy cameras clip anything close. A view shot keeps the source's
+        // camera whole, whose physical settings also set its exposure.
+        if (closeup)
+        {
+            camera.usePhysicalProperties = false;
+            camera.fieldOfView = fov;
+            camera.nearClipPlane = 0.05f;
+            camera.useOcclusionCulling = false;
+        }
+        clone.transform.position = position;
+        clone.transform.LookAt(lookAt);
+        var hidden = hideUi ? Diorama.HideUi() : null;
+        for (var i = 0; i < 15; i++)
+            yield return new WaitForEndOfFrame();
+        var tex = ScreenCapture.CaptureScreenshotAsTexture();
+        UnityEngine.Object.Destroy(clone);
+        if (hidden != null)
+            Diorama.ShowUi(hidden);
+        if (tex == null)
+            yield break;
+        System.IO.File.WriteAllBytes(path, (byte[])ImageConversion.EncodeToPNG(tex));
+        UnityEngine.Object.Destroy(tex);
     }
 
     public static object Dump(string filter = null)

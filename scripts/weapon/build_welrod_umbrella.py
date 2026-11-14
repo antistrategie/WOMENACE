@@ -61,6 +61,9 @@ from pathlib import Path
 import bpy
 from mathutils import Matrix, Quaternion, Vector
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from bake_weapon import LEFT_GRIP_TURN_GLTF  # noqa: E402
+
 FBX = Path.home() / "gfl2-extract" / "out" / "welrod_umbrella" / "fbx.fbx"
 TEX_SRC = Path.home() / "gfl2-extract" / "out" / "welrod_umbrella" / "tex" / "Texture2D"
 WORK = Path.home() / "Downloads" / "Welrod_Umbrella"
@@ -147,7 +150,9 @@ def blender_quat_to_gltf(q):
 
 
 LEFT_HAND = GRIP + HOLD_ROT @ ARC_HAND_FROM_HANDGUARD
-LEFT_HAND_QUAT = HOLD_ROT.to_quaternion() @ gltf_quat_to_blender(ARC_HAND_GLTF_QUAT)
+# With the quarter turn about the hand's length that bake_weapon.py gives every grip point.
+LEFT_HAND_QUAT = (HOLD_ROT.to_quaternion() @ gltf_quat_to_blender(ARC_HAND_GLTF_QUAT)
+                  @ gltf_quat_to_blender(LEFT_GRIP_TURN_GLTF))
 # pinned on export (see pin_node_rotation)
 LEFT_HAND_GLTF_QUAT = blender_quat_to_gltf(LEFT_HAND_QUAT)
 

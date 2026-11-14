@@ -87,7 +87,7 @@ The `--path-id` comes from a search, and `import-prefab` is what makes the refer
 `raw.glb` lands with seeded attach-point empties at the REFERENCE weapon's positions, i.e. they fit the parent gun's geometry, not yours. Open in Blender, nudge `muzzle` and `weapon_hand_l` to the right places on the new mesh:
 
 - `muzzle`: where bullet trace lines start + muzzle flash spawns. Set to the front face of the barrel exit, oriented along the barrel axis (empty Y axis → out the barrel).
-- `weapon_hand_l`: where the soldier's left hand grips the foregrip. Position is the palm centre, and rotation defines the wrist orientation.
+- `weapon_hand_l`: where the soldier's left hand grips the foregrip. Position is the palm centre, and rotation defines the wrist orientation. It is seeded as the reference's rotation with a quarter turn about the hand's length, which lays a doll's palm against the handguard where the reference's own rotation puts her thumb under the weapon. `"left_grip_turn": false` in the config seeds the reference's rotation as it comes, for the weapons of a rig that skips the converter's palm calibration.
 
 **The mesh and empties are siblings under a `<name>_root` empty**, so moving the mesh shifts the right-hand grip (the prefab parents under Hand_R at runtime) without dragging the muzzle / left-hand IK targets. Move the empties and leave the mesh alone unless the right-hand grip is also wrong.
 

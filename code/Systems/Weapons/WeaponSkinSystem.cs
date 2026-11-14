@@ -131,7 +131,10 @@ public sealed class WeaponSkinSystem : JiangyuSystem
     internal static GameObject ModelFor(ItemContainer items, ItemSlot slot, WeaponTemplate weapon)
     {
         var skin = Instance?.SelectionFor(items, slot, weapon);
-        return Instance?.LoadModel(skin) ?? weapon?.Model;
+        if (Instance?.LoadModel(skin) is { } skinned)
+            return skinned;
+        WeaponModelSystem.Ensure(weapon);
+        return weapon?.Model;
     }
 
     private GameObject LoadModel(WeaponSkin skin)

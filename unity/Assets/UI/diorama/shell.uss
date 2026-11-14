@@ -1,0 +1,705 @@
+/* The letterbox shell: black bars top and bottom of a strategy screen. Sizes are the mockup's
+   (1600 x 900) at 0.8, the game's panel scale at that resolution. */
+.wm-shell { position: absolute; left: 0; top: 0; right: 0; bottom: 0; justify-content: space-between; overflow: hidden; }
+
+/* The bars' black is two shutters behind them, moved by code (a translate, so nothing lays out
+   again while they move). The bars themselves hold the contents and never move. */
+.wui-shutter {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background-color: rgb(0, 0, 0);
+    transition-property: translate;
+    transition-duration: 0.5s;
+    transition-timing-function: ease-in-out-cubic;
+}
+/* Open by the bar's height, until the code knows the screen's height in pixels. */
+.wui-shutter--top { top: 0; translate: 0 -75%; }
+.wui-shutter--bottom { bottom: 0; translate: 0 75%; }
+.wm-bars-closed .wui-shutter { translate: 0 0; }
+.wm-bars-snap .wui-shutter { transition-duration: 0s; }
+
+.wui-bar {
+    height: 90px;
+    flex-shrink: 0;
+    flex-direction: row;
+    align-items: center;
+    padding: 0 32px;
+}
+/* Shut, the bars' contents are hidden. They show once the bars have opened. */
+.wui-bar > * { transition-property: opacity; transition-duration: 0.3s; transition-delay: 0.25s; }
+.wm-bars-closed .wui-bar > * { opacity: 0; transition-duration: 0s; transition-delay: 0s; }
+/* A story event plays between bare bars */
+.wm-bars-event .wui-bar > * { opacity: 0; transition-duration: 0.2s; transition-delay: 0s; }
+
+/* Title block: the ship's name over the room and screen */
+.wui-bar-title { flex-direction: column; }
+.wui-bar-title__over { color: var(--ink-label); font-size: 10px; letter-spacing: 1.5px; padding: 0; margin: 0 0 3px 0; }
+.wui-bar-title__main { color: var(--ink); font-size: 24px; letter-spacing: 1px; padding: 0; margin: 0; }
+
+.wui-bar-back {
+    flex-direction: row;
+    align-items: center;
+    height: 29px;
+    padding: 0 11px;
+    margin-right: 20px;
+    background-color: rgb(0, 0, 0);
+    border-width: 0.8px;
+    border-color: var(--line-strong);
+    transition-duration: 0.12s;
+}
+.wui-bar-back:hover { border-color: var(--gold); }
+.wui-bar-back__glyph { color: var(--ink); font-size: 11px; padding: 0; margin: 0 6px 0 0; }
+.wui-bar-back__label { color: var(--ink); font-size: 10px; letter-spacing: 1px; padding: 0; margin: 0; }
+.wui-bar-back:hover .wui-bar-back__label { color: var(--gold); }
+.wui-bar-back:hover .wui-bar-back__glyph { color: var(--gold); }
+
+/* Tabs in the top bar: two screens under one destination */
+.wui-bar-tabs { flex-direction: row; align-items: center; margin-left: 36px; }
+.wui-tab {
+    min-width: 104px;
+    height: 29px;
+    margin-right: 4px;
+    padding: 0 14px;
+    align-items: center;
+    justify-content: center;
+    background-color: rgb(0, 0, 0);
+    border-width: 0.8px;
+    border-color: var(--line);
+    transition-duration: 0.12s;
+}
+.wui-tab:hover { border-color: var(--gold); }
+.wui-tab__label { color: var(--ink-meta); font-size: 10px; letter-spacing: 0.8px; padding: 0; margin: 0; }
+.wui-tab:hover .wui-tab__label { color: var(--gold); }
+.wui-tab--on { border-color: var(--gold); }
+.wui-tab--on .wui-tab__label { color: var(--gold); }
+.wui-tab--off { opacity: 0.35; }
+
+/* A tag over something in the room that can be clicked (the Dinergate, the holotable): says what
+   it opens. Placed over it by code. */
+.wui-tag { position: absolute; left: -400px; top: 0; align-items: center; transition-property: opacity, translate; transition-duration: 0.2s, 0.2s; transition-timing-function: ease, ease-out-back; }
+.wui-tag--off { opacity: 0; }
+/* Under the pointer the tag hops up */
+.wui-tag--hover { translate: 0 -9px; }
+.wui-tag__box {
+    flex-direction: row;
+    align-items: center;
+    height: 22px;
+    padding: 0 9px;
+    background-color: rgba(0, 0, 0, 0.88);
+    border-width: 0.8px;
+    border-color: var(--holo);
+    transition-duration: 0.12s;
+}
+.wui-tag__label { color: var(--holo); font-size: 9px; letter-spacing: 1.2px; padding: 0; margin: 0; }
+.wui-tag__count { color: rgb(0, 0, 0); background-color: var(--gold); font-size: 9px; padding: 0 4px; margin: 0 0 0 7px; }
+.wui-tag__line { width: 0.8px; height: 16px; background-color: var(--holo); }
+.wui-tag__dot { width: 5px; height: 5px; rotate: 45deg; background-color: var(--holo); }
+.wui-tag--hover .wui-tag__box { border-color: var(--gold); background-color: rgb(0, 0, 0); }
+.wui-tag--hover .wui-tag__label { color: var(--gold); }
+.wui-tag--hover .wui-tag__line { background-color: var(--gold); }
+.wui-tag--hover .wui-tag__dot { background-color: var(--gold); }
+
+/* The Intel board the Dinergate projects: a dark panel in a hologram frame, grown from its lens */
+.wui-board-blocker { position: absolute; left: 0; top: 0; right: 0; bottom: 0; display: none; }
+.wui-board-blocker--on { display: flex; }
+.wui-board {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 700px;
+    height: 154px;
+    margin-left: -300px;
+    margin-top: -77px;
+    background-color: rgba(3, 18, 25, 0.9);
+    border-width: 0.8px;
+    border-color: var(--holo);
+    transform-origin: 0% 85%;
+    scale: 0.3 0.3;
+    opacity: 0;
+    /* Closed, it is unseen but would still take the pointer over the middle of the room, so it
+       is moved off the screen once it has closed: the move waits out the scale's own time. */
+    translate: -6000px 0;
+    transition-property: scale, opacity, translate;
+    transition-duration: 0.34s, 0.2s, 0s;
+    transition-delay: 0s, 0s, 0.34s;
+    transition-timing-function: ease-out-back, ease-out-cubic, linear;
+}
+.wui-board--open { scale: 1 1; opacity: 1; translate: 0 0; transition-delay: 0s, 0s, 0s; }
+/* The hologram: a soft glow round the frame, scanlines and a sheen from the top over the fill */
+.wui-board__glow { position: absolute; left: -30px; top: -30px; right: -30px; bottom: -30px; background-image: url("../Icons/shell/board_glow.png"); -unity-background-scale-mode: stretch-to-fill; }
+.wui-board__fx { position: absolute; left: 0; top: 0; right: 0; bottom: 0; overflow: hidden; }
+.wui-holo-frame { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+.wui-board__scan { position: absolute; left: 0; top: 0; right: 0; height: 483px; background-image: url("../Icons/shell/board_scan.png"); }
+.wui-holo__corner--tr { right: -5px; top: -5px; border-right-width: 2.4px; border-top-width: 2.4px; }
+.wui-holo__corner--bl { left: -5px; bottom: -5px; border-left-width: 2.4px; border-bottom-width: 2.4px; }
+.wui-board__head { flex-direction: row; align-items: center; height: 40px; padding: 0 12px 0 20px; flex-shrink: 0; }
+.wui-board__serial { color: rgb(170, 240, 248); font-size: 9px; letter-spacing: 1.6px; padding: 0; margin: 0; }
+.wui-board__rule { flex-grow: 1; height: 0.8px; margin: 0 14px; background-color: rgba(79, 220, 234, 0.35); }
+.wui-board__close { width: 24px; height: 24px; align-items: center; justify-content: center; border-width: 0.8px; border-color: rgba(79, 220, 234, 0.5); transition-duration: 0.12s; }
+.wui-board__close:hover { border-color: var(--gold); }
+.wui-board__close-glyph { color: var(--ink); font-size: 10px; padding: 0; margin: 0; }
+.wui-board__body { flex-grow: 1; flex-direction: row; padding: 0 20px 20px 20px; }
+.wui-board__col { flex-grow: 1; }
+.wui-board__col--factions { flex-grow: 0; width: 250px; margin-left: 20px; padding-left: 20px; border-left-width: 0.8px; border-color: rgba(79, 220, 234, 0.28); }
+.wui-board__heading { flex-direction: row; align-items: center; height: 30px; }
+.wui-board__tick { width: 8px; height: 0.8px; margin-right: 7px; background-color: var(--ink-label); }
+.wui-board__title { color: var(--ink); font-size: 13px; letter-spacing: 0.8px; padding: 0; margin: 0; }
+.wui-board__count { color: rgb(0, 0, 0); background-color: var(--gold); font-size: 9px; padding: 0 4px; margin: 0 0 0 8px; }
+.wui-board__empty { color: var(--ink-meta); font-size: 10px; letter-spacing: 0.6px; padding: 0; margin: 10px 0 0 0; }
+
+/* A resource's name on gold, before its amount, added to the vanilla resource displays in the top bar */
+.wui-res-caption { color: rgb(0, 0, 0); background-color: var(--gold); font-size: 7px; letter-spacing: 0.7px; -unity-text-align: middle-center; padding: 0 6px; margin: 0; }
+
+/* A view's own actions on the bottom bar: the lesser one left, what it acts on in the middle, the
+   main one right */
+.wui-act-row { flex-grow: 1; flex-direction: row; align-items: center; }
+.wui-act {
+    min-width: 200px;
+    height: 51px;
+    padding: 0 20px;
+    align-items: center;
+    justify-content: center;
+    background-color: rgb(0, 0, 0);
+    border-width: 0.8px;
+    border-color: var(--line-strong);
+    transition-duration: 0.12s;
+}
+.wui-act__label { color: var(--ink); font-size: 11px; letter-spacing: 1.2px; padding: 0; margin: 0; }
+/* A plain action (Back) answers the pointer as the bar's destinations do. A dangerous one keeps
+   its own colours below. */
+.wui-act:hover { border-color: var(--gold); }
+.wui-act:hover .wui-act__label { color: var(--gold); }
+/* An action that cannot be taken does not answer. */
+.wui-act--off:hover { border-color: var(--line-strong); }
+.wui-act--off:hover .wui-act__label { color: var(--ink); }
+.wui-act--danger { border-color: rgba(255, 123, 108, 0.6); }
+.wui-act--danger .wui-act__label { color: var(--danger); }
+.wui-act--danger:hover { border-color: var(--danger); background-color: rgba(255, 123, 108, 0.12); }
+.wui-act--danger:hover .wui-act__label { color: var(--danger); }
+.wui-act--off { opacity: 0.35; }
+.wui-act-info { flex-grow: 1; color: var(--ink-label); font-size: 11px; letter-spacing: 1.4px; -unity-text-align: middle-center; padding: 0; margin: 0 24px; }
+.wui-act-primary__inner { align-items: center; }
+
+/* Vanilla's own buttons for those actions go */
+.wm-view-operations > #MissionWindow #Buttons { display: none; }
+
+/* A mission launch: the bars shut slower, to black */
+.wm-bars-launch .wui-shutter { transition-duration: 0.5s; transition-timing-function: ease-in-out-cubic; }
+
+/* A cut to another room: the bars shut fast */
+.wm-bars-cut .wui-shutter { transition-duration: 0.24s; transition-timing-function: ease-in-cubic; }
+
+/* Destination row */
+.wui-dest-row { flex-grow: 1; flex-direction: row; align-items: center; }
+.wui-dest-gap { width: 22px; flex-shrink: 0; }
+.wui-dest-divider { width: 1px; flex-shrink: 0; align-self: stretch; margin: 16px 13px; background-color: var(--line-strong); }
+
+/* The primary destination: gold, a second gold line round it */
+.wui-primary {
+    min-width: 240px;
+    height: 57px;
+    flex-shrink: 0;
+    padding: 2.4px;
+    border-width: 0.8px;
+    border-color: var(--gold);
+    background-color: rgb(0, 0, 0);
+    transition-duration: 0.12s;
+}
+.wui-primary__inner {
+    flex-grow: 1;
+    justify-content: center;
+    padding: 0 16px;
+    border-width: 0.8px;
+    border-color: var(--gold);
+    background-color: rgb(0, 0, 0);
+    transition-duration: 0.12s;
+}
+.wui-primary:hover .wui-primary__inner { background-color: rgba(215, 192, 116, 0.14); }
+.wui-primary__label { color: var(--gold); font-size: 16px; letter-spacing: 1.6px; padding: 0; margin: 0; }
+.wui-primary__sub { color: var(--ink-label); font-size: 8px; letter-spacing: 0.7px; padding: 0; margin: 2px 0 0 0; }
+
+.wui-dest {
+    flex-grow: 1;
+    flex-basis: 0;
+    height: 51px;
+    margin-left: 8px;
+    align-items: center;
+    justify-content: center;
+    background-color: rgb(0, 0, 0);
+    border-width: 0.8px;
+    border-color: var(--line);
+    transition-duration: 0.12s;
+}
+.wui-dest:hover { border-color: var(--gold); }
+.wui-dest__icon { width: 18px; height: 18px; margin-bottom: 5px; -unity-background-image-tint-color: var(--ink); }
+.wui-dest:hover .wui-dest__icon { -unity-background-image-tint-color: var(--gold); }
+.wui-dest__icon--oci { background-image: url("../Icons/shell/oci.png"); }
+.wui-dest__icon--market { background-image: url("../Icons/shell/market.png"); }
+.wui-dest__icon--squads { background-image: url("../Icons/shell/squads.png"); }
+.wui-dest__icon--workshop { background-image: url("../Icons/shell/workshop.png"); }
+.wui-dest__label { color: var(--ink); font-size: 10px; letter-spacing: 1px; padding: 0; margin: 0; }
+.wui-dest:hover .wui-dest__label { color: var(--gold); }
+.wui-dest--off { opacity: 0.35; }
+/* The screen you are on */
+.wui-dest--here { border-color: var(--gold); }
+.wui-dest--here .wui-dest__label { color: var(--gold); }
+.wui-dest--here .wui-dest__icon { -unity-background-image-tint-color: var(--gold); }
+
+/* Vanilla panels under the shell. shell.uss is attached to the screen root, which carries
+   wm-shell-on while the shell is shown and one class for the view. */
+.wm-shell-on > .screen-header { display: none; }
+.wm-shell-on .strategy-navigation {
+    position: absolute;
+    left: auto;
+    right: 32px;
+    top: 0;
+    width: auto;
+    height: 90px;
+    justify-content: center;
+}
+.wm-shell-on .strategy-navigation { transition-property: opacity; transition-duration: 0.3s; transition-delay: 0.25s; }
+.wm-shell-on.wm-bars-closed .strategy-navigation { opacity: 0; transition-duration: 0s; transition-delay: 0s; }
+.wm-shell-on.wm-bars-event .strategy-navigation { opacity: 0; transition-duration: 0.2s; transition-delay: 0s; }
+.wm-shell-on .strategy-navigation #Container { width: auto; background-color: rgba(0, 0, 0, 0); border-width: 0; padding: 0; margin: 0; }
+.wm-shell-on .strategy-navigation #Ship { display: none; }
+.wm-shell-on .strategy-navigation #Line { display: none; }
+.wm-shell-on .strategy-navigation #Buttons { display: none; }
+.wm-shell-on .strategy-navigation #Resources { flex-direction: row; align-items: center; width: auto; height: auto; background-color: rgba(0, 0, 0, 0); border-width: 0; padding: 0; margin: 0; }
+.wm-shell-on .strategy-navigation #Resources > #Row { flex-direction: row; align-items: center; justify-content: flex-start; width: auto; height: auto; padding: 0; margin: 0; }
+.wm-shell-on .strategy-navigation ResourceDisplayBig { flex-direction: row; align-items: stretch; background-color: rgb(0, 0, 0); border-width: 0.8px; border-color: var(--gold); }
+.wm-shell-on .strategy-navigation ResourceDisplayBig #Icon { display: none; }
+.wm-shell-on .strategy-navigation ResourceDisplayBig #Amount { font-size: 11px; }
+
+/* Operations, mission select: the left box (vanilla's operation strip) */
+.wm-shell-on .wui-ops { padding: 13px 13px 9px 13px; }
+.wm-view-operations #wm-chibi { display: none; }
+
+/* A mission's card on the holotable is in the room. Here: the unseen click target over it,
+   placed and sized by code. */
+.wui-markers { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+.wui-marker { position: absolute; }
+
+/* Home: the room alone, the screen's panels put away */
+.wm-view-home > #MissionPois { display: none; visibility: hidden; }
+.wm-view-home > #MissionWindow { display: none; }
+.wm-view-home > #TopRightCorner { display: none; }
+.wm-view-home #HUD { display: none; }
+
+
+/* The vanilla message list and faction list inside the Intel board. Their sizes and the labels'
+   type are set on the elements in code, where vanilla's own rules outrank these. */
+.wm-shell-on EventMessagesPanel #border_new { display: none; }
+.wm-shell-on EventMessagesPanel #EventMessagesPanel > #Row { display: none; }
+.wm-shell-on EventMessagesPanel #EventsScrollView { margin: 0; padding: 0; }
+.wm-shell-on EventMessagesPanel #SlotsScrollViewRow { height: auto; margin: 0 0 5px 0; }
+.wm-shell-on EventMessagesPanel EventMessageElement { height: auto; }
+.wm-shell-on EventMessagesPanel .event-msg {
+    height: 36px;
+    align-items: center;
+    padding: 0 8px 0 10px;
+    background-color: rgba(6, 30, 40, 0.6);
+    border-width: 0.8px;
+    border-color: rgba(79, 220, 234, 0.28);
+}
+.wm-shell-on EventMessagesPanel .event-msg:hover { border-color: var(--gold); }
+.wm-shell-on EventMessagesPanel .event-msg #Icon { width: 18px; height: 18px; margin: 0 10px 0 0; flex-shrink: 0; }
+.wm-shell-on EventMessagesPanel .event-msg #SenderLabel { letter-spacing: 0.8px; margin: 0; padding: 0; }
+.wm-shell-on EventMessagesPanel .event-msg #MessageLabel { margin: 0; padding: 0; }
+.wm-shell-on EventMessagesPanel .event-msg #DeleteButton { flex-shrink: 0; margin: 0 0 0 8px; }
+
+.wm-shell-on StoryFactionList StoryFactionSlot { margin: 0 0 5px 0; }
+.wm-shell-on StoryFactionList StoryFactionSlot > #Pickable { padding: 6px 8px; background-color: rgba(6, 30, 40, 0.6); border-width: 0.8px; border-color: rgba(79, 220, 234, 0.28); }
+.wm-shell-on StoryFactionList StoryFactionSlot > #Pickable:hover { border-color: var(--gold); }
+
+/* Mission preparation's loadout bar sits on the bottom bar and goes with its contents when it shuts */
+.wm-shell-on > #SuppliesPanel { transition-property: opacity; transition-duration: 0.15s; }
+.wm-shell-on.wm-bars-closed > #SuppliesPanel { opacity: 0; }
+
+/* ---- Squads: vanilla's armoury as the roster, the room and the squad panel ---- */
+/* A row of equal tabs over a list */
+.wui-seg-row { position: absolute; flex-direction: row; }
+.wui-seg {
+    flex-grow: 1;
+    flex-basis: 0;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1.6px;
+    background-color: rgb(0, 0, 0);
+    border-width: 0.64px;
+    border-color: var(--line);
+}
+.wui-seg:hover { border-color: var(--gold); }
+.wui-seg__label { color: var(--ink-meta); font-size: 8px; letter-spacing: 0.64px; padding: 0; margin: 0; }
+.wui-seg--on { border-color: var(--gold); }
+.wui-seg--on .wui-seg__label { color: var(--gold); }
+
+/* The roster shows squads only: vanilla's empty places and its heading for the dead are the tabs' job */
+.wm-squads #UnitsScrollView .mission-prep-unit-slot-empty { display: none; }
+.wm-squads #PermanentlyDeadUnitsTitle { display: none; }
+/* A slim scrollbar, shown only once the list is longer than its space */
+.wm-squads #UnitsScrollView .unity-scroller--vertical { width: 3.2px; min-width: 3.2px; border-width: 0; background-color: rgba(0, 0, 0, 0); }
+.wm-squads #UnitsScrollView .unity-scroller--vertical .unity-repeat-button { display: none; }
+.wm-squads #UnitsScrollView .unity-scroller--vertical .unity-slider { margin: 0; min-width: 3.2px; width: 3.2px; }
+.wm-squads #UnitsScrollView .unity-scroller--vertical .unity-base-slider__tracker { border-width: 0; background-color: rgb(21, 29, 34); }
+.wm-squads #UnitsScrollView .unity-scroller--vertical .unity-base-slider__dragger { left: 0; width: 3.2px; border-width: 0; border-radius: 0; background-color: var(--ink-meta); }
+.wm-squads #UnitsScrollView .unity-scroller--vertical .unity-base-slider__dragger-border { display: none; }
+
+/* The panel's header: name, then rank and unit on a small line (sizes are set on the labels) */
+.wm-squads UnitWindow #Header #LeaderRank { margin: 0 4px 0 0; letter-spacing: 0.8px; }
+.wm-squads UnitWindow #Header #UnitName { letter-spacing: 0.8px; }
+.wm-squads__divider { padding: 0; margin: 0 4px 0 0; }
+/* The three equipment cards are a little shorter than vanilla's (108.8), so the panel fits between the bars */
+.wm-squads EquipmentSlotsContainer > EquipmentSlot > #Pickable { height: 88px; }
+/* The cards stand closer together than vanilla's, which is where their height comes from */
+.wm-squads EquipmentSlotsContainer > EquipmentSlot > .unit-equipment-slot-header { margin-top: 2.4px; }
+/* The accessories' row stands as far under the armour card as each card does under the one before */
+.wm-squads EquipmentSlotsContainer > VisualElement { margin-top: 2.4px; }
+
+/* The header's buttons: small, black, hairline, like the panel's other controls */
+.wm-squads UnitWindow #Header TextButton { height: 20.8px; }
+.wm-squads UnitWindow #Header .text-button { height: 20.8px; background-image: none; background-color: rgb(0, 0, 0); border-width: 0.64px; border-color: var(--line-strong); }
+.wm-squads UnitWindow #Header .text-button:hover { border-color: var(--gold); }
+.wm-squads UnitWindow #Header .text-button-label { font-size: 8px; letter-spacing: 0.64px; }
+
+/* The four stats on the portrait: a white number beside vanilla's icon in a hairline box */
+.wm-squads UnitWindow #AdditionalStats { height: auto; background-image: none; background-color: rgba(0, 0, 0, 0); }
+.wm-squads UnitWindow #AdditionalStats TacticalUnitInfoStat { margin-bottom: 4.8px; }
+.wm-squads UnitWindow #AdditionalStats TacticalUnitInfoStat > #Pickable { background-image: none; background-color: rgba(0, 0, 0, 0); }
+.wm-squads UnitWindow #AdditionalStats #Icon { background-color: rgba(0, 0, 0, 0.8); border-width: 0.64px; border-color: var(--line-strong); }
+
+/* Perks, Stats and Attributes: underlined text tabs sharing the column's width */
+.wm-squads UnitWindow #TabsHeader { width: 100%; flex-shrink: 0; height: 19.2px; border-bottom-width: 0.64px; border-bottom-color: var(--line-strong); }
+.wm-squads UnitWindow #TabsHeader TabButton { flex-grow: 1; flex-basis: 0; }
+.wm-squads UnitWindow #TabsHeader .tab-button,
+.wm-squads UnitWindow #TabsHeader .tab-button-selected {
+    height: 19.2px;
+    margin: 0;
+    background-image: none;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-bottom-width: 1.9px;
+    border-bottom-color: rgba(0, 0, 0, 0);
+}
+.wm-squads UnitWindow #TabsHeader .tab-button-selected { border-bottom-color: var(--gold); }
+.wm-squads UnitWindow #TabsHeader .tab-button-label,
+.wm-squads UnitWindow #TabsHeader .tab-button-selected-label { font-size: 8px; letter-spacing: 0.8px; -unity-text-align: middle-center; color: var(--ink-meta); }
+.wm-squads UnitWindow #TabsHeader .tab-button-selected-label { color: var(--gold); }
+.wm-squads UnitWindow #TabsHeader .tab-button:hover .tab-button-label { color: var(--gold); }
+
+/* A small button in a panel's header */
+.wui-mini { height: 24px; padding: 0 8px; margin-right: 4.8px; flex-shrink: 0; align-items: center; justify-content: center; background-color: rgb(0, 0, 0); border-width: 0.64px; border-color: var(--line-strong); }
+.wui-mini:hover { border-color: var(--gold); }
+.wui-mini__label { color: var(--ink-meta); font-size: 8px; letter-spacing: 0.8px; padding: 0; margin: 0; }
+.wui-mini--gold { border-color: var(--gold); }
+.wui-mini--gold .wui-mini__label { color: var(--gold); }
+
+/* Underlined text tabs sharing a row's width */
+.wui-utab-row { flex-direction: row; flex-shrink: 0; height: 22.4px; margin: 0 0 4px 0; border-bottom-width: 0.64px; border-bottom-color: var(--line-strong); }
+.wui-utab { flex-grow: 1; flex-basis: 0; align-items: center; justify-content: center; border-bottom-width: 1.9px; border-bottom-color: rgba(0, 0, 0, 0); }
+.wui-utab__label { color: var(--ink-meta); font-size: 8.8px; letter-spacing: 0.88px; padding: 0; margin: 0; }
+.wui-utab:hover .wui-utab__label { color: var(--gold); }
+.wui-utab--on { border-bottom-color: var(--gold); }
+.wui-utab--on .wui-utab__label { color: var(--gold); }
+.wui-utab--off { display: none; }
+
+/* The Appearance and Affinity tabs' own content, in the loadout's place */
+.wm-squads__tab { flex-grow: 1; flex-shrink: 1; margin-top: 4px; padding-left: 4px; }
+.wm-squads__dress { position: relative; height: 24px; margin-bottom: 6.4px; flex-shrink: 0; }
+.wm-squads__gift { align-self: center; margin-right: 0; padding: 0 12px; }
+/* The armour card's outfit tile is not drawn: the Appearance tab does its job */
+.wm-squads UnitWindow #transmog-tile { visibility: hidden; }
+.wui-mini--danger { border-color: rgb(255, 123, 108); }
+.wui-mini--danger .wui-mini__label { color: rgb(255, 123, 108); }
+
+/* ---- Squads, the loadout's cards: dark fill, hairline edge, white names ---- */
+.wm-squads UnitWindow EquipmentSlot .unit-equipment-slot { background-image: none; background-color: rgb(12, 17, 24); border-width: 0.64px; border-color: var(--line-strong); border-radius: 0; }
+.wm-squads UnitWindow EquipmentSlot .unit-equipment-slot:hover { border-color: var(--gold); }
+/* Vanilla's drawn frame over the card goes: the hairline is the frame */
+.wm-squads UnitWindow EquipmentSlot .unit-equipment-slot-border { visibility: hidden; }
+.wm-squads UnitWindow EquipmentSlot #ItemName { font-size: 12px; letter-spacing: 0.48px; }
+.wm-squads UnitWindow EquipmentSlot #ShortItemName { font-size: 8px; }
+/* The squad type row: one dark box */
+.wm-squads__type-row .text-button { background-image: none; background-color: rgb(0, 0, 0); border-width: 0.64px; border-color: var(--line); }
+.wm-squads__type-row .text-button:hover { border-color: var(--gold); }
+.wm-squads UnitWindow #UnitTypeHeadline { font-size: 7.2px; letter-spacing: 0.72px; }
+.wm-squads UnitWindow #UnitTypeName { font-size: 10.4px; letter-spacing: 0.6px; }
+.wm-squads__divider { -unity-text-align: middle-left; }
+
+/* ---- Squads, second styling pass ---- */
+/* The box behind the portrait */
+.wm-squads__portrait-box { position: absolute; left: 3.2px; right: 3.2px; top: 3.2px; height: 247px; background-color: rgb(12, 17, 24); border-width: 0.64px; border-color: var(--line); }
+/* Roster tiles: a hairline each, gold on the chosen one */
+.wm-squads ArmoryUnitSelectSlot > #Pickable { border-width: 0.64px; border-color: var(--line); }
+.wm-squads ArmoryUnitSelectSlot #Selected { background-image: none; border-width: 1.9px; border-color: var(--gold); }
+/* The Affinity tab's level in large figures, and its bar */
+.wm-squads__level { flex-direction: row; align-items: flex-end; flex-shrink: 0; margin: 2px 0 6px 0; }
+.wm-squads__level-number { color: var(--ink); font-size: 27px; padding: 0; margin: 0 8px 0 0; }
+.wm-squads__level-next { color: var(--ink-label); font-size: 9.6px; padding: 0; margin: 0 0 4px 0; }
+.wm-squads__level-bar { height: 6.4px; flex-shrink: 0; margin-bottom: 8px; background-color: rgb(34, 39, 46); }
+.wm-squads__level-fill { height: 100%; width: 0; background-color: var(--gold); }
+/* A doll who can be promoted: a gold chip in her tile's corner */
+.wm-squads__promotable { position: absolute; left: 1.6px; top: 1.6px; width: 16px; height: 16px; align-items: center; justify-content: center; background-color: rgb(0, 0, 0); border-width: 0.64px; border-color: var(--gold); }
+.wm-squads__promotable-mark { width: 12px; height: 12px; background-image: url("../Icons/squads/promotable.png"); -unity-background-scale-mode: scale-to-fit; }
+/* Our line icons for the stats whose vanilla picture is known */
+.wm-stat-icon { position: absolute; left: 2px; top: 2px; right: 2px; bottom: 2px; -unity-background-scale-mode: scale-to-fit; }
+.wm-stat-icon--armor { background-image: url("../Icons/squads/stat_armor.png"); }
+.wm-stat-icon--detection { background-image: url("../Icons/squads/stat_detection.png"); }
+.wm-stat-icon--concealment { background-image: url("../Icons/squads/stat_concealment.png"); }
+.wm-stat-icon--vision { background-image: url("../Icons/squads/stat_vision.png"); }
+/* A list that scrolls inside a tab, with the roster's slim scrollbar */
+.wui-scroll { flex-grow: 1; flex-shrink: 1; flex-basis: 0; }
+.wui-scroll .unity-scroller--vertical { width: 3.2px; min-width: 3.2px; margin-left: 4px; border-width: 0; background-color: rgba(0, 0, 0, 0); }
+.wui-scroll .unity-scroller--vertical .unity-repeat-button { display: none; }
+.wui-scroll .unity-scroller--vertical .unity-slider { margin: 0; min-width: 3.2px; width: 3.2px; }
+.wui-scroll .unity-scroller--vertical .unity-base-slider__tracker { border-width: 0; background-color: rgb(21, 29, 34); }
+.wui-scroll .unity-scroller--vertical .unity-base-slider__dragger { left: 0; width: 3.2px; border-width: 0; border-radius: 0; background-color: var(--ink-meta); }
+.wui-scroll .unity-scroller--vertical .unity-base-slider__dragger-border { display: none; }
+.wui-scroll .unity-scroller--horizontal { display: none; }
+
+/* ---- Squads, the pickers and flyouts that open from the panel ---- */
+/* Vanilla's equipment picker, our skin picker and our gift flyout: one flat box with a hairline
+   edge, as the panel is. Vanilla's drawn backing and frame are not drawn. */
+.wm-squads UnitWindow .wm-outfit-modal,
+.wm-squads UnitWindow .wm-gift-flyout { background-color: rgba(0, 0, 0, 0); border-width: 0.64px; border-color: var(--line-strong); }
+.wm-squads UnitWindow #EquipmentAlternatives > .unit-window-border,
+.wm-squads UnitWindow .wm-outfit-modal > .unit-window-border,
+.wm-squads UnitWindow .wm-gift-flyout > .unit-window-border { visibility: hidden; }
+/* Their backing is vanilla's backing element, flat and solid: they open over the lit room and the squad */
+.wm-squads UnitWindow .wm-outfit-modal > .unit-window-background,
+.wm-squads UnitWindow .wm-gift-flyout > .unit-window-background { background-image: none; background-color: rgba(0, 0, 0, 0.92); }
+/* Their titles in white, their small labels in blue-grey */
+.wm-squads UnitWindow .wm-outfit-title,
+.wm-squads UnitWindow .wm-gift-title { color: var(--ink); letter-spacing: 0.64px; }
+/* The filter and sort buttons at rest: blue-grey for vanilla's khaki. A button vanilla marks as
+   chosen wears vanilla's own marking, which these rules do not reach. */
+.wm-squads UnitWindow #EquipmentAlternatives .image-tint-interact { -unity-background-image-tint-color: var(--ink-meta); }
+.wm-squads UnitWindow #EquipmentAlternatives .border-color-interact { border-color: var(--line-strong); }
+/* The skin picker's cards, as the loadout's */
+.wm-squads UnitWindow .wm-outfit-modal .wm-outfit-card { background-image: none; background-color: rgb(12, 17, 24); border-width: 0.64px; border-color: var(--line-strong); border-radius: 0; }
+.wm-squads UnitWindow .wm-outfit-modal .wm-outfit-card:hover { border-color: var(--gold); }
+.wm-squads UnitWindow .wm-outfit-modal .wm-outfit-card #Border { visibility: hidden; }
+.wm-squads UnitWindow .wm-outfit-modal .wm-outfit-card-name { color: var(--ink); }
+.wm-squads UnitWindow .wm-outfit-modal .wm-outfit-card-shortname { color: var(--ink-meta); }
+.wm-squads UnitWindow .wm-outfit-modal .wm-outfit-badge-label { color: var(--ink-body); }
+.wm-squads UnitWindow .wm-outfit-modal .wm-outfit-badge-icon { -unity-background-image-tint-color: var(--ink-body); }
+/* The gift flyout: the levels in gold beside a dark bar, Give as the panel's gold button */
+.wm-squads UnitWindow .wm-gift-level { color: var(--gold); }
+.wm-squads UnitWindow .wm-gift-preview-track { background-color: rgb(34, 39, 46); border-width: 0; }
+.wm-squads UnitWindow .wm-gift-preview-fill { background-color: var(--gold); }
+.wm-squads UnitWindow .wm-gift-btn { background-image: none; background-color: rgb(0, 0, 0); border-width: 0.64px; border-color: var(--gold); }
+.wm-squads UnitWindow .wm-gift-btn .text-button-label { color: var(--gold); font-size: 8px; letter-spacing: 0.8px; }
+
+/* Mission preparation: the roster's count, the rail that widens the roster, the mission's facts
+   as chips, and vanilla's roster tiles and objectives box in the squad screen's style. */
+.wm-prep__count { position: absolute; margin: 0; padding: 0; background-color: rgb(0, 0, 0); border-width: 0.64px; border-color: var(--gold); color: var(--gold); font-size: 10.4px; -unity-text-align: middle-center; }
+/* The rail is unseen but for its chevron until the pointer is on it. */
+.wm-prep__rail { position: absolute; width: 9.6px; align-items: center; justify-content: center; background-color: rgba(190, 215, 245, 0); }
+.wm-prep__rail:hover { background-color: rgba(190, 215, 245, 0.12); }
+.wm-prep__rail-chevron { width: 0; height: 0; border-top-width: 4px; border-bottom-width: 4px; border-left-width: 5px; border-top-color: rgba(0, 0, 0, 0); border-bottom-color: rgba(0, 0, 0, 0); border-left-color: rgb(219, 232, 248); }
+.wm-prep__rail--open .wm-prep__rail-chevron { border-left-width: 0; border-right-width: 5px; border-right-color: rgb(219, 232, 248); }
+.wm-prep__rail:hover .wm-prep__rail-chevron { border-left-color: rgb(255, 255, 255); border-right-color: rgb(255, 255, 255); }
+.wm-prep__chips { position: absolute; flex-direction: row; }
+.wm-prep__chip { flex-direction: row; align-items: center; margin-right: 4.8px; padding: 0 9.6px; background-color: rgba(0, 0, 0, 0.92); border-width: 0.64px; border-color: var(--line-strong); }
+.wm-prep__chip-name { color: var(--ink-meta); font-size: 8px; letter-spacing: 0.88px; padding: 0; margin: 0 6.4px 0 0; }
+.wm-prep__chip-value { color: var(--ink); font-size: 8.8px; letter-spacing: 0.88px; padding: 0; margin: 0; }
+.wm-prep #UnitsContainer .mission-prep-unit-slot-empty { display: none; }
+.wm-prep MissionPrepUnitSelectSlot > #Pickable { border-width: 0.64px; border-color: var(--line); }
+.wm-prep MissionPrepUnitSelectSlot #Selected { background-image: none; border-width: 1.9px; border-color: var(--gold); }
+
+/* Mission preparation's tokens are cards in the room. Here: the layer over the map, and an
+   enemy contact's words, shown while the pointer is on it. */
+.wm-prep__tokens { position: absolute; left: 0; top: 0; right: 0; bottom: 0; overflow: hidden; }
+.wm-prep-token__words { position: absolute; display: none; margin: 0; padding: 3px 7px; white-space: nowrap; background-color: rgba(8, 18, 38, 0.9); font-size: 7px; letter-spacing: 0.3px; }
+
+/* Mission preparation's off-map abilities, on the top bar: a caption over a row of squares, each
+   an icon with its uses in the corner. */
+.wm-prep__abilities-caption { color: var(--ink-label); font-size: 8px; letter-spacing: 0.64px; padding: 0; margin: 0 0 4.8px 0; }
+.wm-prep #OffmapAbilitiesPanel #OffmapAbilities { flex-direction: row; width: auto; height: auto; padding: 0; margin: 0; }
+.wm-prep MissionPrepOffmapAbility { width: 35.2px; height: 35.2px; margin: 0 0 0 4.8px; padding: 0; }
+.wm-prep MissionPrepOffmapAbility > #Pickable { position: relative; left: 0; top: 0; width: 35.2px; height: 35.2px; margin: 0; align-items: center; justify-content: center; background-color: rgb(0, 0, 0); border-width: 0.64px; border-color: var(--line-strong); }
+.wm-prep MissionPrepOffmapAbility > #Pickable:hover { border-color: var(--gold); }
+.wm-prep MissionPrepOffmapAbility #Background { display: none; }
+.wm-prep MissionPrepOffmapAbility #Icon { position: relative; left: 0; top: 0; width: 22px; height: 22px; margin: 0; -unity-background-image-tint-color: rgb(255, 255, 255); }
+.wm-prep MissionPrepOffmapAbility #UsesLabel { position: absolute; left: auto; top: auto; right: 2px; bottom: 0; padding: 0; margin: 0; background-color: rgba(0, 0, 0, 0); color: rgb(205, 175, 65); font-size: 8.8px; }
+
+/* Mission preparation's loadout on the bottom bar: vanilla's box without its frame. The bar's
+   parts are vanilla's, at the bar's own height. */
+.wm-prep #SuppliesPanel #SuppliesBar > VisualElement { top: 0; height: 8px; }
+.wm-prep__supplies-left { position: absolute; margin: 0; padding: 0; color: rgb(83, 201, 156); font-size: 8px; letter-spacing: 0.64px; }
+.wm-prep__supplies-uses { position: absolute; margin: 0; padding: 0; color: var(--ink-meta); font-size: 7.2px; letter-spacing: 0.58px; }
+
+/* Mission preparation's squad panel has no tabs over its loadout, so the slots take the room the
+   tabs would: a little more between them, and taller cards. */
+.wm-prep EquipmentSlotsContainer > EquipmentSlot > .unit-equipment-slot-header { margin-top: 5.6px; }
+.wm-prep EquipmentSlotsContainer > VisualElement { margin-top: 5.6px; }
+.wm-prep EquipmentSlotsContainer > EquipmentSlot > #Pickable { height: 94.4px; }
+
+/* What turns the view, at the foot of the frame midway between the panels: the input in a small
+   box, what it does beside it. */
+.wm-pan-hint { position: absolute; left: 432px; bottom: 107px; translate: -50% 0; flex-direction: row; align-items: center; padding: 3.2px 8px; }
+.wm-pan-hint__key { margin: 0; padding: 1.6px 4px; font-size: 7.2px; letter-spacing: 0.72px; color: var(--ink); border-width: 0.64px; border-color: var(--ink-meta); background-color: rgba(8, 12, 18, 0.45); }
+.wm-pan-hint__action { margin: 0 9.6px 0 4.8px; padding: 0; font-size: 7.2px; letter-spacing: 0.72px; color: var(--ink); text-shadow: 0 0 3px rgb(0, 0, 0); }
+
+/* ---- Recruit: vanilla's hiring window as the candidates' grid and the squad panel ---- */
+/* The window is the panel. Its drawn backing, its rules and its list of who is hired go. */
+.wm-recruit #HiringWindow { background-color: rgba(0, 0, 0, 0.92); border-width: 0.64px; border-color: var(--line-strong); }
+.wm-recruit #HiringWindow > #Background { display: none; }
+.wm-recruit #HiringWindow > #Border { display: none; }
+.wm-recruit #HiringWindow > #HiredColumn { display: none; }
+/* Nobody to show: the panel goes and the grid stays */
+.wm-recruit #HiringWindow.wm-recruit--empty { background-color: rgba(0, 0, 0, 0); border-color: rgba(0, 0, 0, 0); }
+.wm-recruit #HiringWindow.wm-recruit--empty > #UnitInfoColumn { display: none; }
+.wm-recruit #HiringWindow.wm-recruit--empty > #UnitLeaderColumn { display: none; }
+.wm-recruit__empty { margin: 0; padding: 0; color: var(--ink-meta); font-size: 10px; letter-spacing: 1px; text-shadow: 0 0 3px rgb(0, 0, 0); }
+
+/* The candidates' column: the list alone */
+.wm-recruit #HirableColumn > #HirableHeadline { display: none; }
+.wm-recruit #HirableColumn > #Center { display: none; }
+.wm-recruit #HirableScrollView HiringUnitSlot #Selected { background-image: none; border-width: 1.9px; border-color: var(--gold); }
+
+/* The header: the unit's badge, her name over her rank and unit, and Hire */
+.wm-recruit #HiringWindow #Header { border-bottom-width: 0; }
+.wm-recruit #HiringWindow #Header > #Badge { flex-shrink: 0; }
+.wm-recruit #HiringWindow #Header #LeaderRank { letter-spacing: 0.8px; }
+.wm-recruit #HiringWindow #Header #UnitName { letter-spacing: 0.8px; }
+.wm-recruit #HiringWindow #Header #HireButton { height: 24px; flex-shrink: 0; }
+.wm-recruit #HiringWindow #Header #HireButton .text-button { height: 24px; padding: 0 12px; }
+.wm-recruit #HiringWindow #Header #HireButton .text-button-label { font-size: 8px; letter-spacing: 0.8px; }
+
+/* Stats and Attributes: underlined text tabs, as the squad panel's */
+.wm-recruit #HiringWindow #TabsHeader { width: 100%; flex-shrink: 0; height: 19.2px; border-bottom-width: 0.64px; border-bottom-color: var(--line-strong); }
+.wm-recruit #HiringWindow #TabsHeader TabButton { flex-grow: 1; flex-basis: 0; }
+.wm-recruit #HiringWindow #TabsHeader .tab-button,
+.wm-recruit #HiringWindow #TabsHeader .tab-button-selected {
+    height: 19.2px;
+    margin: 0;
+    background-image: none;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-bottom-width: 1.9px;
+    border-bottom-color: rgba(0, 0, 0, 0);
+}
+.wm-recruit #HiringWindow #TabsHeader .tab-button-selected { border-bottom-color: var(--gold); }
+.wm-recruit #HiringWindow #TabsHeader .tab-button-label,
+.wm-recruit #HiringWindow #TabsHeader .tab-button-selected-label { font-size: 8px; letter-spacing: 0.8px; -unity-text-align: middle-center; color: var(--ink-meta); }
+.wm-recruit #HiringWindow #TabsHeader .tab-button-selected-label { color: var(--gold); }
+.wm-recruit #HiringWindow #TabsHeader .tab-button:hover .tab-button-label { color: var(--gold); }
+
+/* The candidates: three tiles a row, as the roster's, each vanilla's own tile at the roster's size */
+.wm-recruit #HirableScrollView #SlotsContainer { flex-direction: row; flex-wrap: wrap; }
+.wm-recruit #HirableScrollView #SlotsScrollViewRow { width: auto; height: auto; margin: 0; }
+.wm-recruit #HirableScrollView HiringUnitSlot { width: 56px; height: 56px; margin: 0 3.2px 3.2px 0; }
+.wm-recruit #HirableScrollView HiringUnitSlot > #Pickable { width: 100%; height: 100%; margin: 0; }
+.wm-recruit #HirableScrollView HiringUnitSlot #Name { display: none; }
+
+/* The description, and the two forms' tabs */
+.wm-recruit #HiringWindow #Description { color: var(--ink-meta); flex-shrink: 1; overflow: hidden; }
+.wm-recruit #HiringWindow #wm-formtabs .tab-button,
+.wm-recruit #HiringWindow #wm-formtabs .tab-button-selected { height: 16px; margin: 0; background-image: none; background-color: rgb(0, 0, 0); border-width: 0.64px; border-color: var(--line); }
+.wm-recruit #HiringWindow #wm-formtabs .tab-button-selected { border-color: var(--gold); }
+.wm-recruit #HiringWindow #wm-formtabs .tab-button-label,
+.wm-recruit #HiringWindow #wm-formtabs .tab-button-selected-label { font-size: 8px; letter-spacing: 0.64px; color: var(--ink-meta); }
+.wm-recruit #HiringWindow #wm-formtabs .tab-button-selected-label { color: var(--gold); }
+
+/* What a candidate costs, in the Hire button after its word */
+.wm-recruit__cost { flex-direction: row; align-items: center; margin-left: 2.4px; }
+.wm-recruit__cost-icon { width: 11.2px; height: 11.2px; margin-right: 2.4px; }
+.wm-recruit__cost-value { margin: 0; padding: 0; font-size: 9.6px; }
+
+/* ---- Workshop: calibration's panel as two, at the sides of the lounge's table ---- */
+.wm-workshop .wm-cal-blocker { display: none; }
+.wm-workshop .wm-cal-panel { position: absolute; left: 32px; right: 32px; top: 99.2px; bottom: 99.2px; width: auto; height: auto; max-width: none; max-height: none; padding: 0; background-color: rgba(0, 0, 0, 0); }
+.wm-workshop .wm-cal-panel > .wm-cal-fill { display: none; }
+.wm-workshop .wm-cal-header { display: none; }
+.wm-workshop .wm-cal-body { justify-content: space-between; }
+.wm-workshop .wm-cal-listpane { width: 280px; padding: 10px; background-color: rgba(0, 0, 0, 0.92); border-width: 0.64px; border-color: rgb(50, 60, 74); }
+.wm-workshop .wm-cal-detail { flex-grow: 0; width: 360px; padding: 10px 12px; background-color: rgba(0, 0, 0, 0.92); border-width: 0.64px; border-color: rgb(50, 60, 74); }
+/* The shell's tabs do what the Workshop's own switches do */
+.wm-workshop #wm-workshop-tabs { display: none; }
+.wm-workshop #wm-calibrate-open { display: none; }
+/* Taking apart, laid out for the panel's own size with its switches gone */
+.wm-workshop .wm-disassembly { top: 0; }
+.wm-workshop .wm-disassembly-banner { left: 12px; width: 306px; }
+.wm-workshop .wm-disassembly-action { left: 65px; top: 290px; bottom: auto; }
+.wm-workshop .wm-disassembly-feedback { top: 328px; bottom: auto; }
+/* Calibration in the shell's colours */
+.wm-workshop .wm-cal-sectionlabel { color: var(--ink-meta); letter-spacing: 0.8px; }
+.wm-workshop .wm-cal-name { color: var(--ink); }
+.wm-workshop .wm-cal-rank { color: var(--gold); }
+.wm-workshop .wm-cal-rank--base { color: var(--ink-label); }
+.wm-workshop .wm-cal-who { color: var(--ink-label); }
+.wm-workshop .wm-cal-detailname { color: var(--ink); }
+.wm-workshop .wm-cal-detailwho { color: var(--ink-label); }
+.wm-workshop .wm-cal-node { color: var(--ink-meta); border-bottom-color: var(--line); }
+.wm-workshop .wm-cal-node--done { color: var(--ink-body); border-bottom-color: var(--line-strong); }
+.wm-workshop .wm-cal-node--current { color: var(--gold); border-bottom-color: var(--gold); background-color: rgba(215, 192, 116, 0.08); }
+.wm-workshop .wm-cal-statrow { border-bottom-color: var(--line); }
+.wm-workshop .wm-cal-statname { color: var(--ink-meta); }
+.wm-workshop .wm-cal-statnow { color: var(--ink-body); }
+.wm-workshop .wm-cal-statarrow { color: var(--ink-meta); }
+.wm-workshop .wm-cal-statnext { color: var(--gold); }
+.wm-workshop .wm-cal-material-name { color: var(--ink-body); }
+.wm-workshop .wm-cal-material-count { color: var(--ink-label); }
+.wm-workshop .wm-cal-material-missing { color: var(--danger); }
+.wm-workshop .wm-cal-tally { color: var(--ink-label); }
+.wm-workshop .wm-cal-empty { color: var(--ink-meta); }
+
+/* O.C.I.: the slots' groups across the top, a line from each to its part of the ship, and the
+   ship's figures in a panel at the right. */
+#wm-oci-lines { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+#wm-oci-groups { position: absolute; flex-direction: row; align-items: flex-start; }
+.wm-oci-group { flex-direction: column; flex-shrink: 0; padding: 5px 5px 0 5px; background-color: rgba(0, 0, 0, 0.92); border-width: 0.64px; border-color: var(--line); }
+.wm-oci-group-header { flex-direction: row; align-items: center; margin-bottom: 2px; }
+.wm-oci-group-title { margin: 0 6px 0 0; padding: 0; font-size: 8px; letter-spacing: 1px; color: var(--ink); -unity-font-style: bold; }
+.wm-oci-group-rule { flex-grow: 1; height: 0.8px; background-color: var(--line-strong); }
+/* Vanilla shows and hides the label itself, so it is made see-through. */
+.wm-oci #Slots #SlotNameLabel { opacity: 0; }
+/* An ability module's kind, delay and uses are on its icon in the ship's panel, and are left
+   off its slot, where they would run the group down over the ship. */
+.wm-oci #Slots #InfoPanel { opacity: 0; }
+.wm-oci-stem { position: absolute; width: 1.1px; margin-left: -0.55px; background-color: rgba(121, 233, 245, 0.75); }
+.wm-oci-line { position: absolute; height: 1.1px; margin-top: -0.55px; transform-origin: left center; background-color: rgba(121, 233, 245, 0.75); }
+.wm-oci-ring { position: absolute; width: 9px; height: 9px; margin-left: -4.5px; margin-top: -4.5px; border-radius: 4.5px; border-width: 1.2px; border-color: rgb(121, 233, 245); }
+.wm-oci-line--on { background-color: var(--gold); border-color: var(--gold); }
+.wm-oci-ring.wm-oci-line--on { background-color: rgba(0, 0, 0, 0); }
+/* Vanilla stands the figures 20 in from the panel's sides, and the panel's top and foot match. */
+.wm-oci #ShipInfoWindow { padding: 8px 0 10px 0; background-color: rgba(0, 0, 0, 0.92); border-width: 0.64px; border-color: var(--line); }
+/* The ship is in the middle of the frame, and so is the hint that it can be turned. */
+.wm-oci .wm-pan-hint { left: 640px; }
+
+/* The black market: vanilla's panels flat and black like the shell's own, with its titles, kind
+   labels and hint in the shell's inks, and the Trade button as the shell's main action. */
+.wm-market #Panels > TemplateContainer > #Background { background-color: rgba(0, 0, 0, 0.92); border-width: 0.64px; border-color: var(--line); }
+.wm-market #Panels > TemplateContainer > #Background > #Gradient { display: none; }
+.wm-market #Panels #WindowHeader { border-bottom-color: var(--line-strong); }
+.wm-market #Panels #PlayerPanelTitle, .wm-market #Panels #MerchantPanelTitle { font-size: 10px; letter-spacing: 1px; color: var(--ink); -unity-font-style: bold; }
+.wm-market #Panels #SlotsScrollViewLabel { font-size: 8px; letter-spacing: 0.8px; color: var(--ink-label); }
+.wm-market #Panels #ShiftClickHint { font-size: 7px; color: var(--ink-meta); }
+.wm-market #TradeButton .text-button { background-image: none; background-color: rgb(0, 0, 0); border-width: 0.64px; border-color: var(--gold); }
+.wm-market #TradeButton .text-button-label { font-size: 9px; letter-spacing: 1.2px; color: var(--gold); -unity-font-style: bold; }
+.wm-market #TradeButton .text-button:enabled:hover { background-color: rgb(54, 48, 29); }
+.wm-market #TradeButton .text-button:disabled { border-color: var(--line-strong); }
+.wm-market #TradeButton .text-button:disabled .text-button-label { color: var(--ink-meta); }
+/* The chevron that opens the strip of what is on offer to its full height, over the strip's
+   right end: a square's two edges, turned to point up, and down once the strip is open. */
+.wm-market-fold { position: absolute; width: 28px; height: 28px; padding: 0; margin: 0; align-items: center; justify-content: center; }
+.wm-market-fold__mark { width: 7px; height: 7px; margin-top: 4px; border-left-width: 1.2px; border-top-width: 1.2px; border-color: var(--ink-body); rotate: 45deg; }
+.wm-market-fold--open .wm-market-fold__mark { margin-top: -4px; rotate: 225deg; }
+.wm-market-fold:hover .wm-market-fold__mark { border-color: var(--gold); }
+/* Vanilla lays what is on offer out two to a row, for the narrow columns it had. Here the rows
+   stand side by side and wrap, so the strip's width is used. */
+.wm-market #TradePanel #SlotsContainer { flex-direction: row; flex-wrap: wrap; }
+.wm-market #TradePanel #SlotsScrollViewRow { width: auto; flex-grow: 0; flex-shrink: 0; }
+.wm-market #TradePanel #SlotsScrollViewLabel { width: 100%; }
+/* Six to a line on both sides: the slots stand closer than vanilla's, whose rows of two would
+   otherwise fit two to a line on the side with a scrollbar and two and a half on the other. */
+.wm-market #TradePanel #SlotsScrollViewSlot { margin-left: 0.8px; margin-right: 0; }
+.wm-market #TradePanel #SlotsContainer { padding-left: 2px; }
+
+/* Kalina's shop lays itself out (kalina-shop.uss). On Procurement her side of the room is the
+   capsule machine's, so neither she nor what she says is there. Both are hidden by a property
+   the shop does not set itself. */
+.wm-kalina--procurement #wm-shop-root .wm-kalina-portrait, .wm-kalina--procurement #wm-shop-root .wm-kalina-dialogue { visibility: hidden; }

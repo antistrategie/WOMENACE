@@ -24,8 +24,11 @@ internal static partial class SpringBodyProfiles
                 "Earring_R01>Earring_R02"
             ),
             NemesisCloak(
-                "CapeL1>CapeL11",
                 "CapeR1>CapeR11"
+            ),
+            // The left shawl end is rigged off the upper arm and bound draped under it.
+            SpringPresets.ArmCape(
+                "CapeL1>CapeL11"
             ),
         },
         Colliders = HumanoidColliders(1.678f),

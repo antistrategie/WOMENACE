@@ -31,21 +31,23 @@ internal static partial class SpringBodyProfiles
             SpringPresets.Accessory(
                 "Bag1>Bag2"
             ),
-            NemesisCape(
+            SpringPresets.ArmCape(
                 "CapeRB1>CapeRB9",
                 "Cape_0_1>Cape_7_1",
                 "Cape_0_2>Cape_7_2",
                 "Cape_0_3>Cape_7_3",
                 "Cape_0_4>Cape_7_4",
-                "Cape_0_5>Cape_7_5",
-                "Cape_0_6>Cape_7_6",
-                "Cape_0_7>Cape_7_7",
                 "Cape_0_8>Cape_7_8",
                 "Cape_0_9>Cape_7_9",
                 "Cape_0_10>Cape_7_10",
                 "Cape_0_11>Cape_7_11",
                 "Cape_1_0>Cape_7_0",
                 "Cape_1_12>Cape_7_12"
+            ),
+            NemesisCape(
+                "Cape_0_5>Cape_7_5",
+                "Cape_0_6>Cape_7_6",
+                "Cape_0_7>Cape_7_7"
             ),
             NemesisCape(
                 "PiFengFR1>PiFengFR7"

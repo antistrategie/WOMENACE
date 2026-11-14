@@ -21,6 +21,8 @@ public sealed class ProcurementRewardSystem : JiangyuSystem
     private const int OfferChance = 20;
     private bool _initialising;
     private IntPtr _missionRewardEffect;
+    private StrategicAssetTemplate _missionReward;
+    private readonly HashSet<IntPtr> _offered = [];
 
     public override void OnInit()
     {
@@ -28,6 +30,7 @@ public sealed class ProcurementRewardSystem : JiangyuSystem
         Context.Patches.Postfix("Il2CppMenace.UI.OperationAssetRewardSlot", "Init", OnMissionRewardSlot);
         Context.Patches.Prefix("Il2CppMenace.Strategy.OwnedItems", "AddItem", 3, OnAddItem);
         Context.Patches.Postfix("Il2CppMenace.Strategy.AddItemEffect", "OnAdd", OnAddItemEffect);
+        Context.Patches.Prefix("Il2CppMenace.Strategy.Operation", "GenerateMission", BeforeGenerateMission);
     }
 
     public override void OnTemplatesApplied()
@@ -42,34 +45,42 @@ public sealed class ProcurementRewardSystem : JiangyuSystem
         if (effects != null && effects.Length > 0 && effects[0] != null)
             _missionRewardEffect = effects[0].Pointer;
 
-        // JIANGYU-CONTRACT: Operation.GenerateMission (RVA 0x5BF930) draws each mission's
-        // reward from its enemy-difficulty-filtered PotentialStrategicAssets. Adding here
-        // preserves fixed and story rewards.
-        foreach (var mission in Templates.All<MissionTemplate>())
+        _missionReward = reward;
+        _offered.Clear();
+    }
+
+    // JIANGYU-CONTRACT: Operation.GenerateMission (RVA 0x5BF930) draws each mission's reward
+    // from its enemy-difficulty-filtered PotentialStrategicAssets. The reward is added to a
+    // mission's template as that mission is about to be generated, which preserves fixed and
+    // story rewards. Asking for every mission template at boot would load them all, with what
+    // they refer to, two seconds before the title.
+    private void BeforeGenerateMission(PatchInfo info)
+    {
+        if (_missionReward == null || info.Args[0] is not MissionTemplate mission || !_offered.Add(mission.Pointer))
+            return;
+        var existing = mission.PotentialStrategicAssets;
+        if (existing == null || existing.Length == 0)
+            return;
+        var options = existing.Where(option => option?.StrategicAsset?.GetID() != MissionRewardId).ToList();
+        var additions = new List<MissionStrategicAssetTemplate>();
+        foreach (var difficulty in Enum.GetValues<MissionEnemyDifficultyFlag>())
         {
-            var existing = mission.PotentialStrategicAssets;
-            if (existing == null || existing.Length == 0)
+            var totalWeight = options.Where(option => option?.StrategicAsset != null
+                && (option.ReqMissionEnemyDifficulty & difficulty) != 0)
+                .Sum(option => (long)Math.Max(0, option.Weight));
+            if (totalWeight == 0)
                 continue;
-            var options = existing.Where(option => option?.StrategicAsset?.GetID() != MissionRewardId).ToList();
-            var additions = new List<MissionStrategicAssetTemplate>();
-            foreach (var difficulty in Enum.GetValues<MissionEnemyDifficultyFlag>())
+            additions.Add(new MissionStrategicAssetTemplate
             {
-                var totalWeight = options.Where(option => option?.StrategicAsset != null
-                    && (option.ReqMissionEnemyDifficulty & difficulty) != 0)
-                    .Sum(option => (long)Math.Max(0, option.Weight));
-                if (totalWeight == 0)
-                    continue;
-                additions.Add(new MissionStrategicAssetTemplate
-                {
-                    StrategicAsset = reward,
-                    ReqMissionEnemyDifficulty = difficulty,
-                    Weight = (int)Math.Clamp((totalWeight * OfferChance + (100 - OfferChance) / 2)
-                        / (100 - OfferChance), 1, int.MaxValue),
-                });
-            }
-            if (additions.Count > 0 || options.Count != existing.Length)
-                mission.PotentialStrategicAssets = options.Concat(additions).ToArray();
+                StrategicAsset = _missionReward,
+                ReqMissionEnemyDifficulty = difficulty,
+                Weight = (int)Math.Clamp((totalWeight * OfferChance + (100 - OfferChance) / 2)
+                    / (100 - OfferChance), 1, int.MaxValue),
+            });
         }
+        if (additions.Count > 0 || options.Count != existing.Length)
+            mission.PotentialStrategicAssets = options.Concat(additions).ToArray();
+        Context.Log.Debug($"mission reward: offered on '{mission.GetID()}' at {additions.Count} difficult(ies)");
     }
 
     private void OnRewardSelection(PatchInfo info)

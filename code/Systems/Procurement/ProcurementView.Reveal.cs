@@ -105,6 +105,19 @@ internal sealed partial class ProcurementView
         CloseOverlay(_pool);
         CloseOverlay(_exchange);
         Refresh();
+        // In the strategy rooms the shipment comes out of the capsule machine over the holotable,
+        // the shop out of the way while it runs. The cards follow as they do after the transfer.
+        var epoch = _epoch;
+        if (StrategyDiorama.PlayPull(_shipment.Count > 1, PullRarity(), () =>
+            {
+                ShopSystem.Instance?.ShowDuringPull(true);
+                if (epoch == _epoch)
+                    ShowResults();
+            }))
+        {
+            ShopSystem.Instance?.ShowDuringPull(false);
+            return;
+        }
         _transfer.Clear();
         var rare = _shipment.Any(entry => entry.Reward.Section is ProcurementSection.Special or ProcurementSection.Dossiers or ProcurementSection.Curios);
         BuildTransferBackdrop(rare);
@@ -137,6 +150,17 @@ internal sealed partial class ProcurementView
         Later(ShowResults, 3300);
     }
 
+    // The machine's rarity for a shipment, by the rarest section in it: colourful for a dossier
+    // or a curio, golden for special equipment, purple for standard equipment, white otherwise.
+    private string PullRarity()
+    {
+        if (_shipment.Any(entry => entry.Reward.Section is ProcurementSection.Dossiers or ProcurementSection.Curios))
+            return "colorful";
+        if (_shipment.Any(entry => entry.Reward.Section == ProcurementSection.Special))
+            return "golden";
+        return _shipment.Any(entry => entry.Reward.Section == ProcurementSection.Equipment) ? "purple" : "white";
+    }
+
     private void ShowResults()
     {
         if (_shipment == null)
@@ -151,7 +175,7 @@ internal sealed partial class ProcurementView
         _cards.Clear();
         _nextCard = 0;
         var dialog = Element("wm-proc-results", _results);
-        ShopVisuals.Surface(dialog, ShopSurface.Dialog);
+        ShopVisuals.Brackets(dialog);
         var header = Element("wm-proc-row wm-proc-between wm-proc-results-heading", dialog);
         Text(Locale.Text("WOMENACE::ui/procurement/results", "Procurement complete"), "wm-proc-title", header);
         Text(_shipment.Count == 1 ? Locale.Text("WOMENACE::ui/procurement/single_pull", "1 PULL")
@@ -167,8 +191,8 @@ internal sealed partial class ProcurementView
             var front = Element("wm-proc-reward-front", root);
             front.SetVisible(false);
             var colour = Colour(entry.Reward.Section);
-            ShopVisuals.Surface(root, ShopSurface.Card, new Color(.5f, .58f, .42f));
-            ShopVisuals.Surface(front, ShopSurface.Card, colour);
+            ShopVisuals.Card(root, new Color(.47f, .56f, .69f));
+            ShopVisuals.Card(front, colour);
             Text(ProcurementCatalogue.SectionName(entry.Reward.Section).ToUpperInvariant(), "wm-proc-reward-category", front).style.color = colour;
             Icon(entry, front);
             Text(entry.Name, "wm-proc-reward-name", front);

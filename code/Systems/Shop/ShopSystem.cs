@@ -18,12 +18,33 @@ namespace WOMENACE.Code;
 public sealed partial class ShopSystem : JiangyuSystem
 {
     public static ShopSystem Instance { get; private set; }
+
+    // Opens the shop from outside the workshop (the ship's navigation screen).
+    internal static bool OpenFromNavigation() => Instance?._host.Open() ?? false;
+
+    // Whether the workshop screen is showing Kalina's shop right now.
+    internal static bool IsShopOpen => Instance?._host?.IsOpen ?? false;
+
+    // What is in the basket on the tab that is showing, in the order it went in: each item
+    // and how many of it. The holotable shows it.
+    internal static void Basket(List<(BaseItemTemplate Template, int Count)> into)
+    {
+        var shop = Instance;
+        if (!IsShopOpen || shop._procurementActive || shop._catalogue == null)
+            return;
+        foreach (var (id, count) in shop.Selection)
+            if (count > 0 && shop._catalogue.Items.TryGetValue(id, out var entry))
+                into.Add((entry.Template, count));
+    }
+
+    // Whether the shop is open on its Procurement view.
+    internal static bool IsProcurementOpen => IsShopOpen && Instance._procurementActive;
     public KalinaState State => Context.State.Get<KalinaState>();
 
-    private VisualElement _root, _grid, _portrait, _affinity, _outfits, _outfitGrid;
+    private VisualElement _root, _grid, _portrait, _outfits, _outfitGrid;
     private ScrollView _scroll;
     private IVisualElementScheduledItem _scrollRestore;
-    private Label _total, _feedback;
+    private Label _total, _feedback, _empty;
     private TextButton _checkout;
     private ShopHost _host;
     private ShopCatalogue _catalogue;
@@ -31,12 +52,11 @@ public sealed partial class ShopSystem : JiangyuSystem
     private ShopCurrency _currency;
     private ProcurementView _procurement;
     private bool _procurementActive;
-    private readonly Dictionary<string, int> _buySelection = new(StringComparer.Ordinal);
-    private readonly Dictionary<string, int> _sellSelection = new(StringComparer.Ordinal);
+    // The basket of the tab that is showing: how many of each item. Leaving a tab empties it.
+    private Dictionary<string, int> Selection { get; } = new(StringComparer.Ordinal);
     private readonly Vector2[] _scrollOffsets = new Vector2[2];
     private bool _buy = true;
     private int _holdEpoch, _scrollEpoch, _lastBalance = -1, _lastPieces = -1;
-    private Dictionary<string, int> Selection => _buy ? _buySelection : _sellSelection;
 
     public override void OnInit()
     {
@@ -49,12 +69,8 @@ public sealed partial class ShopSystem : JiangyuSystem
 
     public override void OnSceneLoaded(int buildIndex, string sceneName)
     {
-        // Cleared first: Reset hides the shop, and a pending restore would request the
-        // strategy track inside the scene that is loading.
-        _musicBeforeShop = null;
         _host.Reset();
-        _buySelection.Clear();
-        _sellSelection.Clear();
+        Selection.Clear();
         _currentDialogue = null;
         _greetingPending = false;
         _procurementActive = false;
@@ -72,21 +88,25 @@ public sealed partial class ShopSystem : JiangyuSystem
 
     public void ShowWorkshop() => _host.ShowWorkshop();
 
+    // The shop steps out of sight while a pull runs at the capsule machine, and back after it.
+    internal void ShowDuringPull(bool show)
+    {
+        if (_root != null)
+            _root.style.visibility = show ? Visibility.Visible : Visibility.Hidden;
+    }
+
     private void SetHostVisible(bool show)
     {
         _holdEpoch++;
         CancelScrollRestore();
-        if (!show)
-            HoverDelay.Cancel(ref _affinityHover);
         _root?.SetVisible(show);
-        SetShopMusic(show);
         _procurement?.SetVisible(show && _procurementActive);
-        _affinity?.SetVisible(false);
         HideOutfits();
         if (show && _grid != null)
         {
             BuildCatalogue();
             RefreshPortrait();
+            RefreshLevel();
             RefreshDialogue();
             SetTradeVisibility();
         }
@@ -108,13 +128,18 @@ public sealed partial class ShopSystem : JiangyuSystem
             })));
         _grid = UI.Find(root, UiSelector.Name("wm-shop-grid"));
         _scroll = UI.Find(root, UiSelector.Name("wm-shop-scroll"))?.TryCast<ScrollView>();
+        // What the list says with nothing to sell: in the list's own element and beside what
+        // scrolls, so it is hidden with the list.
+        _empty = new Label(Locale.Text("WOMENACE::ui/kalina/no_stock", "No items to sell.").ToUpperInvariant()) { pickingMode = PickingMode.Ignore };
+        _empty.AddToClassList("wm-shop-empty");
+        _empty.SetVisible(false);
+        _scroll.hierarchy.Add(_empty);
         ConstrainVerticalScroll(_scroll);
         _artwork = new ShopArtwork(Context);
         _currency = new ShopCurrency(_artwork);
         _total = _currency.Amount(UI.Find(root, UiSelector.Name("wm-shop-total")), ShopCurrency.Gold, "0");
         _feedback = UI.Find(root, UiSelector.Name("wm-shop-feedback"))?.TryCast<Label>();
         _portrait = UI.Find(root, UiSelector.Name("wm-kalina-portrait"));
-        _affinity = UI.Find(root, UiSelector.Name("wm-kalina-affinity"));
         _outfits = UI.Find(root, UiSelector.Name("wm-kalina-outfits"));
         _outfitGrid = UI.Find(root, UiSelector.Name("wm-kalina-outfit-grid"));
         var tabs = UI.Find(root, UiSelector.Name("wm-shop-tabs"));
@@ -123,22 +148,19 @@ public sealed partial class ShopSystem : JiangyuSystem
             var button = new TextButton(buy ? BuyLabel() : SellLabel());
             button.Root.name = buy ? "wm-shop-buy" : "wm-shop-sell";
             button.Root.AddToClassList("wm-shop-tab");
-            ShopVisuals.Surface(button.Root, ShopSurface.Tab);
             button.OnClick(() => SetTab(buy));
             tabs.Add(button.Root);
         }
         var procurementTab = new TextButton(Locale.Text("WOMENACE::ui/procurement/tab", "PROCUREMENT"));
         procurementTab.Root.name = "wm-shop-procurement";
         procurementTab.Root.AddToClassList("wm-shop-tab");
-        ShopVisuals.Surface(procurementTab.Root, ShopSurface.Tab);
         procurementTab.OnClick(ShowProcurement);
         tabs.Add(procurementTab.Root);
         _checkout = new TextButton(BuyLabel()).OnClick(Checkout);
         _checkout.Root.name = "wm-shop-checkout-button";
         _checkout.Root.AddToClassList("wm-shop-primary");
-        ShopVisuals.Surface(_checkout.Root, ShopSurface.Button);
+        ShopVisuals.Button(_checkout.Root);
         UI.Find(root, UiSelector.Name("wm-shop-checkout"))?.Add(_checkout.Root);
-        ShopVisuals.Surface(UI.Find(root, UiSelector.Class("wm-shop-panel")), ShopSurface.Panel);
         _scroll.RegisterCallback<WheelEvent>(DelegateSupport.ConvertDelegate<EventCallback<WheelEvent>>(
             (Action<WheelEvent>)(_ => { _holdEpoch++; CancelScrollRestore(); })), TrickleDown.TrickleDown);
         BindKalina();
@@ -163,6 +185,7 @@ public sealed partial class ShopSystem : JiangyuSystem
     public void SetTab(bool buy)
     {
         SaveScrollOffset();
+        Selection.Clear();
         _procurementActive = false;
         _procurement.SetVisible(false);
         _buy = buy;
@@ -175,6 +198,7 @@ public sealed partial class ShopSystem : JiangyuSystem
     {
         SaveScrollOffset();
         CancelScrollRestore();
+        Selection.Clear();
         _procurementActive = true;
         SetTradeVisibility();
         _procurement.SetVisible(true);
@@ -225,8 +249,6 @@ public sealed partial class ShopSystem : JiangyuSystem
     {
         _scroll.SetVisible(!_procurementActive);
         UI.Find(_root, UiSelector.Name("wm-shop-checkout"))?.SetVisible(!_procurementActive);
-        HoverDelay.Cancel(ref _affinityHover);
-        _affinity.SetVisible(false);
         foreach (var name in new[] { "wm-shop-buy", "wm-shop-sell", "wm-shop-procurement" })
         {
             var tab = UI.Find(_root, UiSelector.Name(name));
@@ -254,16 +276,59 @@ public sealed partial class ShopSystem : JiangyuSystem
             foreach (var id in Selection.Keys.ToList())
                 Selection[id] = Math.Min(Selection[id], stock.GetValueOrDefault(id));
         }
+        // With nothing at all to sell the list says so, once, in the middle of its space.
+        var nothing = !_buy && stock.Values.All(count => count == 0);
+        _empty.SetVisible(nothing);
+        if (nothing)
+        {
+            RefreshCheckout();
+            return;
+        }
         foreach (var category in _catalogue.Categories)
         {
-            var heading = new Label(category.Name.Resolve());
+            var heading = new Label(category.Name.Resolve().ToUpperInvariant());
             heading.AddToClassList("wm-shop-section");
-            _grid.Add(heading);
+            if (_buy)
+                _grid.Add(heading);
+            else
+            {
+                // What is sold is sold by the heap: everything under the heading at once, or none of it.
+                var row = new VisualElement();
+                row.AddToClassList("wm-shop-section-row");
+                row.Add(heading);
+                var owned = new List<string>();
+                foreach (var group in category.Groups)
+                    foreach (var entry in group.Items)
+                        if (stock.GetValueOrDefault(entry.Template.GetID()) > 0)
+                            owned.Add(entry.Template.GetID());
+                var all = owned.Count > 0 && owned.All(id => Selection.GetValueOrDefault(id) >= stock[id]);
+                var select = new Button
+                {
+                    name = "wm-shop-select-all",
+                    text = all
+                    ? Locale.Text("WOMENACE::ui/kalina/select_none", "SELECT NONE")
+                    : Locale.Text("WOMENACE::ui/kalina/select_all", "SELECT ALL")
+                };
+                select.AddToClassList("wm-shop-text-button");
+                select.SetEnabled(owned.Count > 0);
+                select.clickable.clicked += (Action)(() => SelectAll(owned, stock, !all));
+                row.Add(select);
+                _grid.Add(row);
+            }
             foreach (var group in category.Groups)
                 AddGroup(group, stock);
         }
         RestoreScrollOffset();
         RefreshCheckout();
+    }
+
+    private void SelectAll(List<string> ids, Dictionary<string, int> stock, bool all)
+    {
+        Sound.Click();
+        foreach (var id in ids)
+            Selection[id] = all ? stock[id] : 0;
+        SaveScrollOffset();
+        BuildCatalogue();
     }
 
     private void AddGroup(ShopCatalogue.Group definition, Dictionary<string, int> stock)
@@ -291,7 +356,7 @@ public sealed partial class ShopSystem : JiangyuSystem
             tile.Root.name = "wm-shop-item-" + id;
             tile.Root.AddToClassList("wm-shop-item");
             ItemTileStyle.Align(tile);
-            tile.Badge.AddToClassList("wm-gift-box__badge");
+            tile.Badge.AddToClassList("wm-shop-chosen");
             // Parts use their Sardis price. Buy stock has no artificial supply limit to display.
             foreach (var element in UI.FindAll(tile.Root, UiSelector.Type<Label>()))
                 element.SetVisible(false);
@@ -324,9 +389,9 @@ public sealed partial class ShopSystem : JiangyuSystem
             });
             slots.Add(tile.Root);
         }
-        if (!_buy && slots.childCount == 0)
-            slots.Add(new Label(Locale.Text("WOMENACE::ui/kalina/no_stock", "No items to sell.")));
-        _grid.Add(group);
+        // A group with nothing in it to sell is left out.
+        if (_buy || slots.childCount > 0)
+            _grid.Add(group);
     }
 
     private void RefreshCheckout()
@@ -356,6 +421,8 @@ public sealed partial class ShopSystem : JiangyuSystem
         var result = ShopTrade.Run(selection, buy, State, Context.Log);
         if (result.ok && buy && State.Level > previousLevel)
             Speak(previousLevel);
+        if (result.ok && _root != null)
+            RefreshLevel();
         return result;
     }
 

@@ -1,0 +1,118 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="../wui/wui.uss" />
+    <Style src="shell.uss" />
+    <ui:VisualElement name="wm-shell" class="wm-shell" picking-mode="Ignore">
+        <ui:VisualElement name="wm-markers" class="wui-markers" picking-mode="Ignore" />
+        <ui:VisualElement name="wm-shutter-top" class="wui-shutter wui-shutter--top" picking-mode="Ignore" />
+        <ui:VisualElement name="wm-shutter-bottom" class="wui-shutter wui-shutter--bottom" picking-mode="Ignore" />
+        <ui:VisualElement name="wm-shell-top" class="wui-bar wui-bar--top">
+            <ui:VisualElement name="wm-shell-back" class="wui-bar-back">
+                <ui:Label text="&lt;" class="wui-bar-back__glyph" picking-mode="Ignore" />
+                <ui:Label name="@WOMENACE::ui/shell/home" text="HOME" class="wui-bar-back__label" picking-mode="Ignore" />
+            </ui:VisualElement>
+            <ui:VisualElement class="wui-bar-title" picking-mode="Ignore">
+                <ui:Label name="wm-shell-ship" text="MCV ELMO" class="wui-bar-title__over" picking-mode="Ignore" />
+                <ui:Label name="wm-shell-title" text="OPS ROOM" class="wui-bar-title__main" picking-mode="Ignore" />
+            </ui:VisualElement>
+            <ui:VisualElement name="wm-shell-tabs" class="wui-bar-tabs" picking-mode="Ignore">
+                <ui:VisualElement name="wm-shell-tab-0" class="wui-tab">
+                    <ui:Label name="wm-shell-tab-label-0" text="" class="wui-tab__label" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:VisualElement name="wm-shell-tab-1" class="wui-tab">
+                    <ui:Label name="wm-shell-tab-label-1" text="" class="wui-tab__label" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:VisualElement name="wm-shell-tab-2" class="wui-tab">
+                    <ui:Label name="wm-shell-tab-label-2" text="" class="wui-tab__label" picking-mode="Ignore" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="wm-dg-tag" class="wui-tag wui-tag--off" picking-mode="Ignore">
+            <ui:VisualElement class="wui-tag__box" picking-mode="Ignore">
+                <ui:Label name="@WOMENACE::ui/intel/title" text="INTEL" class="wui-tag__label" picking-mode="Ignore" />
+                <ui:Label name="wm-dg-tag-count" text="" class="wui-tag__count" picking-mode="Ignore" />
+            </ui:VisualElement>
+            <ui:VisualElement class="wui-tag__line" picking-mode="Ignore" />
+            <ui:VisualElement class="wui-tag__dot" picking-mode="Ignore" />
+        </ui:VisualElement>
+        <ui:VisualElement name="wm-table-tag" class="wui-tag wui-tag--off" picking-mode="Ignore">
+            <ui:VisualElement class="wui-tag__box" picking-mode="Ignore">
+                <ui:Label name="@WOMENACE::ui/shell/operations" text="OPERATIONS" class="wui-tag__label" picking-mode="Ignore" />
+            </ui:VisualElement>
+            <ui:VisualElement class="wui-tag__line" picking-mode="Ignore" />
+            <ui:VisualElement class="wui-tag__dot" picking-mode="Ignore" />
+        </ui:VisualElement>
+        <ui:VisualElement name="wm-board-blocker" class="wui-board-blocker" />
+        <ui:VisualElement name="wm-board" class="wui-board">
+            <ui:VisualElement class="wui-board__glow" picking-mode="Ignore" />
+            <ui:VisualElement class="wui-board__fx" picking-mode="Ignore">
+                <ui:VisualElement class="wui-board__scan" picking-mode="Ignore" />
+            </ui:VisualElement>
+            <ui:VisualElement class="wui-holo__corner wui-holo__corner--tl" picking-mode="Ignore" />
+            <ui:VisualElement class="wui-holo__corner wui-holo__corner--tr" picking-mode="Ignore" />
+            <ui:VisualElement class="wui-holo__corner wui-holo__corner--bl" picking-mode="Ignore" />
+            <ui:VisualElement class="wui-holo__corner wui-holo__corner--br" picking-mode="Ignore" />
+            <ui:VisualElement class="wui-board__head" picking-mode="Ignore">
+                <ui:Label name="@WOMENACE::ui/intel/relay" text="DINERGATE RELAY  //  INTEL" class="wui-board__serial" picking-mode="Ignore" />
+                <ui:VisualElement class="wui-board__rule" picking-mode="Ignore" />
+                <ui:VisualElement name="wm-board-close" class="wui-board__close" picking-mode="Position">
+                    <ui:Label text="X" class="wui-board__close-glyph" picking-mode="Ignore" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement class="wui-board__body" picking-mode="Ignore">
+                <ui:VisualElement class="wui-board__col wui-board__col--messages" picking-mode="Ignore">
+                    <ui:VisualElement class="wui-board__heading" picking-mode="Ignore">
+                        <ui:VisualElement class="wui-board__tick" picking-mode="Ignore" />
+                        <ui:Label name="@WOMENACE::ui/intel/messages" text="MESSAGES" class="wui-board__title" picking-mode="Ignore" />
+                        <ui:Label name="wm-board-count" text="" class="wui-board__count" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                    <ui:Label name="wm-board-empty" text="" class="wui-board__empty" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:VisualElement name="wm-board-factions" class="wui-board__col wui-board__col--factions" picking-mode="Ignore">
+                    <ui:VisualElement class="wui-board__heading" picking-mode="Ignore">
+                        <ui:VisualElement class="wui-board__tick" picking-mode="Ignore" />
+                        <ui:Label name="@WOMENACE::ui/intel/factions" text="FACTIONS" class="wui-board__title" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="wm-shell-bottom" class="wui-bar wui-bar--bottom">
+            <ui:VisualElement name="wm-shell-actions" class="wui-act-row">
+                <ui:VisualElement name="wm-act-secondary" class="wui-act wui-act--danger">
+                    <ui:Label name="wm-act-secondary-label" text="" class="wui-act__label" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:Label name="wm-act-info" text="" class="wui-act-info" picking-mode="Ignore" />
+                <ui:VisualElement name="wm-act-primary" class="wui-primary wui-act-primary">
+                    <ui:VisualElement class="wui-primary__inner wui-act-primary__inner" picking-mode="Ignore">
+                        <ui:Label name="wm-act-primary-label" text="" class="wui-primary__label" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="wm-shell-destinations" class="wui-dest-row">
+                <ui:VisualElement name="wm-shell-operations" class="wui-primary">
+                    <ui:VisualElement class="wui-primary__inner" picking-mode="Ignore">
+                        <ui:Label name="@WOMENACE::ui/shell/operations" text="OPERATIONS" class="wui-primary__label" picking-mode="Ignore" />
+                        <ui:Label name="wm-shell-operations-sub" text="" class="wui-primary__sub" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement class="wui-dest-gap" picking-mode="Ignore" />
+                <ui:VisualElement name="wm-shell-oci" class="wui-dest">
+                    <ui:VisualElement class="wui-dest__icon wui-dest__icon--oci" picking-mode="Ignore" />
+                    <ui:Label name="@WOMENACE::ui/shell/oci" text="O.C.I." class="wui-dest__label" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:VisualElement name="wm-shell-market" class="wui-dest">
+                    <ui:VisualElement class="wui-dest__icon wui-dest__icon--market" picking-mode="Ignore" />
+                    <ui:Label name="@WOMENACE::ui/shell/market" text="MARKET" class="wui-dest__label" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:VisualElement class="wui-dest-divider" picking-mode="Ignore" />
+                <ui:VisualElement name="wm-shell-squads" class="wui-dest">
+                    <ui:VisualElement class="wui-dest__icon wui-dest__icon--squads" picking-mode="Ignore" />
+                    <ui:Label name="@WOMENACE::ui/shell/squads" text="SQUADS" class="wui-dest__label" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:VisualElement name="wm-shell-workshop" class="wui-dest">
+                    <ui:VisualElement class="wui-dest__icon wui-dest__icon--workshop" picking-mode="Ignore" />
+                    <ui:Label name="@WOMENACE::ui/shell/workshop" text="WORKSHOP" class="wui-dest__label" picking-mode="Ignore" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

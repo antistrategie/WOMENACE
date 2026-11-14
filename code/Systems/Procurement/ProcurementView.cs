@@ -59,8 +59,10 @@ internal sealed partial class ProcurementView
     {
         var content = Element("wm-proc-content", _home);
         var heading = Element("wm-proc-row wm-proc-heading", content);
-        Text(Locale.Text("WOMENACE::ui/procurement/title", "Special Procurement"), "wm-proc-title", heading);
-        heading.Add(Button(Locale.Text("WOMENACE::ui/procurement/pool", "REWARD POOL") + " ↗", () => OpenPool(ProcurementSection.Dossiers), "wm-proc-link"));
+        Text(Locale.Text("WOMENACE::ui/procurement/title", "Special Procurement").ToUpperInvariant(), "wm-proc-title", heading);
+        var poolLink = Button(Locale.Text("WOMENACE::ui/procurement/pool", "REWARD POOL") + " ↗", () => OpenPool(ProcurementSection.Dossiers), "wm-proc-link");
+        poolLink.name = "wm-procurement-pool-link";
+        heading.Add(poolLink);
         var hero = Element("wm-proc-hero", content);
         BuildAmbientBackdrop(hero);
         Text("III", "wm-proc-roman", hero);
@@ -157,7 +159,7 @@ internal sealed partial class ProcurementView
             card.EnableInClassList("wm-proc-claimed", claimed);
             art.style.opacity = claimed ? .25f : 1f;
             ShopVisuals.Draw(card, context => ShopVisuals.Gradient(context, context.visualElement.contentRect,
-                new Color(.04f, .06f, .05f, 0), new Color(.04f, .06f, .05f, .6f), true), false);
+                new Color(0f, 0f, 0f, 0), new Color(0f, 0f, 0f, .6f), true), false);
             Text(Claim(entry), "wm-proc-claim", card);
             Text(entry.DollName.ToUpperInvariant(), "wm-proc-doll-name", card);
             _featured.Add(card);
@@ -176,9 +178,10 @@ internal sealed partial class ProcurementView
             foreach (var entry in entries)
             {
                 var card = CreateRewardCard(entry, "wm-proc-special-card wm-proc-row", () => OpenPool(ProcurementSection.Special));
-                ShopVisuals.Surface(card, ShopSurface.Card, Colour(ProcurementSection.Special));
+                ShopVisuals.Card(card, Colour(ProcurementSection.Special));
+                // The picture has the card's whole width, under its name and its claims.
                 Icon(entry, card);
-                var copy = Element("wm-proc-item-copy", card);
+                var copy = Element("wm-proc-item-copy", card, PickingMode.Ignore);
                 Text(entry.Name, "wm-proc-item-name", copy);
                 Text(Claim(entry), "wm-proc-muted", copy);
                 card.EnableInClassList("wm-proc-claimed", !State.Available(entry.Reward));
@@ -237,7 +240,7 @@ internal sealed partial class ProcurementView
         if (text.Length > 0)
             Text(text, "wm-proc-button-caption", button);
         if (button.ClassListContains("wm-proc-pull") || button.ClassListContains("wm-shop-primary"))
-            ShopVisuals.Surface(button, ShopSurface.Button);
+            ShopVisuals.Button(button);
         button.clickable.clicked += (Action)(() => { Sound.Click(); action(); });
         return button;
     }
@@ -287,7 +290,7 @@ internal sealed partial class ProcurementView
         ProcurementSection.Special => new Color(.85f, .71f, .48f),
         ProcurementSection.Dossiers => new Color(.92f, .78f, .46f),
         ProcurementSection.Curios => new Color(.86f, .65f, .80f),
-        _ => new Color(.69f, .74f, .55f),
+        _ => new Color(.62f, .70f, .82f),
     };
 
     private void CloseOverlay(VisualElement overlay)

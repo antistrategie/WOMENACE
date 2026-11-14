@@ -74,6 +74,7 @@ public sealed class Ots14ArmoryPreviewSystem : JiangyuSystem
     private RuntimeAnimatorController AuthoredController()
     {
         var template = Templates.Resolve<WeaponTemplate>(WeaponId, _weapons, msg => Context.Log.Warn($"ots14 armoury: {msg}"));
+        WeaponModelSystem.Ensure(template);
         var prefab = template?.ModelSecondary;
         return prefab == null ? null : FindAnimator(prefab.transform)?.runtimeAnimatorController;
     }

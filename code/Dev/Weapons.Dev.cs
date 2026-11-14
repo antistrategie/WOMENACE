@@ -41,6 +41,26 @@ public static class Weapons
         return new { ok = true, weaponId, minted };
     }
 
+    // Puts a weapon in the hands of a hired leader, by place in the roster, for seeing its
+    // model on a squad without going through the armoury.
+    [MutatingVerb]
+    public static object Equip(string weaponId, int leader = 0)
+    {
+        var context = BayMountSystem.Instance?.Context;
+        var hired = Il2CppMenace.States.StrategyState.Get()?.Roster?.m_HiredLeaders;
+        if (context == null || hired == null || leader < 0 || leader >= hired.Count)
+            return new { error = "no such leader" };
+        var template = Templates.Resolve<Il2CppMenace.Items.WeaponTemplate>(weaponId, GiveCache, msg => context.Log.Warn($"weapons: {msg}"));
+        var item = template?.CreateItem(Il2CppMenace.Items.BaseItemTemplate.CreateGuid())?.TryCast<Il2CppMenace.Items.Item>();
+        if (item == null)
+            return new { error = $"cannot make '{weaponId}'" };
+        var items = hired[leader].GetItems();
+        var held = items.GetItemAtSlot(Il2CppMenace.Items.ItemSlot.InfantryWeapon);
+        if (held != null)
+            items.Remove(held, default);
+        return new { ok = items.Equip(item, 0, default), weaponId, leader };
+    }
+
     // Every calibratable weapon instance the player owns: weapon, rank and holder.
     public static object Status()
         => CalibrationSystem.Instance?.DevStatus() ?? NoSystem;
@@ -60,6 +80,11 @@ public static class Weapons
     [MutatingVerb]
     public static object Revert(string characterTag = "wmgfl_makiatto")
         => CalibrationSystem.Instance?.DevRevert(characterTag) ?? NoSystem;
+
+    // Pick the weapon of the doll with this character tag on the open calibration panel.
+    [MutatingVerb]
+    public static object PickCalibration(string characterTag)
+        => new { ok = CalibrationUISystem.Instance?.DevPick(characterTag) ?? false };
 
     // Open the calibration screen, for testing without the workshop button.
     [MutatingVerb]

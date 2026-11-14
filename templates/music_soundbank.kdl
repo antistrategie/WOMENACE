@@ -31,10 +31,46 @@ clone "SoundBank" from="music_soundbank" id="wmgfl_music_bank" {
     append "busIndices" 0
 
     append "sounds" {
-        set "name" "kalina_shop"
+        set "name" "title"
         set "fixedPitch" 1.0
         append "variations" {
-            set "fixedVolume" 0.11
+            set "fixedVolume" 0.12
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "ops_room"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "fixedVolume" 0.168
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "mission_prep"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "fixedVolume" 0.21
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "workshop"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "fixedVolume" 0.168
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "refitting"
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "fixedVolume" 0.22
         }
     }
     append "busIndices" 0

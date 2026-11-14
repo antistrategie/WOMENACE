@@ -88,6 +88,29 @@ public static class Trade
         return new { ok = screen != null };
     }
 
+    // Puts the first of the player's items and of the market's on offer, as clicks on them do,
+    // so the barter can be looked at without a mouse.
+    [MutatingVerb]
+    public static object Offer(int sell = 1, int buy = 1)
+    {
+        var screen = UIManager.Get()?.GetActiveScreen()?.TryCast<BlackMarketUIScreen>();
+        if (screen == null)
+            return new { error = "the black market is not the active screen" };
+        screen.m_SellItems.Clear();
+        screen.m_BuyItems.Clear();
+        var state = StrategyState.Get();
+        foreach (var entry in state.OwnedItems.GetRawInstances())
+            foreach (var item in entry.Value)
+                if (screen.m_SellItems.Count < sell && item.GetTradeValue(1f) > 0)
+                    screen.m_SellItems.Add(item);
+        var theirs = new Il2CppSystem.Collections.Generic.List<BaseItem>();
+        state.BlackMarket.GetInstances(theirs, false);
+        for (var i = 0; i < buy && i < theirs.Count; i++)
+            screen.m_BuyItems.Add(theirs[i]);
+        screen.UpdateWindow();
+        return $"give {screen.CalcItemsSellValue()} ({screen.m_SellItems.Count} items), get {screen.CalcItemsBuyValue()} ({screen.m_BuyItems.Count} items)";
+    }
+
     private static List<string> Shelf(Il2CppMenace.Strategy.BlackMarket market)
     {
         var ids = new List<string>();

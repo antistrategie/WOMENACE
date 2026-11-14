@@ -62,7 +62,7 @@ REFERENCE = Path(__file__).parent / "data" / "face_sdf_uv_ref.npz"
 # The part whose materials sample the SDF. The welded face material covers the
 # face, mouth, teeth, tongue and eye whites, and it is the only material the
 # bake gives _UseBlendTex.
-SDF_PART = "face"
+SDF_PARTS = ("face", "faceskin")
 
 # Neighbours per vertex for the UV transfer. One neighbour quantises the lookup
 # to the reference's vertex sites, which puts a vertex-density wobble on the
@@ -215,13 +215,13 @@ def bake(doll):
     targets = {}
     for mesh in doc["meshes"]:
         for prim in mesh["primitives"]:
-            if part_for(names[prim["material"]] or "") != SDF_PART:
+            if part_for(names[prim["material"]] or "") not in SDF_PARTS:
                 continue
             attrs = prim["attributes"]
             if "TEXCOORD_2" in attrs and attrs["TEXCOORD_2"] not in targets:
                 targets[attrs["TEXCOORD_2"]] = attrs["POSITION"]
     if not targets:
-        raise SystemExit(f"no primitives resolve to part '{SDF_PART}'")
+        raise SystemExit(f"no primitives resolve to a face part ({', '.join(SDF_PARTS)})")
 
     positions = {uv_acc: read_vec(doc, buf, pos_acc, 3)
                  for uv_acc, pos_acc in targets.items()}

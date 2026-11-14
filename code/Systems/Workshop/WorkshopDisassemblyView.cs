@@ -22,6 +22,7 @@ internal sealed class WorkshopDisassemblyView(ModContext context)
     private bool _disassemble;
     private string _feedback;
     public bool IsActive => _disassemble;
+    public Item Selected => _selected;
 
     public void Reset()
     {

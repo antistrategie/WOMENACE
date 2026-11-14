@@ -183,7 +183,7 @@ public sealed class TransmogPickerSystem : JiangyuSystem
             return null;
         var selectedSkin = system.SelectionFor(items, slot, weapon);
         var code = WeaponClasses.Code(WeaponClasses.Classify(weapon));
-        var defaultArt = new StyleBackground(Context.Assets.Load<Texture2D>("weapon_skins__default_" + code.ToLowerInvariant()));
+        var defaultArt = new StyleBackground(Context.Assets.Load<Sprite>("weapon_skins__default_" + code.ToLowerInvariant()));
         var weaponChoices = new List<Choice>
         {
             new(null, Locale.Text("WOMENACE::ui/weapon_skins/default", "Default"), code, defaultArt),
@@ -220,7 +220,62 @@ public sealed class TransmogPickerSystem : JiangyuSystem
         var modal = ModalRoot(window);
         if (UI.Find(modal, UiSelector.Name("appearance-title"))?.TryCast<Label>() is { } heading)
             heading.text = appearance.Title;
-        var list = UI.Find(modal, UiSelector.Name("appearance-list"));
+        FillList(window, slot, appearance, UI.Find(modal, UiSelector.Name("appearance-list")), null);
+    }
+
+    private const string HostedName = "wm-hosted-outfits";
+
+    // The outfit list on its own, for a screen that shows it in place instead of in the modal: the
+    // modal's template with its window dressing taken off. The caller parents it and fills it
+    // with FillHosted.
+    internal VisualElement BuildHosted()
+    {
+        var tree = Context.Assets.Load<VisualTreeAsset>("transmog/appearance-modal");
+        var host = tree?.Instantiate();
+        var modal = host != null ? UI.Find(host, UiSelector.Name(ModalName)) : null;
+        if (modal == null)
+            return null;
+        // Not a modal: nothing here answers ModalRoot or ClosePickers.
+        modal.name = HostedName;
+        modal.RemoveFromClassList("wm-outfit-modal");
+        modal.RemoveFromClassList("window");
+        for (var i = 0; i < modal.childCount; i++)
+            if (modal.ElementAt(i).name != "appearance-list")
+                modal.ElementAt(i).style.display = DisplayStyle.None;
+        UI.Find(modal, UiSelector.Name("appearance-list"))?.AddToClassList("wm-outfit-list--rows");
+        return host;
+    }
+
+    // Fills a hosted list with the window's leader's outfits. A click dresses the squad leader,
+    // or her dummy links when dressLinks is set. Says whether the doll has dummy links to dress.
+    internal bool FillHosted(VisualElement window, VisualElement host, bool dressLinks)
+    {
+        var list = host != null ? UI.Find(host, UiSelector.Name("appearance-list")) : null;
+        if (list == null)
+            return false;
+        try
+        {
+            if (ChoicesFor(window, ItemSlot.InfantryArmor) is not { } appearance)
+            {
+                list.Clear();
+                return false;
+            }
+            FillList(window, ItemSlot.InfantryArmor, appearance, list, dressLinks && appearance.HasSquad);
+            return appearance.HasSquad;
+        }
+        catch (Exception ex)
+        {
+            Context.Log.Warn($"appearance picker: hosted list failed: {ex.Message}");
+            return false;
+        }
+    }
+
+    // One card per choice. In the modal (hostedSquad null) a left click dresses the leader and a
+    // right click the dummy links. In a hosted list the host says which of the two a click dresses.
+    private void FillList(VisualElement window, ItemSlot slot, Appearance appearance, VisualElement list, bool? hostedSquad)
+    {
+        if (list == null)
+            return;
         list.Clear();
         foreach (var choice in appearance.Choices)
         {
@@ -236,12 +291,29 @@ public sealed class TransmogPickerSystem : JiangyuSystem
             AppearanceSlotUi.Overlay(card, "Selected", "slot-selected-border").SetVisible(choice.Id == appearance.Selection);
             var title = new Label(choice.Name) { name = "ItemName", pickingMode = PickingMode.Ignore };
             title.AddToClassList("wm-outfit-card-name");
-            card.Add(title);
+            // A hosted row carries who wears the outfit as chips beside its name, and is edged in
+            // gold when it is the one the host's switch is dressing.
+            if (hostedSquad != null)
+            {
+                var worn = choice.Id == appearance.Selection;
+                var linked = appearance.HasSquad && choice.Id == appearance.SquadSelection;
+                card.EnableInClassList("wm-outfit-card--on", hostedSquad.Value ? linked : worn);
+                var heading = new VisualElement { pickingMode = PickingMode.Ignore };
+                heading.AddToClassList("wm-outfit-card-heading");
+                heading.Add(title);
+                if (worn)
+                    heading.Add(Chip(Locale.Text("WOMENACE::ui/transmog_badge_leader", "SL"), "wm-outfit-chip--leader"));
+                if (linked)
+                    heading.Add(Chip(Locale.Text("WOMENACE::ui/transmog_chip_links", "DL"), "wm-outfit-chip--links"));
+                card.Add(heading);
+            }
+            else
+                card.Add(title);
             var subtitle = new Label(choice.Subtitle) { name = "ShortItemName", pickingMode = PickingMode.Ignore };
             subtitle.AddToClassList("wm-outfit-card-shortname");
             card.Add(subtitle);
-            card.clickable.clicked += (Action)(() => Pick(window, slot, choice, squad: false));
-            if (appearance.HasSquad)
+            card.clickable.clicked += (Action)(() => Pick(window, slot, choice, squad: hostedSquad ?? false));
+            if (appearance.HasSquad && hostedSquad == null)
             {
                 // Clickable answers the left button only, so the squaddie pick listens for the
                 // right one itself. Stopping it keeps the window's own right click from firing.
@@ -254,9 +326,16 @@ public sealed class TransmogPickerSystem : JiangyuSystem
                         Pick(window, slot, choice, squad: true);
                     })));
             }
-            if (slot == ItemSlot.InfantryArmor)
+            // In a hosted list a locked outfit says what unlocks it, where the modal leaves that to the tooltip.
+            if (hostedSquad != null && !choice.Unlocked && !string.IsNullOrEmpty(choice.LockedMessage))
+            {
+                var tag = new Label(choice.LockedMessage) { pickingMode = PickingMode.Ignore };
+                tag.AddToClassList("wm-outfit-tag");
+                card.Add(tag);
+            }
+            if (slot == ItemSlot.InfantryArmor && hostedSquad == null)
                 card.Add(Badges(choice.Id == appearance.Selection, appearance.HasSquad && choice.Id == appearance.SquadSelection));
-            Tooltip.OnHover(card, () => ChoiceTooltip(choice, hint: appearance.HasSquad));
+            Tooltip.OnHover(card, () => ChoiceTooltip(choice, hint: appearance.HasSquad && hostedSquad == null));
             list.Add(card);
         }
     }
@@ -265,7 +344,9 @@ public sealed class TransmogPickerSystem : JiangyuSystem
     // it centres on the title.
     private void AddCloseButton(VisualElement window)
     {
-        var header = UI.Find(window, UiSelector.Name("appearance-header"));
+        // Under the modal: a hosted list in the same window keeps a hidden header of the same name.
+        var modal = ModalRoot(window);
+        var header = modal != null ? UI.Find(modal, UiSelector.Name("appearance-header")) : null;
         if (header == null || UI.Find(header, UiSelector.Name("appearance-close")) != null)
             return;
         var close = new Il2CppMenace.UI.CloseButton { name = "appearance-close" };
@@ -286,6 +367,14 @@ public sealed class TransmogPickerSystem : JiangyuSystem
         Select(window, slot, choice.Id, squad);
     }
 
+    private static Label Chip(string text, string kind)
+    {
+        var chip = new Label(text) { pickingMode = PickingMode.Ignore };
+        chip.AddToClassList("wm-outfit-chip");
+        chip.AddToClassList(kind);
+        return chip;
+    }
+
     // The labels in a card's bottom-left corner, under its name, saying who wears it: a rank
     // chevron for the squad leader and a chain link for her dummy links.
     private VisualElement Badges(bool leader, bool squad)
@@ -295,13 +384,13 @@ public sealed class TransmogPickerSystem : JiangyuSystem
         if (!leader && !squad)
             return badges;
         if (leader)
-            badges.Add(Badge(Context.Assets.Load<Texture2D>("transmog__badge_leader"), Locale.Text("WOMENACE::ui/transmog_badge_leader", "SL")));
+            badges.Add(Badge(Context.Assets.Load<Sprite>("transmog__badge_leader"), Locale.Text("WOMENACE::ui/transmog_badge_leader", "SL")));
         if (squad)
-            badges.Add(Badge(Context.Assets.Load<Texture2D>("transmog__badge_links"), Locale.Text("WOMENACE::ui/transmog_badge_links", "LINKS")));
+            badges.Add(Badge(Context.Assets.Load<Sprite>("transmog__badge_links"), Locale.Text("WOMENACE::ui/transmog_badge_links", "LINKS")));
         return badges;
     }
 
-    private static VisualElement Badge(Texture2D glyph, string text)
+    private static VisualElement Badge(Sprite glyph, string text)
     {
         var badge = new VisualElement { pickingMode = PickingMode.Ignore };
         badge.AddToClassList("wm-outfit-badge");
@@ -419,5 +508,5 @@ public sealed class TransmogPickerSystem : JiangyuSystem
     private ArmorTemplate OutfitTemplate(string id)
         => Templates.Resolve<ArmorTemplate>(id, _armorCache, msg => Context.Log.Warn($"appearance picker: {msg}"));
 
-    private StyleBackground SkinArt(WeaponSkin skin) => new(Context.Assets.Load<Texture2D>(skin.IconAsset));
+    private StyleBackground SkinArt(WeaponSkin skin) => new(Context.Assets.Load<Sprite>(skin.IconAsset));
 }

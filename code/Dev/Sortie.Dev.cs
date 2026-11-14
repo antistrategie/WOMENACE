@@ -1,3 +1,4 @@
+using Il2CppMenace.Strategy;
 using Il2CppMenace.Tactical;
 using Il2CppMenace.UI;
 using Il2CppMenace.UI.Strategy;
@@ -18,6 +19,7 @@ namespace WOMENACE.Code;
 //   Sortie.Open    -> open mission prep for the current operation's mission
 //   Sortie.Launch  -> launch the prepped mission, once its preview has landed
 //   Sortie.Skills  -> an actor's skills as the engine judges them, with lifetime and cooldown counters
+//   Sortie.Aim     -> raise or lower the active actor's weapon for one of its skills
 //   Sortie.Use     -> use one of the active actor's skills on a tile through its own Use
 //   Sortie.EndTurn  -> end the active unit's turn and hand over to the next actor
 //
@@ -171,6 +173,26 @@ public static class Sortie
         return new { error = $"active actor has no skill '{skillId}'" };
     }
 
+    // Raise (or lower) the active actor's weapon for one of its skills without firing, for
+    // inspecting the aiming pose and the support-hand IK on a held weapon.
+    [MutatingVerb]
+    public static object Aim(string skillId, bool on = true)
+    {
+        var actor = TacticalManager.Get()?.GetActiveActor();
+        var skills = actor?.GetSkills()?.GetAllSkills();
+        if (skills == null)
+            return new { error = "no active actor" };
+        for (var i = 0; i < skills.Count; i++)
+        {
+            var skill = skills[i]?.TryCast<Il2CppMenace.Tactical.Skills.Skill>();
+            if (skill == null || skill.GetID() != skillId)
+                continue;
+            actor.SetAiming(on, skill);
+            return new { actor = actor.GetTemplate()?.GetID(), skill = skillId, aiming = on };
+        }
+        return new { error = $"active actor has no skill '{skillId}'" };
+    }
+
     private static string Describe(Il2CppMenace.Tactical.Skills.SkillEventHandler handler)
     {
         if (handler == null)
@@ -183,6 +205,126 @@ public static class Sortie
         if (cooldown != null)
             return $"{name}:{cooldown.m_Cooldown}";
         return name;
+    }
+
+    // What the prep screen's generated preview holds, and how long one pass over its tiles takes.
+    // With a path, writes the grid as text: one line per row, each tile "elevation:entity type:road".
+    public static object PreviewProbe(string dumpPath = "")
+    {
+        var screen = Prep(ActiveScreen());
+        var mission = screen?.GetMission();
+        var preview = mission?.GetPreview();
+        if (preview == null)
+            return new { error = "no preview: open mission prep and wait for previewReady" };
+
+        int sizeX = preview.SizeX, sizeZ = preview.SizeZ;
+        var tiles = preview.Tiles;
+        var kinds = new Dictionary<string, int>();
+        var templates = new Dictionary<string, int>();
+        float low = float.MaxValue, high = float.MinValue;
+        var rows = new System.Text.StringBuilder();
+        var roads = 0;
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        for (var z = 0; z < sizeZ; z++)
+        {
+            for (var x = 0; x < sizeX; x++)
+            {
+                var tile = tiles.GetTile(x, z);
+                var elevation = tile.GetElevation();
+                var kind = tile.GetEntityType().ToString();
+                var road = preview.HasRoad(x, z);
+                low = Math.Min(low, elevation);
+                high = Math.Max(high, elevation);
+                kinds[kind] = kinds.GetValueOrDefault(kind) + 1;
+                if (road)
+                    roads++;
+                var template = tile.m_EntityTemplate;
+                if (template != null)
+                    templates[template.name] = templates.GetValueOrDefault(template.name) + 1;
+                if (dumpPath.Length > 0)
+                    rows.Append(elevation.ToString("0.##")).Append(':').Append(kind).Append(':').Append(road ? 1 : 0).Append(' ');
+            }
+            rows.Append('\n');
+        }
+        watch.Stop();
+        if (dumpPath.Length > 0)
+            File.WriteAllText(dumpPath, rows.ToString());
+
+        var blueprint = preview.Blueprint;
+        var heights = blueprint?.GetHeightmap()?.TryCast<Il2CppSystem.Array>();
+        return new
+        {
+            sizeX,
+            sizeZ,
+            readMs = watch.Elapsed.TotalMilliseconds,
+            elevation = $"{low:0.##} to {high:0.##}",
+            roads,
+            kinds = string.Join(", ", kinds.Select(k => $"{k.Key} {k.Value}")),
+            templates = string.Join(", ", templates.OrderByDescending(k => k.Value).Take(25).Select(k => $"{k.Key} {k.Value}")),
+            deploymentZones = string.Join(" ", preview.DeploymentZones.ToArray().Select(r => $"[{r.x},{r.y} {r.width}x{r.height}]")),
+            areas = preview.Areas?.Count ?? -1,
+            pois = preview.PointsOfInterest?.Count ?? -1,
+            scaledZones = string.Join(" ", preview.DeploymentZones.ToArray().Select(r => MissionPreviewResult.ScaleDeploymentZone(r, screen.m_DeploymentScale, sizeX, sizeZ)).Select(r => $"[{r.x},{r.y} {r.width}x{r.height}]")),
+            scaleIsIdentity = screen.m_DeploymentScale.IsIdentity(),
+            validRows = ValidRows(preview, sizeX, sizeZ),
+            zoneTiles = ZoneTiles(preview, sizeX, sizeZ),
+            pixelsPerTile = preview.PixelsPerTile,
+            blueprint = blueprint == null ? "none" : $"{blueprint.Width}x{blueprint.Height} tiles, heightmap res {blueprint.HeightMapRes}, terrain y {blueprint.ActualTerrainMinY:0.##} to {blueprint.ActualTerrainMaxY:0.##}, chunks {blueprint.Chunks?.Count ?? -1}, terrain points {blueprint.TerrainPoints?.Count ?? -1}, base colour {blueprint.m_BaseColor?.Length ?? -1}",
+            heightmap = heights == null ? "none" : $"rank {heights.Rank}, {heights.Length} values",
+        };
+    }
+
+    // For the first deployed squad found, which of the map's first six rows it may stand on, by
+    // vanilla's own rule, counted over the row's tiles.
+    // The map's first four rows, a letter a tile: B blocked, I isolated, S a structure, x one the
+    // first deployed squad may not stand on for another reason, and a dot where it may.
+    private static string ZoneTiles(MissionPreviewResult preview, int sizeX, int sizeZ)
+    {
+        MissionPrepDeployedEntity first = null;
+        var screen = UIManager.Get()?.GetActiveScreen()?.TryCast<MissionPrepUIScreen>();
+        var deployed = screen?.m_Deployed;
+        for (var i = 0; deployed != null && i < deployed.childCount && first == null; i++)
+            first = deployed.ElementAt(i).TryCast<MissionPrepDeployedEntity>();
+        var entity = first?.GetEntity();
+        if (entity == null)
+            return "no squad";
+        var rows = new List<string>();
+        for (var z = 0; z < Math.Min(4, sizeZ); z++)
+        {
+            var row = new System.Text.StringBuilder();
+            for (var x = 0; x < sizeX; x++)
+            {
+                var tile = preview.Tiles.GetTile(x, z);
+                row.Append(tile.IsBlocked() ? 'B' : tile.IsIsolated() ? 'I' : tile.GetEntityType() == EntityType.Structure ? 'S'
+                    : preview.IsValidDeployPosition(new UnityEngine.Vector2Int(x, z), entity, -1) ? '.' : 'x');
+            }
+            rows.Add(row.ToString());
+        }
+        return string.Join(" / ", rows);
+    }
+
+    private static string ValidRows(MissionPreviewResult preview, int sizeX, int sizeZ)
+    {
+        for (var z = 0; z < sizeZ; z++)
+        {
+            for (var x = 0; x < sizeX; x++)
+            {
+                var entity = MissionPrepUIScreen.GetDeployedEntityOnTile(new UnityEngine.Vector2Int(x, z));
+                if (entity == null)
+                    continue;
+                var rows = new List<string>();
+                for (var row = 0; row < Math.Min(6, sizeZ); row++)
+                {
+                    var valid = 0;
+                    for (var column = 0; column < sizeX; column++)
+                        if (preview.IsValidDeployPosition(new UnityEngine.Vector2Int(column, row), entity, 0))
+                            valid++;
+                    rows.Add($"row {row}: {valid}");
+                }
+                return $"squad at {x},{z}; " + string.Join(", ", rows);
+            }
+        }
+        return "no deployed squad found";
     }
 
     private static UIScreen ActiveScreen()

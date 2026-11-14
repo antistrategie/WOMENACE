@@ -16,35 +16,40 @@ namespace WOMENACE.Code;
 //
 // Her special-weapon slot becomes the bay: the slot header is retitled and a
 // 2x2 grid of tiles overlays the slot's pickable area, each tile showing its
-// bay weapon's banner art, name and rank. Clicking a tile opens the bay
-// flyout (a sibling of the vanilla EquipmentAlternatives, in its style)
-// listing every owned special weapon, with rows the bay refuses greyed out
-// carrying the reason. Picking routes through Bay.TrySetSlot, and the 3D
-// preview respawns through the container's visual-alteration event so the
-// weapon lands on the arm immediately. While a tile's picker is open the
-// preview grows that arm (Ots14BayRevealSystem.ArmouryFocus): a filled slot
-// grows arm and weapon, an empty slot grows nothing until a weapon is
-// picked, at which point both appear together.
+// bay weapon's banner art, name and rank. Clicking a tile opens vanilla's own
+// list of alternatives for that special-weapon slot, which has one row for
+// each kind of weapon with how many are owned and in use, however many copies
+// there are. A row picked while a tile is open goes to the bay and not to her
+// own slot: vanilla's handler is stopped, a free copy of that kind is found
+// and Bay.TrySetSlot takes it. A right click on a tile empties it, as it does
+// a vanilla slot. The 3D preview respawns through the container's
+// visual-alteration event so the weapon lands on the arm immediately. While a
+// tile's list is open the preview grows that arm
+// (Ots14BayRevealSystem.ArmouryFocus): a filled slot grows arm and weapon, an
+// empty slot grows nothing until a weapon is picked, at which point both
+// appear together.
 //
 // The grid is a SIBLING of the slot floated over it, never a child: the game
 // resolves clicked InteractiveElements from ancestry, and a child would open
-// the vanilla special-weapon dropdown underneath (the transmog tile lesson).
+// the vanilla list for her own slot underneath (the transmog tile lesson).
 public sealed class BayEquipUISystem : JiangyuSystem
 {
     private const string GridName = "wmgfl-bay-grid";
-    private const string ModalName = "BayAlternatives";
     private const float TileGap = 4f;
 
     internal static BayEquipUISystem Instance { get; private set; }
 
     private string _vanillaHeader;
     private int _pickSlot = -1;
+    // The window whose list is open for a tile, and a count that ends the watch of a list
+    // another has replaced.
+    private VisualElement _pickWindow;
+    private int _pickEpoch;
 
     public override void OnInit()
     {
         Instance = this;
-        RegisterScreen<ArmoryUIScreen>();
-        RegisterScreen<MissionPrepUIScreen>();
+        Context.Patches.Prefix(VanillaUi.Targets.EquipmentAlternativePicked.Type, VanillaUi.Targets.EquipmentAlternativePicked.Method, OnAlternativePicked);
         Context.Patches.Postfix("Il2CppMenace.UI.Strategy.UnitWindow", "SetLeader", OnWindowChanged);
         Context.Patches.Postfix("Il2CppMenace.UI.Strategy.UnitWindow", "Refresh", OnWindowChanged);
     }
@@ -54,48 +59,20 @@ public sealed class BayEquipUISystem : JiangyuSystem
         Instance = null;
     }
 
-    public override void OnSceneLoaded(int buildIndex, string sceneName)
+    public override void OnSceneLoaded(int buildIndex, string sceneName) => ForgetPick();
+
+    // No tile's list is open, and whatever was watching one stops.
+    private void ForgetPick()
     {
         _pickSlot = -1;
-    }
-
-    private void RegisterScreen<TScreen>() where TScreen : Il2CppMenace.UI.UIScreen
-    {
-        UI.InjectEach(
-            UiTarget.Screen<TScreen>()
-                .Each(UiSelector.TypeName("UnitWindow"))
-                .Before(UiSelector.Name("EquipmentAlternatives")),
-            "bay/bay-modal",
-            WireModal);
-    }
-
-    private void WireModal(VisualElement root, VisualElement window)
-    {
-        root.SetVisible(false);
-        EnsureDismissHooked(root, window);
-        EnsureUi(window);
-    }
-
-    private void EnsureDismissHooked(VisualElement modal, VisualElement window)
-    {
-        if (modal == null || modal.panel == null || modal.ClassListContains("wm-bay-dismiss-hooked"))
-            return;
-        modal.AddToClassList("wm-bay-dismiss-hooked");
-        var dismissable = modal;
-        var dismissWindow = window;
-        UI.CloseOnOutsideClick(dismissable, () => ClosePicker(dismissWindow), GridName);
+        _pickWindow = null;
+        _pickEpoch++;
     }
 
     private void OnWindowChanged(PatchInfo info)
     {
         if (info.Instance is VisualElement window)
             EnsureUi(window);
-    }
-
-    private static VisualElement ModalRoot(VisualElement window)
-    {
-        var inner = UI.Find(window, UiSelector.Name(ModalName));
-        return inner?.parent ?? inner;
     }
 
     private void EnsureUi(VisualElement window)
@@ -105,7 +82,6 @@ public sealed class BayEquipUISystem : JiangyuSystem
             var leader = Affinity.LeaderOf(window);
             var characterTag = Affinity.CharacterTag(leader);
             var slot = FindSpecialSlot(window);
-            var modal = ModalRoot(window);
             var grid = UI.Find(window, UiSelector.Name(GridName));
 
             // Sextans carries no special weapon at all (blades live in the
@@ -115,14 +91,11 @@ public sealed class BayEquipUISystem : JiangyuSystem
             // leaders, so everyone else gets it shown back.
             slot?.SetVisible(characterTag != "wmgfl_sextans");
 
-            if (characterTag != Bay.CharacterTag || slot == null || modal == null)
+            if (characterTag != Bay.CharacterTag || slot == null)
             {
                 grid?.SetVisible(false);
                 if (characterTag != Bay.CharacterTag)
-                {
-                    modal?.SetVisible(false);
                     RestoreHeader(slot);
-                }
                 return;
             }
 
@@ -134,11 +107,8 @@ public sealed class BayEquipUISystem : JiangyuSystem
                 slot.parent.Add(grid);
             }
             PositionGrid(grid, slot);
-            EnsureDismissHooked(modal, window);
             grid.SetVisible(true);
             RebuildTiles(grid, window);
-            if (modal.IsVisible() && _pickSlot >= 0)
-                RebuildRows(window);
         }
         catch (Exception ex)
         {
@@ -221,9 +191,8 @@ public sealed class BayEquipUISystem : JiangyuSystem
     private static readonly Color MutedColour = new(184f / 255f, 151f / 255f, 134f / 255f);
     private static readonly Color DimColour = new(140f / 255f, 133f / 255f, 116f / 255f);
 
-    // Every tile style is inline: the tiles live in the equipment column,
-    // outside the modal's UXML subtree, so bay.uss never reaches them (the
-    // transmog tile learned the same lesson).
+    // Every tile style is inline: the tiles are code-built in the equipment
+    // column, where no stylesheet of the mod's is attached.
     private VisualElement BuildGrid(VisualElement window)
     {
         var grid = new VisualElement { name = GridName };
@@ -305,10 +274,18 @@ public sealed class BayEquipUISystem : JiangyuSystem
 
             var slotIndex = i;
             tile.clickable.clicked += (Action)(() => OnTileClicked(window, slotIndex));
-            // Hovering a filled tile grows its arm on the preview with no
-            // modal in the way (an empty slot's arm never grows, so hovering
-            // one is harmless), and raises the weapon's native item popover,
-            // the same panel every other equipment slot shows.
+            // A right click empties the slot, as it does a vanilla one.
+            tile.RegisterCallback(
+                Il2CppInterop.Runtime.DelegateSupport.ConvertDelegate<EventCallback<PointerDownEvent>>(
+                    (Action<PointerDownEvent>)(evt =>
+                    {
+                        if (evt.button == 1)
+                            OnTileCleared(window, slotIndex);
+                    })));
+            // Hovering a filled tile grows its arm on the preview (an empty
+            // slot's arm never grows, so hovering one is harmless), and raises
+            // the weapon's native item popover, the same panel every other
+            // equipment slot shows.
             var shownTooltipId = new string[1];
             var pendingTooltip = new IVisualElementScheduledItem[1];
             tile.RegisterCallback(
@@ -441,12 +418,17 @@ public sealed class BayEquipUISystem : JiangyuSystem
         var inner = pickable?.layout ?? new Rect(0f, 0f, rect.width, rect.height);
         if (float.IsNaN(inner.width) || inner.width <= 0f)
             inner = new Rect(0f, 0f, rect.width, rect.height);
+        // The pickable area starts in from the slot's left and top and runs to its right
+        // and bottom edges. The grid keeps the left's margin on every side but the top,
+        // which has the area's own, so it sits evenly in the slot's frame.
+        var width = Mathf.Max(0f, rect.width - 2f * inner.x);
+        var height = Mathf.Max(0f, rect.height - inner.y - inner.x);
         grid.style.left = new StyleLength(rect.x + inner.x);
         grid.style.top = new StyleLength(rect.y + inner.y);
-        grid.style.width = new StyleLength(inner.width);
-        grid.style.height = new StyleLength(inner.height);
-        var tileWidth = (inner.width - TileGap) / 2f;
-        var tileHeight = (inner.height - TileGap) / 2f;
+        grid.style.width = new StyleLength(width);
+        grid.style.height = new StyleLength(height);
+        var tileWidth = (width - TileGap) / 2f;
+        var tileHeight = (height - TileGap) / 2f;
         // Only the first four children are tiles. The link badges come after
         // them and take their own positions below.
         for (var i = 0; i < Bay.SlotCount && i < grid.childCount; i++)
@@ -478,7 +460,7 @@ public sealed class BayEquipUISystem : JiangyuSystem
     private void RebuildTiles(VisualElement grid, VisualElement window)
     {
         // Selling a slotted weapon leaves its guid behind. Clear those before
-        // painting, so a gone weapon stops showing an UNEQUIP action on an
+        // painting, so a gone weapon stops answering a right click on an
         // empty-looking tile.
         var pruned = Bay.Prune(Context);
         if (pruned > 0)
@@ -552,69 +534,33 @@ public sealed class BayEquipUISystem : JiangyuSystem
         catch { }
     }
 
-    // The native item tooltip for a flyout row, built through a hidden
-    // EquipmentSlot: the vanilla dropdown's own tooltip factory, so the
-    // stat rows, ordering and the current-vs-hovered comparison columns are
-    // pixel-identical to the base game. The slot element is never attached
-    // to the panel; only its TooltipData is used. Falls back to the plain
-    // weapon tooltip if the factory refuses.
-    private string ShowRowTooltip(VisualElement row, Item item)
-    {
-        try
-        {
-            var manager = Il2CppMenace.UI.UIManager.Get();
-            if (manager == null || item == null)
-                return null;
-            Il2CppMenace.UI.TooltipData data = null;
-            try
-            {
-                var factory = new EquipmentSlot(Il2CppMenace.Items.ItemSlot.InfantrySpecial, 1, null);
-                factory.Init(true, item, 1, false, 0, null, true, false, 1f);
-                var slots = Bay.Loadout(Context);
-                var equipped = _pickSlot >= 0 && _pickSlot < slots.Length ? Bay.ResolveItem(slots[_pickSlot]) : null;
-                if (equipped != null && equipped.Pointer != item.Pointer)
-                    factory.SetItemToCompareWith(equipped, 1f, 1f);
-                data = factory.GetTooltipData();
-            }
-            catch (Exception ex)
-            {
-                Context.Log.Debug($"bay ui: comparison tooltip fell back: {ex.GetType().Name}: {ex.Message}");
-                data = Bay.WeaponOf(item)?.GetSimpleTooltipData(1, 1f, null);
-            }
-            if (data == null)
-                return null;
-            manager.AddTooltip(data, row, false, true, false);
-            return manager.GetActiveTooltipId();
-        }
-        catch (Exception ex)
-        {
-            Context.Log.Warn($"bay ui: row tooltip failed: {ex.Message}");
-            return null;
-        }
-    }
+    // Vanilla's equipment panel of a unit window, and her own special-weapon slot in it.
+    private static (UnitWindowEquipment Equipment, EquipmentSlot Slot) Vanilla(VisualElement window)
+        => (window.TryCast<UnitWindow>()?.m_Equipment, FindSpecialSlot(window)?.TryCast<EquipmentSlot>());
 
     private void OnTileClicked(VisualElement window, int slotIndex)
     {
         try
         {
+            var (equipment, slot) = Vanilla(window);
+            if (equipment == null || slot == null)
+            {
+                Context.Log.Warn("bay ui: the unit window has no equipment panel or special-weapon slot to open a list for");
+                return;
+            }
             Sound.Click();
+            // The tile whose list is open closes it.
             if (_pickSlot == slotIndex)
             {
+                equipment.HideEquipmentAlternatives();
                 ClosePicker(window);
                 return;
             }
             _pickSlot = slotIndex;
+            _pickWindow = window;
             Ots14BayRevealSystem.ArmouryFocus = slotIndex;
-            var modal = ModalRoot(window);
-            if (modal == null)
-                return;
-            var title = UI.Find(window, UiSelector.Name("bay-title"))?.TryCast<Label>();
-            if (title != null)
-                title.text = Locale.Text("WOMENACE::ui/select_bay_weapon", "Select Bay Weapon")
-                    + $" | {slotIndex + 1:00}";
-            RebuildRows(window);
-            modal.SetVisible(true);
             SyncTiles(window);
+            Context.Coroutines.Start(OpenPicker(window, equipment, slot, ++_pickEpoch));
         }
         catch (Exception ex)
         {
@@ -622,11 +568,104 @@ public sealed class BayEquipUISystem : JiangyuSystem
         }
     }
 
+    private static bool ListOpen(UnitWindowEquipment equipment)
+        => equipment.m_EquipmentAlternativesContainer is { } list && list.visible;
+
+    // Opens vanilla's list for her special-weapon slot, then watches for vanilla closing it.
+    // The list is opened on the frame after the click: vanilla closes an open list on any
+    // press that ends outside it and outside its slot, and the click on a tile is one, so a
+    // list opened during the click is closed by the same click.
+    private System.Collections.IEnumerator OpenPicker(VisualElement window, UnitWindowEquipment equipment, EquipmentSlot slot, int epoch)
+    {
+        yield return null;
+        if (epoch != _pickEpoch || window.panel == null)
+            yield break;
+        try
+        {
+            // All four tiles are that one slot to vanilla, whose click on a slot with an
+            // open list closes it.
+            if (ListOpen(equipment))
+                equipment.HideEquipmentAlternatives();
+            equipment.OnEquipmentSlotLeftClick(slot);
+            if (!ListOpen(equipment))
+                Context.Log.Warn("bay ui: vanilla did not open its list for the special-weapon slot");
+        }
+        catch (Exception ex)
+        {
+            Context.Log.Warn($"bay ui: opening the list failed: {ex.GetType().Name}: {ex.Message}");
+        }
+        // Vanilla closes its list itself, on a click outside it or a change of unit. The
+        // tile stops being the open one when it has.
+        yield return null;
+        while (epoch == _pickEpoch)
+        {
+            if (window.panel == null || !ListOpen(equipment))
+            {
+                ClosePicker(window);
+                yield break;
+            }
+            yield return null;
+        }
+    }
+
+    private void OnTileCleared(VisualElement window, int slotIndex)
+    {
+        try
+        {
+            if (Bay.Loadout(Context)[slotIndex] == null)
+                return;
+            Sound.RightClick();
+            Vanilla(window).Equipment?.HideEquipmentAlternatives();
+            if (Bay.TrySetSlot(Context, slotIndex, null, out _))
+                Context.Coroutines.Start(RefreshAfterEquip(window, slotIndex));
+        }
+        catch (Exception ex)
+        {
+            Context.Log.Warn($"bay ui: clearing a tile failed: {ex.Message}");
+        }
+    }
+
+    // A row of vanilla's list picked while a tile's list is open. The row is a kind of
+    // weapon: the copy that goes to the bay is one no unit holds and no other bay slot has.
+    private void OnAlternativePicked(PatchInfo info)
+    {
+        try
+        {
+            var equipment = (info.Instance as Il2CppObjectBase)?.TryCast<UnitWindowEquipment>();
+            var row = (info.Args[0] as Il2CppObjectBase)?.TryCast<EquipmentSlot>();
+            if (equipment == null || row == null || row.GetItemSlotType() != ItemSlot.InfantrySpecial
+                || Affinity.CharacterTag(equipment.m_Leader) != Bay.CharacterTag)
+                return;
+            // Her special weapons are the bay's and never her own slot's: vanilla's handler,
+            // which would put the weapon in her hands, does not run for her, whatever comes
+            // of the pick. Her list is only ever opened by a tile, which covers the slot.
+            info.Skip = true;
+            var window = _pickWindow;
+            // The list that was picked from is the one a tile opened.
+            if (_pickSlot < 0 || window?.TryCast<UnitWindow>()?.m_Equipment?.Pointer != equipment.Pointer)
+                return;
+            // The row is a kind of weapon. What goes to the bay is a copy of it that is free:
+            // none when every copy is in someone's hands or a slot, this slot's own included.
+            var free = Bay.FreeCopy(row.GetItem()?.GetTemplate(), Bay.Loadout(Context));
+            if (free == null || !Bay.TrySetSlot(Context, _pickSlot, free, out _))
+            {
+                Sound.RightClick();
+                return;
+            }
+            Sound.Click();
+            equipment.HideEquipmentAlternatives();
+            Context.Coroutines.Start(RefreshAfterEquip(window, _pickSlot));
+        }
+        catch (Exception ex)
+        {
+            Context.Log.Warn($"bay ui: pick failed: {ex.GetType().Name}: {ex.Message}");
+        }
+    }
+
     private void ClosePicker(VisualElement window)
     {
-        _pickSlot = -1;
+        ForgetPick();
         Ots14BayRevealSystem.ArmouryFocus = -1;
-        ModalRoot(window)?.SetVisible(false);
         SyncTiles(window);
     }
 
@@ -639,178 +678,18 @@ public sealed class BayEquipUISystem : JiangyuSystem
             UI.Find(grid.ElementAt(i), UiSelector.Name("Selected"))?.SetVisible(_pickSlot == i);
     }
 
-    // -- the flyout rows ----------------------------------------------------
-
-    private void RebuildRows(VisualElement window)
-    {
-        var list = UI.Find(window, UiSelector.Name("bay-list"));
-        if (list == null || _pickSlot < 0)
-            return;
-        list.Clear();
-
-        var slots = Bay.Loadout(Context);
-        if (slots[_pickSlot] != null)
-            list.Add(BuildClearRow(window));
-
-        var owned = Jiangyu.Game.Strategy.Inventory.Owned;
-        if (owned == null)
-            return;
-        var all = new Il2CppSystem.Collections.Generic.List<BaseItem>();
-        owned.GetInstances(all);
-        for (var i = 0; i < all.Count; i++)
-        {
-            var item = all[i]?.TryCast<Item>();
-            if (item == null || !Bay.IsBayWeapon(item))
-                continue;
-            var guid = item.GetGuid();
-            var current = slots[_pickSlot] == guid;
-            // CanSlot's refusals, restated as row states: an instance some
-            // doll has equipped, or one already slotted elsewhere in the bay.
-            string blocked = null;
-            var inBay = Array.IndexOf(slots, guid);
-            if (Bay.IsEquipped(item))
-                blocked = Locale.Text("WOMENACE::ui/bay_equipped", "EQUIPPED");
-            else if (!current && inBay >= 0)
-                blocked = Locale.Text("WOMENACE::ui/bay_in_slot", "IN BAY") + $" {inBay + 1:00}";
-            list.Add(BuildRow(window, item, current, blocked));
-        }
-    }
-
-    // A subtle separator under every flyout row, and a hover tint matching
-    // the vanilla dropdown feel. Inline (the injected-USS lesson): the rows
-    // are code-built, so classes from bay.uss never reach them.
-    private static void StyleRowChrome(VisualElement row)
-    {
-        row.style.borderBottomWidth = new StyleFloat(1f);
-        row.style.borderBottomColor = new StyleColor(new Color(1f, 1f, 1f, 0.10f));
-        row.RegisterCallback(
-            Il2CppInterop.Runtime.DelegateSupport.ConvertDelegate<EventCallback<MouseEnterEvent>>(
-                (Action<MouseEnterEvent>)(_ => row.style.backgroundColor = new StyleColor(new Color(1f, 1f, 1f, 0.07f)))));
-        row.RegisterCallback(
-            Il2CppInterop.Runtime.DelegateSupport.ConvertDelegate<EventCallback<MouseLeaveEvent>>(
-                (Action<MouseLeaveEvent>)(_ => row.style.backgroundColor = new StyleColor(StyleKeyword.Null))));
-    }
-
-    private VisualElement BuildClearRow(VisualElement window)
-    {
-        var row = new Button { name = "wmgfl-bay-clear", focusable = false };
-        row.AddToClassList("unit-equipment-slot");
-        row.AddToClassList("wm-bay-row");
-        // Fixed inline width: the ScrollView's content container shrink-wraps
-        // to its widest row, so a percentage resolves against that shrunk
-        // parent (circular). The modal is a fixed 400 (12px padding each
-        // side, ~13px scroller): 350 fills the viewport.
-        row.style.width = new StyleLength(350f);
-        StyleRowChrome(row);
-        var name = new Label(Locale.Text("WOMENACE::ui/bay_unequip", "UNEQUIP"))
-        {
-            pickingMode = PickingMode.Ignore,
-        };
-        name.AddToClassList("wm-bay-row-name");
-        row.Add(name);
-        row.clickable.clicked += (Action)(() =>
-        {
-            Sound.Click();
-            if (Bay.TrySetSlot(Context, _pickSlot, null, out _))
-                Context.Coroutines.Start(RefreshAfterEquip(window));
-        });
-        return row;
-    }
-
-    private VisualElement BuildRow(VisualElement window, Item item, bool current, string blocked)
-    {
-        var weapon = Bay.WeaponOf(item);
-        var row = new Button { name = "wmgfl-bay-option", focusable = false };
-        row.AddToClassList("unit-equipment-slot");
-        row.AddToClassList("wm-bay-row");
-        row.style.width = new StyleLength(350f);
-        StyleRowChrome(row);
-        if (blocked != null)
-            row.AddToClassList("wm-bay-row-blocked");
-
-        // Hovering a row raises the native item tooltip, comparing against
-        // whatever the open slot currently holds, the way the vanilla
-        // dropdown does.
-        var shownTooltipId = new string[1];
-        var pendingTooltip = new IVisualElementScheduledItem[1];
-        row.RegisterCallback(
-            Il2CppInterop.Runtime.DelegateSupport.ConvertDelegate<EventCallback<MouseEnterEvent>>(
-                (Action<MouseEnterEvent>)(_ =>
-                {
-                    HoverDelay.Cancel(ref pendingTooltip[0]);
-                    pendingTooltip[0] = HoverDelay.Schedule(row,
-                        () => shownTooltipId[0] = ShowRowTooltip(row, item));
-                })));
-        row.RegisterCallback(
-            Il2CppInterop.Runtime.DelegateSupport.ConvertDelegate<EventCallback<MouseLeaveEvent>>(
-                (Action<MouseLeaveEvent>)(_ =>
-                {
-                    HoverDelay.Cancel(ref pendingTooltip[0]);
-                    HideWeaponTooltip(shownTooltipId[0]);
-                    shownTooltipId[0] = null;
-                })));
-
-        var chip = new VisualElement { pickingMode = PickingMode.Ignore };
-        chip.AddToClassList("wm-bay-row-chip");
-        var banner = weapon?.IconEquipment;
-        if (banner != null)
-            chip.style.backgroundImage = new StyleBackground(banner);
-        row.Add(chip);
-
-        var name = new Label(weapon != null ? WeaponName(weapon) : "?")
-        {
-            pickingMode = PickingMode.Ignore,
-        };
-        name.AddToClassList("wm-bay-row-name");
-        row.Add(name);
-
-        var state = new Label(blocked ?? (weapon != null ? WeaponTypeLine(weapon) : string.Empty))
-        {
-            pickingMode = PickingMode.Ignore,
-            enableRichText = true, // the gold rank marker in the type line
-        };
-        state.AddToClassList("wm-bay-row-state");
-        row.Add(state);
-
-        if (current)
-        {
-            var selected = new VisualElement { name = "Selected", pickingMode = PickingMode.Ignore };
-            selected.AddToClassList("slot-selected-border");
-            selected.AddToClassList("wm-fill");
-            row.Add(selected);
-        }
-
-        var chosen = item;
-        var isBlocked = blocked != null;
-        row.clickable.clicked += (Action)(() =>
-        {
-            if (isBlocked || current)
-            {
-                Sound.RightClick();
-                return;
-            }
-            Sound.Click();
-            if (Bay.TrySetSlot(Context, _pickSlot, chosen, out var error))
-                Context.Coroutines.Start(RefreshAfterEquip(window));
-            else
-                Context.Log.Warn($"bay ui: equip refused: {error}");
-        });
-        return row;
-    }
-
-    // How long the equipped arm stays grown after the modal closes, so the
+    // How long the equipped arm stays grown after the list closes, so the
     // weapon landing is watched unobstructed.
     private const float LingerSeconds = 4f;
 
-    // Rebuild the window (tiles, rows) and respawn the 3D preview so the
-    // weapon lands on the arm. Deferred a frame: the row whose click is
-    // still dispatching must not be destroyed under it. The picker CLOSES on
-    // equip and the arm lingers grown: with the modal covering the preview,
-    // staying open would hide the very thing just picked.
-    private System.Collections.IEnumerator RefreshAfterEquip(VisualElement window)
+    // Rebuild the window's tiles and respawn the 3D preview so the weapon
+    // lands on the arm. Deferred a frame: vanilla's row whose click is still
+    // dispatching must not be destroyed under it. The list CLOSES on equip
+    // and the arm lingers grown: with the list covering the preview, staying
+    // open would hide the very thing just picked.
+    private System.Collections.IEnumerator RefreshAfterEquip(VisualElement window, int equippedSlot)
     {
         yield return null;
-        var equippedSlot = _pickSlot;
         try
         {
             var unitWindow = window.TryCast<UnitWindow>();
@@ -843,7 +722,7 @@ public sealed class BayEquipUISystem : JiangyuSystem
         }
     }
 
-    // Keep the just-equipped arm grown for a moment after the modal closes;
+    // Keep the just-equipped arm grown for a moment after the list closes;
     // a hover or a new pick supersedes the linger, ending it early.
     private System.Collections.IEnumerator LingerReveal(int slot)
     {

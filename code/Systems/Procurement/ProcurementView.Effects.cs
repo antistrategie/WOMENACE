@@ -115,8 +115,8 @@ internal sealed partial class ProcurementView
         {
             var p = context.painter2D;
             var rect = context.visualElement.contentRect;
-            var tone = rare ? Gold : new Color(.61f, .73f, .59f);
-            Gradient(context, rect, new Color(.07f, .11f, .09f), new Color(.025f, .045f, .04f));
+            var tone = rare ? Wui.Gold : new Color(.62f, .70f, .82f);
+            Gradient(context, rect, new Color(.035f, .05f, .07f), new Color(.012f, .02f, .03f));
             Glow(context, new Vector2(rect.width * .5f, rect.height * .42f), 360f, Alpha(tone, .18f));
             PaintStageGrid(p, rect, Time.unscaledTime, tone);
         });
@@ -130,9 +130,9 @@ internal sealed partial class ProcurementView
             var rect = context.visualElement.contentRect;
             var time = Time.unscaledTime;
             var centre = new Vector2(350, 336);
-            Gradient(context, rect, new Color(.086f, .114f, .098f), new Color(.039f, .063f, .051f));
+            Gradient(context, rect, new Color(.04f, .055f, .075f), new Color(.016f, .024f, .035f));
             Glow(context, new Vector2(rect.width * .36f, rect.height * .44f), 420, new Color(.63f, .46f, .21f, .36f));
-            PaintStageGrid(p, rect, time * .4f, Gold);
+            PaintStageGrid(p, rect, time * .4f, Wui.Gold);
             for (var i = 0; i < 20; i++)
             {
                 var angle = (i * 18f + time * 3.6f) * Mathf.Deg2Rad;
@@ -151,7 +151,7 @@ internal sealed partial class ProcurementView
             {
                 var y = rect.height * i / 24f;
                 var alpha = Mathf.Sin(i / 24f * Mathf.PI) * .3f;
-                Line(p, Alpha(Gold, alpha), 1,
+                Line(p, Alpha(Wui.Gold, alpha), 1,
                     new(680 - y * .24f, y), new(680 - (y + rect.height / 24f) * .24f, y + rect.height / 24f));
             }
         });
@@ -179,7 +179,7 @@ internal sealed partial class ProcurementView
         var p = context.painter2D;
         var progress = _cargoProgress;
         var centre = new Vector2(210, 177);
-        var accent = rare ? new Color(.93f, .74f, .36f, 1f) : new Color(.63f, .79f, .69f, 1f);
+        var accent = rare ? new Color(.93f, .74f, .36f, 1f) : new Color(.62f, .70f, .82f, 1f);
         var dim = new Color(accent.r, accent.g, accent.b, .22f);
         var opened = Mathf.SmoothStep(0, 1, Mathf.Clamp01((progress - .79f) / .2f));
         Glow(context, centre, 173f, new Color(accent.r, accent.g, accent.b, .10f + opened * .16f));

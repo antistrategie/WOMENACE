@@ -47,6 +47,8 @@ internal static partial class SpringBodyProfiles
         spec.Stiffness = 2f;
         spec.TipStiffness = 2f;
         spec.Drag = 0.6f;
+        // Long enough to hang: its hem falls instead of holding the rest pose's flare.
+        spec.Sag = 1.5f;
         return spec;
     }
 }

@@ -105,6 +105,11 @@ clone "EntityTemplate" from="player_vehicle.modular_light_troop_carrier" id="pla
 
     set "AimWithVisualSlot" enum="VisualAlterationSlot" "EntireModel"
 
+    // The supercar has no exhaust stacks: the carrier's exhaust smoke looks for exhaust01 and
+    // exhaust02 children that its model does not carry, and logs an error on every armoury preview.
+    set "ExhaustIdleEffect" #null
+    set "ExhaustRevEffect" #null
+
     set "Properties" {
         set "SoundOnMovementStart" {
             set "bankId" "wmgfl_sinner_sfx"
