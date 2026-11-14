@@ -85,7 +85,12 @@ internal static class SpecialWeaponCarry
         };
         if (type != ExecutingElementType.AllButSpecial)
             return;
-        var actor = (info.Instance as Il2CppObjectBase)?.TryCast<Skill>()?.GetActor();
+        var skill = (info.Instance as Il2CppObjectBase)?.TryCast<Skill>();
+        // Only the squad weapon is in her hands. A sidearm's skill looks for its pistol on every
+        // element it is given, and vanilla hangs none on the carrier.
+        if (skill?.GetItem()?.GetTemplate()?.SlotType != ItemSlot.InfantryWeapon)
+            return;
+        var actor = skill.GetActor();
         var element = actor?.GetElement(0);
         if (element == null || !element.IsAlive() || !joins(actor, element))
             return;

@@ -303,11 +303,28 @@ public sealed class UmbrellaCarrySystem : JiangyuSystem
     {
         var animated = carrier.Body != null && carrier.CarrierController != null
             && carrier.Body.runtimeAnimatorController?.Pointer == carrier.CarrierController.Pointer;
-        yield return SpecialWeaponCarry.Wait(animated ? ClipLength(carrier, "Fold") + ClipLength(carrier, "Stow") : 0.3f);
+        // The carrier's clips have no walk and no vault, so a squad sent off before she has put
+        // the umbrella away gets her vanilla controller back at once: vanilla waits for a vault
+        // her animator could never play, then gives the move up with an error.
+        var length = animated ? ClipLength(carrier, "Fold") + ClipLength(carrier, "Stow") : 0.3f;
+        for (var waited = 0f; waited < length && Current(carrier, seq) && !Moving(actor); waited += Time.deltaTime)
+            yield return null;
         if (!Current(carrier, seq))
             yield break;
         Apply(carrier, open: false);
         SwapBody(carrier, toCarrier: false);
+    }
+
+    private static bool Moving(Actor actor)
+    {
+        try
+        {
+            return actor != null && actor.IsMoving();
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     // Still the latest open or close, with the holder alive: a holder who died meanwhile
