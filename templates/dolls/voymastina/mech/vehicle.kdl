@@ -27,6 +27,11 @@ clone "ModularVehicleTemplate" from="modular_vehicle_medium_walker" id="modular_
 }
 
 clone "EntityTemplate" from="player_vehicle.generic_heavy_attack_walker" id="player_vehicle.voymastina_mech" {
+    // The model has none of the points vanilla spawns these effects at, and vanilla logs an
+    // error for each one it looks for.
+    set "ExhaustRevEffect" #null
+    set "ExhaustIdleEffect" #null
+    set "MovementEffectOverrides2" #null
     set "Title" {
         set "m_DefaultTranslation" "Sinbreaker (White Mastiff's Fang)"
     }
@@ -82,6 +87,11 @@ clone "EntityTemplate" from="player_vehicle.generic_heavy_attack_walker" id="pla
 }
 
 clone "EntityTemplate" from="player_vehicle.generic_heavy_attack_walker" id="player_vehicle.voymastina_mech_erwin" {
+    // The model has none of the points vanilla spawns these effects at, and vanilla logs an
+    // error for each one it looks for.
+    set "ExhaustRevEffect" #null
+    set "ExhaustIdleEffect" #null
+    set "MovementEffectOverrides2" #null
     set "Title" {
         set "m_DefaultTranslation" "Sinbreaker (Erwin)"
     }

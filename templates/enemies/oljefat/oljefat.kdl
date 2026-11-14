@@ -7,6 +7,9 @@ clone "MovementType" from="movement_type.human_soldier" id="movement_type.wmgfl_
 }
 
 clone "EntityTemplate" from="enemy.pirate_flamethrower_team" id="enemy.wmgfl_oljefat" {
+    // The model has none of the points vanilla spawns these effects at, and vanilla logs an
+    // error for each one it looks for.
+    set "MovementEffectOverrides2" #null
     set "Title" {
         set "m_DefaultTranslation" "Oljefat"
     }

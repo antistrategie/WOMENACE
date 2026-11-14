@@ -3,6 +3,9 @@ clone "ElementAnimatorTemplate" from="animator.construct_soldier" id="animator.v
 }
 
 clone "EntityTemplate" from="enemy.construct_soldier_tier1" id="construct.voymastina_mech" {
+    // The model has none of the points vanilla spawns these effects at, and vanilla logs an
+    // error for each one it looks for.
+    set "MovementEffectOverrides2" #null
     set "Properties" {
         set "MinElements" 1
         set "MaxElements" 1
@@ -11,6 +14,9 @@ clone "EntityTemplate" from="enemy.construct_soldier_tier1" id="construct.voymas
 }
 
 clone "EntityTemplate" from="enemy.construct_soldier_tier1" id="construct.voymastina_mech_erwin" {
+    // The model has none of the points vanilla spawns these effects at, and vanilla logs an
+    // error for each one it looks for.
+    set "MovementEffectOverrides2" #null
     set "Properties" {
         set "MinElements" 1
         set "MaxElements" 1
