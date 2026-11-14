@@ -28,13 +28,15 @@ public sealed partial class StrategyDiorama
     private static readonly Color32 PrepGrid = new(26, 58, 84, 255);
     private static readonly Color32 PrepRoad = new(86, 106, 128, 255);
     private static readonly Color32 PrepRough = new(44, 96, 124, 255);
-    private static readonly Color32 PrepZone = new(120, 92, 30, 255);
-    private static readonly Color32 PrepZoneGrid = new(215, 170, 70, 255);
+    // The zone is a light wash inside a bright outline, so what stands in it still reads.
+    private static readonly Color32 PrepZone = new(70, 54, 18, 255);
+    private static readonly Color32 PrepZoneGrid = new(160, 126, 50, 255);
+    private static readonly Color32 PrepZoneEdge = new(250, 200, 84, 255);
     private static readonly Color32 PrepZoneRefused = new(40, 34, 24, 255);
-    private static readonly Color32 PrepZoneRoad = new(205, 172, 100, 255);
+    private static readonly Color32 PrepZoneRoad = new(126, 104, 58, 255);
     private static readonly Color32 PrepZoneRefusedRoad = new(86, 74, 48, 255);
     private static readonly Color32 PrepZoneRefusedGrid = new(92, 76, 40, 255);
-    private static readonly Color32 PrepObjectiveEdge = new(215, 192, 116, 255);
+    private static readonly Color32 PrepObjectiveEdge = new(236, 244, 250, 255);
     private static readonly Color32 PrepRoof = new(56, 112, 150, 255);
     private static readonly Color32 PrepRoofEdge = new(150, 215, 245, 255);
     private static readonly Color32 PrepWallTop = new(110, 180, 215, 255);
@@ -374,6 +376,10 @@ public sealed partial class StrategyDiorama
                         var within = road && !zone[x, z] && (i > 0 || Road(x - 1, z)) && (j > 0 || Road(x, z - 1)) && (i > 0 || j > 0 || Road(x - 1, z - 1));
                         var pixel = edge && !within ? (built ? PrepRoofEdge : lit == 2 ? PrepZoneGrid : lit == 1 ? PrepZoneRefusedGrid : PrepGrid)
                             : hatched && (i + j) % 4 == 0 ? PrepRough : fill;
+                        // The zone is outlined where it ends, its refused part included.
+                        if (!built && zone[x, z] && ((i < 2 && Lit(x - 1, z) == 0) || (i >= p - 2 && Lit(x + 1, z) == 0)
+                            || (j < 2 && Lit(x, z - 1) == 0) || (j >= p - 2 && Lit(x, z + 1) == 0)))
+                            pixel = PrepZoneEdge;
                         // An objective's area is lit a little and outlined where it ends.
                         if (objective[x, z])
                         {
