@@ -8,8 +8,9 @@ namespace WOMENACE.Code;
 // it is cloned from, and its own is installed the first time a unit's items are asked for what
 // they look like. A weapon nobody holds keeps its model and textures unloaded.
 // ElementAttachments..ctor asks GetVisualAlteration for each socket before it spawns anything,
-// in a mission and in the armoury alike, and the container answers from a list it rebuilds
-// when it is marked dirty, so a model installed here is in that answer.
+// in a mission and in the armoury alike, and the container answers from a list it keeps. The
+// list is made again here, by marking the container dirty and asking for the update, so a
+// model just installed is in the answer.
 public sealed class WeaponModelSystem : JiangyuSystem
 {
     private static WeaponModelSystem _instance;
@@ -19,6 +20,7 @@ public sealed class WeaponModelSystem : JiangyuSystem
     {
         _instance = this;
         Context.Patches.Prefix("Il2CppMenace.Items.ItemContainer", "GetVisualAlteration", BeforeVisualAlteration);
+        Context.Patches.Prefix("Il2CppMenace.Tactical.Element", "CreateAttachments", BeforeCreateAttachments);
     }
 
     public override void OnUnload()
@@ -35,7 +37,35 @@ public sealed class WeaponModelSystem : JiangyuSystem
         foreach (var slot in WeaponSkinSystem.Slots)
             installed |= Install(WeaponSkinSystem.WeaponAt(items, slot));
         if (installed)
+        {
             items.VisualAlterationsDirty = true;
+            items.UpdateVisualAlterations();
+        }
+    }
+
+    // A mission's units are given their attachments once, from a container whose answers were
+    // made before any model was installed, and often after another container has had the
+    // weapon installed for it. So the container a unit is built from is made to answer again
+    // whenever it holds a weapon that has a model of its own. UpdateVisualAlterations makes
+    // the answers again only for a container marked dirty.
+    private void BeforeCreateAttachments(PatchInfo info)
+    {
+        if ((info.Args is { Count: > 1 } ? info.Args[1] : null) is not ItemContainer items)
+            return;
+        var own = false;
+        foreach (var slot in WeaponSkinSystem.Slots)
+        {
+            var weapon = WeaponSkinSystem.WeaponAt(items, slot);
+            if (weapon == null)
+                continue;
+            Install(weapon);
+            own |= WeaponModels.AssetsFor(weapon.GetID()).Model != null;
+        }
+        if (own)
+        {
+            items.VisualAlterationsDirty = true;
+            items.UpdateVisualAlterations();
+        }
     }
 
     // Makes sure a weapon's own model is on its template, for code that reads the template.

@@ -177,6 +177,99 @@ public static class Rig
         UnityEngine.Object.Destroy(tex);
     }
 
+    // Writes how every matching element stands right now, for replaying the hold outside the
+    // game: each transform under the element (path, place and rotation in the element's own
+    // frame, scale), each Animator's parameters and playing clips, and the weapon in its hand.
+    // One file an element, named <template id>_<index>.txt, in the folder given.
+    public static object Record(string folder, string filter = null)
+    {
+        System.IO.Directory.CreateDirectory(folder);
+        var written = new List<string>();
+        var inv = System.Globalization.CultureInfo.InvariantCulture;
+        foreach (var actor in Mission.Actors())
+        {
+            var id = actor?.GetTemplate()?.GetID() ?? "?";
+            if (actor == null || (filter != null && !id.Contains(filter)))
+                continue;
+            var elements = actor.GetElements();
+            for (var k = 0; elements != null && k < elements.Count; k++)
+            {
+                var element = elements[k];
+                var root = element?.gameObject;
+                if (root == null)
+                    continue;
+                var text = new System.Text.StringBuilder();
+                text.Append("ELEMENT\t").Append(id).Append('\t').Append(k).Append('\n');
+                GameObject weapon = null;
+                try { element.GetAttachments()?.TryGetFirstAttachmentInSlot(Il2CppMenace.Items.VisualAlterationSlot.Hand_R, out weapon); } catch { }
+                text.Append("WEAPON\t").Append(weapon != null ? PathFrom(root.transform, weapon.transform) : "none").Append('\n');
+                foreach (var animator in root.GetComponentsInChildren<Animator>(true))
+                {
+                    text.Append("ANIMATOR\t").Append(PathFrom(root.transform, animator.transform)).Append('\t').Append(animator.isHuman ? "human" : "generic")
+                        .Append('\t').Append(animator.runtimeAnimatorController != null ? animator.runtimeAnimatorController.name : "none").Append('\n');
+                    try
+                    {
+                        for (var index = 0; index < animator.parameterCount; index++)
+                        {
+                            var parameter = animator.GetParameter(index);
+                            var value = parameter.type switch
+                            {
+                                AnimatorControllerParameterType.Float => animator.GetFloat(parameter.name).ToString("0.####", inv),
+                                AnimatorControllerParameterType.Int => animator.GetInteger(parameter.name).ToString(inv),
+                                _ => animator.GetBool(parameter.name) ? "1" : "0",
+                            };
+                            text.Append("PARAM\t").Append(parameter.name).Append('\t').Append(parameter.type.ToString()).Append('\t').Append(value).Append('\n');
+                        }
+                        for (var layer = 0; layer < animator.layerCount; layer++)
+                        {
+                            var infos = animator.GetCurrentAnimatorClipInfo(layer);
+                            var clips = new List<string>();
+                            for (var c = 0; infos != null && c < infos.Length; c++)
+                                if (infos[c].clip != null)
+                                    clips.Add($"{infos[c].clip.name}:{infos[c].weight.ToString("0.###", inv)}");
+                            text.Append("LAYER\t").Append(layer).Append('\t').Append(animator.GetLayerName(layer)).Append('\t')
+                                .Append(animator.GetLayerWeight(layer).ToString("0.###", inv)).Append('\t').Append(string.Join(",", clips)).Append('\n');
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        text.Append("ANIMATORERROR\t").Append(ex.GetType().Name).Append('\n');
+                    }
+                }
+                foreach (var renderer in root.GetComponentsInChildren<Renderer>(true))
+                {
+                    var skinned = renderer.TryCast<SkinnedMeshRenderer>();
+                    var mesh = skinned != null ? skinned.sharedMesh : renderer.GetComponent<MeshFilter>()?.sharedMesh;
+                    var material = renderer.sharedMaterial;
+                    text.Append("MESH\t").Append(PathFrom(root.transform, renderer.transform)).Append('\t').Append(mesh != null ? $"{mesh.name}:{mesh.vertexCount}" : "none")
+                        .Append('\t').Append(material != null ? $"{material.name}:{material.shader?.name}" : "none").Append('\t').Append(renderer.enabled ? 1 : 0).Append('\n');
+                }
+                var back = Quaternion.Inverse(root.transform.rotation);
+                foreach (var t in root.GetComponentsInChildren<Transform>(true))
+                {
+                    var place = root.transform.InverseTransformPoint(t.position);
+                    var turn = back * t.rotation;
+                    var scale = t.lossyScale;
+                    text.Append("T\t").Append(PathFrom(root.transform, t)).Append('\t')
+                        .Append(string.Format(inv, "{0:0.#####} {1:0.#####} {2:0.#####}\t{3:0.######} {4:0.######} {5:0.######} {6:0.######}\t{7:0.####} {8:0.####} {9:0.####}\t{10}\n",
+                            place.x, place.y, place.z, turn.x, turn.y, turn.z, turn.w, scale.x, scale.y, scale.z, t.gameObject.activeInHierarchy ? 1 : 0));
+                }
+                var file = System.IO.Path.Combine(folder, $"{id}_{k}.txt");
+                System.IO.File.WriteAllText(file, text.ToString());
+                written.Add($"{id}_{k}");
+            }
+        }
+        return $"wrote {written.Count}: {string.Join(", ", written)}";
+    }
+
+    private static string PathFrom(Transform root, Transform t)
+    {
+        var path = t.name;
+        for (var up = t.parent; up != null && up != root; up = up.parent)
+            path = up.name + "/" + path;
+        return t == root ? "." : path;
+    }
+
     public static object Dump(string filter = null)
     {
         var rows = new List<string>();
