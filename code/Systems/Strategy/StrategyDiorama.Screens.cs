@@ -248,17 +248,23 @@ public sealed partial class StrategyDiorama
             Cue(TableCue.Travel);
             _shotFrom = (_camera.transform.position, _camera.transform.rotation, camera.fieldOfView, _lensShift);
             _shotTravel = 0f;
-            // The weapon room's doorway opens on nothing. A turn between two shots that would
-            // pass it on its shorter way round goes the other way, by the room's far end.
-            if (_weaponSet.Root != null && space == _weaponSet.Root.transform)
+            // Each room has a side that is not for showing: the weapon room's doorway opens on
+            // nothing, and the ops room's back, behind the Dinergate, is not dressed. A turn
+            // between two shots that would pass that side on its shorter way round goes the
+            // other way, by the room's far end.
+            Vector3? unseen = _weaponSet.Root != null && space == _weaponSet.Root.transform ? WeaponRoomDoorway
+                : _room != null && space == _room.transform ? OpsRoomBack : null;
+            if (unseen is { } side)
             {
-                var doorway = space.TransformDirection(WeaponRoomDoorway);
-                float Towards(Quaternion facing) => Vector3.Dot(facing * Vector3.forward, doorway);
-                var halfway = Quaternion.Slerp(_shotFrom.Rotation, shot.Rotation, 0.5f);
-                if (Towards(halfway) > Mathf.Max(Towards(_shotFrom.Rotation), Towards(shot.Rotation)) + 0.05f)
+                var away = space.TransformDirection(side);
+                float Towards(Quaternion facing) => Vector3.Dot(facing * Vector3.forward, away);
+                var most = float.MinValue;
+                for (var part = 1; part < 10; part++)
+                    most = Mathf.Max(most, Towards(Quaternion.Slerp(_shotFrom.Rotation, shot.Rotation, part / 10f)));
+                if (most > Mathf.Max(Towards(_shotFrom.Rotation), Towards(shot.Rotation)) + 0.05f)
                 {
                     var level = Quaternion.Slerp(_shotFrom.Rotation, shot.Rotation, 0.5f).eulerAngles.x;
-                    _shotVia = Quaternion.LookRotation(-doorway, Vector3.up) * Quaternion.Euler(level > 180f ? level - 360f : level, 0f, 0f);
+                    _shotVia = Quaternion.LookRotation(-away, Vector3.up) * Quaternion.Euler(level > 180f ? level - 360f : level, 0f, 0f);
                 }
             }
             return;
@@ -298,6 +304,8 @@ public sealed partial class StrategyDiorama
     private Quaternion? _shotVia;
     // The way out of the weapon room's doorway, in the room's space.
     private static readonly Vector3 WeaponRoomDoorway = Vector3.left;
+    // The way to the ops room's back, past the Dinergate from the holotable, in the room's space.
+    private static readonly Vector3 OpsRoomBack = Vector3.right;
     // Which of the Workshop's stations the camera was last sent to.
     private int _workshopStation;
 
