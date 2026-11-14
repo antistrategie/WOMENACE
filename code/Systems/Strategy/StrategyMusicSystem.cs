@@ -34,7 +34,34 @@ public sealed class StrategyMusicSystem : JiangyuSystem
     // The track both of vanilla's strategy names are on, and the one last asked for here.
     private ID? _named;
 
-    public override void OnInit() => _instance = this;
+    public override void OnInit()
+    {
+        _instance = this;
+        Context.Coroutines.Start(KeepLooping());
+    }
+
+    // The tracks that go round a part of their clip are kept going round it (ModMusic). The
+    // tail gives eight seconds to do it in, so the music is looked at four times a second.
+    private System.Collections.IEnumerator KeepLooping()
+    {
+        var next = 0f;
+        while (true)
+        {
+            if (UnityEngine.Time.unscaledTime >= next)
+            {
+                next = UnityEngine.Time.unscaledTime + 0.25f;
+                try
+                {
+                    ModMusic.KeepLooping(AudioManager.Get()?.m_CurrentMusicInstance?.Source);
+                }
+                catch (Exception ex)
+                {
+                    Context.Log.Warn($"strategy music: loop watch failed: {ex.GetType().Name}: {ex.Message}");
+                }
+            }
+            yield return null;
+        }
+    }
 
     public override void OnUnload() => _instance = null;
 
@@ -77,6 +104,15 @@ public sealed class StrategyMusicSystem : JiangyuSystem
         if (audio == null)
             return;
         system.Name(wanted);
+        // Vanilla keeps the track it played before the current one paused, and resumes it where
+        // it stopped when it is asked for again. Mission prep's track opens a mission's
+        // planning, so it is let go of and starts from its beginning.
+        if (planning && Same(audio.m_PreviousMusicId, wanted))
+        {
+            audio.m_PreviousMusicInstance?.Stop();
+            audio.m_PreviousMusicInstance = null;
+            audio.m_PreviousMusicId = ID.NONE;
+        }
         var scheduled = audio.m_ScheduledMusicId;
         var playing = scheduled.IsValid() ? scheduled : audio.m_CurrentMusicId;
         if (system.IsStrategyTrack(playing) && !Same(wanted, playing))

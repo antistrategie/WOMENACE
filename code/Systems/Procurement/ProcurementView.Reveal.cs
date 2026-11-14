@@ -308,9 +308,6 @@ internal sealed partial class ProcurementView
         var proceed = Button(Continue(), DismissUnlock, "wm-shop-primary wm-proc-reveal-continue");
         proceed.name = curio ? "wm-procurement-curio-continue" : "wm-procurement-dossier-continue";
         text.Add(proceed);
-        Text(skin ? Locale.Text("WOMENACE::ui/procurement/weapon_skin_unlocked", "WEAPON SKIN UNLOCKED")
-            : curio ? Locale.Text("WOMENACE::ui/procurement/outfit_unlocked", "OUTFIT UNLOCKED")
-            : Locale.Text("WOMENACE::ui/procurement/dossier_acquired", "DOSSIER ACQUIRED"), "wm-proc-reveal-caption", _reveal);
         _reveal.SetVisible(true);
         proceed.Focus();
         PlaySound("dossier", true);

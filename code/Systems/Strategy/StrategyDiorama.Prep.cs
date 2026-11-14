@@ -13,7 +13,6 @@ public sealed partial class StrategyDiorama
 {
     private const string PrepClass = "wm-prep";
     private const string PrepRosterName = "wm-prep-roster";
-    private const string PrepCountName = "wm-prep-count";
     private const string PrepRailName = "wm-prep-rail";
     private const string PrepChipsName = "wm-prep-chips";
 
@@ -79,7 +78,7 @@ public sealed partial class StrategyDiorama
     }
 
     // Vanilla's roster is a fixed block of tiles two across. Here it is one column that scrolls,
-    // under a count of the squads deployed, and the rail at its right widens it to three.
+    // and the rail at its right widens it to three.
     private void LayOutPrepRoster(VisualElement row)
     {
         var tiles = UI.Find(row, UiSelector.Name(VanillaUi.Elements.UnitsContainer));
@@ -87,7 +86,7 @@ public sealed partial class StrategyDiorama
             return;
         var columns = _prepRosterWide ? PrepColumnsWide : 1;
         var width = columns * PrepTile;
-        var top = SquadsTop + PrepChipHeight + PrepGap;
+        var top = SquadsTop;
 
         var scroll = UI.Find(row, UiSelector.Name(PrepRosterName));
         if (scroll == null)
@@ -124,19 +123,6 @@ public sealed partial class StrategyDiorama
         tiles.style.alignSelf = Align.FlexStart;
         // Vanilla starts its block of tiles below its own header.
         tiles.style.marginTop = 0;
-
-        var count = UI.Find(row, UiSelector.Name(PrepCountName));
-        if (count == null)
-        {
-            count = new Label { name = PrepCountName, pickingMode = PickingMode.Ignore };
-            count.AddToClassList("wm-prep__count");
-            row.Insert(row.IndexOf(scroll), count);
-            _shellUndo.Add(count.RemoveFromHierarchy);
-        }
-        count.style.left = RosterLeft + RosterTileInset;
-        count.style.top = SquadsTop;
-        count.style.width = width - RosterTileInset;
-        count.style.height = PrepChipHeight;
 
         var rail = UI.Find(row, UiSelector.Name(PrepRailName));
         if (rail == null)
@@ -271,12 +257,51 @@ public sealed partial class StrategyDiorama
     private const string PrepSuppliesUsesName = "wm-prep-supplies-uses";
     // Vanilla sizes the bar's parts for a bar this wide, so the panel is exactly that.
     private const float PrepSuppliesWidth = 368f;
-    private const float PrepSuppliesHeight = 46f;
-    private const float PrepSuppliesBarTop = 19f;
-    private const float PrepSuppliesBarHeight = 8f;
+    private const float PrepSuppliesHeight = 56f;
+    private const float PrepSuppliesBarTop = 15f;
+    private const float PrepSuppliesBarHeight = 22f;
 
     // Vanilla's loadout box on the bottom bar, without its frame: a line of words and numbers,
     // the bar under it, and under that what the open squad uses, which vanilla prints on the bar.
+    // The loadout bar stands midway between the two buttons of the bottom bar, wherever the shell
+    // has laid them out, which is not the middle of the bar: the buttons are not the same width.
+    // Until both have a place the bar keeps the middle of the bottom bar.
+    private void PlacePrepSupplies()
+    {
+        var panel = _shellRoot != null ? UI.Find(_shellRoot, UiSelector.Name(VanillaUi.Elements.SuppliesPanel)) : null;
+        if (panel?.parent == null || panel.style.position != Position.Absolute)
+            return;
+        var back = Placed("wm-act-secondary") ?? Placed("wm-shell-back");
+        var launch = Placed("wm-act-primary");
+        if (back is not { } left || launch is not { } right)
+        {
+            // The buttons have no place yet. The bar is kept out of sight for a moment, so that
+            // it is not seen in the bar's middle and then moved, and shown there if they never get one.
+            if (_prepSuppliesWaitFrom < 0f)
+                _prepSuppliesWaitFrom = UnityEngine.Time.unscaledTime;
+            panel.style.visibility = UnityEngine.Time.unscaledTime - _prepSuppliesWaitFrom < PrepSuppliesWait ? Visibility.Hidden : StyleKeyword.Null;
+            return;
+        }
+        var middle = (left.xMax + right.xMin) / 2f;
+        panel.style.left = panel.parent.WorldToLocal(new UnityEngine.Vector2(middle, left.yMin)).x - PrepSuppliesWidth / 2f;
+        panel.style.marginLeft = 0f;
+        panel.style.visibility = StyleKeyword.Null;
+        (_prepSuppliesPlaced, _prepSuppliesWaitFrom) = (true, -1f);
+
+        UnityEngine.Rect? Placed(string name)
+        {
+            var element = UI.Find(_shellRoot, UiSelector.Name(name));
+            if (element == null || element.resolvedStyle.display == DisplayStyle.None)
+                return null;
+            var box = element.worldBound;
+            return float.IsNaN(box.width) || box.width <= 0f ? null : box;
+        }
+    }
+
+    private bool _prepSuppliesPlaced;
+    private float _prepSuppliesWaitFrom = -1f;
+    private const float PrepSuppliesWait = 0.5f;
+
     private void LayOutPrepSupplies(VisualElement root)
     {
         var panel = UI.Find(root, UiSelector.Name(VanillaUi.Elements.SuppliesPanel));
@@ -293,6 +318,8 @@ public sealed partial class StrategyDiorama
         {
             var s = e.style;
             s.height = StyleKeyword.Null;
+            s.visibility = StyleKeyword.Null;
+            (_prepSuppliesPlaced, _prepSuppliesWaitFrom) = (false, -1f);
         });
         foreach (var name in new[] { VanillaUi.Elements.PrepInfoBorder, VanillaUi.Elements.SuppliesIcon, VanillaUi.Elements.SuppliesCaption,
                      VanillaUi.Elements.SuppliesBarBacking, VanillaUi.Elements.SuppliesStripes })
@@ -360,7 +387,27 @@ public sealed partial class StrategyDiorama
         }
         if (UI.Find(panel, UiSelector.Name(PrepSuppliesLeftName))?.TryCast<Label>() is { } leftWord)
             leftWord.text = Locale.Text("WOMENACE::ui/prep/left", "LEFT");
+        LayOutPrepSections(panel);
+        // Where the loadout's limit is on the bar. Vanilla draws it into the bar's backing
+        // picture, which is not shown here, and fills the bar so that the limit is always this far
+        // along it (MissionPrepUIScreen.UpdateSupplies): what is past it is over the limit.
+        if (UI.Find(panel, UiSelector.Name(PrepSuppliesLimitName)) == null)
+        {
+            var limit = new VisualElement { name = PrepSuppliesLimitName, pickingMode = PickingMode.Ignore };
+            limit.style.position = Position.Absolute;
+            limit.style.left = PrepSuppliesLimitAt - 0.5f;
+            limit.style.top = PrepSuppliesBarTop - PrepSuppliesLimitReach;
+            limit.style.width = 1f;
+            limit.style.height = PrepSuppliesBarHeight + 2f * PrepSuppliesLimitReach;
+            limit.style.backgroundColor = SquadMetaInk;
+            panel.Add(limit);
+            _shellUndo.Add(limit.RemoveFromHierarchy);
+        }
     }
+
+    private const string PrepSuppliesLimitName = "wm-prep-supplies-limit";
+    private const float PrepSuppliesLimitAt = 268f;
+    private const float PrepSuppliesLimitReach = 3f;
 
     // Vanilla's red for a loadout over its limit.
     private static readonly UnityEngine.Color PrepOverInk = new(179f / 255f, 48f / 255f, 53f / 255f);
@@ -450,6 +497,9 @@ public sealed partial class StrategyDiorama
     {
         if (_shellRoot == null || _policyScreen != VanillaUi.Screens.MissionPrep || !_shellRoot.ClassListContains(PrepClass))
             return;
+        // Every frame until it has its place, so it is first seen there.
+        if (!_prepSuppliesPlaced)
+            PlacePrepSupplies();
         if (++_prepTick % 12 != 0)
             return;
         var row = UI.Find(_shellRoot, UiSelector.Name(VanillaUi.Elements.MapColumn))?.parent;
@@ -469,22 +519,6 @@ public sealed partial class StrategyDiorama
                 if (roster.verticalScrollerVisibility != bar)
                     roster.verticalScrollerVisibility = bar;
             }
-            if (UI.Find(row, UiSelector.Name(PrepCountName))?.TryCast<Label>() is { } count
-                && UI.Find(row, UiSelector.Name(VanillaUi.Elements.UnitsContainer)) is { } tiles)
-            {
-                var (squads, deployed) = (0, 0);
-                foreach (var slot in UI.FindAll(tiles, UiSelector.TypeName(VanillaUi.Elements.PrepUnitSlot)))
-                {
-                    squads++;
-                    var mark = UI.Find(slot, UiSelector.Name(VanillaUi.Elements.PrepDeployedIcon));
-                    if (mark != null && mark.resolvedStyle.display != DisplayStyle.None)
-                        deployed++;
-                }
-                var text = $"{deployed} / {squads}";
-                if (count.text != text)
-                    count.text = text;
-            }
-
             // The abilities' caption shows only while there are abilities under it.
             if (UI.Find(_shellRoot, UiSelector.Name(PrepAbilitiesCaptionName)) is { } caption
                 && UI.Find(_shellRoot, UiSelector.Name(VanillaUi.Elements.PrepAbilities)) is { } abilities)
@@ -521,6 +555,9 @@ public sealed partial class StrategyDiorama
                 }
             }
 
+            PlacePrepSupplies();
+            RefreshPrepSections();
+
             // The word after what is left is red with vanilla's figure once the loadout is over.
             if (UI.Find(_shellRoot, UiSelector.Name(PrepSuppliesLeftName)) is { } leftWord
                 && UI.Find(_shellRoot, UiSelector.Name(VanillaUi.Elements.SuppliesDelta))?.TryCast<Label>() is { } delta)
@@ -543,6 +580,11 @@ public sealed partial class StrategyDiorama
             // Each of vanilla's detail rows reads "name: value", and the map's corner label ends
             // with the intelligence level in the same form.
             var facts = new List<string>();
+            // The mission's own name leads them, asked of the mission: the screen's label for it
+            // is not the only element of its name in the document.
+            var mission = Il2CppMenace.UI.UIManager.Get()?.GetActiveScreen()?.TryCast<Il2CppMenace.UI.Strategy.MissionPrepUIScreen>()?.GetMission()?.GetTranslatedName(CurrentOperation());
+            if (!string.IsNullOrWhiteSpace(mission))
+                facts.Add($"{Locale.Text("WOMENACE::ui/prep/mission", "Mission")}: {mission}");
             if (UI.Find(row, UiSelector.Name(VanillaUi.Elements.PrepDetails)) is { } details)
                 foreach (var label in UI.FindAll(details, UiSelector.TypeName("Label")))
                     facts.Add(label.TryCast<Label>()?.text ?? "");

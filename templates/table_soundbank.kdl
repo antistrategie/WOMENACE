@@ -173,4 +173,34 @@ clone "SoundBank" from="ui_soundbank" id="wmgfl_table_soundbank" {
         }
     }
     append "busIndices" 0
+
+    append "sounds" {
+        set "name" "map_build"
+        set "fixedVolume" 0.8
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="table/map_build"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "map_objective"
+        set "fixedVolume" 0.6
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="table/map_objective"
+        }
+    }
+    append "busIndices" 0
+
+    append "sounds" {
+        set "name" "map_contact"
+        set "fixedVolume" 0.4
+        set "fixedPitch" 1.0
+        append "variations" {
+            set "clip" asset="table/map_contact"
+        }
+    }
+    append "busIndices" 0
 }

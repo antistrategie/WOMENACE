@@ -4,7 +4,7 @@ using NVector3 = System.Numerics.Vector3;
 
 namespace WOMENACE.Code;
 
-// Mission select's camera round the planet: hold the right button off the panels and drag to
+// Mission select's camera round the planet: hold the middle button off the panels and drag to
 // turn and tilt it about the planet, and roll the wheel to come closer. It starts each visit at
 // the view from the table's right-hand side and keeps to that side, and it never comes nearer
 // the room's own surfaces than a set clearance, measured from the room's meshes.
@@ -74,9 +74,9 @@ public sealed partial class StrategyDiorama
         var mouse = UnityEngine.InputSystem.Mouse.current;
         if (mouse != null)
         {
-            if (!mouse.rightButton.isPressed)
+            if (!mouse.middleButton.isPressed)
                 _planetOrbiting = false;
-            else if (mouse.rightButton.wasPressedThisFrame)
+            else if (mouse.middleButton.wasPressedThisFrame)
                 _planetOrbiting = PointerOverPlanet();
             if (_planetOrbiting)
             {

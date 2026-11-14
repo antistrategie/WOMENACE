@@ -60,6 +60,8 @@ public sealed partial class StrategyDiorama
     private float[] _prepMapStarts;
     private float _prepMapBornAt;
     private bool _prepMapBuilding;
+    // A new mission's map whose build has not been heard yet.
+    private bool _prepMapUnheard;
 
     // When a tile's square starts up, in seconds from the map's start.
     private float PrepBuildStart(float x, float z)
@@ -164,7 +166,16 @@ public sealed partial class StrategyDiorama
             return;
         }
         if (_prepMap != null && _prepMapBuilding)
+        {
+            // The build is heard as it starts, which is later than the map is made when the
+            // planet's sheet is still on its way down to the table.
+            if (_prepMapUnheard && Time.unscaledTime >= _prepMapBornAt)
+            {
+                _prepMapUnheard = false;
+                TableSounds.Play(TableSounds.MapBuild);
+            }
             ShowPrepMapBuild();
+        }
         if (Time.frameCount % 10 != 0)
             return;
         try
@@ -184,7 +195,7 @@ public sealed partial class StrategyDiorama
             // Coming from mission select, the map builds once the planet's sheet lies on the table.
             var born = preview.Pointer == _prepMapOf ? _prepMapBornAt : PlanetLaidBy();
             if (preview.Pointer != _prepMapOf)
-                Cue(TableCue.Appear);
+                _prepMapUnheard = true;
             ClearPrepMap();
             BuildPrepMap(preview, scale, areas);
             (_prepMapOf, _prepMapScale, _prepMapAreas, _prepMapBornAt, _prepMapBuilding) = (preview.Pointer, scale, areasKey, born, true);

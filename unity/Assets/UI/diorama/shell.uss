@@ -492,9 +492,8 @@
 .wm-squads UnitWindow .wm-gift-btn { background-image: none; background-color: rgb(0, 0, 0); border-width: 0.64px; border-color: var(--gold); }
 .wm-squads UnitWindow .wm-gift-btn .text-button-label { color: var(--gold); font-size: 8px; letter-spacing: 0.8px; }
 
-/* Mission preparation: the roster's count, the rail that widens the roster, the mission's facts
+/* Mission preparation: the rail that widens the roster, the mission's facts
    as chips, and vanilla's roster tiles and objectives box in the squad screen's style. */
-.wm-prep__count { position: absolute; margin: 0; padding: 0; background-color: rgb(0, 0, 0); border-width: 0.64px; border-color: var(--gold); color: var(--gold); font-size: 10.4px; -unity-text-align: middle-center; }
 /* The rail is unseen but for its chevron until the pointer is on it. */
 .wm-prep__rail { position: absolute; width: 9.6px; align-items: center; justify-content: center; background-color: rgba(190, 215, 245, 0); }
 .wm-prep__rail:hover { background-color: rgba(190, 215, 245, 0.12); }
@@ -530,6 +529,15 @@
 .wm-prep #SuppliesPanel #SuppliesBar > VisualElement { top: 0; height: 8px; }
 .wm-prep__supplies-left { position: absolute; margin: 0; padding: 0; color: rgb(83, 201, 156); font-size: 8px; letter-spacing: 0.64px; }
 .wm-prep__supplies-uses { position: absolute; margin: 0; padding: 0; color: var(--ink-meta); font-size: 7.2px; letter-spacing: 0.58px; }
+/* The loadout bar's sections, a squad each: a dark line between two, its badge in its middle,
+   the open squad's lit. One that is not deployed yet is pale, and red past the limit. */
+.wm-prep__sections { position: absolute; left: 0; overflow: hidden; }
+.wm-prep__section { position: absolute; top: 0; bottom: 0; }
+.wm-prep__section-line { position: absolute; left: 0; top: 0; bottom: 0; width: 1px; background-color: rgba(0, 0, 0, 0.7); }
+.wm-prep__would { position: absolute; top: 0; bottom: 0; background-color: rgba(254, 241, 199, 0.8); }
+.wm-prep__would--over { background-color: rgba(238, 87, 92, 0.8); }
+.wm-prep__section--open { background-color: rgba(255, 255, 255, 0.35); }
+.wm-prep__section-badge { position: absolute; top: 2px; width: 18px; height: 18px; -unity-background-scale-mode: scale-to-fit; }
 
 /* Mission preparation's squad panel has no tabs over its loadout, so the slots take the room the
    tabs would: a little more between them, and taller cards. */

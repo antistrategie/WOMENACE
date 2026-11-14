@@ -91,7 +91,13 @@ public sealed class ProcurementSystem : JiangyuSystem
         var committed = false;
         try
         {
-            var plan = Procurement.Plan(State, Catalogue.Rewards, count, StrategyState.Get().GetSeed());
+            var seed = StrategyState.Get().GetSeed();
+            var before = State;
+            var plan = Procurement.Plan(before, Catalogue.Rewards, count, seed);
+            // What the draw was made from, so an unlikely result can be told from a wrong one.
+            Context.Log.Info($"Procurement: {count} drawn on campaign seed {seed}, generator {before.RandomState}, "
+                + $"counters {string.Join(" ", before.Counters.Select(c => $"{c.Key} {c.Value}"))}: "
+                + string.Join(", ", plan.Rewards.Select(reward => $"{reward.Section} {reward.Id}")));
             var rewards = plan.Rewards.Select(reward => Catalogue.ById[reward.Id]).ToList();
             var stock = new InventoryStock();
             var payment = stock.Available(currency, cost).ToList();

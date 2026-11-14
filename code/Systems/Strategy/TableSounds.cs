@@ -21,6 +21,9 @@ public sealed class TableSounds : JiangyuSystem
     internal const string Count = "count";
     internal const string ProjectorOn = "projector_on";
     internal const string ProjectorOff = "projector_off";
+    internal const string MapBuild = "map_build";
+    internal const string MapObjective = "map_objective";
+    internal const string MapContact = "map_contact";
     internal const string Room = "room";
 
     private const string BankId = "wmgfl_table_soundbank";

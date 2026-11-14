@@ -68,6 +68,8 @@ public sealed partial class StrategyDiorama
     private sealed class Token
     {
         public TokenKind Kind;
+        // Whether its coming up out of the map has been heard, or was not to be.
+        public bool Heard;
         public GameObject Card;
         public GameObject Ring;
         public VisualElement Cell;
@@ -481,6 +483,20 @@ public sealed partial class StrategyDiorama
     }
 
     // Stands each card on its tile and keeps each contact's target over it on the screen.
+    // A token coming up as the build's front reaches its tile. Only while the map is being
+    // built: one made later is already standing. Tokens of a kind that come up together are
+    // heard as one.
+    private void HearToken(TokenKind kind)
+    {
+        if (!_prepMapBuilding || Time.unscaledTime - _tokenHeardAt[(int)kind] < TokenHeardApart)
+            return;
+        _tokenHeardAt[(int)kind] = Time.unscaledTime;
+        TableSounds.Play(kind == TokenKind.Objective ? TableSounds.MapObjective : kind == TokenKind.Contact ? TableSounds.MapContact : TableSounds.TokenPlace);
+    }
+
+    private readonly float[] _tokenHeardAt = { float.NegativeInfinity, float.NegativeInfinity, float.NegativeInfinity };
+    private const float TokenHeardApart = 0.12f;
+
     private void PlacePrepTokens(VisualElement layer, (IntPtr Squad, Vector2Int Now, Vector2Int From, bool Valid)? drag)
     {
         var camera = _camera.GetComponent<Camera>();
@@ -501,6 +517,11 @@ public sealed partial class StrategyDiorama
             var foot = PrepMapPoint(token.Tile.x, token.Tile.y, 0.05f);
             // A token grows out of its tile as the map is built.
             var up = PrepBuilt(token.Tile.x, token.Tile.y);
+            if (!token.Heard && up > 0f)
+            {
+                token.Heard = true;
+                HearToken(token.Kind);
+            }
             var (width, height) = (token.Size.x * _prepMapTile * up, token.Size.y * _prepMapTile * up);
             var card = token.Card.transform;
             card.rotation = facing;

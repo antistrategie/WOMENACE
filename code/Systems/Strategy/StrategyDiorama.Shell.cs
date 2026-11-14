@@ -84,7 +84,7 @@ public sealed partial class StrategyDiorama
         VanillaUi.Screens.Workshop => new(WeaponRoomKey, "WEAPON ROOM", null, null, NavigationMenu.Target.Workshop, WorkshopTabs()),
         VanillaUi.Screens.ShipUpgrades => new(OpsRoomKey, "OPS ROOM", "WOMENACE::ui/shell/oci", "O.C.I.", NavigationMenu.Target.Oci, null),
         VanillaUi.Screens.OperationSelect => new(OpsRoomKey, "OPS ROOM", "WOMENACE::ui/shell/operations_title", "OPERATIONS", null, null),
-        VanillaUi.Screens.MissionPrep => new(OpsRoomKey, "OPS ROOM", "WOMENACE::ui/shell/mission_prep", "MISSION PREPARATION", null, null),
+        VanillaUi.Screens.MissionPrep => new(OpsRoomKey, "OPS ROOM", "WOMENACE::ui/shell/mission_prep", "DEPLOYMENT", null, null),
         _ => new(OpsRoomKey, "OPS ROOM", null, null, null, null),
     };
 
@@ -186,7 +186,7 @@ public sealed partial class StrategyDiorama
             hint.AddToClassList("wm-pan-hint");
             foreach (var (key, fallbackKey, action, fallbackAction) in new[]
             {
-                ("WOMENACE::ui/shell/pan_key", "RMB", "WOMENACE::ui/shell/pan_action", "ROTATE"),
+                ("WOMENACE::ui/shell/pan_key", "MMB", "WOMENACE::ui/shell/pan_action", "ROTATE"),
                 ("WOMENACE::ui/shell/zoom_key", "SCROLL", "WOMENACE::ui/shell/zoom_action", "ZOOM"),
             })
             {
@@ -754,10 +754,7 @@ public sealed partial class StrategyDiorama
         var screen = LookFor(screenName);
         _shellShop = ShopSystem.IsShopOpen;
         var room = Locale.Text(screen.RoomKey, screen.Room);
-        // Mission preparation is named by its mission, as the vanilla screen is.
-        var mission = screenName == VanillaUi.Screens.MissionPrep ? VanillaText(VanillaUi.Elements.MissionName) : "";
         var within = onOperations ? Locale.Text("WOMENACE::ui/shell/operations_title", "OPERATIONS")
-            : mission.Length > 0 ? mission.ToUpperInvariant()
             : screen.Screen != null ? Locale.Text(screen.ScreenKey, screen.Screen) : null;
         SetText("wm-shell-title", within != null ? room + "  //  " + within : room);
 

@@ -738,8 +738,8 @@ public sealed partial class StrategyDiorama
         {
             position = mouse.position.ReadValue();
             delta = mouse.delta.ReadValue();
-            held = mouse.rightButton.isPressed;
-            pressed = mouse.rightButton.wasPressedThisFrame;
+            held = mouse.middleButton.isPressed;
+            pressed = mouse.middleButton.wasPressedThisFrame;
             scroll = WheelNotches(mouse.scroll.ReadValue().y);
         }
         else

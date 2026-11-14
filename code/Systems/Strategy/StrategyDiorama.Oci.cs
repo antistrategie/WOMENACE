@@ -174,9 +174,9 @@ public sealed partial class StrategyDiorama
         var mouse = UnityEngine.InputSystem.Mouse.current;
         if (mouse != null)
         {
-            if (!mouse.rightButton.isPressed)
+            if (!mouse.middleButton.isPressed)
                 _ociOrbiting = false;
-            else if (mouse.rightButton.wasPressedThisFrame)
+            else if (mouse.middleButton.wasPressedThisFrame)
                 _ociOrbiting = PointerOverOciRoom();
             if (_ociOrbiting)
             {

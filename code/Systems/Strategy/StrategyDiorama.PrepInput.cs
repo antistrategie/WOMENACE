@@ -32,7 +32,7 @@ public sealed partial class StrategyDiorama
     private Vector2 _prepPressedAt;
 
     // The camera turns and tilts round the map, and the map stays where it is over the table:
-    // hold the right button off the panels and drag, and roll the wheel to come closer. Bearing 0
+    // hold the middle button off the panels and drag, and roll the wheel to come closer. Bearing 0
     // is the view down the table from its foot.
     private static readonly Vector3 PrepOrbitFocus = new(-14.5f, 0.3f, 0f);
     private const float PrepOrbitPitch = 50f;
@@ -66,10 +66,10 @@ public sealed partial class StrategyDiorama
         var mouse = UnityEngine.InputSystem.Mouse.current;
         if (mouse != null)
         {
-            var held = mouse.rightButton.isPressed;
+            var held = mouse.middleButton.isPressed;
             if (!held)
                 _prepOrbiting = false;
-            else if (mouse.rightButton.wasPressedThisFrame)
+            else if (mouse.middleButton.wasPressedThisFrame)
                 _prepOrbiting = PointerOverPrepMap();
             if (_prepOrbiting)
             {
@@ -108,7 +108,7 @@ public sealed partial class StrategyDiorama
     }
 
     // The panels that may lie over a part of the map's place on screen.
-    private static readonly string[] PrepPanels = { VanillaUi.Elements.PrepSelectedColumn, PrepRosterName, PrepRailName, PrepChipsName, PrepCountName };
+    private static readonly string[] PrepPanels = { VanillaUi.Elements.PrepSelectedColumn, PrepRosterName, PrepRailName, PrepChipsName };
 
     // Whether the pointer is over the map's part of the screen: the room, vanilla's unseen map
     // or the map's own tokens under it, or anything else there that is not one of the panels.
