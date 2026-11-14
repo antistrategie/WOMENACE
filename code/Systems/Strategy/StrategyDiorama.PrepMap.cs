@@ -133,8 +133,43 @@ public sealed partial class StrategyDiorama
 
     // A place on the map in the world: tile coordinates (a tile's middle is half past its number)
     // and a height in tiles.
-    private Vector3 PrepMapPoint(float x, float z, float up) =>
-        _prepMap.transform.TransformPoint(new Vector3(-(z - _prepMapSizeZ / 2f) * _prepMapTile, up * _prepMapTile, (x - _prepMapSizeX / 2f) * _prepMapTile));
+    // The height is above the tile's own ground, or above the map's foot when onGround is off.
+    private Vector3 PrepMapPoint(float x, float z, float up, bool onGround = true) =>
+        _prepMap.transform.TransformPoint(new Vector3(-(z - _prepMapSizeZ / 2f) * _prepMapTile, (up + (onGround ? PrepGroundAt(x, z) : 0f)) * _prepMapTile, (x - _prepMapSizeX / 2f) * _prepMapTile));
+
+    // The land's relief. The preview's elevation is a small part of 1 over a whole map, so it
+    // is drawn many times its size, from the map's lowest tile up, in steps a quarter tile high:
+    // a hill stands as terraces, each with a wall down to the one below.
+    private const float PrepReliefTiles = 30f;
+    private const float PrepReliefStep = 0.25f;
+    private float[,] _prepMapGround;
+    // The heights the ground stands at, highest first.
+    private float[] _prepMapLevels = { 0f };
+
+    // How high a tile's ground stands above the map's foot, in tiles.
+    private float PrepGroundAt(float x, float z)
+    {
+        if (_prepMapGround == null)
+            return 0f;
+        var (tx, tz) = (Math.Clamp((int)MathF.Floor(x), 0, _prepMapSizeX - 1), Math.Clamp((int)MathF.Floor(z), 0, _prepMapSizeZ - 1));
+        return _prepMapGround[tx, tz];
+    }
+
+    // The tile a ray lands on, as tile coordinates. The ground stands at several heights, so
+    // the ray is met with each from the highest down and lands on the first whose tile is there.
+    private Vector2 PrepTileUnder(Ray ray)
+    {
+        var tile = Vector2.zero;
+        foreach (var level in _prepMapLevels)
+        {
+            var plane = PrepMapPoint(0f, 0f, level, false).y;
+            var local = _prepMap.transform.InverseTransformPoint(ray.origin + ray.direction * ((plane - ray.origin.y) / ray.direction.y));
+            tile = new Vector2(local.z / _prepMapTile + _prepMapSizeX / 2f, _prepMapSizeZ / 2f - local.x / _prepMapTile);
+            if (tile.x >= 0f && tile.y >= 0f && tile.x < _prepMapSizeX && tile.y < _prepMapSizeZ && PrepGroundAt(tile.x, tile.y) >= level - 0.01f)
+                break;
+        }
+        return tile;
+    }
 
     // The objectives' areas as vanilla's own map shows them, in tiles: read from its elements, so
     // the hologram marks what that map marks and no more.
@@ -245,12 +280,16 @@ public sealed partial class StrategyDiorama
         var names = new string[sizeX, sizeZ];
         var roads = new bool[sizeX, sizeZ];
         var rough = new bool[sizeX, sizeZ];
+        var ground = new float[sizeX, sizeZ];
+        var lowest = float.MaxValue;
         for (var z = 0; z < sizeZ; z++)
         {
             for (var x = 0; x < sizeX; x++)
             {
                 var tile = tiles.GetTile(x, z);
                 roads[x, z] = preview.HasRoad(x, z);
+                ground[x, z] = tile.GetElevation();
+                lowest = Math.Min(lowest, ground[x, z]);
                 if (tile.GetEntityType() != EntityType.Structure)
                 {
                     // Ground with nothing built on it that no squad can stand on, which vanilla's
@@ -262,6 +301,11 @@ public sealed partial class StrategyDiorama
                 heights[x, z] = PrepHeight(names[x, z]);
             }
         }
+        for (var z = 0; z < sizeZ; z++)
+            for (var x = 0; x < sizeX; x++)
+                ground[x, z] = MathF.Round((ground[x, z] - lowest) * PrepReliefTiles / PrepReliefStep) * PrepReliefStep;
+        _prepMapGround = ground;
+        _prepMapLevels = ground.Cast<float>().Distinct().OrderByDescending(level => level).ToArray();
         var zone = new bool[sizeX, sizeZ];
         var refused = new bool[sizeX, sizeZ];
         foreach (var drawn in preview.DeploymentZones.ToArray())
@@ -337,9 +381,13 @@ public sealed partial class StrategyDiorama
         }
         for (var j = 0; j < p; j++)
         {
-            var shade = Color32.Lerp(PrepWallFoot, PrepWallTop, j / (p - 1f));
+            // Three shades side by side: a wall's own, the zone's and the zone's refused part's.
             for (var i = 0; i < width; i++)
-                pixels[(sizeZ * p + j) * width + i] = shade;
+            {
+                var kind = i * 3 / width;
+                pixels[(sizeZ * p + j) * width + i] = kind == 0 ? Color32.Lerp(PrepWallFoot, PrepWallTop, j / (p - 1f))
+                    : Color32.Lerp(kind == 2 ? PrepZone : PrepZoneRefused, kind == 2 ? PrepZoneGrid : PrepZoneRefusedGrid, j / (p - 1f));
+            }
         }
         _prepMapTexture = new Texture2D(width, height, TextureFormat.RGBA32, false) { filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp };
         _prepMapTexture.SetPixels32(pixels);
@@ -367,37 +415,33 @@ public sealed partial class StrategyDiorama
             triangles.Add(first); triangles.Add(first + 2); triangles.Add(first + 3);
         }
         Vector2 Uv(float x, float z) => new(x / sizeX, z / sizeZ * mapV);
-        void Wall(float x0, float z0, float x1, float z1, float foot, float top)
+        // A wall takes the shade of the tile whose side it is.
+        void Wall(float x0, float z0, float x1, float z1, float foot, float top, int lit)
         {
-            var u = 0.5f;
+            var u = (lit == 2 ? 2.5f : lit == 1 ? 1.5f : 0.5f) / 3f;
             Face(At(x0, z0, foot), At(x1, z1, foot), At(x1, z1, top), At(x0, z0, top),
                 new Vector2(u, wallFoot), new Vector2(u, wallFoot), new Vector2(u, wallTop), new Vector2(u, wallTop));
         }
 
         // The ground is a square to a tile, so the squares can come up one by one.
+        // A tile's ground stands at its own height and a structure on top of that. A wall stands
+        // where the neighbouring tile is lower, from that tile's height up, and at the map's edge
+        // down to its foot.
+        float Top(int x, int z) => x < 0 || z < 0 || x >= sizeX || z >= sizeZ ? 0f : ground[x, z] + heights[x, z];
         for (var z = 0; z < sizeZ; z++)
         {
             for (var x = 0; x < sizeX; x++)
             {
                 start = PrepBuildStart(x, z);
-                Face(At(x, z, 0), At(x + 1, z, 0), At(x + 1, z + 1, 0), At(x, z + 1, 0), Uv(x, z), Uv(x + 1, z), Uv(x + 1, z + 1), Uv(x, z + 1));
-            }
-        }
-        for (var z = 0; z < sizeZ; z++)
-        {
-            for (var x = 0; x < sizeX; x++)
-            {
-                start = PrepBuildStart(x, z);
-                var top = heights[x, z];
-                if (top <= 0f)
-                    continue;
-                Face(At(x, z, top), At(x + 1, z, top), At(x + 1, z + 1, top), At(x, z + 1, top), Uv(x, z), Uv(x + 1, z), Uv(x + 1, z + 1), Uv(x, z + 1));
-                // A wall stands where the neighbouring tile is lower, from that tile's height up.
-                float Beside(int nx, int nz) => nx < 0 || nz < 0 || nx >= sizeX || nz >= sizeZ ? 0f : heights[nx, nz];
-                if (Beside(x - 1, z) < top) Wall(x, z, x, z + 1, Beside(x - 1, z), top);
-                if (Beside(x + 1, z) < top) Wall(x + 1, z, x + 1, z + 1, Beside(x + 1, z), top);
-                if (Beside(x, z - 1) < top) Wall(x, z, x + 1, z, Beside(x, z - 1), top);
-                if (Beside(x, z + 1) < top) Wall(x, z + 1, x + 1, z + 1, Beside(x, z + 1), top);
+                var top = Top(x, z);
+                if (heights[x, z] <= 0f || top <= 0f)
+                    Face(At(x, z, ground[x, z]), At(x + 1, z, ground[x, z]), At(x + 1, z + 1, ground[x, z]), At(x, z + 1, ground[x, z]), Uv(x, z), Uv(x + 1, z), Uv(x + 1, z + 1), Uv(x, z + 1));
+                else
+                    Face(At(x, z, top), At(x + 1, z, top), At(x + 1, z + 1, top), At(x, z + 1, top), Uv(x, z), Uv(x + 1, z), Uv(x + 1, z + 1), Uv(x, z + 1));
+                if (Top(x - 1, z) < top) Wall(x, z, x, z + 1, Top(x - 1, z), top, heights[x, z] > 0f ? 0 : Lit(x, z));
+                if (Top(x + 1, z) < top) Wall(x + 1, z, x + 1, z + 1, Top(x + 1, z), top, heights[x, z] > 0f ? 0 : Lit(x, z));
+                if (Top(x, z - 1) < top) Wall(x, z, x + 1, z, Top(x, z - 1), top, heights[x, z] > 0f ? 0 : Lit(x, z));
+                if (Top(x, z + 1) < top) Wall(x, z + 1, x + 1, z + 1, Top(x, z + 1), top, heights[x, z] > 0f ? 0 : Lit(x, z));
             }
         }
         var mesh = new Mesh { name = "WOMENACE_PrepMap", vertices = vertices.ToArray(), uv = uvs.ToArray(), triangles = triangles.ToArray() };

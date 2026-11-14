@@ -157,17 +157,14 @@ public sealed partial class StrategyDiorama
         var aim = _prepPointerOverride ?? real;
         _prepPointerPanel = RuntimePanelUtils.ScreenToPanel(column.panel, new Vector2(aim.x, Screen.height - aim.y));
 
-        // Where the pointer's ray meets the map's plane, in tiles.
+        // Where the pointer's ray meets the map's ground, in tiles.
         var ray = camera.ScreenPointToRay(aim);
-        var plane = PrepMapPoint(0f, 0f, 0f).y;
         if (ray.direction.y > -1e-4f)
         {
             column.style.left = PrepFlatMapParked;
             return;
         }
-        var hit = ray.origin + ray.direction * ((plane - ray.origin.y) / ray.direction.y);
-        var local = _prepMap.transform.InverseTransformPoint(hit);
-        var tile = new Vector2(local.z / _prepMapTile + _prepMapSizeX / 2f, _prepMapSizeZ / 2f - local.x / _prepMapTile);
+        var tile = PrepTileUnder(ray);
 
         // A chibi stands taller than her tile, so the pointer on her is over tiles behind her.
         // While nothing is dragged, the pointer on a chibi counts as on her tile, so a press there
