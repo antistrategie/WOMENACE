@@ -31,6 +31,8 @@ public sealed partial class StrategyDiorama
     private static readonly Color32 PrepZone = new(120, 92, 30, 255);
     private static readonly Color32 PrepZoneGrid = new(215, 170, 70, 255);
     private static readonly Color32 PrepZoneRefused = new(40, 34, 24, 255);
+    private static readonly Color32 PrepZoneRoad = new(205, 172, 100, 255);
+    private static readonly Color32 PrepZoneRefusedRoad = new(86, 74, 48, 255);
     private static readonly Color32 PrepZoneRefusedGrid = new(92, 76, 40, 255);
     private static readonly Color32 PrepObjectiveEdge = new(215, 192, 116, 255);
     private static readonly Color32 PrepRoof = new(56, 112, 150, 255);
@@ -321,7 +323,7 @@ public sealed partial class StrategyDiorama
                     // how the eye is told a squad will be refused there.
                     var tile = tiles.GetTile(x, z);
                     zone[x, z] = true;
-                    refused[x, z] = tile.IsBlocked() || tile.IsIsolated();
+                    refused[x, z] = tile.IsBlocked() || tile.IsIsolated() || !tile.IsValidDeployPosition();
                 }
         }
 
@@ -333,8 +335,8 @@ public sealed partial class StrategyDiorama
         bool Objective(int x, int z) => x >= 0 && z >= 0 && x < sizeX && z < sizeZ && objective[x, z];
 
         // How bright a tile's lines are: 2 in the zone, 1 in its refused part, 0 elsewhere.
-        int Lit(int x, int z) => x < 0 || z < 0 || !zone[x, z] ? 0 : refused[x, z] ? 1 : 2;
-        bool Road(int x, int z) => x >= 0 && z >= 0 && roads[x, z] && !zone[x, z] && heights[x, z] <= 0f;
+        int Lit(int x, int z) => x < 0 || z < 0 || x >= sizeX || z >= sizeZ || !zone[x, z] ? 0 : refused[x, z] ? 1 : 2;
+        bool Road(int x, int z) => x >= 0 && z >= 0 && roads[x, z] && heights[x, z] <= 0f;
 
         // The sheet's texture: a block of pixels per tile, and above the map one more row of blocks
         // holding the wall's shade from its foot to its top.
@@ -347,24 +349,29 @@ public sealed partial class StrategyDiorama
                 var built = heights[x, z] > 0f;
                 var road = Road(x, z);
                 var hatched = !built && !zone[x, z] && !road && rough[x, z];
-                var fill = built ? PrepRoof : zone[x, z] ? (refused[x, z] ? PrepZoneRefused : PrepZone) : road ? PrepRoad : PrepGround;
+                var inZone = zone[x, z] ? (refused[x, z] ? (road ? PrepZoneRefusedRoad : PrepZoneRefused) : road ? PrepZoneRoad : PrepZone) : default;
+                var fill = built ? PrepRoof : zone[x, z] ? inZone : road ? PrepRoad : PrepGround;
                 for (var j = 0; j < p; j++)
                 {
                     for (var i = 0; i < p; i++)
                     {
                         // A structure's roof is edged where the structure ends, not between its tiles.
+                        // Ground has a line between each two tiles, drawn on the brighter of the
+                        // two so it stays with that tile where they stand at different heights,
+                        // and on the far or right one's near side where they are alike.
                         bool edge;
+                        var lit = 0;
                         if (built)
                             edge = (i == 0 && !Same(names, x, z, x - 1, z)) || (i == p - 1 && !Same(names, x, z, x + 1, z))
                                 || (j == 0 && !Same(names, x, z, x, z - 1)) || (j == p - 1 && !Same(names, x, z, x, z + 1));
                         else
-                            edge = i == 0 || j == 0;
-                        // A tile draws the lines on its near and left sides, which are its neighbours'
-                        // far and right ones: a line is the brightest of the tiles it lies between.
-                        var lit = !edge || built ? 0 : Math.Max(Math.Max(Lit(x, z), i == 0 ? Lit(x - 1, z) : 0),
-                            Math.Max(j == 0 ? Lit(x, z - 1) : 0, i == 0 && j == 0 ? Lit(x - 1, z - 1) : 0));
+                        {
+                            lit = Lit(x, z);
+                            edge = (i == 0 && Lit(x - 1, z) <= lit) || (j == 0 && Lit(x, z - 1) <= lit)
+                                || (i == p - 1 && Lit(x + 1, z) < lit) || (j == p - 1 && Lit(x, z + 1) < lit);
+                        }
                         // A road is one strip: no line is drawn between two of its tiles.
-                        var within = road && lit == 0 && (i > 0 || Road(x - 1, z)) && (j > 0 || Road(x, z - 1)) && (i > 0 || j > 0 || Road(x - 1, z - 1));
+                        var within = road && !zone[x, z] && (i > 0 || Road(x - 1, z)) && (j > 0 || Road(x, z - 1)) && (i > 0 || j > 0 || Road(x - 1, z - 1));
                         var pixel = edge && !within ? (built ? PrepRoofEdge : lit == 2 ? PrepZoneGrid : lit == 1 ? PrepZoneRefusedGrid : PrepGrid)
                             : hatched && (i + j) % 4 == 0 ? PrepRough : fill;
                         // An objective's area is lit a little and outlined where it ends.
