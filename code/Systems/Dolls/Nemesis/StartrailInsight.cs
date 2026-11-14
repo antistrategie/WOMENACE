@@ -96,6 +96,10 @@ public sealed class StartrailInsightSystem : JiangyuSystem
     // Set while the read runs, so the board-change hooks ignore the borrowed planning.
     internal static bool Reading { get; private set; }
 
+    // Set when the last read left an enemy out because its planner could not run yet, so the next
+    // allied turn start reads again.
+    private static bool _deferred;
+
     // The seer whose vision it is, and how much she reads.
     private static Actor _owner;
     private static int _maxEnemies = 8;
@@ -158,7 +162,10 @@ public sealed class StartrailInsightSystem : JiangyuSystem
             if (_owner == null || unit == null || !unit.IsPlayerOrPlayerAI() || !_owner.IsAlive() || !_stale)
                 return;
             _stale = false;
+            _deferred = false;
             Show(Read(_owner.GetPos(), _maxEnemies, _attackShare, null));
+            if (_deferred)
+                _stale = true;
         }
         catch (Exception ex) { Warn($"read failed: {ex.Message}"); }
     }
@@ -347,6 +354,24 @@ public sealed class StartrailInsightSystem : JiangyuSystem
     {
         var actor = agent.GetActor();
         var vision = new Vision { Enemy = actor };
+        // Agent.Evaluate (RVA 0x7BB6F0) opens with `while (m_SleepUntil > m_Faction.m_Time ||
+        // m_Actor.GetSkills().IsBusy()) Thread.Sleep(1)`. The AI runs it on a worker thread. The
+        // read runs on the main thread, where the faction clock never advances and a busy skill
+        // never resolves, so either condition would freeze the game for good. An enemy that fired
+        // the same weapon twice in a turn has been seen to keep its skill busy long afterwards. Such
+        // an enemy is left out of this vision and read again at the next turn start.
+        if (actor?.GetSkills()?.IsBusy() == true)
+        {
+            vision.Summary = "read failed: a skill of it is still resolving";
+            _deferred = true;
+            return vision;
+        }
+        if (agent.m_Faction?.TryCast<AIFaction>() is { } owner && agent.m_SleepUntil > owner.m_Time)
+        {
+            vision.Summary = $"read failed: its agent sleeps until {agent.m_SleepUntil:F1} (faction time {owner.m_Time:F1})";
+            _deferred = true;
+            return vision;
+        }
         var rng = agent.m_Random;
         var (s0, s1, s2, s3) = rng == null ? (0u, 0u, 0u, 0u) : (rng.m_S0, rng.m_S1, rng.m_S2, rng.m_S3);
         var active = agent.m_ActiveBehavior;
