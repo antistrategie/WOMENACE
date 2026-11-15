@@ -146,6 +146,16 @@ public sealed class CalibrationUISystem : JiangyuSystem
         return true;
     }
 
+    // Dev: picks the open panel's stock copy of a weapon.
+    internal bool DevPickStock(string baseWeaponId)
+    {
+        var index = _instances.FindIndex(instance => instance.Leader == null && instance.BaseWeaponId == baseWeaponId);
+        if (!_open || index < 0)
+            return false;
+        Select(index);
+        return true;
+    }
+
     // The weapon picked on the calibration panel, and the doll who carries it (none for one in stock).
     internal CalibrationInstance Picked => _open && _selected >= 0 && _selected < _instances.Count ? _instances[_selected] : null;
 

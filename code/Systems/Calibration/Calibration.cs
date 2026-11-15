@@ -65,6 +65,16 @@ public static class Calibration
     public static string WeaponIdFor(string characterTag) => "weapon." + DollName(characterTag);
     public static string SsrWeaponIdFor(string characterTag) => WeaponIdFor(characterTag) + "_ssr";
 
+    // The character whose signature weapon a calibratable base id is ("weapon.makiatto_ssr" ->
+    // "wmgfl_makiatto").
+    public static string OwnerTagFor(string baseWeaponId)
+    {
+        var name = Tail(baseWeaponId);
+        if (name.EndsWith("_ssr", StringComparison.Ordinal))
+            name = name.Substring(0, name.Length - "_ssr".Length);
+        return Affinity.Tag + "_" + name;
+    }
+
     // Whether a doll name belongs to one of our characters: the character tag template exists.
     // Memoised by name, both verdicts: TryResolveWeaponId runs per owned weapon on every unit
     // window refresh and under the tactical stats panel, and a vanilla name misses every time.

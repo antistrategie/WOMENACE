@@ -250,17 +250,22 @@ public sealed partial class StrategyDiorama
     private string _calibrationDollTag;
     private IntPtr _calibrationLeader;
     private string _calibrationTag;
+    private string _calibrationWeapon;
 
     // The doll whose weapon is being calibrated sits in the lounge with it.
     private void ShowCalibrationDoll()
     {
         var lit = false;
         var room = _weaponSet.Root;
-        var leader = WorkshopStation == CalibrateStation ? CalibrationUISystem.Instance?.Picked?.Leader : null;
-        // Her tag is read when the leader picked changes, and not on every look.
+        var instance = WorkshopStation == CalibrateStation ? CalibrationUISystem.Instance?.Picked : null;
+        var leader = instance?.Leader;
+        // The doll who carries the weapon, or for one in stock the doll whose weapon it is.
+        // Her tag is read when the leader or the weapon picked changes, and not on every look.
         var picked = leader != null ? leader.Pointer : IntPtr.Zero;
-        if (picked != _calibrationLeader)
-            (_calibrationLeader, _calibrationTag) = (picked, leader != null ? Affinity.CharacterTag(leader) : null);
+        var weapon = leader == null ? instance?.BaseWeaponId : null;
+        if (picked != _calibrationLeader || weapon != _calibrationWeapon)
+            (_calibrationLeader, _calibrationWeapon, _calibrationTag) = (picked, weapon,
+                leader != null ? Affinity.CharacterTag(leader) : weapon != null ? Calibration.OwnerTagFor(weapon) : null);
         var tag = _calibrationTag;
         if (tag != _calibrationDollTag || (tag != null && _calibrationDoll == null))
         {

@@ -86,6 +86,11 @@ public static class Weapons
     public static object PickCalibration(string characterTag)
         => new { ok = CalibrationUISystem.Instance?.DevPick(characterTag) ?? false };
 
+    // Pick the stock copy of a weapon (its base id, "weapon.makiatto_ssr") on the open panel.
+    [MutatingVerb]
+    public static object PickStockCalibration(string weaponId)
+        => new { ok = CalibrationUISystem.Instance?.DevPickStock(weaponId) ?? false };
+
     // Open the calibration screen, for testing without the workshop button.
     [MutatingVerb]
     public static object OpenCalibration()
