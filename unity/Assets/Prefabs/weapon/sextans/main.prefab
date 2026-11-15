@@ -32,6 +32,7 @@ Transform:
   - {fileID: 1853885199945950691}
   - {fileID: 6398088233419701086}
   - {fileID: 5167562711333305074}
+  - {fileID: 6359689744588889255}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &3042997102770507658
@@ -146,6 +147,37 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0.31753674, y: -0.30321264, z: -0.5181293, w: 0.73401266}
   m_LocalPosition: {x: -0.1198302, y: 0.7013933, z: 0.3528177}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2775715800282346363}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &7496955477011540544
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6359689744588889255}
+  m_Layer: 0
+  m_Name: weapon_hold
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6359689744588889255
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7496955477011540544}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.5303214, y: 0.24596749, z: 0.44475138, w: 0.6785687}
+  m_LocalPosition: {x: -0.021934204, y: 0.047140177, z: 0.022733975}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

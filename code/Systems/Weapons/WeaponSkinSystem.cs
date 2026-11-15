@@ -28,6 +28,10 @@ public sealed class WeaponSkinSystem : JiangyuSystem
     {
         Instance = null;
         _missingAssets.Clear();
+        _held.Clear();
+        if (_heldHolder != null)
+            UnityEngine.Object.Destroy(_heldHolder);
+        _heldHolder = null;
     }
 
     // UnitActor.GetItems (RVA 0x665200) returns the strategy leader's container,
@@ -120,11 +124,50 @@ public sealed class WeaponSkinSystem : JiangyuSystem
                 var skin = SelectionFor(items, itemSlot, weapon);
                 var model = LoadModel(skin);
                 if (model != null)
-                    info.Result = model;
+                    info.Result = Held(model, original);
                 return;
             }
         }
         catch (Exception ex) { Context.Log.Warn($"weapon skin: model lookup failed: {ex.Message}"); }
+    }
+
+    // The empty on a weapon's own model that says how its doll holds a blade: where a sword
+    // made the usual way round (its handle at its origin, its blade along +Z) sits in her hand.
+    internal const string HoldName = "weapon_hold";
+
+    private readonly Dictionary<(IntPtr Skin, IntPtr Own), GameObject> _held = [];
+    private GameObject _heldHolder;
+
+    // A skin is one model for every doll of its class, and each doll who carries a blade holds
+    // it her own way, so a blade's skin is put in her hand as her own weapon is: the skin's
+    // parts take the hold her own model carries. The skin is copied once for each such weapon
+    // and the copy handed over as the prefab. It is kept under a holder that is off, which
+    // leaves the copy itself on, so what the game makes from it is on too.
+    private GameObject Held(GameObject skin, GameObject own)
+    {
+        var hold = own != null ? own.transform.Find(HoldName) : null;
+        if (hold == null)
+            return skin;
+        var key = (skin.Pointer, own.Pointer);
+        if (_held.TryGetValue(key, out var made) && made != null)
+            return made;
+        if (_heldHolder == null)
+        {
+            _heldHolder = new GameObject("WOMENACE.HeldSkins");
+            _heldHolder.SetActive(false);
+            UnityEngine.Object.DontDestroyOnLoad(_heldHolder);
+        }
+        made = UnityEngine.Object.Instantiate(skin, _heldHolder.transform, false);
+        made.name = skin.name;
+        var (place, turn) = (hold.localPosition, hold.localRotation);
+        for (var i = 0; i < made.transform.childCount; i++)
+        {
+            var part = made.transform.GetChild(i);
+            part.localPosition = place + turn * part.localPosition;
+            part.localRotation = turn * part.localRotation;
+        }
+        _held[key] = made;
+        return made;
     }
 
     // Bespoke carries can mount the primary rifle directly instead of asking the container.
