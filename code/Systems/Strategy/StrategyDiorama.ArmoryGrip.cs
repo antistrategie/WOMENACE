@@ -13,7 +13,7 @@ namespace WOMENACE.Code;
 // Tactical units grip through the game's IK onto the weapon's weapon_hand_l empty. Here each
 // staged squaddie gets the same grip after its Animator has posed it: a two-bone solve that brings
 // the left hand to weapon_hand_l, keeps the elbow on the side the animation bent it, and turns
-// the hand to the empty's rotation.
+// the hand as a mission's IK turns it at the empty.
 public sealed partial class StrategyDiorama
 {
     private sealed class Grip
@@ -143,8 +143,13 @@ public sealed partial class StrategyDiorama
 
         grip.Lower.rotation = U(turn * N(grip.Lower.rotation));
         grip.Upper.rotation = U(roll * swing * N(grip.Upper.rotation));
-        grip.Hand.rotation = grip.Target.rotation;
+        grip.Hand.rotation = U(N(grip.Target.rotation) * GripTurn);
     }
+
+    // A mission's IK turns the hand to the empty's rotation and then by this turn of its own,
+    // the same for every unit and weapon (measured off units in a mission with Rig.Record).
+    // The empties are placed against that, so the hand here takes it too.
+    private static readonly Quat GripTurn = Quat.Normalize(new Quat(0.4912f, 0.5087f, 0.5087f, 0.4912f));
 
     private static float Angle(Vec from, Vec to)
     {
