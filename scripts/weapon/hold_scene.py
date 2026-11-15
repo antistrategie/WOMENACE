@@ -14,6 +14,9 @@ Move the root to move the whole weapon in her hand, or the mesh and the empties 
 The reference objects cannot be picked. "Save placement" in the sidebar's WOMENACE tab writes
 where the root's children now stand into raw.glb, and nothing else of the file changes.
 
+The doll stands upright. The weapon's root hangs from hold_frame, which stands where her
+hand holds the weapon, and a placement is saved as it stands in that frame.
+
 Run through hold_scene.sh, which makes the pose first.
 """
 
@@ -24,7 +27,7 @@ import sys
 from pathlib import Path
 
 import bpy  # type: ignore
-from mathutils import Vector  # type: ignore
+from mathutils import Matrix, Vector  # type: ignore
 
 
 def read_pose(pose):
@@ -42,14 +45,19 @@ def read_pose(pose):
     weapon = nodes["weapon"]
 
     def place(point):
-        # Into the weapon's own frame as Unity has it (the pose's points and axes are mirrored
-        # alike, which a dot product does not see), then to the glTF's axes, which turn x
-        # round, and on to Blender's, which stand z up.
-        rel = point - weapon["p"]
-        x, y, z = rel.dot(weapon["x"]), rel.dot(weapon["y"]), rel.dot(weapon["z"])
-        return Vector((-x, -z, y))
+        # The pose is Y up with its front along -Z for Blender, which stands Z up.
+        return Vector((point.x, -point.z, point.y))
 
-    return [place(v) for v in vertices], faces, {k: place(n["p"]) for k, n in nodes.items()}
+    # Where the weapon's own frame stands in that world. A point of the weapon's file, in
+    # Blender's axes (a, b, c), is Unity's (-a, c, -b) in the weapon's frame: the pose's points
+    # and axes are mirrored alike, so the weapon's axes carry it straight into the pose.
+    frame = Matrix.Identity(4)
+    for column, axis in enumerate((-place(weapon["x"]), -place(weapon["z"]), place(weapon["y"]))):
+        for row in range(3):
+            frame[row][column] = axis[row]
+    for row in range(3):
+        frame[row][3] = place(weapon["p"])[row]
+    return [place(v) for v in vertices], faces, {k: place(n["p"]) for k, n in nodes.items()}, frame
 
 
 def make(name, vertices, faces, colour):
@@ -65,8 +73,9 @@ def make(name, vertices, faces, colour):
     return obj
 
 
-def to_gltf(obj):
-    location, rotation, scale = obj.matrix_world.decompose()
+def to_gltf(obj, frame):
+    # Where the object stands in the weapon's own frame, which the doll's hand holds.
+    location, rotation, scale = (frame.matrix_world.inverted() @ obj.matrix_world).decompose()
     return (
         [location.x, location.z, -location.y],
         [rotation.x, rotation.z, -rotation.y, rotation.w],
@@ -74,7 +83,7 @@ def to_gltf(obj):
     )
 
 
-def save(path, root):
+def save(path, root, frame):
     data = Path(path).read_bytes()
     chunks, offset = [], 12
     while offset < len(data):
@@ -88,7 +97,7 @@ def save(path, root):
         node = by_name.get(child.name)
         if node is None or child.name.startswith("ref_"):
             continue
-        translation, rotation, scale = to_gltf(child)
+        translation, rotation, scale = to_gltf(child, frame)
         node.pop("matrix", None)
         if max(abs(t) for t in translation) > 1e-7:
             node["translation"] = translation
@@ -127,7 +136,7 @@ class WOMENACE_OT_save_placement(bpy.types.Operator):
     def execute(self, context):
         scene = context.scene
         root = bpy.data.objects.get(scene["womenace_root"])
-        written = save(scene["womenace_glb"], root)
+        written = save(scene["womenace_glb"], root, bpy.data.objects.get(scene["womenace_frame"]))
         self.report({"INFO"}, f"Wrote {', '.join(written)} to {scene['womenace_glb']}. Bake with: {scene['womenace_bake']}")
         return {"FINISHED"}
 
@@ -181,6 +190,8 @@ def main():
     bpy.ops.wm.read_factory_settings(use_empty=True)
     bpy.ops.import_scene.gltf(filepath=args.glb)
     root = next(o for o in bpy.data.objects if o.parent is None and o.children)
+    if any(abs(c) > 1e-6 for c in (*root.location, *root.rotation_euler)):
+        raise SystemExit("the weapon's root is moved in its file: it is expected at its file's origin")
     for obj in root.children:
         if obj.type == "EMPTY":
             obj.empty_display_type = "ARROWS"
@@ -192,7 +203,17 @@ def main():
     root.empty_display_size = 0.08
     root.show_name = True
 
-    vertices, faces, nodes = read_pose(Path(args.pose))
+    vertices, faces, nodes, stands = read_pose(Path(args.pose))
+    # The weapon hangs from a frame that stands where the doll's hand holds it, so she stands
+    # upright in the scene whatever way her hand has the weapon turned.
+    frame = bpy.data.objects.new("hold_frame", None)
+    frame.empty_display_size = 0.02
+    frame.hide_select = True
+    bpy.context.scene.collection.objects.link(frame)
+    frame.matrix_world = stands
+    root.parent = frame
+    root.matrix_parent_inverse = Matrix.Identity(4)
+    bpy.context.view_layer.update()
 
     def middles(tris):
         return {tuple(round(c, 4) for c in (vertices[a] + vertices[b] + vertices[c]) / 3) for a, b, c in tris}
@@ -216,6 +237,7 @@ def main():
     scene["womenace_weapon"] = args.weapon
     scene["womenace_glb"] = args.glb
     scene["womenace_root"] = root.name
+    scene["womenace_frame"] = frame.name
     scene["womenace_bake"] = f"python3 scripts/weapon/shade_weapons.py --bake {args.weapon}"
     bpy.utils.register_class(WOMENACE_OT_save_placement)
     bpy.utils.register_class(WOMENACE_PT_hold)
