@@ -22,7 +22,7 @@ namespace Womenace.EditorTools
     // stood: bone for bone where the recording is of the same doll, and by rotation alone
     // (her own bone lengths kept) where it is of another.
     //
-    // List line: <name> <doll prefab> <weapon prefab> [Param=value,... | <recording>.txt]
+    // List line: <name> <doll prefab> <weapon prefab> [Param=value,... | <recording>.txt] [move=x,y,z]
     //
     //   Unity -batchmode -nographics -quit -projectPath unity/ \
     //     -executeMethod Womenace.EditorTools.WeaponHoldCheck.Run -list holds.txt -out /tmp/holds
@@ -31,6 +31,9 @@ namespace Womenace.EditorTools
         private const string Socket = "Hand_R_Socket";
         private const string LeftGrip = "weapon_hand_l";
         private const string Muzzle = "muzzle";
+        // The game brings the left hand to the empty and turns it to the empty's rotation with
+        // this turn after it, the same for every unit and weapon recorded.
+        private static readonly Quaternion GripTurn = new Quaternion(0.4912f, 0.5087f, 0.5087f, 0.4912f).normalized;
 
         private static readonly HumanBodyBones[] Bones =
         {
@@ -75,7 +78,7 @@ namespace Womenace.EditorTools
                     continue;
                 try
                 {
-                    Pose(parts[0], parts[1], parts[2], parts.Length > 3 ? parts[3] : "", outDir);
+                    Pose(parts[0], parts[1], parts[2], parts.Length > 3 ? parts[3] : "", parts.Length > 4 ? parts[4] : "", outDir);
                     Debug.Log($"WeaponHoldCheck: wrote {parts[0]}");
                 }
                 catch (System.Exception ex)
@@ -87,7 +90,7 @@ namespace Womenace.EditorTools
             EditorApplication.Exit(failed > 0 ? 2 : 0);
         }
 
-        private static void Pose(string name, string dollPath, string weaponPath, string parameters, string outDir)
+        private static void Pose(string name, string dollPath, string weaponPath, string parameters, string move, string outDir)
         {
             var dollPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(dollPath);
             var weaponPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(weaponPath);
@@ -103,6 +106,14 @@ namespace Womenace.EditorTools
                 var weapon = Object.Instantiate(weaponPrefab, socket, false);
                 weapon.transform.localPosition = Vector3.zero;
                 weapon.transform.localRotation = Quaternion.identity;
+                // A trial placement: the weapon's children (its mesh and its empties alike) moved
+                // in the weapon's own frame, as moving them in its source file would.
+                if (move.StartsWith("move="))
+                {
+                    var by = move.Substring(5).Split(',').Select(v => float.Parse(v, CultureInfo.InvariantCulture)).ToArray();
+                    foreach (Transform child in weapon.transform)
+                        child.localPosition += new Vector3(by[0], by[1], by[2]);
+                }
 
                 animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
                 var recorded = parameters.EndsWith(".txt");
@@ -143,7 +154,7 @@ namespace Womenace.EditorTools
                 var grip = Find(weapon.transform, LeftGrip);
                 var before = hand != null ? hand.position : Vector3.zero;
                 var gameGap = grip != null && hand != null ? Vector3.Distance(hand.position, grip.position) : -1f;
-                var gameTurn = grip != null && hand != null ? Quaternion.Angle(hand.rotation, grip.rotation) : -1f;
+                var gameTurn = grip != null && hand != null ? Quaternion.Angle(hand.rotation, grip.rotation * GripTurn) : -1f;
                 var reach = 0f;
                 var arm = 0f;
                 if (grip != null && upper != null && lower != null && hand != null)
@@ -177,6 +188,8 @@ namespace Womenace.EditorTools
                 var offset = 1;
                 WriteObject(obj, "body", Posed(doll, weapon.transform, false), ref offset);
                 WriteObject(obj, "weapon", Posed(weapon, null, true), ref offset);
+                WriteObject(obj, "hand_r", Posed(doll, weapon.transform, false, "Hand_R"), ref offset);
+                WriteObject(obj, "hand_l", Posed(doll, weapon.transform, false, "Hand_L"), ref offset);
                 File.WriteAllText(Path.Combine(outDir, name + ".obj"), obj.ToString());
             }
             finally
@@ -208,11 +221,28 @@ namespace Womenace.EditorTools
                 if (own || row[1] == "Root/Hips")
                     t.position = new Vector3(p[0], p[1], p[2]);
             }
+            // The game's driver moves the weapon socket off the hand bone. On another doll it
+            // is put where the recording has it in its own hand's frame.
+            if (!own)
+            {
+                var hand = rows.FirstOrDefault(r => r[1].EndsWith("/Hand_R"));
+                var socket = rows.FirstOrDefault(r => r[1].EndsWith("/Hand_R/" + Socket));
+                var mine = Find(doll.transform, Socket);
+                if (hand != null && socket != null && mine != null)
+                {
+                    Vector3 P(string[] r) { var v = r[2].Split(' ').Select(x => float.Parse(x, inv)).ToArray(); return new Vector3(v[0], v[1], v[2]); }
+                    Quaternion Q(string[] r) { var v = r[3].Split(' ').Select(x => float.Parse(x, inv)).ToArray(); return new Quaternion(v[0], v[1], v[2], v[3]); }
+                    mine.localPosition = Quaternion.Inverse(Q(hand)) * (P(socket) - P(hand));
+                    mine.localRotation = Quaternion.Inverse(Q(hand)) * Q(socket);
+                }
+            }
             Debug.Log($"WeaponHoldCheck: {doll.name} stands as {Path.GetFileName(recording)} ({(own ? "her own recording" : "another doll's, by rotation")})");
         }
 
         // The first level of detail's meshes as they stand in the world, as vertices and triangles.
-        private static (List<Vector3> Vertices, List<int> Triangles) Posed(GameObject root, Transform skip, bool all)
+        // With a bone named, only the triangles whose corners all follow that bone most: a
+        // doll's fingers have no bones of their own, so her hand is what follows her hand bone.
+        private static (List<Vector3> Vertices, List<int> Triangles) Posed(GameObject root, Transform skip, bool all, string bone = null)
         {
             var vertices = new List<Vector3>();
             var triangles = new List<int>();
@@ -240,8 +270,25 @@ namespace Womenace.EditorTools
                 var first = vertices.Count;
                 foreach (var v in mesh.vertices)
                     vertices.Add(matrix.MultiplyPoint3x4(v));
-                foreach (var index in mesh.triangles)
-                    triangles.Add(first + index);
+                bool[] follows = null;
+                if (bone != null)
+                {
+                    var rigged = renderer as SkinnedMeshRenderer;
+                    var which = rigged != null ? System.Array.FindIndex(rigged.bones, b => b != null && b.name == bone) : -1;
+                    var weights = rigged != null ? rigged.sharedMesh.boneWeights : null;
+                    follows = new bool[mesh.vertexCount];
+                    for (var i = 0; which >= 0 && weights != null && i < weights.Length && i < follows.Length; i++)
+                        follows[i] = weights[i].boneIndex0 == which;
+                }
+                var corners = mesh.triangles;
+                for (var i = 0; i + 2 < corners.Length; i += 3)
+                {
+                    if (follows != null && !(follows[corners[i]] && follows[corners[i + 1]] && follows[corners[i + 2]]))
+                        continue;
+                    triangles.Add(first + corners[i]);
+                    triangles.Add(first + corners[i + 1]);
+                    triangles.Add(first + corners[i + 2]);
+                }
                 if (owned)
                     Object.DestroyImmediate(mesh);
             }
@@ -261,7 +308,8 @@ namespace Womenace.EditorTools
 
         // The armoury's grip (StrategyDiorama.ArmoryGrip): the elbow opens or closes about the
         // axis the animation bends it round, the shoulder swings the hand onto the empty and
-        // rolls the elbow back to the side it was on, and the hand takes the empty's rotation.
+        // rolls the elbow back to the side it was on, and the hand takes the empty's rotation as the
+        // game gives it.
         private static void Solve(Transform upper, Transform lower, Transform hand, Transform target)
         {
             Vector3 s = upper.position, e = lower.position, h = hand.position, t = target.position;
@@ -284,7 +332,7 @@ namespace Womenace.EditorTools
             var roll = was.sqrMagnitude > 1e-8f && now.sqrMagnitude > 1e-8f ? Quaternion.AngleAxis(Vector3.SignedAngle(now, was, line), line) : Quaternion.identity;
             lower.rotation = turn * lower.rotation;
             upper.rotation = roll * swing * upper.rotation;
-            hand.rotation = target.rotation;
+            hand.rotation = target.rotation * GripTurn;
         }
 
         private static string F(float value) => value.ToString("0.#####", CultureInfo.InvariantCulture);

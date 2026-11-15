@@ -1,8 +1,8 @@
 """Render how a doll holds a weapon, from a pose written by WeaponHoldCheck.
 
 Takes the OBJ (objects "body" and "weapon") and the JSON beside it, and writes one PNG a
-view: the whole hold from her right and from in front, and each hand close up from two
-sides. Workbench with flat colours, the weapon in orange against a pale body, so where a
+view: the whole hold from either side of the weapon and from above, and each hand close up
+from either side and from below. Workbench with flat colours, the weapon in orange against a pale body, so where a
 hand meets the weapon reads at a glance.
 
 Run as:
@@ -74,20 +74,22 @@ def main():
         scene.render.filepath = str(Path(args.out) / f"{pose.name}_{name}.png")
         bpy.ops.render.render(write_still=True)
 
-    # Her right is -x and her front is -y here.
+    # The views are laid out about the weapon: along its barrel, to either side of it, and
+    # from above and below, so a sheet reads the same whichever way the unit stood.
     right, left = nodes["RightHand"]["p"], nodes["LeftHand"]["p"]
+    weapon = nodes["weapon"]
+    forward = (nodes["muzzle"]["p"] - weapon["p"]).normalized() if "muzzle" in nodes else weapon["z"].normalized()
+    side = forward.cross(Vector((0, 0, 1))).normalized()
+    over = side.cross(forward).normalized()
     middle = (right + left) / 2
-    if "muzzle" in nodes:
-        middle = (middle + nodes["muzzle"]["p"]) / 2
-    shot("1_right", middle, (-1, -0.15, 0.1), 1.3)
-    shot("2_front", middle, (-0.35, -1, 0.15), 1.3)
-    shot("3_top", middle, (0, -0.05, 1), 1.3)
-    shot("4_rhand_out", right, (-1, 0, 0.1), 0.36)
-    shot("5_rhand_in", right, (1, 0, 0.1), 0.36)
-    shot("6_rhand_under", right, (0, -0.2, -1), 0.36)
-    shot("7_lhand_out", left, (1, 0, 0.1), 0.36)
-    shot("8_lhand_in", left, (-1, 0, 0.1), 0.36)
-    shot("9_lhand_under", left, (0, -0.2, -1), 0.36)
-
+    shot("1_side_a", middle, side + over * 0.15, 1.2)
+    shot("2_side_b", middle, -side + over * 0.15, 1.2)
+    shot("3_above", middle, over - forward * 0.05, 1.2)
+    shot("4_rhand_a", right, side, 0.34)
+    shot("5_rhand_b", right, -side, 0.34)
+    shot("6_rhand_under", right, -over + forward * 0.05, 0.34)
+    shot("7_lhand_a", left, side, 0.34)
+    shot("8_lhand_b", left, -side, 0.34)
+    shot("9_lhand_under", left, -over + forward * 0.05, 0.34)
 
 main()
