@@ -24,19 +24,23 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _BaseMap:
-        m_Texture: {fileID: 2800000, guid: 3e0e780fc11a3f14b85514f933643752, type: 3}
+        m_Texture: {fileID: 2800000, guid: 1dce9e242f945ff8492f2f5b3119af7b, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MaskMap:
-        m_Texture: {fileID: 2800000, guid: 7c6197719ce946dfb8ba16568c4be8ea, type: 3}
+        m_Texture: {fileID: 2800000, guid: 240f7d7a572365009b859a498584ac8e, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _NormalMap:
-        m_Texture: {fileID: 2800000, guid: 68a3c3aec9d9b16399f7763a8d7fa9c1, type: 3}
+        m_Texture: {fileID: 2800000, guid: 95c687abd3817ef978935adb96554bed, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _RampMap:
         m_Texture: {fileID: 2800000, guid: ecc8f3410fe6c002965d5911cd2a3033, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _RoomReflection:
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SdfMap:
@@ -50,14 +54,20 @@ Material:
     m_Ints: []
     m_Floats:
     - _BlendSmoothness: 0.1
+    - _FaceSpecIntensity: 1
     - _IblIntensity: 0.6038
+    - _KeyOcclusion: 1
     - _MaskRoughnessInverted: 0
     - _MatCapIntensity: 0
     - _MatCapUVOffset: 0.025
     - _NormalScale: 1
     - _OcclusionStrength: 1
+    - _RoomLit: 0
+    - _SpecUVYOffset: 0
     - _UseBlendTex: 0
+    - _UseRoomReflection: 0
     m_Colors:
     - _BaseTint: {r: 1, g: 1, b: 1, a: 1}
+    - _KeyDirection: {r: 0, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

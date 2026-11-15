@@ -1277,14 +1277,13 @@ SUPPORT_HAND_THUMB_BASE = (20.0, (0.7, 0.7))
 SUPPORT_HAND_THUMB_TIP = ((20.0, 25.0), (0.9, 0.3))
 
 
-def _curl_support_hand(armature_obj: "bpy.types.Object", missing: list[str]) -> int:
-    """Curl the left hand's fingers towards its palm. Runs in pose mode and
-    returns the number of bones turned."""
-    bones = armature_obj.pose.bones
-    wrist, index, little = bones.get("手首.L"), bones.get("人指１.L"), bones.get("小指１.L")
+def _hand_frame(bones, side: str):
+    """The ways a hand faces, measured off its own bones: out of its palm, across
+    its knuckles from the index finger to the little one, and along it from the
+    wrist. None when the hand has no such bones."""
+    wrist, index, little = bones.get(f"手首.{side}"), bones.get(f"人指１.{side}"), bones.get(f"小指１.{side}")
     if wrist is None or index is None or little is None:
-        missing.append("手首.L")
-        return 0
+        return None
     origin = wrist.bone.head_local
     palm = (index.bone.head_local - origin).cross(little.bone.head_local - origin).normalized()
     # MMD models stand with their palms towards the floor, which signs the
@@ -1292,43 +1291,72 @@ def _curl_support_hand(armature_obj: "bpy.types.Object", missing: list[str]) -> 
     if palm.z > 0.0:
         palm.negate()
     across = (little.bone.head_local - index.bone.head_local).normalized()
+    reach = wrist.bone.matrix_local.to_3x3().col[1].normalized()
+    return palm, across, reach
 
-    def curl(names: list[str], way: "mathutils.Vector", angles: tuple[float, ...]) -> int:
-        """Turn a digit's joints, base first, so its tip goes the given way. The
-        joints share one hinge, the one that takes the base joint that way."""
-        base = bones.get(names[0])
-        if base is None:
-            missing.append(names[0])
-            return 0
-        along = base.matrix.to_3x3().col[1].normalized()
-        way = way - way.dot(along) * along
-        if way.length < 1e-6:
-            return 0
-        hinge = along.cross(way.normalized())
-        done = 0
-        for name, degrees in zip(names, angles):
-            pb = bones.get(name)
-            if pb is None:
-                missing.append(name)
-                continue
-            head = pb.matrix.to_translation()
-            pb.matrix = (mathutils.Matrix.Translation(head)
-                         @ mathutils.Matrix.Rotation(math.radians(degrees), 4, hinge)
-                         @ mathutils.Matrix.Translation(-head) @ pb.matrix)
-            # A joint's children are placed from it, so each is settled before the next.
-            bpy.context.view_layer.update()
-            done += 1
-        return done
 
+def _curl_towards(bones, names: list[str], way: "mathutils.Vector", angles: tuple[float, ...], missing: list[str]) -> int:
+    """Turn a digit's joints, base first, so its tip goes the given way. The
+    joints share one hinge, the one that takes the base joint that way."""
+    base = bones.get(names[0])
+    if base is None:
+        missing.append(names[0])
+        return 0
+    along = base.matrix.to_3x3().col[1].normalized()
+    way = way - way.dot(along) * along
+    if way.length < 1e-6:
+        return 0
+    hinge = along.cross(way.normalized())
+    done = 0
+    for name, degrees in zip(names, angles):
+        pb = bones.get(name)
+        if pb is None:
+            missing.append(name)
+            continue
+        head = pb.matrix.to_translation()
+        pb.matrix = (mathutils.Matrix.Translation(head)
+                     @ mathutils.Matrix.Rotation(math.radians(degrees), 4, hinge)
+                     @ mathutils.Matrix.Translation(-head) @ pb.matrix)
+        # A joint's children are placed from it, so each is settled before the next.
+        bpy.context.view_layer.update()
+        done += 1
+    return done
+
+
+def _curl_thumb(bones, side: str, frame, missing: list[str]) -> int:
+    """Bring a thumb round opposite the fingers: its base towards the palm and
+    across it, its two outer joints along the hand and in."""
+    palm, across, reach = frame
+    degrees, (to_palm, to_little) = SUPPORT_HAND_THUMB_BASE
+    turned = _curl_towards(bones, [f"親指０.{side}"], palm * to_palm + across * to_little, (degrees,), missing)
+    angles, (to_tips, to_palm) = SUPPORT_HAND_THUMB_TIP
+    return turned + _curl_towards(bones, [f"親指１.{side}", f"親指２.{side}"], reach * to_tips + palm * to_palm, angles, missing)
+
+
+def _curl_support_hand(armature_obj: "bpy.types.Object", missing: list[str]) -> int:
+    """Curl the left hand's fingers towards its palm. Runs in pose mode and
+    returns the number of bones turned."""
+    bones = armature_obj.pose.bones
+    frame = _hand_frame(bones, "L")
+    if frame is None:
+        missing.append("手首.L")
+        return 0
     turned = 0
     for finger, angles in SUPPORT_HAND_CURL.items():
-        turned += curl([f"{finger}{joint}.L" for joint in "１２３"], palm, angles)
-    degrees, (to_palm, to_little) = SUPPORT_HAND_THUMB_BASE
-    turned += curl(["親指０.L"], palm * to_palm + across * to_little, (degrees,))
-    reach = wrist.bone.matrix_local.to_3x3().col[1].normalized()
-    angles, (to_tips, to_palm) = SUPPORT_HAND_THUMB_TIP
-    turned += curl(["親指１.L", "親指２.L"], reach * to_tips + palm * to_palm, angles)
-    return turned
+        turned += _curl_towards(bones, [f"{finger}{joint}.L" for joint in "１２３"], frame[0], angles, missing)
+    return turned + _curl_thumb(bones, "L", frame, missing)
+
+
+def curl_trigger_thumb(armature_obj: "bpy.types.Object", missing: list[str]) -> int:
+    """Close the right hand's thumb, measured off the hand as the left one's is:
+    a thumb bone's own axes do not say which way it closes. Runs in pose mode
+    and returns the number of bones turned."""
+    bones = armature_obj.pose.bones
+    frame = _hand_frame(bones, "R")
+    if frame is None:
+        missing.append("手首.R")
+        return 0
+    return _curl_thumb(bones, "R", frame, missing)
 
 
 def apply_fist_pose(
@@ -1356,8 +1384,10 @@ def apply_fist_pose(
     and full-width numerals: 中指１.L, 親指０.R, etc. The thumb is numbered
     0/1/2; the other four fingers are 1/2/3.
 
-    The RIGHT hand is the trigger hand: a moderate closed fist, turned about each
-    bone's local X, which on that side bends a finger towards the palm.
+    The RIGHT hand is the trigger hand: a moderate closed fist, its fingers turned
+    about each bone's local X, which on that side bends a finger towards the palm.
+    Its thumb is brought round as the left hand's is, measured off the hand: a
+    thumb bone's own X closes the thumb on one source and opens it on another.
 
     The LEFT hand is the support hand, which lies under a handguard or hangs
     open at her side, so it is a loose curl that deepens from the index finger
@@ -1370,11 +1400,8 @@ def apply_fist_pose(
     """
     NON_THUMB_FINGERS = ["中指", "人指", "小指", "薬指"]
 
-    # Joint curl angles (degrees). Knuckle/PIP/DIP for non-thumb;
-    # CMC/MCP/IP for the thumb (gentler — a closed fist tucks the thumb
-    # over the fingers without fully curling it).
+    # Joint curl angles (degrees): knuckle, PIP and DIP.
     NON_THUMB_ANGLES = [55, 75, 30]
-    THUMB_ANGLES = [20, 30, 40]
 
     rotations: list[tuple[str, float]] = []
     if custom_rotations:
@@ -1392,8 +1419,6 @@ def apply_fist_pose(
                 continue
             for joint, deg in zip("１２３", NON_THUMB_ANGLES):
                 rotations.append((f"{finger}{joint}.R", math.radians(deg)))
-        for joint, deg in zip("０１２", THUMB_ANGLES):
-            rotations.append((f"親指{joint}.R", math.radians(deg)))
 
     clear_selection()
     bpy.context.view_layer.objects.active = armature_obj
@@ -1413,6 +1438,7 @@ def apply_fist_pose(
 
     bpy.context.view_layer.update()
     if not custom_rotations:
+        rotated += curl_trigger_thumb(armature_obj, missing)
         rotated += _curl_support_hand(armature_obj, missing)
     bpy.ops.object.mode_set(mode="OBJECT")
 

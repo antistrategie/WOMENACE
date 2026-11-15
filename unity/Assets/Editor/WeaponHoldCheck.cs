@@ -263,7 +263,7 @@ namespace Womenace.EditorTools
                     owned = true;
                     skinned.BakeMesh(mesh, true);
                 }
-                else if (renderer.GetComponent<MeshFilter>() is { } filter)
+                else if (renderer.TryGetComponent<MeshFilter>(out var filter))
                     mesh = filter.sharedMesh;
                 if (mesh == null)
                     continue;
