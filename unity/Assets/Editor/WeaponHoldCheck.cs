@@ -157,17 +157,24 @@ namespace Womenace.EditorTools
                 var gameTurn = grip != null && hand != null ? Quaternion.Angle(hand.rotation, grip.rotation * GripTurn) : -1f;
                 var reach = 0f;
                 var arm = 0f;
+                var follows = true;
                 if (grip != null && upper != null && lower != null && hand != null)
                 {
                     arm = Vector3.Distance(upper.position, lower.position) + Vector3.Distance(lower.position, hand.position);
                     reach = Vector3.Distance(upper.position, grip.position);
-                    Solve(upper, lower, hand, grip);
+                    // A stance the game leaves the left hand out of (a blade held in one hand)
+                    // has that hand well off the empty in the doll's own recording, and there
+                    // it stays.
+                    follows = !(recorded && gameGap > 0.02f && Find(doll.transform, Socket) != null && OwnRecording(doll, parameters));
+                    if (follows)
+                        Solve(upper, lower, hand, grip);
                 }
 
                 var json = new StringBuilder("{\n");
                 json.Append($"  \"name\": \"{name}\",\n  \"states\": [{string.Join(", ", states.Select(s => $"\"{s}\""))}],\n");
                 json.Append($"  \"armLength\": {F(arm)}, \"reach\": {F(reach)}, \"leftHandBefore\": {V(before)},\n");
                 json.Append($"  \"handToGripBefore\": {F(gameGap)}, \"handTurnBefore\": {F(gameTurn)},\n");
+                json.Append($"  \"leftHandFollows\": {(follows ? "true" : "false")},\n");
                 json.Append($"  \"hasLeftGrip\": {(grip != null ? "true" : "false")},\n  \"nodes\": {{\n");
                 var nodes = new List<string>();
                 void Node(string label, Transform t)
@@ -196,6 +203,15 @@ namespace Womenace.EditorTools
             {
                 Object.DestroyImmediate(doll);
             }
+        }
+
+        // Whether a recording is of this doll: it names the unit's body by its first level of
+        // detail, which the doll then has too.
+        private static bool OwnRecording(GameObject doll, string recording)
+        {
+            var body = File.ReadLines(recording).Select(l => l.Split('\t')).Where(r => r[0] == "T")
+                .Select(r => r[1]).FirstOrDefault(path => path.EndsWith("_LOD0") && !path.Contains("/"));
+            return body != null && doll.transform.Find(body) != null;
         }
 
         // Puts the doll's transforms where a recording has them, by their paths under the root.

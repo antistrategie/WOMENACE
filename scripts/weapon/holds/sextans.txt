@@ -1,0 +1,207 @@
+ELEMENT	player_squad.sextans	0
+WEAPON	Root/Hips/Spine/Spine2/Shoulder_R/UpperArm_R/LowerArm_R/Hand_R/Hand_R_Socket/main
+ANIMATOR	.	human	sextans
+PARAM	Acceleration_Sign	Float	0
+PARAM	Aiming	Bool	0
+PARAM	Aiming_Weapon_1	Bool	0
+PARAM	Aiming_Weapon_2	Bool	0
+PARAM	AngleRotationPingPong	Float	0
+PARAM	AngleRotation	Float	0
+PARAM	AngleRotation_Saved	Float	0
+ANIMATORERROR	MissingMethodException
+MESH	sextans_LOD0	sextans_LOD0:50125	baked_Face:Womenace/DollToonFace	1
+MESH	sextans_LOD1	sextans_LOD1:28854	baked_Face:Womenace/DollToonFace	1
+MESH	sextans_LOD2	sextans_LOD2:16892	baked_Face:Womenace/DollToonFace	1
+MESH	sextans_LOD3	sextans_LOD3:8234	baked_Face:Womenace/DollToonFace	1
+MESH	Root/Hips/Spine/Spine2/Shoulder_R/UpperArm_R/LowerArm_R/Hand_R/Hand_R_Socket/main/muzzle/halo_funky/HALO_HALO	HALO_HALO:26	m.fakelight:HDRP/Unlit	1
+MESH	Root/Hips/Spine/Spine2/Shoulder_R/UpperArm_R/LowerArm_R/Hand_R/Hand_R_Socket/main/muzzle/halo_funky/HALO_STAR	HALO_STAR:4	m.fakelightstar:HDRP/Unlit	1
+MESH	Root/Hips/Spine/Spine2/Shoulder_R/UpperArm_R/LowerArm_R/Hand_R/Hand_R_Socket/main/muzzle/halo_funky/HALO_STAR_001	HALO_STAR:4	m.fakelightstarbig:HDRP/Unlit	1
+MESH	Root/Hips/Spine/Spine2/Shoulder_R/UpperArm_R/LowerArm_R/Hand_R/Hand_R_Socket/main/sextans_sword_LOD0	sextans_sword_LOD0:9235	baked_sextans_sword_preview:Womenace/DollToon	1
+MESH	transform/dust01/footsteps_stone_small_01(Clone)	none	DefaultHDParticleMaterial:HDRP/Unlit	0
+MESH	transform/dust01/footsteps_stone_small_01(Clone)/dust_kickup_steps_small_earth_01	none	smoke_puff_fix_01:Shader Graphs/ParticleLitSoft	1
+MESH	transform/dust01/footsteps_snow_small_01(Clone)	none	DefaultHDParticleMaterial:HDRP/Unlit	0
+MESH	transform/dust01/footsteps_snow_small_01(Clone)/particle_kickup_steps_small_snow_01	none	snow_sprite_01:Shader Graphs/ParticleLitSoft	1
+MESH	transform/dust01/footsteps_snow_small_01(Clone)/dust_kickup_steps_small_snow	none	smoke_puff_fix_01:Shader Graphs/ParticleLitSoft	1
+MESH	transform/dust01/footsteps_earth_small_01(Clone)	none	DefaultHDParticleMaterial:HDRP/Unlit	0
+MESH	transform/dust01/footsteps_earth_small_01(Clone)/dust_kickup_steps_small_earth_01	none	smoke_puff_fix_01:Shader Graphs/ParticleLitSoft	1
+T	.	0 0 0	0 0 0 1	1 1 1	1
+T	sextans_LOD0	0 0 0	0 0 0 1	1 1 1	1
+T	sextans_LOD1	0 0 0	0 0 0 1	1 1 1	1
+T	sextans_LOD2	0 0 0	0 0 0 1	1 1 1	1
+T	sextans_LOD3	0 0 0	0 0 0 1	1 1 1	1
+T	Root	0 0 0	0 0 0 1	1 1 1	1
+T	Root/Hips	0.01042 1.00039 0.07347	-0.044681 -0.051392 -0.007396 0.997651	1 1 1	1
+T	Root/Hips/Cloth_L01	-0.13014 1.19002 0.02033	-0.958051 0.254826 0.116646 0.059961	1 1 1	1
+T	Root/Hips/Cloth_L01/Cloth_L02	-0.17531 1.11242 0.01535	-0.966364 0.222037 0.116174 0.057823	1 1 1	1
+T	Root/Hips/Cloth_L01/Cloth_L02/Cloth_L03	-0.20894 1.04443 0.01077	-0.966364 0.222037 0.116174 0.057823	1 1 1	1
+T	Root/Hips/Cloth_LB02	-0.06918 1.06973 -0.07171	-0.996748 -0.022164 -0.076029 0.014907	1 1 1	1
+T	Root/Hips/Cloth_LB02/Cloth_LB03	-0.06473 0.97395 -0.07424	-0.995978 -0.022907 -0.0862 -0.008492	1 1 1	1
+T	Root/Hips/Cloth_LB02/Cloth_LB03/Cloth_LB03_End	-0.06071 0.88319 -0.07234	-0.082393 -0.047606 -0.024455 0.995162	1 1 1	1
+T	Root/Hips/Cloth_LB04	0.01593 1.1472 -0.07349	-0.842945 0.324167 0.345212 0.255318	1 1 1	1
+T	Root/Hips/Cloth_LB04/Cloth_LB04_End	-0.01874 1.11557 -0.0834	-0.152795 -0.069842 0.149167 0.974436	1 1 1	1
+T	Root/Hips/Cloth_LB05	0.01445 1.14121 -0.06796	-0.985041 0.139928 0.09979 0.012514	1 1 1	1
+T	Root/Hips/Cloth_LB05/Cloth_LB05_End	-0.0089 1.06059 -0.06769	-0.114008 -0.057165 0.043258 0.99089	1 1 1	1
+T	Root/Hips/Cloth_LF01	-0.10054 1.20299 0.10161	0.952914 -0.224853 -0.138063 0.149447	1 1 1	1
+T	Root/Hips/Cloth_LF01/Cloth_LF02	-0.13072 1.13641 0.12864	0.965807 -0.182344 -0.101062 0.154126	1 1 1	1
+T	Root/Hips/Cloth_LF01/Cloth_LF02/Cloth_LF03	-0.15512 1.06909 0.15407	-0.107431 -0.048327 0.00475 0.993026	1 1 1	1
+T	Root/Hips/Cloth_R01	0.1627 1.18702 0.05072	-0.940976 -0.258685 -0.217221 0.021497	1 1 1	1
+T	Root/Hips/Cloth_R01/Cloth_R02	0.20732 1.10921 0.05719	-0.951061 -0.219415 -0.214447 0.036792	1 1 1	1
+T	Root/Hips/Cloth_R01/Cloth_R02/Cloth_R03	0.24023 1.04075 0.05902	-0.951061 -0.219415 -0.214447 0.036792	1 1 1	1
+T	Root/Hips/Cloth_RB02	0.11952 1.06781 -0.05213	-0.995231 0.0257 -0.029933 0.089216	1 1 1	1
+T	Root/Hips/Cloth_RB02/Cloth_RB03	0.11513 0.97354 -0.06931	-0.997743 0.028208 -0.019139 0.057862	1 1 1	1
+T	Root/Hips/Cloth_RB02/Cloth_RB03/Cloth_RB03_End	0.11021 0.88343 -0.0799	-0.020953 -0.059596 0.008474 0.997967	1 1 1	1
+T	Root/Hips/Cloth_RB04	0.03816 1.14697 -0.07118	-0.804845 -0.342717 -0.433013 0.217414	1 1 1	1
+T	Root/Hips/Cloth_RB04/Cloth_RB04_End	0.07365 1.11481 -0.07373	-0.136053 -0.030941 -0.171605 0.975236	1 1 1	1
+T	Root/Hips/Cloth_RB05	0.03836 1.14097 -0.06548	-0.970315 -0.134647 -0.200875 -0.00283	1 1 1	1
+T	Root/Hips/Cloth_RB05/Cloth_RB05_End	0.0602 1.06008 -0.06048	-0.108855 -0.044658 -0.060682 0.991198	1 1 1	1
+T	Root/Hips/Cloth_RF01	0.11731 1.20076 0.12421	0.940137 0.187328 0.234328 0.161682	1 1 1	1
+T	Root/Hips/Cloth_RF01/Cloth_RF02	0.13886 1.13237 0.15475	0.958446 0.141426 0.197634 0.149402	1 1 1	1
+T	Root/Hips/Cloth_RF01/Cloth_RF02/Cloth_RF03	0.15497 1.06281 0.18076	-0.080265 -0.048135 -0.036847 0.994929	1 1 1	1
+T	Root/Hips/Spine	0.01492 1.23178 0.05293	-0.095633 -0.014316 0.050449 0.994034	1 1 1	1
+T	Root/Hips/Spine/Bag_RB02_jnt_skin	0.17809 1.15943 -0.06867	0.994455 0.080226 0.023806 0.063684	1 1 1	1
+T	Root/Hips/Spine/Bag_RB02_jnt_skin/Bag_RB03_jnt_skin	0.1931 1.06552 -0.05616	0.993642 0.008014 0.017706 0.110894	1 1 1	1
+T	Root/Hips/Spine/Bag_RB02_jnt_skin/Bag_RB03_jnt_skin/Bag_RB03_jnt_skin_End	0.19411 0.98366 -0.03764	-0.097583 -0.016058 0.006328 0.995078	1 1 1	1
+T	Root/Hips/Spine/Spine2	0.00371 1.34402 0.03091	-0.149961 0.093185 0.039845 0.983484	1 1 1	1
+T	Root/Hips/Spine/Spine2/backpack	-0.03236 1.27611 -0.15702	-0.097608 0.094447 0.0318 0.990223	1 1 1	1
+T	Root/Hips/Spine/Spine2/Collar_L02	-0.0668 1.639 -0.00608	-0.844442 0.255294 0.455158 -0.120721	1 1 1	1
+T	Root/Hips/Spine/Spine2/Collar_L02/Collar_L02End	-0.10147 1.5483 0.04099	-0.844442 0.255295 0.455159 -0.120721	1 1 1	1
+T	Root/Hips/Spine/Spine2/Collar_R02	0.02519 1.64374 -0.02442	-0.904767 -0.306297 -0.291357 -0.051875	1 1 1	1
+T	Root/Hips/Spine/Spine2/Collar_R02/Collar_R02End	0.08174 1.55665 0.00497	-0.904767 -0.306297 -0.291356 -0.051875	1 1 1	1
+T	Root/Hips/Spine/Spine2/Flower_R02	0.1759 1.5704 -0.0143	-0.574208 -0.228162 -0.260448 0.741886	1 1 1	1
+T	Root/Hips/Spine/Spine2/Flower_R02/Flower_R03	0.26143 1.59742 -0.11099	-0.689088 -0.191712 -0.31171 0.625493	1 1 1	1
+T	Root/Hips/Spine/Spine2/Flower_R02/Flower_R03/Flower_R03_End	0.34772 1.57843 -0.20892	-0.689088 -0.191712 -0.31171 0.625493	1 1 1	1
+T	Root/Hips/Spine/Spine2/Flower_R04	0.14693 1.49748 0.08127	-0.994497 -0.101261 -0.011172 -0.024456	1 1 1	1
+T	Root/Hips/Spine/Spine2/Flower_R04/Flower_R04_End	0.16138 1.4271 0.08493	-0.994497 -0.101263 -0.011173 -0.024455	1 1 1	1
+T	Root/Hips/Spine/Spine2/Flower_R05	0.08453 1.44655 0.11875	-0.997003 -0.071813 0.02574 0.012859	1 1 1	1
+T	Root/Hips/Spine/Spine2/Flower_R05/Flower_R05_End	0.0965 1.36351 0.11629	-0.997003 -0.071814 0.02574 0.01286	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck	-0.02608 1.61067 -0.04964	0.098124 -0.022119 -0.027079 0.99456	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Collar_MB01	-0.02379 1.62293 -0.09014	0.258778 -0.023465 -0.039598 0.96484	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Collar_MB01/Collar_MB01_End	-0.02071 1.66432 -0.0661	0.258778 -0.023465 -0.039598 0.96484	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head	-0.02231 1.68525 -0.03468	0.191267 -0.065693 -0.043445 0.978373	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/Cloth_L06	-0.01668 1.69052 -0.15487	-0.625047 0.297678 0.48803 0.531538	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/Cloth_L06/Cloth_L06_End	-0.05408 1.67971 -0.17056	-0.625046 0.297678 0.48803 0.531539	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/Cloth_L07	-0.01842 1.68655 -0.15311	-0.967054 0.139413 0.132201 0.167015	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/Cloth_L07/Cloth_L07_End	-0.03159 1.64855 -0.16512	-0.967054 0.139412 0.132201 0.167015	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/Cloth_R06	0.00006 1.68865 -0.15297	-0.585873 -0.296601 -0.61235 0.440238	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/Cloth_R06/Cloth_R06_End	0.03728 1.67034 -0.15938	-0.585867 -0.296603 -0.61235 0.440243	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/Cloth_R07	0.00046 1.68444 -0.15097	-0.95128 -0.08313 -0.262651 0.138458	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/Cloth_R07/Cloth_R07_End	0.01015 1.64466 -0.16019	-0.95128 -0.08313 -0.26265 0.138459	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/Earrings_L01	-0.08955 1.71242 -0.03568	0.995431 -0.033571 0.061354 -0.06501	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/Earrings_L01/Earrings_L01_End	-0.09238 1.66497 -0.04209	0.995431 -0.033571 0.061354 -0.06501	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/HairA1	-0.01141 1.68401 -0.13428	-0.966363 0.03699 -0.07002 0.244686	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/HairA1/HairA2	-0.01274 1.65272 -0.15132	-0.987001 0.044558 -0.065663 0.139757	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/HairA1/HairA2/HairA3	-0.01511 1.6202 -0.1609	-0.99095 0.047724 -0.062317 0.108892	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/HairA1/HairA2/HairA3/HairA4	-0.01843 1.5803 -0.17	-0.968287 0.040113 -0.067766 0.237106	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/HairA1/HairA2/HairA3/HairA4/HairA5	-0.0204 1.54208 -0.19008	-0.983545 0.045163 -0.064511 0.1626	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/HairB3	-0.10043 1.77985 0.0196	0.984146 -0.053063 0.051593 -0.161184	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/HairB3/HairB4	-0.10301 1.75217 0.01013	0.980787 -0.006893 0.112138 -0.159483	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/HairB3/HairB4/HairB5	-0.10236 1.72418 0.00085	0.969761 0.036598 0.166211 -0.174922	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/HairB3/HairB4/HairB5/HairB6	-0.09953 1.70372 -0.0063	0.95192 0.090536 0.231232 -0.1794	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/HairB3/HairB4/HairB5/HairB6/HairB7	-0.09373 1.68284 -0.0131	0.97003 0.034061 0.165929 -0.174211	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/HairC3	0.06119 1.75699 0.03279	-0.974476 0.011048 -0.102894 0.19922	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/HairC3/HairC4	0.06189 1.72381 0.0187	-0.984327 0.098254 0.001326 0.146442	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/HairC3/HairC4/HairC5	0.05502 1.69058 0.0085	-0.984815 0.127704 0.03462 0.112397	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/HairC3/HairC4/HairC5/HairC6	0.04579 1.65704 0.00093	-0.988517 0.137729 0.044868 0.04305	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/HairC3/HairC4/HairC5/HairC6/HairC7	0.03586 1.62257 -0.00168	-0.97447 0.184065 0.111751 -0.063562	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/HairC3/HairC4/HairC5/HairC6/HairC7/HairC8	0.02643 1.59727 0.00283	-0.813066 0.408051 0.412979 -0.043219	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/HairC3/HairC4/HairC5/HairC6/HairC7/HairC8/HairC9	0.00089 1.57029 0.0194	-0.929538 0.273702 0.233303 -0.081341	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/HairD3	-0.02211 1.75636 0.09397	0.98234 -0.108101 -0.021325 -0.151222	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/HairD3/HairD4	-0.02583 1.74052 0.08899	0.97104 -0.103622 -0.013728 -0.21484	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/HairD3/HairD4/HairD5	-0.02943 1.72511 0.08179	0.897507 -0.232166 -0.188534 -0.324093	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/HairD3/HairD4/HairD5/HairD6	-0.0426 1.70844 0.06971	0.889368 -0.222778 -0.174675 -0.359005	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/HairD3/HairD4/HairD5/HairD6/HairD7	-0.05577 1.69222 0.05556	0.949659 -0.134452 -0.061946 -0.276104	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/HairE3	-0.06969 1.77352 0.06823	-0.948214 0.141864 0.06934 0.275603	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/HairE3/HairE4	-0.07475 1.7602 0.05994	-0.94441 0.147605 0.069252 0.285495	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/HairE3/HairE4/HairE5	-0.08 1.74712 0.05139	-0.919964 0.146285 0.076946 0.355455	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/HairE3/HairE4/HairE5/HairE6	-0.08498 1.73627 0.04166	-0.921884 0.141341 0.075628 0.352752	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/HairE3/HairE4/HairE5/HairE6/HairE7	-0.08981 1.72532 0.03197	-0.921885 0.14134 0.075627 0.352751	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/HairF3	0.03067 1.76672 0.0778	-0.953187 -0.05916 -0.191329 0.226559	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/HairF3/HairF4	0.03358 1.75371 0.07182	-0.934562 -0.057139 -0.182853 0.299822	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/HairF3/HairF4/HairF5	0.03693 1.74114 0.06349	-0.922572 -0.037835 -0.156017 0.350839	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/HairF3/HairF4/HairF5/HairF6	0.03969 1.72957 0.0537	-0.923937 -0.032878 -0.154461 0.348428	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/HairF3/HairF4/HairF5/HairF6/HairF7	0.04228 1.71794 0.04394	-0.923938 -0.032877 -0.15446 0.348426	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/Hat_M01	-0.0748 1.87224 0.07235	-0.267007 0.018463 0.008577 0.96348	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/Hat_M01/Hat_M02	-0.07617 1.91686 0.04558	-0.193788 0.024193 0.026769 0.98038	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/Hat_M01/Hat_M02/Hat_M03	-0.07913 1.96104 0.02746	0.031617 0.000711 -0.001608 0.999499	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/Hat_M01/Hat_M02/Hat_M03/Hat_M04	-0.07893 2.02179 0.03131	-0.041848 0.032932 0.81558 0.576189	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/Hat_M01/Hat_M02/Hat_M03/Hat_M04/Hat_M05	-0.14145 1.99965 0.03168	-0.066314 -0.052257 0.769212 0.633392	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/Lf_Hat_LB01	-0.08865 1.90083 -0.05229	-0.473397 0.074248 0.090365 0.873051	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/Lf_Hat_LB01/Lf_Hat_LB01_End	-0.11327 1.95861 -0.14004	-0.473397 0.074248 0.090366 0.873051	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/Rt_Hat_RB01	0.09155 1.88073 -0.03187	-0.459396 -0.133492 -0.278215 0.832905	1 1 1	1
+T	Root/Hips/Spine/Spine2/Neck/Head/Rt_Hat_RB01/Rt_Hat_RB01_End	0.1548 1.92639 -0.10643	-0.459397 -0.133492 -0.278215 0.832905	1 1 1	1
+T	Root/Hips/Spine/Spine2/ShouderCloth_MB02	-0.03357 1.48112 -0.12068	-0.993332 -0.01279 0.099955 0.056018	1 1 1	1
+T	Root/Hips/Spine/Spine2/ShouderCloth_MB02/ShouderCloth_MB02End	-0.03255 1.40965 -0.12887	-0.993332 -0.01279 0.099955 0.056018	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_L	-0.07201 1.55702 -0.04938	-0.74573 0.65421 -0.124627 0.019081	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_L/UpperArm_L	-0.1489 1.54567 -0.06455	-0.242347 0.292347 -0.903567 -0.198414	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_L/UpperArm_L/LowerArm_L	-0.28015 1.3488 -0.17793	-0.498231 -0.449948 -0.676832 0.302012	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_L/UpperArm_L/LowerArm_L/Hand_L	-0.03819 1.23231 -0.09096	-0.610216 -0.502572 -0.525272 0.314877	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_L/UpperArm_L/LowerArm_L/Hand_L/Hand_L_Socket	-0.03819 1.23231 -0.09096	-0.610216 -0.502572 -0.525272 0.314877	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_L/UpperArm_L/ShouderCloth_LB02	-0.22987 1.57107 -0.08117	0.274564 0.193492 -0.835096 -0.435649	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_L/UpperArm_L/ShouderCloth_LB02/ShouderCloth_LB02End	-0.2634 1.54164 -0.11151	0.274563 0.193492 -0.835097 -0.435649	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_L/UpperArm_L/ShouderCloth_LF03	-0.12825 1.49011 -0.01143	0.392082 -0.085953 -0.91574 0.017462	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_L/UpperArm_L/ShouderCloth_LF03/ShouderCloth_LF04	-0.1308 1.41927 0.00088	0.423864 -0.082835 -0.901569 0.025535	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_L/UpperArm_L/ShouderCloth_LF03/ShouderCloth_LF04/ShouderCloth_LF04_End	-0.13225 1.36023 0.01113	0.423863 -0.082835 -0.901569 0.025535	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_L/UpperArm_L/SleeveA2.L	-0.38388 1.41609 -0.26795	0.105688 0.109566 -0.925811 -0.345977	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_L/UpperArm_L/SleeveA2.L/SleeveA3.L	-0.50974 1.26595 -0.32421	0.126608 0.092511 -0.942843 -0.294041	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_L/UpperArm_L/SleeveA2.L/SleeveA3.L/SleeveA4.L	-0.60524 1.12028 -0.36898	0.201202 0.068087 -0.94673 -0.242041	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_L/UpperArm_L/SleeveA2.L/SleeveA3.L/SleeveA4.L/SleeveA5.L	-0.66724 0.99459 -0.40154	0.201201 0.068087 -0.946731 -0.242042	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_L/UpperArm_L/SleeveB2.L	-0.37856 1.34871 -0.17506	0.016715 0.092116 -0.976402 -0.194614	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_L/UpperArm_L/SleeveB2.L/SleeveB3.L	-0.44183 1.19641 -0.20635	0.009442 0.057988 -0.988676 -0.13809	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_L/UpperArm_L/SleeveB2.L/SleeveB3.L/SleeveB4.L	-0.47444 1.08189 -0.22041	0.009441 0.057987 -0.988676 -0.13809	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_L/UpperArm_L/SleeveC2.L	-0.29138 1.2753 -0.15114	-0.161243 0.046652 -0.982099 -0.085478	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_L/UpperArm_L/SleeveC2.L/SleeveC3.L	-0.3177 1.13415 -0.16035	-0.261753 0.024421 -0.963456 -0.051397	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_L/UpperArm_L/SleeveC2.L/SleeveC3.L/SleeveC4.L	-0.32776 1.0448 -0.16217	-0.261754 0.024421 -0.963456 -0.051397	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_L/UpperArm_L/SleeveC2.L/SleeveC5.L	-0.29344 1.13386 -0.22527	-0.004653 0.084894 -0.9962 -0.018925	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_L/UpperArm_L/SleeveC2.L/SleeveC5.L/SleeveC6.L	-0.29898 0.99216 -0.24958	-0.004653 0.084894 -0.9962 -0.018925	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_L/UpperArm_L/SleeveD1.L	-0.1803 1.45195 -0.15911	0.171399 0.131127 -0.96997 -0.112187	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_L/UpperArm_L/SleeveD1.L/SleeveD2.L	-0.20721 1.30536 -0.20475	0.171399 0.131127 -0.96997 -0.112187	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_R	0.02151 1.56183 -0.06803	-0.125882 -0.031397 -0.736251 0.664156	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_R/UpperArm_R	0.09958 1.55266 -0.0776	-0.12712 0.033775 -0.976329 0.171702	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_R/UpperArm_R/LowerArm_R	0.18529 1.30635 -0.10636	-0.117288 -0.0457 -0.970008 0.20794	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_R/UpperArm_R/LowerArm_R/Hand_R	0.30219 1.04967 -0.09511	0.036085 0.051941 -0.994571 0.082637	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_R/UpperArm_R/LowerArm_R/Hand_R/Hand_R_Socket	0.30219 1.04967 -0.09511	0.036085 0.051941 -0.994571 0.082637	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_R/UpperArm_R/LowerArm_R/Hand_R/Hand_R_Socket/main	0.30219 1.04967 -0.09511	0.036085 0.051941 -0.994571 0.082637	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_R/UpperArm_R/LowerArm_R/Hand_R/Hand_R_Socket/main/muzzle	0.22473 0.81947 1.31311	0.036085 0.051941 -0.994571 0.082637	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_R/UpperArm_R/LowerArm_R/Hand_R/Hand_R_Socket/main/muzzle/halo_funky	0.22473 0.81947 1.31311	-0.032917 0.739995 -0.666541 0.083949	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_R/UpperArm_R/LowerArm_R/Hand_R/Hand_R_Socket/main/muzzle/halo_funky/HALO_HALO	0.22473 0.81947 1.31311	-0.032917 0.739995 -0.666541 0.083949	2 2 2	0
+T	Root/Hips/Spine/Spine2/Shoulder_R/UpperArm_R/LowerArm_R/Hand_R/Hand_R_Socket/main/muzzle/halo_funky/HALO_STAR	0.22243 0.82818 1.324	0.101867 -0.588453 0.017799 0.801892	0.1 0.1 0.1	0
+T	Root/Hips/Spine/Spine2/Shoulder_R/UpperArm_R/LowerArm_R/Hand_R/Hand_R_Socket/main/muzzle/halo_funky/HALO_STAR_001	0.22243 0.82818 1.324	0.101867 -0.588453 0.017799 0.801892	0.2312 0.2312 0.2312	0
+T	Root/Hips/Spine/Spine2/Shoulder_R/UpperArm_R/LowerArm_R/Hand_R/Hand_R_Socket/main/sextans_sword_LOD0	0.27817 1.00814 0.28185	0.036085 0.051941 -0.994571 0.082637	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_R/UpperArm_R/LowerArm_R/Hand_R/Hand_R_Socket/main/weapon_hand_l	0.33452 1.03626 0.64338	-0.240634 -0.586233 -0.127539 -0.762995	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_R/UpperArm_R/ShouderCloth_RB02	0.06711 1.50347 -0.01431	0.778358 -0.034966 -0.593245 0.202477	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_R/UpperArm_R/ShouderCloth_RB02/ShouderCloth_RB02End	0.07713 1.45407 0.00493	0.778358 -0.034966 -0.593245 0.202476	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_R/UpperArm_R/ShouderCloth_RF03	0.07928 1.60217 -0.10521	0.777122 -0.035495 -0.623563 0.077401	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_R/UpperArm_R/ShouderCloth_RF03/ShouderCloth_RF04	0.08226 1.53128 -0.09337	0.756057 -0.047457 -0.649575 0.064639	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_R/UpperArm_R/ShouderCloth_RF03/ShouderCloth_RF04/ShouderCloth_RF04_End	0.08299 1.4721 -0.08381	0.756057 -0.047457 -0.649576 0.06464	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_R/UpperArm_R/SleeveA2.R	0.19098 1.24886 0.03525	0.840184 0.018861 -0.517417 0.161291	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_R/UpperArm_R/SleeveA2.R/SleeveA3.R	0.23146 1.05578 0.08652	0.848864 -0.081639 -0.522224 0.006957	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_R/UpperArm_R/SleeveA2.R/SleeveA3.R/SleeveA4.R	0.20784 0.87835 0.10398	0.807408 -0.053795 -0.586066 0.041541	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_R/UpperArm_R/SleeveA2.R/SleeveA3.R/SleeveA4.R/SleeveA5.R	0.20235 0.7358 0.1227	0.807408 -0.053796 -0.586066 0.041541	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_R/UpperArm_R/SleeveB2.R	0.13536 1.23284 -0.06398	0.900485 0.080267 -0.426243 0.031641	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_R/UpperArm_R/SleeveB2.R/SleeveB3.R	0.16415 1.06747 -0.0659	0.904982 -0.005989 -0.425118 -0.015689	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_R/UpperArm_R/SleeveB2.R/SleeveB3.R/SleeveB4.R	0.16125 0.94764 -0.06869	0.904983 -0.005989 -0.425117 -0.01569	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_R/UpperArm_R/SleeveC2.R	0.17821 1.25881 -0.1691	0.951147 0.077906 -0.282597 -0.096903	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_R/UpperArm_R/SleeveC2.R/SleeveC3.R	0.19165 1.11938 -0.20196	0.976669 0.044037 -0.191151 -0.087414	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_R/UpperArm_R/SleeveC2.R/SleeveC3.R/SleeveC4.R	0.19638 1.03117 -0.21883	0.976668 0.044037 -0.19115 -0.087414	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_R/UpperArm_R/SleeveC2.R/SleeveC5.R	0.2576 1.12072 -0.18069	0.915325 0.083555 -0.393394 0.020986	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_R/UpperArm_R/SleeveC2.R/SleeveC5.R/SleeveC6.R	0.28198 0.97898 -0.18462	0.915325 0.083555 -0.393394 0.020986	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_R/UpperArm_R/SleeveD1.R	0.18906 1.44943 -0.08453	0.869402 0.102169 -0.480282 0.055061	1 1 1	1
+T	Root/Hips/Spine/Spine2/Shoulder_R/UpperArm_R/SleeveD1.R/SleeveD2.R	0.22499 1.29776 -0.0849	0.869402 0.102169 -0.480282 0.055062	1 1 1	1
+T	Root/Hips/UpperLeg_L	-0.08403 1.11868 0.05681	0.995907 0.008711 0.089938 0.002126	1 1 1	1
+T	Root/Hips/UpperLeg_L/LowerLeg_L	-0.07629 0.66215 0.05946	0.99471 -0.014488 0.093168 -0.040781	1 1 1	1
+T	Root/Hips/UpperLeg_L/LowerLeg_L/Foot_L	-0.08771 0.12638 0.01438	-0.006228 0.476242 0.878642 0.033809	1 1 1	1
+T	Root/Hips/UpperLeg_L/LowerLeg_L/Foot_L/Foot_L_ColliderRotator	-0.08771 0.12638 0.01438	0.003824 0.710166 0.703194 0.034165	1 1 1	1
+T	Root/Hips/UpperLeg_R	0.10866 1.11671 0.07681	0.996958 -0.026779 0.010302 -0.072466	1 1 1	1
+T	Root/Hips/UpperLeg_R/LowerLeg_R	0.08496 0.66555 0.01058	0.974844 0.017121 -0.210639 -0.070833	1 1 1	1
+T	Root/Hips/UpperLeg_R/LowerLeg_R/Foot_R	0.08687 0.13349 -0.06757	-0.289191 -0.443041 -0.828195 0.184872	1 1 1	1
+T	Root/Hips/UpperLeg_R/LowerLeg_R/Foot_R/Foot_R_ColliderRotator	0.08687 0.13349 -0.06757	-0.223304 -0.663787 -0.664514 0.260661	1 1 1	1
+T	transform	0 0 0	0 0 0 1	1 1 1	1
+T	transform/dust01	0 0 0	-0 1 0 -0	1 1 1	1
+T	transform/dust01/footsteps_stone_small_01(Clone)	0 0 0	-0 1 0 -0	1 1 1	1
+T	transform/dust01/footsteps_stone_small_01(Clone)/dust_kickup_steps_small_earth_01	0 0 0	0 0.707107 0.707107 -0	1 1 1	1
+T	transform/dust01/footsteps_snow_small_01(Clone)	0 0 0	-0 1 0 -0	1 1 1	1
+T	transform/dust01/footsteps_snow_small_01(Clone)/particle_kickup_steps_small_snow_01	0 0.097 0	0 0.707107 0.707107 -0	1 1 1	1
+T	transform/dust01/footsteps_snow_small_01(Clone)/dust_kickup_steps_small_snow	0 0 0	0 0.707107 0.707107 -0	1 1 1	1
+T	transform/dust01/footsteps_earth_small_01(Clone)	0 0 0	-0 1 0 -0	1 1 1	1
+T	transform/dust01/footsteps_earth_small_01(Clone)/dust_kickup_steps_small_earth_01	0 0 0	0 0.707107 0.707107 -0	1 1 1	1
+T	__jiangyu_mirrored:rmc_default_female_soldier_2	0 0 0	0 0 0 1	1 1 1	0

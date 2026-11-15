@@ -7,7 +7,8 @@ stands the doll as the game stood a unit in a mission:
   ref_body    the doll, still. Her right hand is where the game holds the weapon's root.
   ref_hand_r  her right hand again, in blue, so it reads against the weapon.
   ref_hand_l  her left hand, in green, a child of weapon_hand_l: it goes where the empty goes,
-              turned as the game turns it.
+              turned as the game turns it. In a stance the game leaves that hand out of (a
+              blade held in one hand) it stays where the stance has it.
 
 Move the root to move the whole weapon in her hand, or the mesh and the empties one by one.
 The reference objects cannot be picked. "Save placement" in the sidebar's WOMENACE tab writes
@@ -202,7 +203,8 @@ def main():
     make("ref_hand_r", vertices, faces.get("hand_r", []), (0.2, 0.45, 0.95, 1.0))
     left = make("ref_hand_l", vertices, faces.get("hand_l", []), (0.2, 0.75, 0.45, 1.0))
     grip = bpy.data.objects.get("weapon_hand_l")
-    if grip is not None:
+    data = json.loads(Path(args.pose).with_suffix(".json").read_text())
+    if grip is not None and data.get("leftHandFollows", True):
         bpy.context.view_layer.update()
         off = (grip.matrix_world.translation - nodes["grip"]).length if "grip" in nodes else 0
         if off > 0.002:

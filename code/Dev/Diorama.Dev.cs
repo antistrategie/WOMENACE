@@ -557,6 +557,11 @@ public static class Diorama
     [MutatingVerb]
     public static string PrepDeployAll() => StrategyDiorama.PrepDeployAllFromDev();
 
+    // Puts the squads with these character tags (comma separated) in the mission and takes
+    // every other squad out of it.
+    [MutatingVerb]
+    public static string PrepDeployOnly(string tags) => StrategyDiorama.PrepDeployFromDev(tags);
+
     [MutatingVerb]
     public static string PrepChibis(bool shown) => StrategyDiorama.PrepChibisFromDev(shown);
 

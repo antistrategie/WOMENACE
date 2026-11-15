@@ -217,7 +217,9 @@ def main():
         places, uv = model.view(prim["attributes"]["POSITION"]), model.view(prim["attributes"]["TEXCOORD_0"])
         for i in np.nonzero(share > 0.99)[0]:
             found = [v for v in uvs.get((round(float(uv[i][0]), 4), round(float(uv[i][1]), 4)), ()) if hand[v]]
-            if len(found) == 1:
+            # A source that doubles its vertices has several at one place on the texture, and
+            # in one place: any of them is the vertex.
+            if len(found) == 1 or (len(found) > 1 and np.ptp(old[found], axis=0).max() < 1e-4):
                 pairs_source.append(old[found[0]])
                 pairs_done.append(new[found[0]])
                 pairs_target.append(places[i].astype(np.float64))

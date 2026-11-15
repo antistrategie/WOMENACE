@@ -249,8 +249,13 @@ public sealed partial class StrategyDiorama
 
     // Puts every squad of the roster on the mission as a player would: each squad's tile is
     // pressed, then vanilla's own button in the unit window. To see the loadout past its limit.
-    internal static string PrepDeployAllFromDev()
+    internal static string PrepDeployAllFromDev() => PrepDeployFromDev(null);
+
+    // Adds the squads not in the mission, or with character tags given (comma separated) adds
+    // those and takes every other squad out, through the squad window's own button.
+    internal static string PrepDeployFromDev(string only)
     {
+        var wanted = only?.Split(',', StringSplitOptions.RemoveEmptyEntries);
         var screen = UIManager.Get()?.GetActiveScreen()?.TryCast<MissionPrepUIScreen>();
         var selector = screen?.m_UnitSelector;
         var d = _instance;
@@ -261,7 +266,10 @@ public sealed partial class StrategyDiorama
         {
             var slot = element.TryCast<MissionPrepUnitSelectSlot>();
             var leader = slot?.GetLeader();
-            if (leader == null || selector.GetDeployedEntity(leader) != null || !slot.IsInteractable())
+            if (leader == null || !slot.IsInteractable())
+                continue;
+            var inMission = selector.GetDeployedEntity(leader) != null;
+            if (inMission == (wanted == null || wanted.Contains(Affinity.CharacterTag(leader))))
                 continue;
             slot.OnClicked(MouseButton.LeftMouse);
             var button = UI.Find(d._squadWindow, UiSelector.Name(VanillaUi.Elements.UnitWindowButton))?.TryCast<InteractiveElement>();
@@ -270,7 +278,7 @@ public sealed partial class StrategyDiorama
             button.OnClicked(MouseButton.LeftMouse);
             added++;
         }
-        return $"pressed Add to Mission for {added} squads";
+        return $"pressed the squad window's button for {added} squads";
     }
 
     internal static string PrepFlatMapFromDev(bool shown)
