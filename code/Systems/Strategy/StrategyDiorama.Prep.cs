@@ -13,21 +13,16 @@ public sealed partial class StrategyDiorama
 {
     private const string PrepClass = "wm-prep";
     private const string PrepRosterName = "wm-prep-roster";
-    private const string PrepRailName = "wm-prep-rail";
     private const string PrepChipsName = "wm-prep-chips";
 
     // Vanilla's roster tile with its margin, and the roster's widths in tiles.
     private const float PrepTile = 57.6f;
-    private const int PrepColumnsWide = 3;
+    private const int PrepColumns = 2;
     private const float PrepScrollerWidth = 7.2f;
     // The count's box is the chips' height.
     private const float PrepChipHeight = 24f;
     private const float PrepGap = 6.4f;
-    private const float PrepRailWidth = 9.6f;
-    // Between the roster's scrollbar and the rail.
-    private const float PrepRailGap = 3.2f;
     private const float PrepInfoWidth = 210f;
-    private bool _prepRosterWide;
     private string _prepChipsOf;
     private int _prepTick;
 
@@ -77,16 +72,17 @@ public sealed partial class StrategyDiorama
         RefreshPrep(row);
     }
 
-    // Vanilla's roster is a fixed block of tiles two across. Here it is one column that scrolls,
-    // and the rail at its right widens it to three.
+    // Vanilla's roster is a fixed block of tiles two across. Here it is two across and scrolls,
+    // and stands against the squad panel's left side, so the squad picked and what it carries
+    // are side by side.
     private void LayOutPrepRoster(VisualElement row)
     {
         var tiles = UI.Find(row, UiSelector.Name(VanillaUi.Elements.UnitsContainer));
         if (tiles == null)
             return;
-        var columns = _prepRosterWide ? PrepColumnsWide : 1;
-        var width = columns * PrepTile;
-        var top = SquadsTop;
+        var width = PrepColumns * PrepTile;
+        // Under the chips, which run on past the roster to the squad panel.
+        var top = SquadsTop + PrepChipHeight + PrepGap;
 
         var scroll = UI.Find(row, UiSelector.Name(PrepRosterName));
         if (scroll == null)
@@ -113,7 +109,7 @@ public sealed partial class StrategyDiorama
                 s.marginTop = StyleKeyword.Null;
             });
         }
-        scroll.style.left = RosterLeft;
+        scroll.style.left = PrepRosterLeft;
         scroll.style.top = top;
         scroll.style.width = width + PrepScrollerWidth;
         scroll.style.height = SquadsBottom - top;
@@ -124,33 +120,13 @@ public sealed partial class StrategyDiorama
         // Vanilla starts its block of tiles below its own header.
         tiles.style.marginTop = 0;
 
-        var rail = UI.Find(row, UiSelector.Name(PrepRailName));
-        if (rail == null)
-        {
-            rail = new VisualElement { name = PrepRailName };
-            rail.AddToClassList("wm-prep__rail");
-            var chevron = new VisualElement { pickingMode = PickingMode.Ignore };
-            chevron.AddToClassList("wm-prep__rail-chevron");
-            rail.Add(chevron);
-            rail.RegisterCallback((EventCallback<ClickEvent>)(_ =>
-            {
-                Sound.Click();
-                _prepRosterWide = !_prepRosterWide;
-                LayOutPrepRoster(row);
-                LayOutPrepInfo(row);
-            }));
-            row.Insert(row.IndexOf(scroll), rail);
-            _shellUndo.Add(rail.RemoveFromHierarchy);
-        }
-        rail.style.left = RosterLeft + width + PrepScrollerWidth + PrepRailGap;
-        rail.style.top = SquadsTop;
-        rail.style.height = SquadsBottom - SquadsTop;
-        rail.EnableInClassList("wm-prep__rail--open", _prepRosterWide);
     }
 
-    // Where the middle space starts: past the roster and its rail. The widened roster opens over
-    // it, so the chips and the objectives stay where they are.
-    private static float PrepMiddleLeft => RosterLeft + PrepTile + PrepScrollerWidth + PrepRailGap + PrepRailWidth + PrepGap;
+    // The roster's left edge: its tiles and scrollbar end a gap short of the squad panel.
+    private const float PrepRosterLeft = SquadPanelLeft - PrepGap - PrepColumns * PrepTile - PrepScrollerWidth;
+
+    // Where the chips and the objectives start: the frame's left, which the roster has left.
+    private const float PrepMiddleLeft = RosterLeft;
 
     // Vanilla's details and objectives box, out of the map's column: the details become chips in
     // a row, and the box under them holds the objectives.
@@ -558,10 +534,26 @@ public sealed partial class StrategyDiorama
             PlacePrepSupplies();
             RefreshPrepSections();
 
-            // The word after what is left is red with vanilla's figure once the loadout is over.
-            if (UI.Find(_shellRoot, UiSelector.Name(PrepSuppliesLeftName)) is { } leftWord
+            // What is left of the limit, in words: so much left, full at exactly the limit, and
+            // so much over it in red. Vanilla prints what is left with a minus once it is over
+            // and nothing at the limit, and writes it again each frame, so past the limit and
+            // at it the figure is put away and the word carries what there is to say.
+            if (UI.Find(_shellRoot, UiSelector.Name(PrepSuppliesLeftName))?.TryCast<Label>() is { } leftWord
                 && UI.Find(_shellRoot, UiSelector.Name(VanillaUi.Elements.SuppliesDelta))?.TryCast<Label>() is { } delta)
-                leftWord.style.color = (delta.text ?? "").Contains('-') ? PrepOverInk : StyleKeyword.Null;
+            {
+                // Vanilla colours its figure with tags, whose own digits are not the figure's.
+                var plain = System.Text.RegularExpressions.Regex.Replace(delta.text ?? "", "<[^>]*>", "");
+                var amount = System.Text.RegularExpressions.Regex.Match(plain, "[0-9]+");
+                var left = amount.Success ? int.Parse(amount.Value) : 0;
+                var over = plain.Contains('-') && left > 0;
+                var word = over ? left + " " + Locale.Text("WOMENACE::ui/prep/over", "OVER")
+                    : left == 0 ? Locale.Text("WOMENACE::ui/prep/full", "FULL")
+                    : Locale.Text("WOMENACE::ui/prep/left", "LEFT");
+                if (leftWord.text != word)
+                    leftWord.text = word;
+                leftWord.style.color = over ? PrepOverInk : StyleKeyword.Null;
+                delta.style.display = over || left == 0 ? DisplayStyle.None : StyleKeyword.Null;
+            }
 
             // What the open squad uses, from the figure vanilla prints on the bar.
             if (UI.Find(_shellRoot, UiSelector.Name(PrepSuppliesUsesName))?.TryCast<Label>() is { } usesLine

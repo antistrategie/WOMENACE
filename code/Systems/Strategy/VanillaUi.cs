@@ -30,6 +30,8 @@ internal static class VanillaUi
     {
         // A screen document's own root, under which the screen's panels sit.
         internal const string ScreenRootClass = "screen-root";
+        // Mission preparation's header, which that screen shows by its own inline style.
+        internal const string ScreenHeader = "ScreenHeader";
         // The tab bar (StrategyNavigation) and its parts.
         internal const string TabBarButtons = "Buttons";
         internal const string TabBarResources = "Resources";
@@ -244,6 +246,8 @@ internal static class VanillaUi
         // The black market's three panels, and its balance's picture and number.
         internal const string MarketPlayerPanel = "PlayerPanel";
         internal const string MarketTradePanel = "TradePanel";
+        // The black market's shadow up from the foot of the screen, as wide as the root.
+        internal const string MarketShadow = "Shadow";
         internal const string MarketMerchantPanel = "MerchantPanel";
         internal const string MarketBalanceIcon = "BalanceIcon";
         internal const string MarketBalanceValue = "BalanceValue";
@@ -283,6 +287,7 @@ internal static class VanillaUi
         internal static readonly Target UpdateActiveCamera = new("Il2CppMenace.UI.UIManager", "UpdateActiveCamera");
         internal static readonly Target UpdateBackgroundScene = new("Il2CppMenace.UI.UIManager", "UpdateBackgroundScene");
         internal static readonly Target BugReportRequestOpen = new("Il2CppMenace.UI.BugReportDialog", "RequestOpen");
+        internal static readonly Target OpenScreen = new("Il2CppMenace.UI.UIManager", "OpenScreen");
 
         internal static readonly Target HighlightMandatoryEvents = new("Il2CppMenace.UI.Strategy.EventMessagesPanel", "HighlightUnfinishedMandatoryEvents");
 
@@ -301,7 +306,7 @@ internal static class VanillaUi
         internal static readonly Target HiringUpdateWindow = new("Il2CppMenace.UI.Strategy.HiringUIScreen", "UpdateWindow");
         internal static readonly Target HiringSlotClicked = new("Il2CppMenace.UI.Strategy.HiringUIScreen", "OnUnitSlotClicked");
 
-        internal static readonly Target[] All = { UpdateActiveCamera, UpdateBackgroundScene, BugReportRequestOpen, HighlightMandatoryEvents, FactionSlotClicked, MissionBoardInit, UnitWindowSetLeader, UnitWindowRefresh, EquipmentAlternativePicked, SystemMapOpened, HiringUpdateWindow, HiringSlotClicked };
+        internal static readonly Target[] All = { UpdateActiveCamera, UpdateBackgroundScene, BugReportRequestOpen, OpenScreen, HighlightMandatoryEvents, FactionSlotClicked, MissionBoardInit, UnitWindowSetLeader, UnitWindowRefresh, EquipmentAlternativePicked, SystemMapOpened, HiringUpdateWindow, HiringSlotClicked };
     }
 
     // Resolves every patch target against the loaded game assemblies and logs the ones that are gone.

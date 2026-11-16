@@ -59,21 +59,15 @@ public sealed partial class StrategyDiorama
         : WorkshopSystem.Instance is { Disassembling: true } ? DisassembleStation
         : AssembleStation;
 
-    private static ShellTab[] WorkshopTabs()
-    {
-        var station = WorkshopStation;
-        return new ShellTab[]
-        {
-            new("WOMENACE::ui/shell/tab_assemble", "ASSEMBLE", NavigationMenu.Target.Workshop, station == AssembleStation, () => GoToStation(AssembleStation)),
-            new("WOMENACE::ui/shell/tab_disassemble", "DISASSEMBLE", NavigationMenu.Target.Workshop, station == DisassembleStation, () => GoToStation(DisassembleStation)),
-            new("WOMENACE::ui/shell/tab_calibrate", "CALIBRATE", NavigationMenu.Target.Workshop, station == CalibrateStation, () => GoToStation(CalibrateStation)),
-        };
-    }
-
     // Sets the Workshop's panels to a station's work. The camera follows what they are doing.
     private static void GoToStation(int station)
     {
         Sound.Click();
+        SetStation(station);
+    }
+
+    private static void SetStation(int station)
+    {
         if (station == CalibrateStation)
         {
             CalibrationUISystem.Instance?.Open();
@@ -113,6 +107,11 @@ public sealed partial class StrategyDiorama
         var room = _weaponSet.Root;
         if (room == null)
             return;
+        // Vanilla greys the Assemble button's word where the project's materials are short and
+        // marks the button no other way, so the shell's rules are told by a class.
+        if (_shellRoot != null && Jiangyu.Game.Ui.UI.Find(_shellRoot, Jiangyu.Game.Ui.UiSelector.Name("AssembleButton")) is { } assemble)
+            assemble.EnableInClassList("wm-workshop__off",
+                UIManager.Get()?.GetActiveScreen()?.TryCast<WorkshopUIScreen>()?.m_SelectedBlueprint?.OwnsPlayerAllCraftingMaterials() != true);
         var station = WorkshopStation;
         var template = station == CalibrateStation
             ? CalibrationUISystem.Instance?.Picked?.Item?.GetTemplate()
@@ -121,6 +120,14 @@ public sealed partial class StrategyDiorama
         if (pointer == _workedOnTemplate && station == _workedOnStation && (_workedOn != null || _workedOnNothing))
             return;
         (_workedOnTemplate, _workedOnStation) = (pointer, station);
+        // Its name, in the strip under it.
+        if (_shellRoot != null && Jiangyu.Game.Ui.UI.Find(_shellRoot, Jiangyu.Game.Ui.UiSelector.Name(WorkshopNameName))?.TryCast<UnityEngine.UIElements.Label>() is { } named)
+            named.text = template != null ? (Templates.DefaultText(template.Title) ?? "").ToUpperInvariant() : "";
+        if (_shellRoot != null && Jiangyu.Game.Ui.UI.Find(_shellRoot, Jiangyu.Game.Ui.UiSelector.Name(WorkshopImageName)) is { } pictured)
+        {
+            var picture = template != null ? template.TryCast<WeaponTemplate>()?.IconEquipment ?? template.Icon : null;
+            pictured.style.backgroundImage = picture != null ? new UnityEngine.UIElements.StyleBackground(picture) : UnityEngine.UIElements.StyleKeyword.None;
+        }
         // Nothing to show, until something is made below: asked once, not on every look.
         _workedOnNothing = _weaponSet.Root != null;
         if (_workedOn != null)

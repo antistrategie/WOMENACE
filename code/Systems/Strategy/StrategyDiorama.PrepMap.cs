@@ -14,8 +14,8 @@ namespace WOMENACE.Code;
 public sealed partial class StrategyDiorama
 {
     // Straight down on the table from over its foot, so the map lies nearly square in the view,
-    // shifted to the middle of the space between the roster and the squad panel.
-    private static readonly Framing PrepFraming = new(new Vector3(-11.9f, 3.4f, 0f), new Vector3(-14.5f, 0.3f, 0f), 50f, 0.195f);
+    // shifted to the middle of the space between the frame's left and the roster.
+    private static readonly Framing PrepFraming = new(new Vector3(-11.9f, 3.4f, 0f), new Vector3(-14.5f, 0.3f, 0f), 50f, 0.279f);
 
     // The map's middle in room space, and its longer side's length. It is wider than the table, so it
     // floats clear above it, as a projection.

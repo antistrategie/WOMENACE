@@ -3,8 +3,8 @@
     position: absolute;
     left: 32px;
     width: 500px;
-    top: 99.2px;
-    bottom: 99.2px;
+    top: 80px;
+    bottom: 80px;
     background-color: rgba(0, 0, 0, 0.92);
     border-width: 0.64px;
     border-color: var(--line);
@@ -35,7 +35,9 @@
 #wm-shop-root .wm-shop-sell-group { width: 100%; }
 #wm-shop-root .wm-shop-category { margin: 0 0 8px 0; padding: 0; font-size: 8px; letter-spacing: 0.8px; color: var(--ink-label); -unity-text-align: middle-left; }
 #wm-shop-root .wm-shop-slots { flex-direction: row; flex-wrap: wrap; }
-#wm-shop-root .wm-shop-item { width: 48px; height: 48px; margin-right: 7px; margin-bottom: 7px; flex-shrink: 0; }
+/* Four to a group's row with room to spare: a row that only just holds four drops the fourth
+   to a line of its own once anything narrows the group by a pixel. */
+#wm-shop-root .wm-shop-item { width: 48px; height: 48px; margin-right: 4px; margin-bottom: 7px; flex-shrink: 0; }
 #wm-shop-root .wm-shop-item > MissionResultLootSlot { width: 48px; height: 48px; margin: 0; }
 #wm-shop-root .wm-shop-item #Pickable { margin: 0; left: 0; right: auto; width: 48px; height: 48px; }
 #wm-shop-root .wm-shop-price { position: absolute; right: 1px; bottom: 0; margin: 0; padding: 0 2px; background-color: rgba(0, 0, 0, 0.6); }
@@ -56,7 +58,7 @@
 #wm-shop-root .wm-shop-primary:disabled .wm-proc-text, #wm-shop-root .wm-shop-primary:disabled .wm-shop-currency-value, #wm-shop-root .wm-shop-primary:disabled .text-button-label, #wm-shop-root .wm-shop-primary:disabled .wm-proc-button-caption { color: var(--ink-meta); }
 #wm-shop-root #wm-shop-checkout-button .text-button-label { margin: 0; padding: 0; font-size: 10px; -unity-font-style: bold; -unity-text-align: middle-center; }
 #wm-shop-root .wm-shop-feedback { flex-grow: 1; flex-shrink: 1; min-width: 0; margin: 0 16px 0 0; padding: 0; font-size: 10px; color: var(--gold); white-space: normal; }
-#wm-shop-root .wm-kalina-portrait { position: absolute; right: 40px; bottom: 99.2px; width: 300px; height: 432px; overflow: hidden; }
+#wm-shop-root .wm-kalina-portrait { position: absolute; right: 40px; bottom: 80px; width: 300px; height: 432px; overflow: hidden; }
 #wm-shop-root .wm-kalina-art { -unity-background-scale-mode: stretch-to-fill; }
 #wm-shop-root .wm-kalina-dialogue {
     position: absolute;
@@ -94,7 +96,7 @@
 #wm-shop-root #wm-shop-checkout-button .text-button-label { letter-spacing: 1.2px; }
 
 /* Kalina's card: what the player has to spend, how she feels about them, and her wardrobe. */
-#wm-shop-root .wm-kalina-card { position: absolute; right: 40px; top: 99.2px; width: 300px; padding: 10px 12px; background-color: rgba(0, 0, 0, 0.92); border-width: 0.64px; border-color: var(--line); }
+#wm-shop-root .wm-kalina-card { position: absolute; right: 40px; top: 80px; width: 300px; padding: 10px 12px; background-color: rgba(0, 0, 0, 0.92); border-width: 0.64px; border-color: var(--line); }
 #wm-shop-root .wm-shop-wallet { height: 24px; margin-bottom: 8px; flex-direction: row; align-items: center; }
 #wm-shop-root .wm-shop-wallet > .wm-shop-currency { margin-right: 18px; }
 #wm-shop-root .wm-kalina-level { flex-direction: row; align-items: flex-end; flex-shrink: 0; margin: 0 0 6px 0; }

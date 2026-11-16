@@ -561,8 +561,11 @@ public sealed partial class StrategyDiorama
             var at = RuntimePanelUtils.ScreenToPanel(layer.panel, new Vector2(screen.x, Screen.height - screen.y));
             var near = screen.z > 0f && Vector2.Distance(at, _prepPointerPanel) < ContactReach;
             token.Words.style.display = near ? DisplayStyle.Flex : DisplayStyle.None;
-            token.Words.style.left = at.x + 12f;
-            token.Words.style.top = at.y - 12f;
+            // The words are placed in the layer, which stands in from the edges of a screen wider
+            // or taller than 16:9.
+            var origin = layer.worldBound.position;
+            token.Words.style.left = at.x - origin.x + 12f;
+            token.Words.style.top = at.y - origin.y - 12f;
         }
         PlaceDragMarks(drag);
     }

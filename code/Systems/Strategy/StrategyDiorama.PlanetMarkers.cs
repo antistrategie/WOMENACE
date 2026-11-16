@@ -21,10 +21,13 @@ public sealed partial class StrategyDiorama
     private const float PlanetCardDistance = 5.3f;
     private const float PlanetCardNearScale = 0.9f;
     private const float PlanetCardFarScale = 1.7f;
-    // The room kept between two cards' boxes and between a box and the picture's edge, as parts
-    // of the picture.
-    private const float CardBoxGap = 0.015f;
-    private const float CardBoxEdge = 0.05f;
+    // The room kept between two cards' boxes as the view starts, in screen heights, and between a
+    // box and the edge of the planet's picture, as a part of the picture.
+    private const float CardBoxGap = 0.035f;
+    private const float CardBoxEdge = 0.02f;
+    // How far a box that stands out past the planet is moved in at a time, and how often.
+    private const float CardBoxStep = 0.01f;
+    private const int CardBoxSteps = 60;
     // A card stands on the surface with the ring under its icon on its place: the ring's
     // middle is this far up the marker's box.
     private const float CardRingUp = 8.4f;
@@ -39,64 +42,167 @@ public sealed partial class StrategyDiorama
         return new Vector2(0.5f + (across - PlanetSlotMiddle.x) * PlanetSlotSpread, 0.5f + (up - PlanetSlotMiddle.y) * PlanetSlotSpread);
     }
 
+    // Where a place in the room falls on the screen as the view starts (PlanetFraming), in screen
+    // heights from the view's middle, and how many screen heights a metre covers there. The
+    // lens's shift moves the whole picture and is left out: only how places stand to each other
+    // is asked.
+    private static (float X, float Y, float PerMetre) SeenAtStart(Vector3 place)
+    {
+        var forward = (PlanetFraming.Target - PlanetFraming.Eye).normalized;
+        var right = Vector3.Cross(Vector3.up, forward).normalized;
+        var up = Vector3.Cross(forward, right);
+        var from = place - PlanetFraming.Eye;
+        var perMetre = 1f / (Mathf.Max(Vector3.Dot(from, forward), 0.01f) * 2f * Mathf.Tan(PlanetFraming.Fov * 0.5f * Mathf.Deg2Rad));
+        return (Vector3.Dot(from, right) * perMetre, Vector3.Dot(from, up) * perMetre, perMetre);
+    }
+
     // Stands a card on the planet for each mission shown: upright on its place on the surface,
-    // which the ring under its icon marks. No card may cover another, so each card's box in the
-    // picture (the card, and the room at its left for the chibi) is moved off the boxes it
-    // meets until none meet.
+    // which the ring under its icon marks. No card may cover another, so each card's box on the
+    // screen as the view starts (the card, and the room at its left for the chibi) is moved off
+    // the boxes it meets, with room between them, until none meet. The boxes are measured on
+    // the screen and not in the picture: the picture is on a globe, where equal parts of it are
+    // not equal lengths on the screen, and a card is larger the further off it stands.
     private void ShowPlanetMarkers(IReadOnlyList<MissionPoi> pois, GameObject template, VisualElement layer, PlanetShape planet)
     {
-        var (sectionWide, sectionTall) = (
-            (planet.OnSphere(1f, 0.5f, out _) - planet.OnSphere(0f, 0.5f, out _)).magnitude * PlanetRadius,
-            (planet.OnSphere(0.5f, 1f, out _) - planet.OnSphere(0.5f, 0f, out _)).magnitude * PlanetRadius);
-        var boxes = new List<(int Index, Vector2 Size, float Width, float Lead, float Left, float Foot, float Wide, float Tall)>();
+        var sectionWide = (planet.OnSphere(1f, 0.5f, out _) - planet.OnSphere(0f, 0.5f, out _)).magnitude * PlanetRadius;
+        (float X, float Y, float PerMetre) Seen(float across, float up) => SeenAtStart(planet.InRoom(planet.OnSphere(across, up, out _)));
+        // How far a part of the picture goes across the screen, and up it, about its middle.
+        var acrossSeen = (Seen(0.6f, 0.5f).X - Seen(0.4f, 0.5f).X) / 0.2f;
+        var upSeen = (Seen(0.5f, 0.6f).Y - Seen(0.5f, 0.4f).Y) / 0.2f;
+        if (Mathf.Abs(acrossSeen) < 0.001f || Mathf.Abs(upSeen) < 0.001f)
+            (acrossSeen, upSeen) = (1f, 1f);
+        // How much of the chibi's room at a card's left its box keeps: all of it, and less where
+        // the boxes cannot all be kept apart over the planet with it.
+        var chibiRoom = 1f;
+        var (eye, centre) = (PlanetFraming.Eye, planet.InRoom(Vector3.zero));
+        var forward = (PlanetFraming.Target - eye).normalized;
+        var right = Vector3.Cross(Vector3.up, forward).normalized;
+        var unturn = Quaternion.Inverse(planet.Turn);
+        var aspect = PlanetFrameHeight / PlanetFrameWidth;
+        // Whether a place in the room is seen over the planet's picture as the view starts: the
+        // line of sight to it meets the globe on the part the picture covers.
+        bool OverPlanet(Vector3 place)
+        {
+            var (along, from) = ((place - eye).normalized, eye - centre);
+            var half = Vector3.Dot(from, along);
+            var inside = half * half - (from.sqrMagnitude - PlanetRadius * PlanetRadius);
+            if (inside < 0f)
+                return false;
+            var spot = unturn * (eye + along * (-half - Mathf.Sqrt(inside)) - centre) / PlanetRadius;
+            var (across, up) = (spot.x * planet.Rim + planet.CentreX, 1f - (planet.CentreY * aspect - spot.y * planet.Rim) / aspect);
+            return spot.z < 0f && across > CardBoxEdge && across < 1f - CardBoxEdge && up > CardBoxEdge && up < 1f - CardBoxEdge;
+        }
+        // Whether a card's whole box, standing upright on its place and square to the view, is
+        // seen over the planet.
+        bool Contained(Vector2 size, Vector2 at)
+        {
+            var surface = planet.InRoom(planet.OnSphere(at.x, at.y, out var onPlanet));
+            if (!onPlanet)
+                return false;
+            var width = PlanetCardWidth * size.x / CardWidth * Mathf.Clamp(Vector3.Distance(surface, eye) / PlanetCardDistance, PlanetCardNearScale, PlanetCardFarScale);
+            var height = width * size.y / size.x;
+            var (left, far) = (height * ChibiToCard * (1f + ChibiBeside) * chibiRoom + width * CardIconCentre / size.x, width * (1f - CardIconCentre / size.x));
+            var (below, above) = (height * CardRingUp / size.y, Mathf.Max(height * (1f - CardRingUp / size.y), height * ChibiToCard * chibiRoom));
+            return OverPlanet(surface - right * left - Vector3.up * below) && OverPlanet(surface - right * left + Vector3.up * above)
+                && OverPlanet(surface + right * far - Vector3.up * below) && OverPlanet(surface + right * far + Vector3.up * above);
+        }
+        // A box that stands out past the planet is brought in: across the picture first, so the
+        // cards keep the heights their missions gave them, and then up or down it.
+        Vector2 Contain(Vector2 size, Vector2 at)
+        {
+            at = new Vector2(Mathf.Clamp01(at.x), Mathf.Clamp01(at.y));
+            for (var step = 0; step < CardBoxSteps && at.x != 0.5f && !Contained(size, at); step++)
+                at.x = Mathf.MoveTowards(at.x, 0.5f, CardBoxStep);
+            for (var step = 0; step < CardBoxSteps && at.y != 0.5f && !Contained(size, at); step++)
+                at.y = Mathf.MoveTowards(at.y, 0.5f, CardBoxStep);
+            return at;
+        }
+        // A card's width on its place, and its box on the screen with that place in it.
+        (float Width, Rect Box, Vector2 Place) Measure(Vector2 size, Vector2 at)
+        {
+            var surface = planet.InRoom(planet.OnSphere(at.x, at.y, out _));
+            var far = Vector3.Distance(surface, PlanetFraming.Eye) / PlanetCardDistance;
+            var width = PlanetCardWidth * size.x / CardWidth * Mathf.Clamp(far, PlanetCardNearScale, PlanetCardFarScale);
+            var height = width * size.y / size.x;
+            var (x, y, perMetre) = SeenAtStart(surface);
+            return (width, Rect.MinMaxRect(
+                x - (height * ChibiToCard * (1f + ChibiBeside) * chibiRoom + width * CardIconCentre / size.x) * perMetre,
+                y - height * CardRingUp / size.y * perMetre,
+                x + width * (1f - CardIconCentre / size.x) * perMetre,
+                y + Mathf.Max(height * (1f - CardRingUp / size.y), height * ChibiToCard * chibiRoom) * perMetre), new Vector2(x, y));
+        }
+        var asked = new List<(int Index, Vector2 Size, Vector2 At)>();
         for (var i = 0; i < pois.Count; i++)
         {
             if (!_markerBoard.TryGetValue(pois[i].Pointer, out var board))
                 continue;
-            var slot = PlanetSlot(board);
             var size = new Vector2(pois[i].layout.width, pois[i].layout.height);
             if (!(size.x > 1f) || !(size.y > 1f))
                 size = new Vector2(CardWidth, CardHeight);
-            var far = Vector3.Distance(planet.InRoom(planet.OnSphere(slot.x, slot.y, out _)), PlanetFraming.Eye) / PlanetCardDistance;
-            var width = PlanetCardWidth * size.x / CardWidth * Mathf.Clamp(far, PlanetCardNearScale, PlanetCardFarScale);
-            var height = width * size.y / size.x;
-            // The box starts where the chibi would stand, at the left of the card's icon.
-            var lead = (height * ChibiToCard * (1f + ChibiBeside) + width * CardIconCentre / size.x) / sectionWide;
-            boxes.Add((i, size, width, lead, slot.x - lead, slot.y, lead + width / sectionWide + CardBoxGap, height * Mathf.Max(1f, ChibiToCard) / sectionTall + CardBoxGap));
+            asked.Add((i, size, PlanetSlot(board)));
         }
-        for (var pass = 0; pass < 200; pass++)
+        var slots = asked;
+        foreach (var room in new[] { 1f, 0.5f, 0f })
         {
+            chibiRoom = room;
+            slots = new List<(int Index, Vector2 Size, Vector2 At)>(asked);
+            var seen = new Rect[slots.Count];
+            // A box brought in across the picture stands against the planet's edge, and has no more
+            // room that way.
+            var held = new bool[slots.Count];
             var met = false;
-            for (var i = 0; i < boxes.Count; i++)
+            for (var pass = 0; pass < 300; pass++)
             {
-                var a = boxes[i];
-                a.Left = Mathf.Clamp(a.Left, CardBoxEdge, 1f - CardBoxEdge - a.Wide);
-                a.Foot = Mathf.Clamp(a.Foot, CardBoxEdge, 1f - CardBoxEdge - a.Tall);
-                boxes[i] = a;
-                for (var j = i + 1; j < boxes.Count; j++)
+                // Each box keeps over the planet.
+                for (var i = 0; i < slots.Count; i++)
                 {
-                    var b = boxes[j];
-                    var lapAcross = Mathf.Min(a.Left + a.Wide, b.Left + b.Wide) - Mathf.Max(a.Left, b.Left);
-                    var lapUp = Mathf.Min(a.Foot + a.Tall, b.Foot + b.Tall) - Mathf.Max(a.Foot, b.Foot);
-                    if (lapAcross <= 0f || lapUp <= 0f)
-                        continue;
-                    met = true;
-                    // Apart along whichever way needs the smaller move, half each.
-                    if (lapAcross / a.Wide < lapUp / a.Tall)
-                    {
-                        var push = (a.Left <= b.Left ? -1f : 1f) * (lapAcross / 2f + 0.001f);
-                        (a.Left, b.Left) = (a.Left + push, b.Left - push);
-                    }
-                    else
-                    {
-                        var push = (a.Foot <= b.Foot ? -1f : 1f) * (lapUp / 2f + 0.001f);
-                        (a.Foot, b.Foot) = (a.Foot + push, b.Foot - push);
-                    }
-                    (boxes[i], boxes[j]) = (a, b);
+                    var (index, size, at) = slots[i];
+                    var across = at.x;
+                    at = Contain(size, at);
+                    held[i] = Mathf.Abs(at.x - across) > 0.0001f;
+                    slots[i] = (index, size, at);
+                    seen[i] = Measure(size, at).Box;
                 }
+                met = false;
+                for (var i = 0; i < slots.Count; i++)
+                    for (var j = i + 1; j < slots.Count; j++)
+                    {
+                        var (a, b) = (seen[i], seen[j]);
+                        var lapAcross = Mathf.Min(a.xMax, b.xMax) - Mathf.Max(a.xMin, b.xMin) + CardBoxGap;
+                        var lapUp = Mathf.Min(a.yMax, b.yMax) - Mathf.Max(a.yMin, b.yMin) + CardBoxGap;
+                        if (lapAcross <= 0f || lapUp <= 0f)
+                            continue;
+                        met = true;
+                        var (first, second) = (slots[i], slots[j]);
+                        // Apart along whichever way needs the smaller move for the boxes' shape, half
+                        // each. Across, one against the planet's edge stays and the other takes the
+                        // whole move, and two against it part up and down.
+                        if (lapAcross / a.width < lapUp / a.height && !(held[i] && held[j]))
+                        {
+                            var push = (a.center.x <= b.center.x ? -1f : 1f) * (lapAcross + 0.002f) / acrossSeen;
+                            var share = held[i] ? 0f : held[j] ? 1f : 0.5f;
+                            (first.At.x, second.At.x) = (first.At.x + push * share, second.At.x - push * (1f - share));
+                        }
+                        else
+                        {
+                            var push = (a.center.y <= b.center.y ? -1f : 1f) * (lapUp / 2f + 0.001f) / upSeen;
+                            (first.At.y, second.At.y) = (first.At.y + push, second.At.y - push);
+                        }
+                        (slots[i], slots[j]) = (first, second);
+                    }
+                if (!met)
+                    break;
             }
             if (!met)
                 break;
+        }
+        // Where there is not room for every box, a card keeps over the planet before it keeps
+        // clear of another: the order they are drawn in settles two that meet.
+        var boxes = new List<(int Index, Vector2 Size, float Width, float Left, float Lead, float Foot)>();
+        foreach (var (index, size, slot) in slots)
+        {
+            var at = Contain(size, slot);
+            boxes.Add((index, size, Measure(size, at).Width, at.x, 0f, at.y));
         }
         foreach (var box in boxes)
         {
@@ -121,7 +227,8 @@ public sealed partial class StrategyDiorama
             };
             marker.CardTransform = marker.Card.transform;
             var renderer = marker.Card.GetComponent<MeshRenderer>();
-            renderer.sortingOrder = PlanetOrder + 2;
+            renderer.sortingOrder = PlanetCardOrder;
+            marker.Renderer = renderer;
             marker.Material = renderer.material;
             marker.Target = ClickTarget(layer, marker);
             marker.Target.name = "wm-marker-" + _markers.Count;
@@ -131,6 +238,12 @@ public sealed partial class StrategyDiorama
         _markersPlacedFor = (new NVector3(float.NaN), -1f);
         PlacePlanetMarkers();
     }
+
+    // Where two meet on the screen as the camera goes round: the chibi is drawn over every card,
+    // and the selected mission's card over the others.
+    private const int PlanetCardOrder = PlanetOrder + 2;
+    private const int PlanetSelectedOrder = PlanetOrder + 3;
+    private const int PlanetChibiOrder = PlanetOrder + 4;
 
     // The planet the cards stand on, or null while they stand on the land.
     private PlanetShape _markersPlanet;

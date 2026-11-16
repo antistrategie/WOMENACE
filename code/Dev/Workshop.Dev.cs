@@ -90,4 +90,13 @@ public static class Workshop
         var weapon = Templates.ById<WeaponTemplate>(weaponId);
         return new { weaponId, baseGame = BaseGameWeapons.Contains(weapon), weaponClass = WeaponParts.DisassemblyClass(weapon).ToString() };
     }
+
+    // Treats the row of what a project takes as this wide (0 for its own width), to see the
+    // slots drawn smaller to fit a row no project fills.
+    [MutatingVerb]
+    public static string RequiredWidth(float width)
+    {
+        WorkshopSystem.RequiredWidth = width > 0f ? width : null;
+        return $"required row {(width > 0f ? width + " wide" : "its own width")}";
+    }
 }

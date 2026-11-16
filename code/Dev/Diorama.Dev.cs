@@ -121,6 +121,36 @@ public static class Diorama
         return "clicked " + name;
     }
 
+    // Clicks the nth element of a vanilla type on the active screen as the player would, for
+    // opening what a click on it opens (an equipment slot's picker).
+    [MutatingVerb]
+    public static string UiPress(string typeName, int index = 0)
+    {
+        var root = Il2CppMenace.UI.UIManager.Get()?.GetActiveScreen()?.m_Container?.rootVisualElement;
+        if (root == null)
+            return "no screen";
+        var found = new List<UnityEngine.UIElements.VisualElement>();
+        foreach (var element in Jiangyu.Game.Ui.UI.FindAll(root, Jiangyu.Game.Ui.UiSelector.TypeName(typeName)))
+            found.Add(element);
+        if (index >= found.Count)
+            return $"{found.Count} of {typeName}";
+        var interactive = found[index].TryCast<Il2CppMenace.UI.InteractiveElement>();
+        if (interactive == null)
+            return typeName + " takes no clicks";
+        interactive.OnClicked(UnityEngine.UIElements.MouseButton.LeftMouse);
+        return $"clicked {typeName} {index} of {found.Count}";
+    }
+
+    // Counts frames for some seconds, then Measured gives the rate. Uncap the rate first (FrameRate).
+    [MutatingVerb]
+    public static string Measure(float seconds = 5f) => StrategyDiorama.MeasureFromDev(seconds);
+
+    public static string Measured() => StrategyDiorama.MeasuredFromDev();
+
+    // Runs the active screen's answer to the back key, which is what Escape does.
+    [MutatingVerb]
+    public static string Escape() => StrategyDiorama.BackKeyFromDev();
+
     // Runs the game at a frame rate of its own, with vertical sync off, to see what only shows at a
     // player's rate. 0 gives the game's own back.
     [MutatingVerb]

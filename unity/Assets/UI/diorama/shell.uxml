@@ -6,24 +6,9 @@
         <ui:VisualElement name="wm-shutter-top" class="wui-shutter wui-shutter--top" picking-mode="Ignore" />
         <ui:VisualElement name="wm-shutter-bottom" class="wui-shutter wui-shutter--bottom" picking-mode="Ignore" />
         <ui:VisualElement name="wm-shell-top" class="wui-bar wui-bar--top">
-            <ui:VisualElement name="wm-shell-back" class="wui-bar-back">
-                <ui:Label text="&lt;" class="wui-bar-back__glyph" picking-mode="Ignore" />
-                <ui:Label name="@WOMENACE::ui/shell/home" text="HOME" class="wui-bar-back__label" picking-mode="Ignore" />
-            </ui:VisualElement>
             <ui:VisualElement class="wui-bar-title" picking-mode="Ignore">
                 <ui:Label name="wm-shell-ship" text="MCV ELMO" class="wui-bar-title__over" picking-mode="Ignore" />
                 <ui:Label name="wm-shell-title" text="OPS ROOM" class="wui-bar-title__main" picking-mode="Ignore" />
-            </ui:VisualElement>
-            <ui:VisualElement name="wm-shell-tabs" class="wui-bar-tabs" picking-mode="Ignore">
-                <ui:VisualElement name="wm-shell-tab-0" class="wui-tab">
-                    <ui:Label name="wm-shell-tab-label-0" text="" class="wui-tab__label" picking-mode="Ignore" />
-                </ui:VisualElement>
-                <ui:VisualElement name="wm-shell-tab-1" class="wui-tab">
-                    <ui:Label name="wm-shell-tab-label-1" text="" class="wui-tab__label" picking-mode="Ignore" />
-                </ui:VisualElement>
-                <ui:VisualElement name="wm-shell-tab-2" class="wui-tab">
-                    <ui:Label name="wm-shell-tab-label-2" text="" class="wui-tab__label" picking-mode="Ignore" />
-                </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
         <ui:VisualElement name="wm-dg-tag" class="wui-tag wui-tag--off" picking-mode="Ignore">
@@ -75,8 +60,8 @@
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
-        <ui:VisualElement name="wm-shell-bottom" class="wui-bar wui-bar--bottom">
-            <ui:VisualElement name="wm-shell-actions" class="wui-act-row">
+        <ui:VisualElement name="wm-shell-bottom" class="wui-bar wui-bar--bottom" picking-mode="Ignore">
+            <ui:VisualElement name="wm-shell-actions" class="wui-act-row" picking-mode="Ignore">
                 <ui:VisualElement name="wm-act-secondary" class="wui-act wui-act--danger">
                     <ui:Label name="wm-act-secondary-label" text="" class="wui-act__label" picking-mode="Ignore" />
                 </ui:VisualElement>
@@ -87,30 +72,61 @@
                     </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
-            <ui:VisualElement name="wm-shell-destinations" class="wui-dest-row">
-                <ui:VisualElement name="wm-shell-operations" class="wui-primary">
-                    <ui:VisualElement class="wui-primary__inner" picking-mode="Ignore">
-                        <ui:Label name="@WOMENACE::ui/shell/operations" text="OPERATIONS" class="wui-primary__label" picking-mode="Ignore" />
-                        <ui:Label name="wm-shell-operations-sub" text="" class="wui-primary__sub" picking-mode="Ignore" />
+            <ui:VisualElement name="wm-shell-destinations" class="wui-nav" picking-mode="Ignore">
+                <ui:VisualElement name="wm-nav-group-ops" class="wui-nav-group" picking-mode="Ignore">
+                    <ui:VisualElement class="wui-nav-head" picking-mode="Ignore">
+                        <ui:VisualElement class="wui-nav-head__icon wui-nav-head__icon--ops" picking-mode="Ignore" />
+                        <ui:VisualElement class="wui-nav-head__line" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="wui-nav-row" picking-mode="Ignore">
+                        <ui:VisualElement name="wm-shell-back" class="wui-nav-btn wui-nav-btn--home">
+                            <ui:VisualElement class="wui-nav-btn__icon wui-nav-btn__icon--home" picking-mode="Ignore" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="wm-shell-operations" class="wui-nav-btn wui-nav-btn--wide">
+                            <ui:Label name="@WOMENACE::ui/shell/operations" text="OPERATIONS" class="wui-nav-btn__label" picking-mode="Ignore" />
+                            <ui:Label name="wm-shell-operations-sub" text="" class="wui-nav-btn__sub" picking-mode="Ignore" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="wm-nav-oci" class="wui-nav-btn">
+                            <ui:Label name="@WOMENACE::ui/shell/oci" text="O.C.I." class="wui-nav-btn__label" picking-mode="Ignore" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="wm-nav-market" class="wui-nav-btn">
+                            <ui:Label name="@WOMENACE::ui/shell/tab_black_market" text="BLACK MARKET" class="wui-nav-btn__label" picking-mode="Ignore" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="wm-nav-kalina" class="wui-nav-btn">
+                            <ui:Label name="@WOMENACE::ui/shell/tab_kalina" text="KALINA'S SHOP" class="wui-nav-btn__label" picking-mode="Ignore" />
+                        </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
-                <ui:VisualElement class="wui-dest-gap" picking-mode="Ignore" />
-                <ui:VisualElement name="wm-shell-oci" class="wui-dest">
-                    <ui:VisualElement class="wui-dest__icon wui-dest__icon--oci" picking-mode="Ignore" />
-                    <ui:Label name="@WOMENACE::ui/shell/oci" text="O.C.I." class="wui-dest__label" picking-mode="Ignore" />
+                <ui:VisualElement name="wm-nav-group-refitting" class="wui-nav-group" picking-mode="Ignore">
+                    <ui:VisualElement class="wui-nav-head" picking-mode="Ignore">
+                        <ui:VisualElement class="wui-nav-head__icon wui-nav-head__icon--refitting" picking-mode="Ignore" />
+                        <ui:VisualElement class="wui-nav-head__line" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="wui-nav-row" picking-mode="Ignore">
+                        <ui:VisualElement name="wm-nav-roster" class="wui-nav-btn">
+                            <ui:Label name="@WOMENACE::ui/shell/tab_roster" text="ROSTER" class="wui-nav-btn__label" picking-mode="Ignore" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="wm-nav-recruit" class="wui-nav-btn">
+                            <ui:Label name="@WOMENACE::ui/shell/nav_recruitment" text="RECRUITMENT" class="wui-nav-btn__label" picking-mode="Ignore" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
                 </ui:VisualElement>
-                <ui:VisualElement name="wm-shell-market" class="wui-dest">
-                    <ui:VisualElement class="wui-dest__icon wui-dest__icon--market" picking-mode="Ignore" />
-                    <ui:Label name="@WOMENACE::ui/shell/market" text="MARKET" class="wui-dest__label" picking-mode="Ignore" />
-                </ui:VisualElement>
-                <ui:VisualElement class="wui-dest-divider" picking-mode="Ignore" />
-                <ui:VisualElement name="wm-shell-squads" class="wui-dest">
-                    <ui:VisualElement class="wui-dest__icon wui-dest__icon--squads" picking-mode="Ignore" />
-                    <ui:Label name="@WOMENACE::ui/shell/squads" text="SQUADS" class="wui-dest__label" picking-mode="Ignore" />
-                </ui:VisualElement>
-                <ui:VisualElement name="wm-shell-workshop" class="wui-dest">
-                    <ui:VisualElement class="wui-dest__icon wui-dest__icon--workshop" picking-mode="Ignore" />
-                    <ui:Label name="@WOMENACE::ui/shell/workshop" text="WORKSHOP" class="wui-dest__label" picking-mode="Ignore" />
+                <ui:VisualElement name="wm-nav-group-weapon" class="wui-nav-group" picking-mode="Ignore">
+                    <ui:VisualElement class="wui-nav-head" picking-mode="Ignore">
+                        <ui:VisualElement class="wui-nav-head__icon wui-nav-head__icon--weapon" picking-mode="Ignore" />
+                        <ui:VisualElement class="wui-nav-head__line" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="wui-nav-row" picking-mode="Ignore">
+                        <ui:VisualElement name="wm-nav-assembly" class="wui-nav-btn">
+                            <ui:Label name="@WOMENACE::ui/shell/nav_assembly" text="ASSEMBLY" class="wui-nav-btn__label" picking-mode="Ignore" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="wm-nav-disassembly" class="wui-nav-btn">
+                            <ui:Label name="@WOMENACE::ui/shell/nav_disassembly" text="DISASSEMBLY" class="wui-nav-btn__label" picking-mode="Ignore" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="wm-nav-calibration" class="wui-nav-btn">
+                            <ui:Label name="@WOMENACE::ui/shell/nav_calibration" text="CALIBRATION" class="wui-nav-btn__label" picking-mode="Ignore" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>

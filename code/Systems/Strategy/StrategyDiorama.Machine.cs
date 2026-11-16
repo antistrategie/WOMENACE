@@ -265,7 +265,7 @@ public sealed partial class StrategyDiorama
     {
         if (_shell == null)
             return;
-        MoveBars(_shell, pulling ? BarEventHeight : BarHeight);
+        MoveBars(_shell, pulling ? BarEventHeight : BarsOpen);
         _shell.EnableInClassList(BarsEventClass, pulling);
         _shell.parent?.EnableInClassList(BarsEventClass, pulling);
     }

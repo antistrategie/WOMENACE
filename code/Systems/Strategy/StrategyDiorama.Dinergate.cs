@@ -160,6 +160,11 @@ public sealed partial class StrategyDiorama
     {
         var t = dinergate.transform;
         var (fromPosition, fromRotation) = (t.localPosition, t.localRotation);
+        // A flight that starts while another is under way goes straight to its place. Drawing
+        // back first from wherever the last one had got to carries the body further off with
+        // each click.
+        var interrupts = _dinergateFlying;
+        _dinergateFlying = true;
         var toPosition = DinergatePosition;
         var toRotation = Quaternion.Euler(0f, _dinergateYaw, 0f);
         var camera = RoomCamera;
@@ -208,7 +213,7 @@ public sealed partial class StrategyDiorama
             // The flight draws back before it goes and overshoots before it settles. The turn does
             // neither, or it would read as a shake of the head.
             var u = time / DinergateFlightSeconds;
-            t.localPosition = Vector3.LerpUnclamped(fromPosition, toPosition, Ease.InOutBack(u));
+            t.localPosition = Vector3.LerpUnclamped(fromPosition, toPosition, interrupts ? Ease.InOutCubic(u) : Ease.InOutBack(u));
             t.localRotation = Quaternion.Slerp(fromRotation, toRotation, Ease.InOutCubic(u));
             yield return null;
         }
@@ -216,9 +221,12 @@ public sealed partial class StrategyDiorama
             yield break;
         t.localPosition = toPosition;
         t.localRotation = toRotation;
+        _dinergateFlying = false;
         if (up)
             SetProjection(dinergate, true);
     }
+
+    private bool _dinergateFlying;
 
     // The lens projection's source. GFL2 lays the projection's parts out along this node's back axis.
     private static Transform ProjectionNode(GameObject dinergate)

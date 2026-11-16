@@ -1,9 +1,10 @@
-/* The letterbox shell: black bars top and bottom of a strategy screen. Sizes are the mockup's
-   (1600 x 900) at 0.8, the game's panel scale at that resolution. */
+/* The shell: a strip of contents along the top and bottom of a strategy screen, over the room.
+   Sizes are the mockup's (1600 x 900) at 0.8, the game's panel scale at that resolution. */
 .wm-shell { position: absolute; left: 0; top: 0; right: 0; bottom: 0; justify-content: space-between; overflow: hidden; }
 
-/* The bars' black is two shutters behind them, moved by code (a translate, so nothing lays out
-   again while they move). The bars themselves hold the contents and never move. */
+/* Two black shutters behind the bars, out of the frame at rest and brought in by code (a
+   translate, so nothing lays out again while they move): shut for a cut, part way for a story
+   event. The bars themselves hold the contents and never move. */
 .wui-shutter {
     position: absolute;
     left: 0;
@@ -14,9 +15,9 @@
     transition-duration: 0.5s;
     transition-timing-function: ease-in-out-cubic;
 }
-/* Open by the bar's height, until the code knows the screen's height in pixels. */
-.wui-shutter--top { top: 0; translate: 0 -75%; }
-.wui-shutter--bottom { bottom: 0; translate: 0 75%; }
+/* Out of the frame, until the code knows the screen's height in pixels. */
+.wui-shutter--top { top: 0; translate: 0 -100%; }
+.wui-shutter--bottom { bottom: 0; translate: 0 100%; }
 .wm-bars-closed .wui-shutter { translate: 0 0; }
 .wm-bars-snap .wui-shutter { transition-duration: 0s; }
 
@@ -37,44 +38,6 @@
 .wui-bar-title { flex-direction: column; }
 .wui-bar-title__over { color: var(--ink-label); font-size: 10px; letter-spacing: 1.5px; padding: 0; margin: 0 0 3px 0; }
 .wui-bar-title__main { color: var(--ink); font-size: 24px; letter-spacing: 1px; padding: 0; margin: 0; }
-
-.wui-bar-back {
-    flex-direction: row;
-    align-items: center;
-    height: 29px;
-    padding: 0 11px;
-    margin-right: 20px;
-    background-color: rgb(0, 0, 0);
-    border-width: 0.8px;
-    border-color: var(--line-strong);
-    transition-duration: 0.12s;
-}
-.wui-bar-back:hover { border-color: var(--gold); }
-.wui-bar-back__glyph { color: var(--ink); font-size: 11px; padding: 0; margin: 0 6px 0 0; }
-.wui-bar-back__label { color: var(--ink); font-size: 10px; letter-spacing: 1px; padding: 0; margin: 0; }
-.wui-bar-back:hover .wui-bar-back__label { color: var(--gold); }
-.wui-bar-back:hover .wui-bar-back__glyph { color: var(--gold); }
-
-/* Tabs in the top bar: two screens under one destination */
-.wui-bar-tabs { flex-direction: row; align-items: center; margin-left: 36px; }
-.wui-tab {
-    min-width: 104px;
-    height: 29px;
-    margin-right: 4px;
-    padding: 0 14px;
-    align-items: center;
-    justify-content: center;
-    background-color: rgb(0, 0, 0);
-    border-width: 0.8px;
-    border-color: var(--line);
-    transition-duration: 0.12s;
-}
-.wui-tab:hover { border-color: var(--gold); }
-.wui-tab__label { color: var(--ink-meta); font-size: 10px; letter-spacing: 0.8px; padding: 0; margin: 0; }
-.wui-tab:hover .wui-tab__label { color: var(--gold); }
-.wui-tab--on { border-color: var(--gold); }
-.wui-tab--on .wui-tab__label { color: var(--gold); }
-.wui-tab--off { opacity: 0.35; }
 
 /* A tag over something in the room that can be clicked (the Dinergate, the holotable): says what
    it opens. Placed over it by code. */
@@ -181,6 +144,10 @@
 .wui-act--off { opacity: 0.35; }
 .wui-act-info { flex-grow: 1; color: var(--ink-label); font-size: 11px; letter-spacing: 1.4px; -unity-text-align: middle-center; padding: 0; margin: 0 24px; }
 .wui-act-primary__inner { align-items: center; }
+/* Beside the destinations, a view's actions stand over them at the frame's two sides, and what
+   they act on is named by the view itself. */
+.wui-act-row--raised { position: absolute; left: 32px; right: 32px; bottom: 78px; }
+.wui-act-row--raised .wui-act-info { visibility: hidden; }
 
 /* Vanilla's own buttons for those actions go */
 .wm-view-operations > #MissionWindow #Buttons { display: none; }
@@ -191,10 +158,48 @@
 /* A cut to another room: the bars shut fast */
 .wm-bars-cut .wui-shutter { transition-duration: 0.24s; transition-timing-function: ease-in-cubic; }
 
-/* Destination row */
-.wui-dest-row { flex-grow: 1; flex-direction: row; align-items: center; }
-.wui-dest-gap { width: 22px; flex-shrink: 0; }
-.wui-dest-divider { width: 1px; flex-shrink: 0; align-self: stretch; margin: 16px 13px; background-color: var(--line-strong); }
+/* The destinations: every screen in one row, grouped by the room it is in. Over each group the
+   room's icon at the left and a line under it, gold over the room the screen is in. */
+/* The row stands near the screen's foot, so the panels over it have the room */
+.wui-nav { flex-direction: row; align-items: flex-end; align-self: flex-end; margin-bottom: 12px; }
+.wui-nav-group { flex-shrink: 0; margin-right: 16px; }
+.wui-nav-head { align-items: flex-start; margin: 0 6px 5px 0; }
+.wui-nav-head__icon { width: 14px; height: 14px; flex-shrink: 0; margin: 0 0 3px 1px; -unity-background-scale-mode: scale-to-fit; -unity-background-image-tint-color: var(--ink); }
+.wui-nav-head__line { align-self: stretch; height: 0.8px; background-color: var(--ink); }
+.wui-nav-head__icon--ops { background-image: url("../Icons/shell/room_ops.png"); }
+.wui-nav-head__icon--refitting { background-image: url("../Icons/shell/room_refitting.png"); }
+.wui-nav-head__icon--weapon { background-image: url("../Icons/shell/room_weapon.png"); }
+.wui-nav-group--here .wui-nav-head__line { background-color: var(--gold); }
+.wui-nav-group--here .wui-nav-head__icon { -unity-background-image-tint-color: var(--gold); }
+.wui-nav-row { flex-direction: row; height: 34px; }
+.wui-nav-btn {
+    width: 116px;
+    flex-shrink: 0;
+    margin-right: 6px;
+    align-items: center;
+    justify-content: center;
+    background-color: rgb(0, 0, 0);
+    border-width: 0.8px;
+    border-color: var(--line);
+    transition-duration: 0.12s;
+}
+.wui-nav-btn:hover { border-color: var(--gold); }
+.wui-nav-btn__label { color: var(--ink); font-size: 11.5px; letter-spacing: 0.6px; padding: 0; margin: 0; }
+.wui-nav-btn:hover .wui-nav-btn__label { color: var(--gold); }
+/* One that is not open keeps its black, so it reads over a bright room: its words dim */
+.wui-nav-btn--off .wui-nav-btn__label { opacity: 0.35; }
+/* Home is a square with its icon: it is the room itself and not a screen in it. Operations is
+   wider, with what it continues under its name */
+.wui-nav-btn--home { width: 34px; }
+.wui-nav-btn__icon { width: 16px; height: 16px; -unity-background-scale-mode: scale-to-fit; -unity-background-image-tint-color: var(--ink); }
+.wui-nav-btn__icon--home { background-image: url("../Icons/shell/home.png"); }
+.wui-nav-btn:hover .wui-nav-btn__icon { -unity-background-image-tint-color: var(--gold); }
+.wui-nav-btn--here .wui-nav-btn__icon { -unity-background-image-tint-color: var(--gold); }
+.wui-nav-btn--wide { width: 160px; align-items: flex-start; padding: 0 12px; }
+.wui-nav-btn__sub { color: var(--ink-label); font-size: 7px; letter-spacing: 0.7px; padding: 0; margin: 1px 0 0 0; }
+/* The screen you are on */
+.wui-nav-btn--here { border-color: var(--gold); }
+.wui-nav-btn--here .wui-nav-btn__label { color: var(--gold); }
 
 /* The primary destination: gold, a second gold line round it */
 .wui-primary {
@@ -220,33 +225,6 @@
 .wui-primary__label { color: var(--gold); font-size: 16px; letter-spacing: 1.6px; padding: 0; margin: 0; }
 .wui-primary__sub { color: var(--ink-label); font-size: 8px; letter-spacing: 0.7px; padding: 0; margin: 2px 0 0 0; }
 
-.wui-dest {
-    flex-grow: 1;
-    flex-basis: 0;
-    height: 51px;
-    margin-left: 8px;
-    align-items: center;
-    justify-content: center;
-    background-color: rgb(0, 0, 0);
-    border-width: 0.8px;
-    border-color: var(--line);
-    transition-duration: 0.12s;
-}
-.wui-dest:hover { border-color: var(--gold); }
-.wui-dest__icon { width: 18px; height: 18px; margin-bottom: 5px; -unity-background-image-tint-color: var(--ink); }
-.wui-dest:hover .wui-dest__icon { -unity-background-image-tint-color: var(--gold); }
-.wui-dest__icon--oci { background-image: url("../Icons/shell/oci.png"); }
-.wui-dest__icon--market { background-image: url("../Icons/shell/market.png"); }
-.wui-dest__icon--squads { background-image: url("../Icons/shell/squads.png"); }
-.wui-dest__icon--workshop { background-image: url("../Icons/shell/workshop.png"); }
-.wui-dest__label { color: var(--ink); font-size: 10px; letter-spacing: 1px; padding: 0; margin: 0; }
-.wui-dest:hover .wui-dest__label { color: var(--gold); }
-.wui-dest--off { opacity: 0.35; }
-/* The screen you are on */
-.wui-dest--here { border-color: var(--gold); }
-.wui-dest--here .wui-dest__label { color: var(--gold); }
-.wui-dest--here .wui-dest__icon { -unity-background-image-tint-color: var(--gold); }
-
 /* Vanilla panels under the shell. shell.uss is attached to the screen root, which carries
    wm-shell-on while the shell is shown and one class for the view. */
 .wm-shell-on > .screen-header { display: none; }
@@ -267,7 +245,9 @@
 .wm-shell-on .strategy-navigation #Line { display: none; }
 .wm-shell-on .strategy-navigation #Buttons { display: none; }
 .wm-shell-on .strategy-navigation #Resources { flex-direction: row; align-items: center; width: auto; height: auto; background-color: rgba(0, 0, 0, 0); border-width: 0; padding: 0; margin: 0; }
-.wm-shell-on .strategy-navigation #Resources > #Row { flex-direction: row; align-items: center; justify-content: flex-start; width: auto; height: auto; padding: 0; margin: 0; }
+/* Vanilla lets a row of resources wrap, which would stand one over the other on the bar */
+.wm-shell-on .strategy-navigation #Resources > #Row { flex-direction: row; flex-wrap: nowrap; flex-shrink: 0; align-items: center; justify-content: flex-start; width: auto; max-width: none; height: auto; padding: 0; margin: 0; }
+.wm-shell-on .strategy-navigation #Resources ResourceDisplayBig { flex-shrink: 0; }
 .wm-shell-on .strategy-navigation ResourceDisplayBig { flex-direction: row; align-items: stretch; background-color: rgb(0, 0, 0); border-width: 0.8px; border-color: var(--gold); }
 .wm-shell-on .strategy-navigation ResourceDisplayBig #Icon { display: none; }
 .wm-shell-on .strategy-navigation ResourceDisplayBig #Amount { font-size: 11px; }
@@ -351,8 +331,11 @@
 .wm-squads UnitWindow #Header #LeaderRank { margin: 0 4px 0 0; letter-spacing: 0.8px; }
 .wm-squads UnitWindow #Header #UnitName { letter-spacing: 0.8px; }
 .wm-squads__divider { padding: 0; margin: 0 4px 0 0; }
-/* The three equipment cards are a little shorter than vanilla's (108.8), so the panel fits between the bars */
-.wm-squads EquipmentSlotsContainer > EquipmentSlot > #Pickable { height: 88px; }
+/* The three equipment cards are a little shorter than vanilla's (108.8), so the panel's contents fit its height */
+.wm-squads EquipmentSlotsContainer > EquipmentSlot > #Pickable { height: 103px; }
+/* The equipment picker opens beside the panel from a little under its top, and ends with it:
+   a longer list scrolls. */
+.wm-squads UnitWindow #EquipmentAlternatives { max-height: 539px; }
 /* The cards stand closer together than vanilla's, which is where their height comes from */
 .wm-squads EquipmentSlotsContainer > EquipmentSlot > .unit-equipment-slot-header { margin-top: 2.4px; }
 /* The accessories' row stands as far under the armour card as each card does under the one before */
@@ -492,14 +475,8 @@
 .wm-squads UnitWindow .wm-gift-btn { background-image: none; background-color: rgb(0, 0, 0); border-width: 0.64px; border-color: var(--gold); }
 .wm-squads UnitWindow .wm-gift-btn .text-button-label { color: var(--gold); font-size: 8px; letter-spacing: 0.8px; }
 
-/* Mission preparation: the rail that widens the roster, the mission's facts
+/* Mission preparation: the mission's facts
    as chips, and vanilla's roster tiles and objectives box in the squad screen's style. */
-/* The rail is unseen but for its chevron until the pointer is on it. */
-.wm-prep__rail { position: absolute; width: 9.6px; align-items: center; justify-content: center; background-color: rgba(190, 215, 245, 0); }
-.wm-prep__rail:hover { background-color: rgba(190, 215, 245, 0.12); }
-.wm-prep__rail-chevron { width: 0; height: 0; border-top-width: 4px; border-bottom-width: 4px; border-left-width: 5px; border-top-color: rgba(0, 0, 0, 0); border-bottom-color: rgba(0, 0, 0, 0); border-left-color: rgb(219, 232, 248); }
-.wm-prep__rail--open .wm-prep__rail-chevron { border-left-width: 0; border-right-width: 5px; border-right-color: rgb(219, 232, 248); }
-.wm-prep__rail:hover .wm-prep__rail-chevron { border-left-color: rgb(255, 255, 255); border-right-color: rgb(255, 255, 255); }
 .wm-prep__chips { position: absolute; flex-direction: row; }
 .wm-prep__chip { flex-direction: row; align-items: center; margin-right: 4.8px; padding: 0 9.6px; background-color: rgba(0, 0, 0, 0.92); border-width: 0.64px; border-color: var(--line-strong); }
 .wm-prep__chip-name { color: var(--ink-meta); font-size: 8px; letter-spacing: 0.88px; padding: 0; margin: 0 6.4px 0 0; }
@@ -543,11 +520,11 @@
    tabs would: a little more between them, and taller cards. */
 .wm-prep EquipmentSlotsContainer > EquipmentSlot > .unit-equipment-slot-header { margin-top: 5.6px; }
 .wm-prep EquipmentSlotsContainer > VisualElement { margin-top: 5.6px; }
-.wm-prep EquipmentSlotsContainer > EquipmentSlot > #Pickable { height: 94.4px; }
+.wm-prep EquipmentSlotsContainer > EquipmentSlot > #Pickable { height: 106px; }
 
 /* What turns the view, at the foot of the frame midway between the panels: the input in a small
    box, what it does beside it. */
-.wm-pan-hint { position: absolute; left: 432px; bottom: 107px; translate: -50% 0; flex-direction: row; align-items: center; padding: 3.2px 8px; }
+.wm-pan-hint { position: absolute; left: 432px; bottom: 86px; translate: -50% 0; flex-direction: row; align-items: center; padding: 3.2px 8px; }
 .wm-pan-hint__key { margin: 0; padding: 1.6px 4px; font-size: 7.2px; letter-spacing: 0.72px; color: var(--ink); border-width: 0.64px; border-color: var(--ink-meta); background-color: rgba(8, 12, 18, 0.45); }
 .wm-pan-hint__action { margin: 0 9.6px 0 4.8px; padding: 0; font-size: 7.2px; letter-spacing: 0.72px; color: var(--ink); text-shadow: 0 0 3px rgb(0, 0, 0); }
 
@@ -573,9 +550,10 @@
 .wm-recruit #HiringWindow #Header > #Badge { flex-shrink: 0; }
 .wm-recruit #HiringWindow #Header #LeaderRank { letter-spacing: 0.8px; }
 .wm-recruit #HiringWindow #Header #UnitName { letter-spacing: 0.8px; }
-.wm-recruit #HiringWindow #Header #HireButton { height: 24px; flex-shrink: 0; }
-.wm-recruit #HiringWindow #Header #HireButton .text-button { height: 24px; padding: 0 12px; }
-.wm-recruit #HiringWindow #Header #HireButton .text-button-label { font-size: 8px; letter-spacing: 0.8px; }
+/* Hire, at the panel's bottom right: as wide as its word and what she costs after it */
+.wm-recruit #HiringWindow #HireButton { height: 28px; flex-shrink: 0; }
+.wm-recruit #HiringWindow #HireButton .text-button { height: 28px; padding: 0 14px; }
+.wm-recruit #HiringWindow #HireButton .text-button-label { font-size: 9px; letter-spacing: 0.8px; }
 
 /* Stats and Attributes: underlined text tabs, as the squad panel's */
 .wm-recruit #HiringWindow #TabsHeader { width: 100%; flex-shrink: 0; height: 19.2px; border-bottom-width: 0.64px; border-bottom-color: var(--line-strong); }
@@ -619,7 +597,7 @@
 
 /* ---- Workshop: calibration's panel as two, at the sides of the lounge's table ---- */
 .wm-workshop .wm-cal-blocker { display: none; }
-.wm-workshop .wm-cal-panel { position: absolute; left: 32px; right: 32px; top: 99.2px; bottom: 99.2px; width: auto; height: auto; max-width: none; max-height: none; padding: 0; background-color: rgba(0, 0, 0, 0); }
+.wm-workshop .wm-cal-panel { position: absolute; left: 32px; right: 32px; top: 80px; bottom: 80px; width: auto; height: auto; max-width: none; max-height: none; padding: 0; background-color: rgba(0, 0, 0, 0); }
 .wm-workshop .wm-cal-panel > .wm-cal-fill { display: none; }
 .wm-workshop .wm-cal-header { display: none; }
 .wm-workshop .wm-cal-body { justify-content: space-between; }
@@ -628,11 +606,38 @@
 /* The shell's tabs do what the Workshop's own switches do */
 .wm-workshop #wm-workshop-tabs { display: none; }
 .wm-workshop #wm-calibrate-open { display: none; }
-/* Taking apart, laid out for the panel's own size with its switches gone */
+/* Taking apart, laid out across the strip under the station with its switches gone */
 .wm-workshop .wm-disassembly { top: 0; }
-.wm-workshop .wm-disassembly-banner { left: 12px; width: 306px; }
-.wm-workshop .wm-disassembly-action { left: 65px; top: 290px; bottom: auto; }
-.wm-workshop .wm-disassembly-feedback { top: 328px; bottom: auto; }
+/* Across the strip, as the Assembly station's: the weapon's picture at the left, then its name
+   and kind over the heading and the parts it gives */
+.wm-workshop .wm-disassembly-banner { left: 10px; top: 10px; width: 420px; height: 84px; flex-direction: row; align-items: flex-start; background-color: rgba(0, 0, 0, 0); border-width: 0; }
+.wm-workshop .wm-disassembly-image { left: 0; top: 0; right: auto; bottom: auto; width: 130px; height: 84px; }
+.wm-workshop .wm-disassembly-title { margin: 0 8px 0 140px; padding: 0; font-size: 12px; letter-spacing: 0.6px; color: var(--ink); }
+.wm-workshop .wm-disassembly-subtitle { margin: 3px 0 0 0; padding: 0; font-size: 8px; letter-spacing: 0.8px; color: var(--ink-meta); }
+.wm-workshop .wm-disassembly-heading { left: 150px; right: auto; top: 30px; height: 12px; margin: 0; padding: 0; font-size: 8px; letter-spacing: 0.8px; color: var(--ink-label); -unity-text-align: middle-left; }
+.wm-workshop .wm-disassembly-parts { left: 150px; right: auto; top: 49px; justify-content: flex-start; }
+.wm-workshop .wm-disassembly-action { left: auto; right: 10px; top: 10px; bottom: auto; width: 130px; height: 28px; background-image: none; background-color: rgb(0, 0, 0); border-width: 0.64px; border-color: var(--gold); border-radius: 0; }
+.wm-workshop .wm-disassembly-action Label { font-size: 9px; letter-spacing: 1.2px; color: var(--gold); -unity-font-style: bold; }
+.wm-workshop .wm-disassembly-action:hover { background-color: rgb(54, 48, 29); }
+/* All of them at once, after the button for one on the strip's top line, so the parts under
+   them have the strip's whole width. What was gained is said under the two. */
+.wm-workshop .wm-disassembly-action { right: 96px; }
+.wm-workshop .wm-disassembly-all { right: 10px; width: 80px; }
+.wm-workshop .wm-disassembly-all--off Label { color: var(--ink-meta); }
+.wm-workshop .wm-disassembly-all--off { opacity: 1; border-color: var(--line-strong); }
+.wm-workshop .wm-disassembly-feedback { left: 380px; right: 10px; width: auto; top: 44px; bottom: auto; -unity-text-align: upper-right; white-space: normal; }
+.wm-workshop .wm-disassembly-empty { margin-top: 40px; }
+/* The strip: the name of what is made, a small heading, and the button as the shell's main action */
+.wm-workshop__image { position: absolute; left: 0; top: 0; -unity-background-scale-mode: scale-to-fit; }
+.wm-workshop__name { position: absolute; left: 0; top: 0; margin: 0; padding: 0; font-size: 12px; letter-spacing: 0.6px; color: var(--ink); }
+/* What it takes starts at the strip's left edge, under its name and heading: vanilla's slots
+   stand in from it */
+.wm-workshop #ReqMaterialsContainer > * { margin-left: 0; margin-right: 7px; }
+.wm-workshop #ReqMaterialsHeadline { margin: 0; padding: 0; font-size: 8px; letter-spacing: 0.8px; color: var(--ink-label); -unity-text-align: middle-left; }
+.wm-workshop #AssembleButton .text-button { height: 28px; background-image: none; background-color: rgb(0, 0, 0); border-width: 0.64px; border-color: var(--gold); }
+.wm-workshop #AssembleButton .text-button-label { font-size: 9px; letter-spacing: 1.2px; color: var(--gold); -unity-font-style: bold; }
+.wm-workshop #AssembleButton .text-button:enabled:hover { background-color: rgb(54, 48, 29); }
+.wm-workshop #AssembleButton.wm-workshop__off .text-button { border-color: var(--line-strong); }
 /* Calibration in the shell's colours */
 .wm-workshop .wm-cal-sectionlabel { color: var(--ink-meta); letter-spacing: 0.8px; }
 .wm-workshop .wm-cal-name { color: var(--ink); }
@@ -677,6 +682,8 @@
 .wm-oci #ShipInfoWindow { padding: 8px 0 10px 0; background-color: rgba(0, 0, 0, 0.92); border-width: 0.64px; border-color: var(--line); }
 /* The ship is in the middle of the frame, and so is the hint that it can be turned. */
 .wm-oci .wm-pan-hint { left: 640px; }
+/* Mission preparation's map is between the frame's left and the roster, and so is its hint. */
+.wm-prep .wm-pan-hint { left: 322px; }
 
 /* The black market: vanilla's panels flat and black like the shell's own, with its titles, kind
    labels and hint in the shell's inks, and the Trade button as the shell's main action. */

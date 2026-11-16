@@ -40,13 +40,105 @@ public sealed partial class StrategyDiorama
     private const float PrepOrbitPitchMin = 30f;
     private const float PrepOrbitPitchMax = 88f;
     private const float PrepOrbitDistanceMin = 2.6f;
-    private const float PrepOrbitDistanceMax = 4.4f;
+    // How much further out than the view that fits the map the wheel goes.
+    private const float PrepOrbitZoomOut = 1.1f;
     // The camera stays under the room's ceiling, in the room's units.
     private const float PrepOrbitCeiling = 3.9f;
     private float _prepYaw, _prepPitch = PrepOrbitPitch, _prepDistance = PrepOrbitDistance;
     private float _prepYawTarget, _prepPitchTarget = PrepOrbitPitch, _prepDistanceTarget = PrepOrbitDistance;
     private bool _prepOrbiting;
     private bool _prepOrbitOn;
+
+    // The view a visit starts from: the tilt, the distance and the lens's shift at which the whole
+    // map lies in the frame's free part, between the frame's left and the roster and between the
+    // chips and the foot of the panels. It is worked out from the map's own shape, which is as
+    // long as it is wide for one mission and not for the next, whatever its size in tiles.
+    private float _prepFitPitch = PrepOrbitPitch, _prepFitDistance = PrepOrbitDistance, _prepFitShift = PrepFraming.Shift;
+    private (int X, int Z, float Aspect) _prepFitFor;
+    private const float PrepFitMargin = 12f;
+    // The map stands this far right of the free part's middle: its near edge, the widest, is low
+    // in the frame, where its corner may run a little under the roster's foot, and the objectives
+    // lie over its far left corner.
+    private const float PrepFitRightward = 20f;
+    // What stands on the map is taken to reach this far over it.
+    private const float PrepFitHeight = 0.12f;
+
+    private float PrepDistanceMax => _prepFitDistance * PrepOrbitZoomOut;
+
+    private void FitPrepView(Camera camera)
+    {
+        // The lens as the camera really draws with it (its sensor's fit to the screen included),
+        // unshifted, and how far a shift of one moves the picture.
+        var (fov, shift, lift) = (camera.fieldOfView, _lensShift, _lensLift);
+        SetLens(camera, PrepFraming.Fov, 0f, 0f);
+        var lens = camera.projectionMatrix;
+        SetLens(camera, PrepFraming.Fov, 1f, 0f);
+        var perShift = -(camera.projectionMatrix.m02 - lens.m02);
+        SetLens(camera, fov, shift, lift);
+
+        // The free part of the frame as the camera's own picture has it. The frame is the middle
+        // 16:9 of a wider screen.
+        var block = Mathf.Min(1f, 16f / 9f / camera.aspect);
+        float Across(float panel) => (0.5f + (panel / 1280f - 0.5f) * block) * 2f - 1f;
+        var (left, right) = (Across(RosterLeft + PrepFitMargin), Across(PrepRosterLeft - PrepFitMargin));
+        var (top, bottom) = (1f - 2f * (SquadsTop + PrepChipHeight + PrepGap + PrepFitMargin) / 720f, 1f - 2f * (SquadsBottom - PrepFitMargin) / 720f);
+
+        var (halfAcross, halfAlong) = (_prepMapSizeX * _prepMapTile / 2f, _prepMapSizeZ * _prepMapTile / 2f);
+        var corners = new Vector3[8];
+        for (var i = 0; i < 8; i++)
+            corners[i] = _room.transform.TransformPoint(PrepMapCentre + new Vector3((i & 1) == 0 ? -halfAlong : halfAlong, (i & 4) == 0 ? 0f : PrepFitHeight, (i & 2) == 0 ? -halfAcross : halfAcross));
+        var focus = _room.transform.TransformPoint(PrepOrbitFocus);
+        var upright = _room.transform.TransformDirection(Vector3.left);
+
+        // The map's box in the picture from a tilt and a distance, with the lens unshifted.
+        (float Left, float Right, float Top, float Bottom) Seen(float tilt, float distance)
+        {
+            var eye = _room.transform.TransformPoint(PrepOrbitFocus + new Vector3(Mathf.Cos(tilt) * distance, Mathf.Sin(tilt) * distance, 0f));
+            var facing = Quaternion.LookRotation(focus - eye, upright);
+            var (across, up, ahead) = (facing * Vector3.right, facing * Vector3.up, facing * Vector3.forward);
+            var box = (Left: float.MaxValue, Right: float.MinValue, Top: float.MinValue, Bottom: float.MaxValue);
+            foreach (var corner in corners)
+            {
+                var from = corner - eye;
+                var seen = lens * new Vector4(Vector3.Dot(from, across), Vector3.Dot(from, up), -Vector3.Dot(from, ahead), 1f);
+                var (x, y) = (seen.x / seen.w, seen.y / seen.w);
+                box = (Mathf.Min(box.Left, x), Mathf.Max(box.Right, x), Mathf.Max(box.Top, y), Mathf.Min(box.Bottom, y));
+            }
+            return box;
+        }
+        bool Fits(float tilt, float distance)
+        {
+            var box = Seen(tilt, distance);
+            return box.Right - box.Left <= right - left && box.Top <= top && box.Bottom >= bottom;
+        }
+
+        // From the usual tilt down to the flattest: a flatter view may stand further back under
+        // the room's ceiling. The nearest distance that fits is taken.
+        var (pitch, far) = (PrepOrbitPitchMin, (PrepOrbitCeiling - PrepOrbitFocus.y) / Mathf.Sin(PrepOrbitPitchMin * Mathf.Deg2Rad));
+        for (var tilt = PrepOrbitPitch; tilt >= PrepOrbitPitchMin; tilt -= 1f)
+        {
+            var limit = (PrepOrbitCeiling - PrepOrbitFocus.y) / Mathf.Sin(tilt * Mathf.Deg2Rad);
+            if (!Fits(tilt * Mathf.Deg2Rad, limit))
+                continue;
+            var near = PrepOrbitDistanceMin;
+            (pitch, far) = (tilt, limit);
+            for (var step = 0; step < 20; step++)
+            {
+                var middle = (near + far) / 2f;
+                if (Fits(tilt * Mathf.Deg2Rad, middle))
+                    far = middle;
+                else
+                    near = middle;
+            }
+            break;
+        }
+        var fitted = Seen(pitch * Mathf.Deg2Rad, far);
+        (_prepFitPitch, _prepFitDistance) = (pitch, far);
+        var stands = (left + right) / 2f + PrepFitRightward / 1280f * block * 2f;
+        _prepFitShift = Mathf.Abs(perShift) > 0.0001f ? (stands - (fitted.Left + fitted.Right) / 2f) / perShift : PrepFraming.Shift;
+        _prepFitFor = (_prepMapSizeX, _prepMapSizeZ, camera.aspect);
+        Context.Log.Info($"strategy diorama: mission preparation fits a {_prepMapSizeX} by {_prepMapSizeZ} map from {far:F2} m at {pitch:F0} degrees, lens shifted {_prepFitShift:F3}");
+    }
 
     private void DrivePrepCamera()
     {
@@ -56,12 +148,18 @@ public sealed partial class StrategyDiorama
             _prepOrbitOn = false;
             return;
         }
-        if (!_prepOrbitOn)
+        // The view is fitted to the map once the map is known, and again for another map or
+        // another shape of screen.
+        var lensCamera = RoomCamera;
+        var refit = _prepMapSizeX > 0 && lensCamera != null && _prepFitFor != (_prepMapSizeX, _prepMapSizeZ, lensCamera.aspect);
+        if (refit)
+            FitPrepView(lensCamera);
+        if (!_prepOrbitOn || refit)
         {
             // Each visit starts from the view down the table.
             _prepOrbitOn = true;
             _prepOrbiting = false;
-            (_prepYaw, _prepPitch, _prepDistance) = (_prepYawTarget, _prepPitchTarget, _prepDistanceTarget) = (0f, PrepOrbitPitch, PrepOrbitDistance);
+            (_prepYaw, _prepPitch, _prepDistance) = (_prepYawTarget, _prepPitchTarget, _prepDistanceTarget) = (0f, _prepFitPitch, _prepFitDistance);
         }
         var mouse = UnityEngine.InputSystem.Mouse.current;
         if (mouse != null)
@@ -79,7 +177,7 @@ public sealed partial class StrategyDiorama
             }
             var scroll = WheelNotches(mouse.scroll.ReadValue().y);
             if (Mathf.Abs(scroll) > 0.01f && PointerOverPrepMap())
-                _prepDistanceTarget = Mathf.Clamp(_prepDistanceTarget * OrbitZoom(scroll), PrepOrbitDistanceMin, PrepOrbitDistanceMax);
+                _prepDistanceTarget = Mathf.Clamp(_prepDistanceTarget * OrbitZoom(scroll), PrepOrbitDistanceMin, PrepDistanceMax);
         }
         var smoothing = OrbitSmoothing();
         _prepYaw = Mathf.Lerp(_prepYaw, _prepYawTarget, smoothing);
@@ -97,7 +195,7 @@ public sealed partial class StrategyDiorama
         var top = _room.transform.TransformDirection(Quaternion.Euler(0f, _prepYaw, 0f) * Vector3.left);
         var facing = Quaternion.LookRotation(focus - eye, top);
         // The room camera's shot follows the orbit, and the camera travels to it on arriving.
-        _shot = (eye, facing, PrepFraming.Fov, PrepFraming.Shift);
+        _shot = (eye, facing, PrepFraming.Fov, _prepFitShift);
     }
 
     // What the shell's panel has under the pointer, or null where it has nothing.
@@ -108,7 +206,7 @@ public sealed partial class StrategyDiorama
     }
 
     // The panels that may lie over a part of the map's place on screen.
-    private static readonly string[] PrepPanels = { VanillaUi.Elements.PrepSelectedColumn, PrepRosterName, PrepRailName, PrepChipsName };
+    private static readonly string[] PrepPanels = { VanillaUi.Elements.PrepSelectedColumn, PrepRosterName, PrepChipsName };
 
     // Whether the pointer is over the map's part of the screen: the room, vanilla's unseen map
     // or the map's own tokens under it, or anything else there that is not one of the panels.
@@ -138,7 +236,7 @@ public sealed partial class StrategyDiorama
             return "no diorama";
         d._prepYawTarget = yaw;
         d._prepPitchTarget = Mathf.Clamp(pitch, PrepOrbitPitchMin, PrepOrbitPitchMax);
-        d._prepDistanceTarget = Mathf.Clamp(distance, PrepOrbitDistanceMin, PrepOrbitDistanceMax);
+        d._prepDistanceTarget = Mathf.Clamp(distance, PrepOrbitDistanceMin, d.PrepDistanceMax);
         return $"orbit to bearing {yaw:0}, tilt {d._prepPitchTarget:0}, distance {d._prepDistanceTarget:0.0}";
     }
 

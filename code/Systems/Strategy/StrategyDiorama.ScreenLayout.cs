@@ -36,9 +36,10 @@ public sealed partial class StrategyDiorama
                 HideInline(UI.Find(root, UiSelector.Name(VanillaUi.Elements.ButtonContainer)));
                 break;
             case VanillaUi.Screens.MissionPrep:
-                // The mission's name and the two buttons are the shell's, and the loadout bar sits
-                // on the bottom bar between the actions.
+                // The title, the mission's name and the two buttons are the shell's, and the loadout
+                // bar sits on the bottom bar between the actions.
                 LayOutPrep(root);
+                HideInline(UI.Find(root, UiSelector.Name(VanillaUi.Elements.ScreenHeader)));
                 HideInline(UI.Find(root, UiSelector.Name(VanillaUi.Elements.StartMissionButton)));
                 HideInline(UI.Find(root, UiSelector.Name(VanillaUi.Elements.AbortButton)));
                 HideInline(UI.Find(root, UiSelector.Name(VanillaUi.Elements.MissionName)));

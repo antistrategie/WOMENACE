@@ -6,9 +6,10 @@ using UnityEngine.UIElements;
 
 namespace WOMENACE.Code;
 
-// The shell's bars in motion: shut for a cut to another room and opened on arrival, shut for a
-// mission launch, and brought in for a story event. The black is two shutters behind the bars
-// (shell.uss), moved by a translate. The bars and their contents stay where they are.
+// The shell's black in motion: two shutters behind the bars (shell.uss), out of the frame at rest.
+// They shut for a cut to another room and open on arrival, shut for a mission launch, and come
+// part way in for a story event, moved by a translate. The bars and their contents stay where
+// they are.
 public sealed partial class StrategyDiorama
 {
     private static string RoomOf(NavigationMenu.Target target) => target switch
@@ -110,7 +111,7 @@ public sealed partial class StrategyDiorama
 
     private void OpenShutBars(VisualElement shell, string paceClass)
     {
-        MoveBars(shell, BarHeight);
+        MoveBars(shell, BarsOpen);
         shell.RemoveFromClassList(BarsClosedClass);
         shell.RemoveFromClassList(paceClass);
         shell.parent?.RemoveFromClassList(BarsClosedClass);
@@ -121,9 +122,10 @@ public sealed partial class StrategyDiorama
 
     private const string BarsClosedClass = "wm-bars-closed";
     private const string BarsEventClass = "wm-bars-event";
-    // How far the bars' edges stand from the screen's edges, in panel pixels: at rest (the height
-    // shell.uss gives a bar), and while a story event plays.
+    // How tall shell.uss makes a bar, in panel pixels: what stands on a bar is placed by it.
     private const float BarHeight = 90f;
+    // How far the black's edges stand from the screen's edges: open, and while a story event plays.
+    private const float BarsOpen = 0f;
     private const float BarEventHeight = 140f;
 
     // Moves the bars' edges to a distance from the screen's edges, or shut (no distance given).
@@ -200,7 +202,7 @@ public sealed partial class StrategyDiorama
         // A shell that has been replaced is left alone: its bars are no longer the screen's.
         if (shell.panel == null || _shell != shell)
             yield break;
-        MoveBars(shell, BarHeight);
+        MoveBars(shell, BarsOpen);
         shell.RemoveFromClassList(BarsClosedClass);
         root?.RemoveFromClassList(BarsClosedClass);
     }

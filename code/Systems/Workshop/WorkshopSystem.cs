@@ -162,6 +162,77 @@ public sealed class WorkshopSystem : JiangyuSystem
         StyleItems(screen);
     }
 
+    // Each material a project takes shows how many are owned against how many it takes, in red
+    // where there are too few, so the materials' own list need not be read through for it.
+    private static void CountRequired(WorkshopUIScreen screen)
+    {
+        var owned = Inventory.Owned;
+        var container = screen.m_ReqMaterialsContainer;
+        if (owned == null || container == null)
+            return;
+        var slots = 0;
+        foreach (var element in UI.FindAll(container, UiSelector.TypeName("BlackMarketItemSlot")))
+        {
+            var slot = element.TryCast<BlackMarketItemSlot>();
+            if (slot?.m_ItemTemplate == null)
+                continue;
+            slots++;
+            // Vanilla writes how many it takes ("6x"), and nothing for one.
+            var digits = new string((slot.m_StackSize?.text ?? "").Where(char.IsDigit).ToArray());
+            var takes = int.TryParse(digits, out var parsed) && parsed > 0 ? parsed : 1;
+            var have = owned.GetInstanceCount(slot.m_ItemTemplate);
+            if (slot.m_StackSize != null)
+                slot.m_StackSize.style.display = DisplayStyle.None;
+            var count = UI.Find(slot, UiSelector.Name(RequiredCountName))?.TryCast<Label>();
+            if (count == null)
+            {
+                // The slot is vanilla's, outside the Workshop's own stylesheet, so the label is
+                // styled here.
+                count = new Label { name = RequiredCountName, pickingMode = PickingMode.Ignore };
+                count.style.position = Position.Absolute;
+                count.style.right = 1f;
+                count.style.bottom = 0f;
+                count.style.marginLeft = count.style.marginRight = count.style.marginTop = count.style.marginBottom = 0f;
+                count.style.paddingTop = count.style.paddingBottom = 0f;
+                count.style.paddingLeft = count.style.paddingRight = 2f;
+                count.style.fontSize = 9f;
+                count.style.backgroundColor = new UnityEngine.Color(0f, 0f, 0f, 0.75f);
+                slot.Add(count);
+            }
+            count.text = $"{have}/{takes}";
+            count.style.color = have >= takes ? Enough : ShortOf;
+        }
+        FitRequired(container, slots);
+    }
+
+    // Where the strategy shell gives what a project takes one row of a set width, more slots
+    // than the row holds are drawn smaller, so every one of them is still seen at once.
+    private static void FitRequired(VisualElement container, int slots)
+    {
+        var width = RequiredWidth ?? (container.style.width.keyword == StyleKeyword.Undefined ? container.style.width.value.value : 0f);
+        var needed = slots * RequiredSlotStep;
+        if (width > 0f && needed > width)
+        {
+            var fit = width / needed;
+            container.style.transformOrigin = new TransformOrigin(0f, 0f, 0f);
+            container.style.scale = new Scale(new UnityEngine.Vector3(fit, fit, 1f));
+        }
+        else
+        {
+            container.style.transformOrigin = StyleKeyword.Null;
+            container.style.scale = StyleKeyword.Null;
+        }
+    }
+
+    // A slot's width with the room after it (shell.uss).
+    private const float RequiredSlotStep = 55f;
+    // Set by a dev verb to try the fit on a narrower row than any project needs.
+    internal static float? RequiredWidth;
+
+    private const string RequiredCountName = "wm-required-count";
+    private static readonly UnityEngine.Color Enough = new(222f / 255f, 208f / 255f, 154f / 255f);
+    private static readonly UnityEngine.Color ShortOf = new(1f, 123f / 255f, 108f / 255f);
+
     private static void StyleItems(WorkshopUIScreen screen)
     {
         if (screen == null)
@@ -174,6 +245,8 @@ public sealed class WorkshopSystem : JiangyuSystem
         var resultId = screen.m_SelectedBlueprint?.GetCraftingResult()?.GetID();
         foreach (var element in UI.FindAll(screen.m_ProjectPreview, UiSelector.Name("Image")))
             element.style.unityBackgroundImageTintColor = WorkshopItemStyle.Tint(resultId);
+        // Vanilla fills what a project takes when one is picked as well as when the window is.
+        CountRequired(screen);
     }
 
     private static string CoreHeading() => Locale.Text("WOMENACE::ui/workshop/cores", "Calibration Cores");

@@ -28,6 +28,8 @@ public sealed partial class StrategyDiorama
         public Material Material;
         public VisualElement Target;
         public bool Selected;
+        // The card's renderer on a planet, whose place in the draw order follows the selection.
+        public MeshRenderer Renderer;
         public bool Hover;
         // On a planet: its place on the unit globe and in the room, how far across the planet's
         // picture that is, its card's width and height in metres, and its marker's box.
@@ -95,7 +97,7 @@ public sealed partial class StrategyDiorama
         if (CurrentPlanet() is { } planet)
         {
             ShowPlanetMarkers(pois, template, layer, planet);
-            ShowChibi(template, PlanetOrder + 1);
+            ShowChibi(template, PlanetChibiOrder);
             RefreshMarkers(true);
             SetMarkersFade(_markerFade);
             return;
@@ -311,6 +313,8 @@ public sealed partial class StrategyDiorama
             {
                 marker.Selected = on;
                 material?.SetColor("_Tint", on ? CardSelectedTint : CardTint);
+                if (marker.Renderer != null)
+                    marker.Renderer.sortingOrder = on ? PlanetSelectedOrder : PlanetCardOrder;
             }
             // The dark backing arrives with the picture, never ahead of it as a black card.
             material?.SetFloat(IntensityId, (marker.Hover ? CardHoverIntensity : CardIntensity) * _markerFade);

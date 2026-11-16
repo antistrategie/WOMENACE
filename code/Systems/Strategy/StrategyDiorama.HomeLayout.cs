@@ -18,7 +18,7 @@ public sealed partial class StrategyDiorama
 
     // Mission select: the mission panel's column and how far the markers shift to clear it.
     private const float MissionColumnWidth = 328f;
-    private const float OperationsCornerTop = 96f;
+    private const float OperationsCornerTop = 70f;
     private const float OperationsCornerLeft = 32f;
     private const float MissionColumnRight = 32f;
 
@@ -282,7 +282,7 @@ public sealed partial class StrategyDiorama
     }
 
     private const float OpsColumnLeft = 32f;
-    private const float OpsColumnTop = 106f;
+    private const float OpsColumnTop = 80f;
     private const float OpsColumnWidth = 264f;
     private const float OpsProgressBarWidth = 70f;
     private const float LightIconsHeight = 14.4f;
@@ -294,7 +294,7 @@ public sealed partial class StrategyDiorama
     private static readonly UnityEngine.Color OpsBoxFill = new(0f, 0f, 0f, 0.975f);
     private static readonly UnityEngine.Color OpsBoxLine = new(50f / 255f, 60f / 255f, 74f / 255f);
     private const float OpsBoxPad = 13f;
-    private const float OpsColumnMaxHeight = 508f;
+    private const float OpsColumnMaxHeight = 503f;
     private const string OpsBoxClass = "wui-ops";
 
     private System.Collections.IEnumerator LayOutMissionsLater()

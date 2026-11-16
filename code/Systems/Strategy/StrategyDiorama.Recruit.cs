@@ -225,7 +225,7 @@ public sealed partial class StrategyDiorama
             Spaced(UI.Find(holder, UiSelector.Name(VanillaUi.Elements.InitialPerk)), 0f, RecruitPad, 0f, 0f, 0f);
         }
         // The header runs across the top of both columns, as the squad panel's does: the unit's
-        // badge, her name over her rank and unit, and Hire at the right where Dismiss is on Squads.
+        // badge and her name over her rank and unit.
         // It is placed from the info's holder, whose right edge is the panel's own.
         var header = holder != null ? UI.Find(holder, UiSelector.Name(VanillaUi.Elements.UnitWindowHeader)) : null;
         Spaced(header, 0f, 0f, 0f, 0f, 0f);
@@ -270,18 +270,31 @@ public sealed partial class StrategyDiorama
             // out of sight: vanilla looks for it there each time the screen opens, which can be
             // after this has run.
             HideInline(portraitColumn != null ? UI.Find(portraitColumn, UiSelector.Name(VanillaUi.Elements.HiringCosts)) : null);
-            // Vanilla's own Hire button, with what it checks and asks, moves into the header.
+            // Vanilla's own Hire button, with what it checks and asks, stands at the panel's
+            // bottom right: where reading her down the panel ends.
             var hire = UI.Find(window, UiSelector.Name(VanillaUi.Elements.HireButton));
-            MoveInto(header, hire);
+            MoveInto(window, hire);
             Spaced(hire, 0f, 0f, 0f, 0f, null);
             Inline(hire, e =>
             {
-                e.style.width = StyleKeyword.Auto;
-                e.style.flexShrink = 0;
+                var s = e.style;
+                s.position = Position.Absolute;
+                s.left = StyleKeyword.Auto;
+                s.top = StyleKeyword.Auto;
+                s.right = RecruitPad;
+                s.bottom = RecruitPad;
+                s.width = StyleKeyword.Auto;
+                s.flexShrink = 0;
             }, e =>
             {
-                e.style.width = StyleKeyword.Null;
-                e.style.flexShrink = StyleKeyword.Null;
+                var s = e.style;
+                s.position = StyleKeyword.Null;
+                s.left = StyleKeyword.Null;
+                s.top = StyleKeyword.Null;
+                s.right = StyleKeyword.Null;
+                s.bottom = StyleKeyword.Null;
+                s.width = StyleKeyword.Null;
+                s.flexShrink = StyleKeyword.Null;
             });
             var face = hire != null ? UI.Find(hire, UiSelector.Name(VanillaUi.Elements.Pickable)) : null;
             if (face != null && UI.Find(face, UiSelector.Name(HireCostName)) == null)

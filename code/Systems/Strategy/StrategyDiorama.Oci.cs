@@ -272,10 +272,13 @@ public sealed partial class StrategyDiorama
                 _ociSettling = Math.Max(_ociSettling, 2);
                 continue;
             }
-            var end = RuntimePanelUtils.ScreenToPanel(panel, new Vector2(at.x, Screen.height - at.y));
-            var (fromX, fromY) = (box.center.x, box.yMax + OciStem);
+            // The lines are placed in their holder, which stands in from the edges of a screen
+            // wider or taller than 16:9.
+            var origin = line.parent != null ? line.parent.worldBound.position : Vector2.zero;
+            var end = RuntimePanelUtils.ScreenToPanel(panel, new Vector2(at.x, Screen.height - at.y)) - origin;
+            var (fromX, fromY) = (box.center.x - origin.x, box.yMax + OciStem - origin.y);
             stem.style.left = fromX;
-            stem.style.top = box.yMax;
+            stem.style.top = box.yMax - origin.y;
             var (dx, dy) = (end.x - fromX, end.y - fromY);
             line.style.left = fromX;
             line.style.top = fromY;

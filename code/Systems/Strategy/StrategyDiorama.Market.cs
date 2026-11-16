@@ -435,6 +435,12 @@ public sealed partial class StrategyDiorama
             root.AddToClassList(MarketClass);
             _shellUndo.Add(() => root.RemoveFromClassList(MarketClass));
         }
+        // Vanilla's shadow is as wide as the root, which on a screen wider than 16:9 leaves the
+        // room lit at its sides: it is drawn out to the screen's edges.
+        var shadow = UI.Find(root, UiSelector.Name(VanillaUi.Elements.MarketShadow));
+        if (shadow != null && shadow.parent == root && _shellInset is { } inset)
+            Inline(shadow, e => { e.style.left = -inset.Left; e.style.right = -inset.Right; e.style.width = StyleKeyword.Auto; },
+                e => { e.style.left = StyleKeyword.Null; e.style.right = StyleKeyword.Null; e.style.width = StyleKeyword.Null; });
         var (right, tall) = (1280f - RosterLeft, SquadsBottom - SquadsTop);
         Dock(panels, 0f, 0f, 1280f, 720f);
         Dock(UI.Find(panels, UiSelector.Name(VanillaUi.Elements.MarketPlayerPanel)), RosterLeft, SquadsTop, MarketPanelWidth, tall);

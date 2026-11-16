@@ -396,8 +396,11 @@ public sealed partial class StrategyDiorama
     }
 
     // The squad's centre: the middle of its units' renderer bounds, or the stand spot when empty.
-    // Also gives the squad's footprint radius across the floor, which sets how far back the camera
-    // stands: an infantry squad fits the default shot, a vehicle needs more room.
+    // Also gives how much room the squad takes in the shot, which sets how far back the camera
+    // stands: its footprint's radius across the floor, or its height where it is taller than it
+    // is wide (a walker). An infantry squad fits the default shot, a vehicle needs more room.
+    private const float TallFraming = 1.6f;
+
     private Vector3 SquadFocus(out float radius)
     {
         radius = 0f;
@@ -418,11 +421,13 @@ public sealed partial class StrategyDiorama
         var stand = _stage.TransformPoint(ArmoryStand);
         if (!has)
             return stand + Vector3.up * (_stageShot.AimHeight ?? 0.8f);
-        radius = new Vector2(bounds.extents.x, bounds.extents.z).magnitude;
+        // What stands over the aim counts for more than its height: the shot looks down, so
+        // the top of a tall thing is nearer the camera than its foot.
+        radius = Mathf.Max(new Vector2(bounds.extents.x, bounds.extents.z).magnitude, bounds.extents.y * TallFraming);
         if (_stageShot.AimHeight is { } height)
             return new Vector3(bounds.center.x, stand.y + height, bounds.center.z);
         // Aim a little below the middle: the units' feet matter more than the air above them.
-        return new Vector3(bounds.center.x, stand.y + Mathf.Min(bounds.extents.y, 1.6f) * 0.75f, bounds.center.z);
+        return new Vector3(bounds.center.x, stand.y + Mathf.Min(bounds.extents.y, 2.4f) * 0.75f, bounds.center.z);
     }
 
     private System.Collections.IEnumerator Orbit()
@@ -450,8 +455,9 @@ public sealed partial class StrategyDiorama
             {
                 CentreSquad();
                 aim = SquadFocus(out var radius);
-                // A new selection (infantry to vehicle and back) re-frames the shot.
-                if (Mathf.Abs(radius - framed) > 0.75f)
+                // A new selection (infantry to vehicle and back) re-frames the shot. A walker
+                // takes little more room than a squad, and all of it upwards.
+                if (Mathf.Abs(radius - framed) > 0.25f)
                 {
                     framed = radius;
                     FrameSquad(radius);
@@ -706,16 +712,20 @@ public sealed partial class StrategyDiorama
     private float YawRange() => Mathf.Lerp(OrbitYawRange, 25f, Mathf.InverseLerp(3.5f, 5.5f, _framedRadius));
 
     private float YawMin() => ArmoryYaw - YawRange();
-    private float YawMax() => ArmoryYaw + YawRange();
+    // To the right the swing stops short of the hall's pillar: past it the camera has the pillar
+    // between it and the squad and closes right in on them to see round it.
+    private const float OrbitYawRight = 50f;
+
+    private float YawMax() => ArmoryYaw + Mathf.Min(YawRange(), OrbitYawRight);
 
     private void FrameSquad(float radius)
     {
         _framedRadius = radius;
         var fit = radius * ArmoryFrameMargin / Mathf.Sin(ArmoryFov * 0.5f * Mathf.Deg2Rad);
         var distance = Mathf.Max(_stageShot.Distance, fit);
-        // A little further out than the framing shot and no more: further still, the camera
-        // backs into the hall's fittings.
-        _orbitDistanceMax = Mathf.Max(OrbitDistanceMax, distance * 1.12f);
+        // Further out than the framing shot by a part of it. Where that would back the camera
+        // into the hall's fittings, it stops short of them (ClearOfHall).
+        _orbitDistanceMax = Mathf.Max(OrbitDistanceMax, distance * 1.3f);
         _orbitDistanceTarget = distance;
         // Standing that far back at the default pitch would put the camera through the roof, so a
         // wide footprint is shot flatter (the focus sits about a metre up).

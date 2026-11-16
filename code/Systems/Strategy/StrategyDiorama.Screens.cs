@@ -74,6 +74,7 @@ public sealed partial class StrategyDiorama
         foreach (var target in new[] { VanillaUi.Targets.UpdateActiveCamera, VanillaUi.Targets.UpdateBackgroundScene, VanillaUi.Targets.SystemMapOpened })
             Context.Patches.Postfix(target.Type, target.Method, _ => ApplyScreenPolicy());
         HookBugReport();
+        HookEscape();
         HookMandatoryMessages();
         HookFactionWindow();
         HookMissionBoard();

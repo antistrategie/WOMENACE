@@ -20,8 +20,8 @@ public sealed partial class StrategyDiorama
     // distance from the bars.
     // The class of a list that scrolls on the shell's slim bar.
     private const string SlimScrollClass = "wui-scroll";
-    private const float SquadsTop = 99.2f;
-    private const float SquadsBottom = 620.8f;
+    private const float SquadsTop = 80f;
+    private const float SquadsBottom = 640f;
     // The panels stand on the bars' own side edges: 32 in from the screen's, where the Home
     // button starts and the bottom bar's last destination ends.
     private const float RosterLeft = 32f;
@@ -808,20 +808,64 @@ public sealed partial class StrategyDiorama
         s.borderBottomColor = StyleKeyword.Null;
     }
 
+    // The four stats beside the portrait are drawn over it: vanilla draws the portrait last, and
+    // a doll's picture is wider than vanilla's leaders'. They are moved to the end of the row the
+    // portrait is in, at the place they had, once that place has been laid out.
+    private void RaiseStats()
+    {
+        if (_squadWindow?.panel == null)
+            return;
+        var stats = UI.Find(_squadWindow, UiSelector.Name(VanillaUi.Elements.AdditionalStats));
+        var column = UI.Find(_squadWindow, UiSelector.Name(VanillaUi.Elements.StatsColumn));
+        var row = column?.parent;
+        if (stats == null || row == null || stats.parent != column)
+            return;
+        var (at, origin) = (stats.worldBound, row.worldBound);
+        if (!(at.width > 1f) || !(origin.width > 1f))
+            return;
+        var index = column.IndexOf(stats);
+        row.Add(stats);
+        _shellUndo.Add(() => column.Insert(Math.Min(index, column.childCount), stats));
+        Inline(stats, e =>
+        {
+            var s = e.style;
+            s.left = at.x - origin.x;
+            s.top = at.y - origin.y;
+            s.right = StyleKeyword.Auto;
+            s.bottom = StyleKeyword.Auto;
+            s.width = at.width;
+        }, e =>
+        {
+            var s = e.style;
+            s.left = StyleKeyword.Null;
+            s.top = StyleKeyword.Null;
+            s.right = StyleKeyword.Null;
+            s.bottom = StyleKeyword.Null;
+            s.width = StyleKeyword.Null;
+        });
+    }
+
     private VisualElement _squadWindow;
     private bool _squadPanelInPrep;
     private int _squadPickerTick;
+    // Whether the equipment picker is open over the room, as last looked.
+    private bool _squadPickerOpen;
 
     // Vanilla fills its equipment picker when a slot is clicked, which refreshes nothing. While a
     // picker is open its cards' names are given the panel's colours every few frames.
     private void DriveSquads()
     {
+        RaiseStats();
         if (_squadWindow == null || _squadWindow.panel == null || _shellRoot == null || !_shellRoot.ClassListContains(SquadsClass))
+        {
+            _squadPickerOpen = false;
             return;
+        }
         if (++_squadPickerTick % 6 != 0)
             return;
         var picker = UI.Find(_squadWindow, UiSelector.Name(VanillaUi.Elements.EquipmentPicker));
-        if (picker == null || picker.resolvedStyle.display == DisplayStyle.None || picker.resolvedStyle.visibility == Visibility.Hidden)
+        _squadPickerOpen = picker != null && picker.resolvedStyle.display != DisplayStyle.None && picker.resolvedStyle.visibility != Visibility.Hidden;
+        if (!_squadPickerOpen)
             return;
         Tint(picker, VanillaUi.Elements.ItemName, SquadInk);
         Tint(picker, VanillaUi.Elements.ShortItemName, SquadBlue);

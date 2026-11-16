@@ -187,6 +187,51 @@ public sealed partial class StrategyDiorama
         return string.Join(" ", lines);
     }
 
+    // Dev: counts frames for a while and keeps the rate, for comparing one view's cost with another's.
+    internal static string MeasureFromDev(float seconds)
+    {
+        if (_instance == null)
+            return "no diorama";
+        _measured = null;
+        _instance.Context.Coroutines.Start(Measure(seconds));
+        return $"measuring for {seconds} s";
+    }
+
+    internal static string MeasuredFromDev() => _measured ?? "not measured yet";
+
+    private static string _measured;
+
+    private static System.Collections.IEnumerator Measure(float seconds)
+    {
+        var (frames, worst, start) = (0, 0f, Time.realtimeSinceStartup);
+        while (Time.realtimeSinceStartup - start < seconds)
+        {
+            yield return null;
+            frames++;
+            worst = Mathf.Max(worst, Time.unscaledDeltaTime);
+        }
+        var took = Time.realtimeSinceStartup - start;
+        _measured = $"{frames / took:F1} fps ({took / frames * 1000f:F1} ms a frame, worst {worst * 1000f:F0} ms) at {Screen.width} x {Screen.height}";
+    }
+
+    // Dev: runs the active screen's own answer to the back key, as Escape does.
+    internal static string BackKeyFromDev()
+    {
+        var screen = Il2CppMenace.UI.UIManager.Get()?.GetActiveScreen();
+        if (screen == null)
+            return "no screen";
+        _devEscape = true;
+        try
+        {
+            screen.OnBackKeyUp();
+        }
+        finally
+        {
+            _devEscape = false;
+        }
+        return "back key on " + screen.GetIl2CppType().Name;
+    }
+
     // Dev: switches a home screen between its Home and Operations views.
     internal static string SetHomeViewFromDev(string view)
     {

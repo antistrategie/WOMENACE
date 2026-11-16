@@ -6,8 +6,9 @@ using UnityEngine.UIElements;
 
 namespace WOMENACE.Code;
 
-// The letterbox shell: black bars along the top and bottom of a strategy screen. The top bar holds
-// the title and the resources, the bottom bar the destinations.
+// The shell: a strip of contents along the top and bottom of a strategy screen, over the room. The
+// top one holds the title and the resources. The bottom one holds the destinations: every screen
+// in one row, grouped by the room it is in.
 //
 // The shell is ours (diorama/shell), added to the vanilla screen's own root so the game's dialogs
 // and tooltips stay above it. Everything it does is vanilla's: a destination clicks the vanilla tab
@@ -23,13 +24,8 @@ public sealed partial class StrategyDiorama
     private static readonly HashSet<string> HomeScreens = new() { VanillaUi.Screens.MissionSelect, VanillaUi.Screens.SystemMap };
 
     // What the shell shows for a screen: the room and, where the room holds more than one screen,
-    // the screen. The destination it is. And its tabs: two screens that share one destination.
-    // A tab goes to its target's screen, or does what it is given to press where its screens
-    // are one screen doing different things.
-    private readonly record struct ShellTab(string Key, string Label, NavigationMenu.Target Target, bool Selected, Action Press = null);
-
-    private readonly record struct ShellLook(string RoomKey, string Room, string ScreenKey, string Screen,
-        NavigationMenu.Target? Destination, ShellTab[] Tabs);
+    // the screen.
+    private readonly record struct ShellLook(string RoomKey, string Room, string ScreenKey, string Screen);
 
     private static readonly HashSet<string> ShellScreens = new()
     {
@@ -59,34 +55,23 @@ public sealed partial class StrategyDiorama
     private const string WeaponRoomKey = "WOMENACE::ui/shell/weapon_room";
     private const string RefittingRoomKey = "WOMENACE::ui/shell/refitting_room";
 
-    private static ShellTab[] SquadTabs(bool recruit) => new ShellTab[]
-    {
-        new("WOMENACE::ui/shell/tab_roster", "ROSTER", NavigationMenu.Target.Armory, !recruit),
-        new("WOMENACE::ui/shell/tab_recruit", "RECRUIT", NavigationMenu.Target.Hiring, recruit),
-    };
-
-    private const int ShellTabSlots = 3;
-
-    private static ShellTab[] MarketTabs(bool kalina) => new ShellTab[]
-    {
-        new("WOMENACE::ui/shell/tab_black_market", "BLACK MARKET", NavigationMenu.Target.Market, !kalina),
-        new("WOMENACE::ui/shell/tab_kalina", "KALINA'S SHOP", NavigationMenu.Target.Shop, kalina),
-    };
-
     private static ShellLook LookFor(string screenName) => screenName switch
     {
-        VanillaUi.Screens.Armory => new(RefittingRoomKey, "REFITTING ROOM", null, null, NavigationMenu.Target.Armory, SquadTabs(false)),
-        VanillaUi.Screens.Hiring => new(RefittingRoomKey, "REFITTING ROOM", null, null, NavigationMenu.Target.Armory, SquadTabs(true)),
-        VanillaUi.Screens.BlackMarket => new(OpsRoomKey, "OPS ROOM", "WOMENACE::ui/shell/market", "MARKET", NavigationMenu.Target.Market, MarketTabs(false)),
+        VanillaUi.Screens.Armory or VanillaUi.Screens.Hiring => new(RefittingRoomKey, "REFITTING ROOM", null, null),
+        VanillaUi.Screens.BlackMarket => new(OpsRoomKey, "OPS ROOM", "WOMENACE::ui/shell/market", "MARKET"),
         // Kalina's shop is hosted on the workshop screen and belongs to the market.
-        VanillaUi.Screens.Workshop when ShopSystem.IsShopOpen =>
-            new(OpsRoomKey, "OPS ROOM", "WOMENACE::ui/shell/market", "MARKET", NavigationMenu.Target.Market, MarketTabs(true)),
-        VanillaUi.Screens.Workshop => new(WeaponRoomKey, "WEAPON ROOM", null, null, NavigationMenu.Target.Workshop, WorkshopTabs()),
-        VanillaUi.Screens.ShipUpgrades => new(OpsRoomKey, "OPS ROOM", "WOMENACE::ui/shell/oci", "O.C.I.", NavigationMenu.Target.Oci, null),
-        VanillaUi.Screens.OperationSelect => new(OpsRoomKey, "OPS ROOM", "WOMENACE::ui/shell/operations_title", "OPERATIONS", null, null),
-        VanillaUi.Screens.MissionPrep => new(OpsRoomKey, "OPS ROOM", "WOMENACE::ui/shell/mission_prep", "DEPLOYMENT", null, null),
-        _ => new(OpsRoomKey, "OPS ROOM", null, null, null, null),
+        VanillaUi.Screens.Workshop when ShopSystem.IsShopOpen => new(OpsRoomKey, "OPS ROOM", "WOMENACE::ui/shell/market", "MARKET"),
+        VanillaUi.Screens.Workshop => new(WeaponRoomKey, "WEAPON ROOM", null, null),
+        VanillaUi.Screens.ShipUpgrades => new(OpsRoomKey, "OPS ROOM", "WOMENACE::ui/shell/oci", "O.C.I."),
+        VanillaUi.Screens.OperationSelect => new(OpsRoomKey, "OPS ROOM", "WOMENACE::ui/shell/operations_title", "OPERATIONS"),
+        VanillaUi.Screens.MissionPrep => new(OpsRoomKey, "OPS ROOM", "WOMENACE::ui/shell/mission_prep", "DEPLOYMENT"),
+        _ => new(OpsRoomKey, "OPS ROOM", null, null),
     };
+
+    // A screen that is stepped into and backed out of (an operation's briefing, mission
+    // preparation) has its own two actions along the bottom and no destinations.
+    private static bool ShowsDestinations(string screenName) =>
+        screenName is not (VanillaUi.Screens.OperationSelect or VanillaUi.Screens.MissionPrep);
 
     // Set by the Operations button on another screen: the home screen it goes to opens on Operations.
     private bool _arriveOnOperations;
@@ -113,13 +98,70 @@ public sealed partial class StrategyDiorama
         (VanillaUi.Elements.Squaddies, "WOMENACE::ui/shell/squaddies", "SQUADDIES"),
     };
 
-    private static readonly (string Element, NavigationMenu.Target Target)[] ShellDestinations =
+    // A destination on the bottom row: its button, the room whose group it stands in, where it
+    // goes, and for the Workshop, which is one screen doing three things, the station.
+    private readonly record struct Destination(string Element, string RoomKey, NavigationMenu.Target Target, int Station = -1);
+
+    private static readonly Destination[] Destinations =
     {
-        ("wm-shell-oci", NavigationMenu.Target.Oci),
-        ("wm-shell-market", NavigationMenu.Target.Market),
-        ("wm-shell-squads", NavigationMenu.Target.Armory),
-        ("wm-shell-workshop", NavigationMenu.Target.Workshop),
+        new("wm-nav-oci", OpsRoomKey, NavigationMenu.Target.Oci),
+        new("wm-nav-market", OpsRoomKey, NavigationMenu.Target.Market),
+        new("wm-nav-kalina", OpsRoomKey, NavigationMenu.Target.Shop),
+        new("wm-nav-roster", RefittingRoomKey, NavigationMenu.Target.Armory),
+        new("wm-nav-recruit", RefittingRoomKey, NavigationMenu.Target.Hiring),
+        new("wm-nav-assembly", WeaponRoomKey, NavigationMenu.Target.Workshop, AssembleStation),
+        new("wm-nav-disassembly", WeaponRoomKey, NavigationMenu.Target.Workshop, DisassembleStation),
+        new("wm-nav-calibration", WeaponRoomKey, NavigationMenu.Target.Workshop, CalibrateStation),
     };
+
+    private static readonly (string Element, string RoomKey)[] DestinationGroups =
+    {
+        ("wm-nav-group-ops", OpsRoomKey),
+        ("wm-nav-group-refitting", RefittingRoomKey),
+        ("wm-nav-group-weapon", WeaponRoomKey),
+    };
+
+    private static bool IsHere(Destination destination, string screenName) => destination.Target switch
+    {
+        NavigationMenu.Target.Oci => screenName == VanillaUi.Screens.ShipUpgrades,
+        NavigationMenu.Target.Market => screenName == VanillaUi.Screens.BlackMarket,
+        NavigationMenu.Target.Shop => screenName == VanillaUi.Screens.Workshop && ShopSystem.IsShopOpen,
+        NavigationMenu.Target.Armory => screenName == VanillaUi.Screens.Armory,
+        NavigationMenu.Target.Hiring => screenName == VanillaUi.Screens.Hiring,
+        NavigationMenu.Target.Workshop => screenName == VanillaUi.Screens.Workshop && !ShopSystem.IsShopOpen
+            && WorkshopStation == destination.Station,
+        _ => false,
+    };
+
+    // The station asked for from another screen, and until when: the Workshop takes it up once
+    // its panels are built, which is some frames after it is the screen.
+    private int? _arriveAtStation;
+    private float _arriveAtStationUntil;
+    private const float ArriveAtStationSeconds = 5f;
+    // The Workshop's own switches, which are there once its panels are.
+    private const string WorkshopPanelsName = "wm-workshop-tabs";
+
+    private void GoTo(Destination destination)
+    {
+        _arriveAtStation = null;
+        if (destination.Station < 0)
+        {
+            // Kalina's shop opens over the Workshop's own screen, where calibration's panels
+            // would stay under it.
+            if (destination.Target == NavigationMenu.Target.Shop && _policyScreen == VanillaUi.Screens.Workshop)
+                CalibrationUISystem.Instance?.Close();
+            GoTo(destination.Target);
+            return;
+        }
+        if (_policyScreen == VanillaUi.Screens.Workshop && !ShopSystem.IsShopOpen)
+        {
+            GoToStation(destination.Station);
+            return;
+        }
+        _arriveAtStation = destination.Station;
+        _arriveAtStationUntil = UnityEngine.Time.unscaledTime + ArriveAtStationSeconds;
+        GoTo(NavigationMenu.Target.Workshop);
+    }
 
     // Arriving on a home screen shows Home. Closing an operation's briefing returns to the map it
     // was opened from.
@@ -169,9 +211,10 @@ public sealed partial class StrategyDiorama
 
     // A view the player can turn says so at the foot of the frame, midway between the panels:
     // the Squads hall, mission preparation's map, mission select's planet and O.C.I.'s ship.
+    // Not while the equipment picker is open over that part of the frame.
     private void DrivePanHint(VisualElement shell, bool covered)
     {
-        var on = !covered && ((_policyScreen == VanillaUi.Screens.MissionPrep && _prepOrbitOn) || ((_policyScreen == ArmoryScreen || _policyScreen == VanillaUi.Screens.Hiring) && _stage != null)
+        var on = !covered && !_squadPickerOpen && ((_policyScreen == VanillaUi.Screens.MissionPrep && _prepOrbitOn) || ((_policyScreen == ArmoryScreen || _policyScreen == VanillaUi.Screens.Hiring) && _stage != null)
             || _planetOrbitOn || _ociOn);
         // Asked every frame: the hint is found once a shell, and its style touched on a change.
         if (_panHint?.parent != shell)
@@ -199,12 +242,82 @@ public sealed partial class StrategyDiorama
             }
             shell.Add(hint);
             _panHint = hint;
+            PlacePanHint();
         }
         hint.style.display = on ? DisplayStyle.Flex : DisplayStyle.None;
     }
 
     private VisualElement _panHint;
     private bool _panHintOn;
+
+    // The screen's root keeps to 16:9 in the middle of a wider or a taller screen, as vanilla lays
+    // it out. The shell covers the whole screen, so what it draws over the room (the tags, the
+    // cards' click targets, the black) is placed in the screen's own coordinates and reaches its
+    // edges, while the bars' contents keep to the root. These are how far the root stands in
+    // from the screen's left, top, right and bottom.
+    private (float Left, float Top, float Right, float Bottom)? _shellInset;
+    private const float BarPadding = 32f;
+
+    private void PlaceShell(VisualElement shell)
+    {
+        var root = shell.parent;
+        var whole = root?.panel?.visualTree;
+        if (whole == null)
+            return;
+        var (inner, outer) = (root.worldBound, whole.worldBound);
+        if (!(inner.width > 1f) || !(outer.width > 1f))
+            return;
+        var inset = (MathF.Max(inner.xMin - outer.xMin, 0f), MathF.Max(inner.yMin - outer.yMin, 0f),
+            MathF.Max(outer.xMax - inner.xMax, 0f), MathF.Max(outer.yMax - inner.yMax, 0f));
+        if (_shellInset is { } was && MathF.Abs(was.Left - inset.Item1) + MathF.Abs(was.Top - inset.Item2)
+            + MathF.Abs(was.Right - inset.Item3) + MathF.Abs(was.Bottom - inset.Item4) < 0.5f)
+            return;
+        _shellInset = inset;
+        var (left, top, right, bottom) = inset;
+        shell.style.left = -left;
+        shell.style.top = -top;
+        shell.style.right = -right;
+        shell.style.bottom = -bottom;
+        foreach (var (name, above) in new[] { ("wm-shell-top", true), ("wm-shell-bottom", false) })
+        {
+            var bar = UI.Find(shell, UiSelector.Name(name));
+            if (bar == null)
+                continue;
+            bar.style.paddingLeft = BarPadding + left;
+            bar.style.paddingRight = BarPadding + right;
+            if (above)
+                bar.style.marginTop = top;
+            else
+                bar.style.marginBottom = bottom;
+        }
+        PlaceActions();
+        PlacePanHint();
+        // The black is half the shell's height each, and stands by the shell's edges.
+        if (!shell.ClassListContains(BarsClosedClass))
+            MoveBars(shell, shell.ClassListContains(BarsEventClass) ? BarEventHeight : BarsOpen);
+        // A screen's own layout reaches the screen's edges where it has to (see LayOutMarket).
+        ApplyHome(_homeScreen, _homeRoomShown);
+    }
+
+    // Raised over the destinations, the actions stand at the root's two sides.
+    private void PlaceActions()
+    {
+        var row = _shell != null ? UI.Find(_shell, UiSelector.Name("wm-shell-actions")) : null;
+        if (row == null)
+            return;
+        var raised = row.ClassListContains("wui-act-row--raised");
+        row.style.left = raised && _shellInset is { } a ? BarPadding + a.Left : StyleKeyword.Null;
+        row.style.right = raised && _shellInset is { } b ? BarPadding + b.Right : StyleKeyword.Null;
+    }
+
+    // The hint is placed by its rules from the root's left and foot.
+    private void PlacePanHint()
+    {
+        if (_panHint == null || _shellInset is not { } inset)
+            return;
+        _panHint.style.marginLeft = inset.Left;
+        _panHint.style.marginBottom = inset.Bottom;
+    }
 
     private static readonly string[] OperationsPanels = { VanillaUi.Elements.Hud, VanillaUi.Elements.MissionPois, VanillaUi.Elements.MissionWindow, VanillaUi.Elements.TopRightCorner };
 
@@ -311,6 +424,7 @@ public sealed partial class StrategyDiorama
             _shell.style.top = 0;
             _shell.style.right = 0;
             _shell.style.bottom = 0;
+            _shellInset = null;
             UI.Localise(_shell);
             // MENACE's bold face (Jura-Bold), set outright as the shell's font.
             NavigationMenu.ApplyGameFont(_shell);
@@ -323,7 +437,7 @@ public sealed partial class StrategyDiorama
                 AddResourceCaptions(bar);
                 LayOutResources(bar);
             }
-            MoveBars(_shell, BarHeight);
+            MoveBars(_shell, BarsOpen);
             // The bars open on arriving in another room, and on the first arrival of all.
             var arrivedIn = LookFor(screenName).RoomKey;
             if (_arrivedThroughBars || _shellRoom != arrivedIn)
@@ -359,7 +473,6 @@ public sealed partial class StrategyDiorama
         return true;
     }
 
-    private ShellTab[] _shellTabs;
     private bool _shellShop;
 
     // The vanilla buttons the bottom bar's two actions press, by name, on the Operations view.
@@ -386,22 +499,19 @@ public sealed partial class StrategyDiorama
         return label?.text ?? "";
     }
 
-    // A screen's own actions on the bottom bar, each a press of the vanilla button. Returns whether
-    // the screen has any, in which case they stand where the destinations would.
-    private bool RefreshActions(string screenName, bool onOperations)
+    // A screen's own actions, each a press of the vanilla button. They stand along the bottom
+    // where the screen has no destinations, and over the destinations where it has.
+    private void RefreshActions(string screenName, bool onOperations)
     {
         var actions = ActionsFor(screenName, onOperations);
-        var pick = actions == null && onOperations;
-        Show("wm-shell-actions", actions != null || pick);
-        Show("wm-act-primary", actions != null);
-        Show("wm-act-secondary", actions != null);
+        Show("wm-shell-actions", actions != null);
+        UI.Find(_shell, UiSelector.Name("wm-shell-actions"))?.EnableInClassList("wui-act-row--raised", ShowsDestinations(screenName));
+        PlaceActions();
         _actionPrimary = actions?.Primary;
         _actionSecondary = actions?.Secondary;
         _actionThroughBars = actions?.ThroughBars ?? false;
-        if (pick)
-            SetText("wm-act-info", Locale.Text("WOMENACE::ui/shell/pick_operation", "SELECT AN OPERATION ON THE HOLOTABLE"));
         if (actions is not { } a || _shellRoot == null)
-            return pick;
+            return;
         SetText("wm-act-primary-label", Locale.Text(a.PrimaryKey, a.PrimaryLabel));
         SetText("wm-act-secondary-label", Locale.Text(a.SecondaryKey, a.SecondaryLabel));
         UI.Find(_shell, UiSelector.Name("wm-act-secondary"))?.EnableInClassList("wui-act--danger", a.SecondaryDanger);
@@ -412,7 +522,6 @@ public sealed partial class StrategyDiorama
             var usable = button != null && button.IsInteractable();
             UI.Find(_shell, UiSelector.Name(element))?.EnableInClassList("wui-act--off", !usable);
         }
-        return true;
     }
 
     private readonly List<(VisualElement Child, VisualElement After)> _shellOrder = new();
@@ -492,6 +601,7 @@ public sealed partial class StrategyDiorama
         var restyle = 0f;
         var events = 0f;
         var actions = 0f;
+        var placed = 0f;
         var eventPlaying = false;
         var resumeIntel = false;
         var recount = 0f;
@@ -537,6 +647,12 @@ public sealed partial class StrategyDiorama
             DriveRoomCamera();
             DriveRoomDolls();
             DrivePanHint(shell, covered);
+            // The screen's size can change under the shell (a resolution chosen in the options).
+            if ((placed -= UnityEngine.Time.unscaledDeltaTime) <= 0f)
+            {
+                placed = 0.25f;
+                PlaceShell(shell);
+            }
             DrivePrepInput();
             DrivePrepTokens();
             // The table's markers follow the camera and the selection.
@@ -560,7 +676,7 @@ public sealed partial class StrategyDiorama
             {
                 actions = 0.25f;
                 var operations = HomeScreens.Contains(_policyScreen) && _homeView == HomeView.Operations;
-                if (operations || ActionsFor(_policyScreen, false) != null)
+                if (ActionsFor(_policyScreen, operations) != null)
                     RefreshActions(_policyScreen, operations);
             }
             // Messages arrive after the screen opens and are read while it shows.
@@ -580,7 +696,7 @@ public sealed partial class StrategyDiorama
                 if (playing != eventPlaying && !covered)
                 {
                     eventPlaying = playing;
-                    MoveBars(shell, playing ? BarEventHeight : BarHeight);
+                    MoveBars(shell, playing ? BarEventHeight : BarsOpen);
                     // The bars are bare for it: their contents and the vanilla resources go.
                     shell.EnableInClassList(BarsEventClass, playing);
                     shell.parent?.EnableInClassList(BarsEventClass, playing);
@@ -605,12 +721,26 @@ public sealed partial class StrategyDiorama
                 ApplyScreenPolicy();
                 ApplyHome(_homeScreen, _homeRoomShown);
             }
-            // Its own tabs change what it is doing without a screen change too, and the camera
-            // goes between its stations.
+            // Its stations change what it is doing without a screen change too, and the camera
+            // goes between them.
             else if (_policyScreen == VanillaUi.Screens.Workshop && _workshopStation != WorkshopStation)
             {
                 ApplyScreenPolicy();
                 ApplyHome(_homeScreen, _homeRoomShown);
+            }
+            // Arrived from another screen by a station's button: the Workshop turns to that station.
+            if (_arriveAtStation is { } station)
+            {
+                if (UnityEngine.Time.unscaledTime > _arriveAtStationUntil)
+                    _arriveAtStation = null;
+                else if (_policyScreen == VanillaUi.Screens.Workshop && !ShopSystem.IsShopOpen
+                    && UI.Find(_shellRoot, UiSelector.Name(WorkshopPanelsName))?.panel != null)
+                {
+                    if (WorkshopStation == station)
+                        _arriveAtStation = null;
+                    else
+                        SetStation(station);
+                }
             }
             // What it shows follows what is picked, looked at a few times a second.
             if (_policyScreen == VanillaUi.Screens.Workshop && _active == _weaponSet && !ShopSystem.IsShopOpen
@@ -711,21 +841,8 @@ public sealed partial class StrategyDiorama
         Click("wm-board-close", () => SetIntel(false));
         Click("wm-board-blocker", StepBackFromIntel);
         Context.Coroutines.Start(FollowDinergate(_shell));
-        foreach (var (element, target) in ShellDestinations)
-            Click(element, () => GoTo(target));
-        for (var i = 0; i < ShellTabSlots; i++)
-        {
-            var index = i;
-            Click("wm-shell-tab-" + i, () =>
-            {
-                if (_shellTabs == null || index >= _shellTabs.Length || _shellTabs[index].Selected)
-                    return;
-                if (_shellTabs[index].Press is { } press)
-                    press();
-                else
-                    GoTo(_shellTabs[index].Target);
-            });
-        }
+        foreach (var destination in Destinations)
+            Click(destination.Element, () => GoTo(destination));
     }
 
     private void Click(string name, Action onClick)
@@ -744,12 +861,15 @@ public sealed partial class StrategyDiorama
     {
         var homeScreen = HomeScreens.Contains(screenName);
         var onOperations = homeScreen && _homeView == HomeView.Operations;
-        // The way home shows wherever home is not the current view, the destinations wherever the
-        // bottom bar is not a view's own actions.
-        var hasActions = ActionsFor(screenName, onOperations) != null || onOperations;
-        var ownsWayBack = ActionsFor(screenName, onOperations) is { SecondaryDanger: false };
-        Show("wm-shell-back", (!homeScreen || onOperations) && !ownsWayBack);
-        Show("wm-shell-destinations", !hasActions);
+        Show("wm-shell-destinations", ShowsDestinations(screenName));
+        // Home is the first of the destinations, lit on the Home view.
+        var home = UI.Find(_shell, UiSelector.Name("wm-shell-back"));
+        if (home != null)
+        {
+            var onHome = homeScreen && !onOperations;
+            home.EnableInClassList("wui-nav-btn--here", onHome);
+            home.pickingMode = onHome ? PickingMode.Ignore : PickingMode.Position;
+        }
 
         var screen = LookFor(screenName);
         _shellShop = ShopSystem.IsShopOpen;
@@ -757,25 +877,6 @@ public sealed partial class StrategyDiorama
         var within = onOperations ? Locale.Text("WOMENACE::ui/shell/operations_title", "OPERATIONS")
             : screen.Screen != null ? Locale.Text(screen.ScreenKey, screen.Screen) : null;
         SetText("wm-shell-title", within != null ? room + "  //  " + within : room);
-
-        // Two screens under one destination show as tabs. Kalina's waits for the workshop unlock.
-        Show("wm-shell-tabs", screen.Tabs != null);
-        for (var i = 0; i < ShellTabSlots; i++)
-        {
-            var tab = UI.Find(_shell, UiSelector.Name("wm-shell-tab-" + i));
-            if (tab == null || screen.Tabs == null)
-                continue;
-            tab.style.display = i < screen.Tabs.Length ? DisplayStyle.Flex : DisplayStyle.None;
-            if (i >= screen.Tabs.Length)
-                continue;
-            var data = screen.Tabs[i];
-            var open = data.Selected || NavigationMenu.Available(data.Target);
-            SetText("wm-shell-tab-label-" + i, Locale.Text(data.Key, data.Label));
-            tab.EnableInClassList("wui-tab--on", data.Selected);
-            tab.EnableInClassList("wui-tab--off", !open);
-            tab.pickingMode = open && !data.Selected ? PickingMode.Position : PickingMode.Ignore;
-        }
-        _shellTabs = screen.Tabs;
         RefreshActions(screenName, onOperations);
 
         // During an operation the button continues it, by the name mission select's header shows.
@@ -787,17 +888,23 @@ public sealed partial class StrategyDiorama
             ? Locale.Text("WOMENACE::ui/shell/select_operation", "SELECT AN OPERATION")
             : Locale.Format("WOMENACE::ui/shell/continue_operation", "CONTINUE {0}", _operationName));
 
-        foreach (var (element, target) in ShellDestinations)
+        UI.Find(_shell, UiSelector.Name("wm-shell-operations"))?.EnableInClassList("wui-nav-btn--here", onOperations);
+        // A destination that is not open (the Workshop's stations and Kalina's shop before the
+        // Workshop unlocks, one the campaign has closed) shows dimmed.
+        foreach (var destination in Destinations)
         {
-            var item = UI.Find(_shell, UiSelector.Name(element));
+            var item = UI.Find(_shell, UiSelector.Name(destination.Element));
             if (item == null)
                 continue;
-            // A destination that is not open yet (the workshop before it unlocks) shows dimmed.
-            var available = NavigationMenu.Available(target);
-            var here = screen.Destination == target;
-            item.EnableInClassList("wui-dest--off", !available);
-            item.EnableInClassList("wui-dest--here", here);
+            var here = IsHere(destination, screenName);
+            var available = here || NavigationMenu.Available(destination.Target);
+            item.EnableInClassList("wui-nav-btn--off", !available);
+            item.EnableInClassList("wui-nav-btn--here", here);
             item.pickingMode = available && !here ? PickingMode.Position : PickingMode.Ignore;
+        }
+        foreach (var (element, roomKey) in DestinationGroups)
+        {
+            UI.Find(_shell, UiSelector.Name(element))?.EnableInClassList("wui-nav-group--here", roomKey == screen.RoomKey);
         }
     }
 
@@ -858,6 +965,59 @@ public sealed partial class StrategyDiorama
     {
         var target = VanillaUi.Targets.BugReportRequestOpen;
         Context.Patches.Prefix(target.Type, target.Method, info => info.Skip = true);
+    }
+
+    // Escape opens vanilla's menu from a home screen and steps back to the home screen from the
+    // others. Where the view has a way back of its own (the Operations view, an operation's
+    // briefing, mission preparation) Escape takes that, and the menu is left for the Home view,
+    // where there is nowhere further back to go.
+    private void HookEscape()
+    {
+        var target = VanillaUi.Targets.OpenScreen;
+        Context.Patches.Prefix(target.Type, target.Method, info =>
+        {
+            var name = info.Args is { Count: > 0 } ? info.Args[0] as string : null;
+            if (name != Il2CppMenace.UI.Menu.TitleUIScreen.PREFAB_NAME || !EscapeUsed() || !StepBackOnEscape())
+                return;
+            info.Skip = true;
+        });
+    }
+
+    // Set while a dev verb stands in for the key.
+    private static bool _devEscape;
+
+    private static bool EscapeUsed()
+    {
+        var key = UnityEngine.InputSystem.Keyboard.current?.escapeKey;
+        return _devEscape || (key != null && (key.wasReleasedThisFrame || key.wasPressedThisFrame || key.isPressed));
+    }
+
+    private bool StepBackOnEscape()
+    {
+        if (!Enabled || _shell == null || _policyScreen == null || NavigationMenu.IsOpen)
+            return false;
+        // The Intel board steps back on Escape by its own watch.
+        if (_intelOpen)
+            return true;
+        Action back = null;
+        if (HomeScreens.Contains(_policyScreen))
+        {
+            if (_homeView == HomeView.Operations)
+                back = () => SetHomeView(HomeView.Home);
+        }
+        else if (ActionsFor(_policyScreen, false) is { SecondaryDanger: false } actions)
+            back = () => ClickVanilla(actions.Secondary);
+        if (back == null)
+            return false;
+        // Taken on the next frame: this is inside the UI manager's own handling of the key.
+        Context.Coroutines.Start(NextFrame(back));
+        return true;
+    }
+
+    private static System.Collections.IEnumerator NextFrame(Action action)
+    {
+        yield return null;
+        action();
     }
 
     private static void HideBugReportButton()
