@@ -168,6 +168,67 @@ public sealed partial class StrategyDiorama
             sparks.enabled = show;
     }
 
+    // The table's top is lit by GFL2 with a grid of lines over a sheet of glow, and curtains of
+    // dots travel across it. Mission preparation's map stands on the table, and its ground,
+    // roads and zones are hard to tell from a bright grid and a glow of the map's own colour
+    // under them, so there both show faintly. The lines are added to the picture at some thirty times what the screen can
+    // show, so they look no different until they are down to a few hundredths.
+    private static readonly (string Node, float UnderMap)[] TableTopParts = { ("line (1)", 0.04f), ("line (2)", 0.04f), ("glow_an", 0.15f), ("Particle System", 0.2f), ("Particle System (1)", 0.2f) };
+    private const float TableTopSeconds = 0.4f;
+    private static readonly int ShownId = Shader.PropertyToID("_WmShown");
+    private readonly List<(Material Material, float UnderMap)> _tableTop = new();
+    private float _tableTopDimmed;
+
+    private void DriveTableGrid()
+    {
+        if (_room == null)
+            return;
+        if (_tableTop.Count == 0 || _tableTop[0].Material == null)
+        {
+            _tableTop.Clear();
+            _tableTopDimmed = 0f;
+            foreach (var t in _room.GetComponentsInChildren<Transform>(true))
+            {
+                if (t.parent == null || t.parent.name != TableEffects || t.GetComponent<Renderer>() is not { } part)
+                    continue;
+                foreach (var (node, underMap) in TableTopParts)
+                    if (t.name == node)
+                        // Its own copy: other parts of the table are drawn with the same materials.
+                        _tableTop.Add((part.material, underMap));
+            }
+            if (_tableTop.Count == 0)
+                return;
+        }
+        var target = _policyScreen == VanillaUi.Screens.MissionPrep ? 1f : 0f;
+        if (_tableTopDimmed == target)
+            return;
+        var step = HitchStep(StageLongestStep) / TableTopSeconds;
+        _tableTopDimmed = Towards(_tableTopDimmed, target, step);
+        foreach (var (material, underMap) in _tableTop)
+            material.SetFloat(ShownId, 1f + (underMap - 1f) * _tableTopDimmed);
+    }
+
+    // The room is bright where its windows are, and the map's names and markers are thin. While
+    // the map or a briefing shows, everything Womenace/BakedScene draws is darkened by this share:
+    // the room and the view through its windows, and not the holograms or the dolls.
+    private const float RoomShadeUnderMap = 0.55f;
+    private const float RoomShadeSeconds = 0.5f;
+    private static readonly int RoomShadeId = Shader.PropertyToID("_WmRoomShade");
+    private float _roomShade;
+
+    private void DriveRoomShade()
+    {
+        // The map's screen is also the home view's, where the camera is not at the table.
+        var atTable = _policyScreen == VanillaUi.Screens.OperationSelect
+            || (_policyScreen == VanillaUi.Screens.SystemMap && _homeView == HomeView.Operations);
+        var target = atTable ? RoomShadeUnderMap : 0f;
+        if (_roomShade == target)
+            return;
+        var step = RoomShadeUnderMap * Time.unscaledDeltaTime / RoomShadeSeconds;
+        _roomShade = Towards(_roomShade, target, step);
+        Shader.SetGlobalFloat(RoomShadeId, _roomShade);
+    }
+
     private Camera _starMapCamera;
     private Vector3 _starMapCameraPosition;
     private Quaternion _starMapCameraRotation;
@@ -208,6 +269,7 @@ public sealed partial class StrategyDiorama
         var source = _starMapSource.transform;
         if (_starMapNames.Count == 0)
             ReadStarMapNames(mapCamera);
+        FitPlanetPlates();
         mapCamera.transform.SetPositionAndRotation(
             source.TransformPoint(copy.InverseTransformPoint(roomCamera.transform.position)),
             source.rotation * (Quaternion.Inverse(copy.rotation) * roomCamera.transform.rotation));
@@ -242,6 +304,7 @@ public sealed partial class StrategyDiorama
             var name = hud.ElementAt(i);
             if (name.GetIl2CppType().Name != VanillaUi.Elements.PlanetHud)
                 continue;
+            ShowPlanetRep(name);
             var (left, top) = (name.resolvedStyle.left, name.resolvedStyle.top);
             if (float.IsNaN(left) || float.IsNaN(top))
                 continue;

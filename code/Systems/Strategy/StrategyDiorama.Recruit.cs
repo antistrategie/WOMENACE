@@ -56,7 +56,9 @@ public sealed partial class StrategyDiorama
     // A frame the game spent loading her model counts as this long, so the drawing in is seen.
     private const float CandidateLongestStep = 1f / 20f;
 
-    private const float HologramLinesPerMetre = 170f;
+    // Her lines go by the screen's rows, this many to its height: she is seen from where
+    // lines fixed to the room would be finer than a pixel, and flicker.
+    private const float HologramRows = 340f;
     private const float HologramLineGap = 0.28f;
     private const float HologramRim = 0.45f;
     private const float HologramOwnColour = 0.4f;
@@ -755,7 +757,7 @@ public sealed partial class StrategyDiorama
         // Set on the loaded material, over whatever it was saved with, and so on every copy
         // of it: finer lines with narrower gaps, a quieter glow along an outline and some of
         // the thing's own colours, so that a face and what is worn can be read.
-        _hologram.SetFloat("_ScanDensity", HologramLinesPerMetre);
+        _hologram.SetFloat("_ScanRows", HologramRows);
         _hologram.SetFloat("_ScanGap", HologramLineGap);
         _hologram.SetFloat("_RimBoost", HologramRim);
         _hologram.SetFloat("_OwnColour", HologramOwnColour);

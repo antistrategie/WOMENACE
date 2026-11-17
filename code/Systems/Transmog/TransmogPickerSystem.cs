@@ -246,8 +246,8 @@ public sealed class TransmogPickerSystem : JiangyuSystem
         return host;
     }
 
-    // Fills a hosted list with the window's leader's outfits. A click dresses the squad leader,
-    // or her dummy links when dressLinks is set. Says whether the doll has dummy links to dress.
+    // Fills a hosted list with the window's leader's outfits. A left click dresses the squad
+    // leader, or her dummy links when dressLinks is set, and a right click the other of the two. Says whether the doll has dummy links to dress.
     internal bool FillHosted(VisualElement window, VisualElement host, bool dressLinks)
     {
         var list = host != null ? UI.Find(host, UiSelector.Name("appearance-list")) : null;
@@ -271,7 +271,8 @@ public sealed class TransmogPickerSystem : JiangyuSystem
     }
 
     // One card per choice. In the modal (hostedSquad null) a left click dresses the leader and a
-    // right click the dummy links. In a hosted list the host says which of the two a click dresses.
+    // right click the dummy links. In a hosted list the host says which of the two a left click
+    // dresses, and a right click dresses the other.
     private void FillList(VisualElement window, ItemSlot slot, Appearance appearance, VisualElement list, bool? hostedSquad)
     {
         if (list == null)
@@ -313,17 +314,20 @@ public sealed class TransmogPickerSystem : JiangyuSystem
             subtitle.AddToClassList("wm-outfit-card-shortname");
             card.Add(subtitle);
             card.clickable.clicked += (Action)(() => Pick(window, slot, choice, squad: hostedSquad ?? false));
-            if (appearance.HasSquad && hostedSquad == null)
+            if (appearance.HasSquad)
             {
-                // Clickable answers the left button only, so the squaddie pick listens for the
-                // right one itself. Stopping it keeps the window's own right click from firing.
+                // Clickable answers the left button only, so the other side's pick listens for the
+                // right one itself: the dummy links in the modal, and in a hosted list whichever
+                // of the two the host's switch is not on. Stopping it keeps the window's own right
+                // click from firing.
+                var other = hostedSquad != true;
                 card.RegisterCallback<PointerDownEvent>(DelegateSupport.ConvertDelegate<EventCallback<PointerDownEvent>>(
                     (Action<PointerDownEvent>)(evt =>
                     {
                         if (evt.button != 1)
                             return;
                         evt.StopPropagation();
-                        Pick(window, slot, choice, squad: true);
+                        Pick(window, slot, choice, squad: other);
                     })));
             }
             // In a hosted list a locked outfit says what unlocks it, where the modal leaves that to the tooltip.
@@ -335,7 +339,14 @@ public sealed class TransmogPickerSystem : JiangyuSystem
             }
             if (slot == ItemSlot.InfantryArmor && hostedSquad == null)
                 card.Add(Badges(choice.Id == appearance.Selection, appearance.HasSquad && choice.Id == appearance.SquadSelection));
-            Tooltip.OnHover(card, () => ChoiceTooltip(choice, hint: appearance.HasSquad && hostedSquad == null));
+            var hint = !appearance.HasSquad ? null : hostedSquad switch
+            {
+                null => Locale.Text("WOMENACE::ui/transmog_click_hint",
+                    "Left-click to dress the squad leader. Right-click to dress the dummy links."),
+                false => Locale.Text("WOMENACE::ui/transmog_hint_links", "Right-click to dress the dummy links instead."),
+                true => Locale.Text("WOMENACE::ui/transmog_hint_leader", "Right-click to dress the squad leader instead."),
+            };
+            Tooltip.OnHover(card, () => ChoiceTooltip(choice, hint: hint));
             list.Add(card);
         }
     }
@@ -407,16 +418,15 @@ public sealed class TransmogPickerSystem : JiangyuSystem
         return badge;
     }
 
-    private static Tooltip ChoiceTooltip(Choice choice, string heading = null, bool hint = false)
+    private static Tooltip ChoiceTooltip(Choice choice, string heading = null, string hint = null)
     {
         var tooltip = new Tooltip("wm-appearance", 230).Subheading(heading ?? choice.Name);
         if (heading != null)
             tooltip.Line().Paragraph(choice.Name);
         if (!string.IsNullOrEmpty(choice.Description))
             tooltip.Line().Paragraph(choice.Description);
-        if (hint && choice.Unlocked)
-            tooltip.Line().Paragraph(Locale.Text("WOMENACE::ui/transmog_click_hint",
-                "Left-click to dress the squad leader. Right-click to dress the dummy links."), Tooltip.Style.Hint);
+        if (hint != null && choice.Unlocked)
+            tooltip.Line().Paragraph(hint, Tooltip.Style.Hint);
         if (!choice.Unlocked)
             tooltip.Line().Paragraph(choice.LockedMessage, Tooltip.Style.Disabled);
         return tooltip;

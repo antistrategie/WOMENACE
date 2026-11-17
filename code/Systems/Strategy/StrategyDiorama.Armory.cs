@@ -435,9 +435,10 @@ public sealed partial class StrategyDiorama
         var focus = SquadFocus(out var framed);
         var aim = focus;
         FrameSquad(framed);
-        var (refocusAt, settledAt) = (0f, Time.unscaledTime + SquadSettleSeconds);
+        var (refocusAt, settledAt, posedAt) = (0f, Time.unscaledTime + SquadSettleSeconds, 0f);
         var dragging = false;
         var goodYaw = ArmoryYaw;
+        var shown = 0f;
         while (_camera != null && _stage != null)
         {
             // The controller respawns the units on every selection, so their grips and their light
@@ -445,8 +446,9 @@ public sealed partial class StrategyDiorama
             if (SquadChanged())
             {
                 TrackGrips();
+                HoldCarried();
                 ProbeLightSquad();
-                (refocusAt, settledAt) = (0f, Time.unscaledTime + SquadSettleSeconds);
+                (refocusAt, settledAt, posedAt) = (0f, Time.unscaledTime + SquadSettleSeconds, Time.unscaledTime + SquadPoseSeconds);
             }
             // The squad is centred and the shot aimed at it while a new squad settles into its
             // pose, and then left alone: the units' outlines move as they breathe, and a shot
@@ -456,8 +458,10 @@ public sealed partial class StrategyDiorama
                 CentreSquad();
                 aim = SquadFocus(out var radius);
                 // A new selection (infantry to vehicle and back) re-frames the shot. A walker
-                // takes little more room than a squad, and all of it upwards.
-                if (Mathf.Abs(radius - framed) > 0.25f)
+                // takes little more room than a squad, and all of it upwards. Units measure
+                // about 0.4 m wider on the frame they appear than a moment later, so the footprint
+                // is read once they have settled: a doll changing her outfit keeps the shot she had.
+                if (Time.unscaledTime >= posedAt && Mathf.Abs(radius - framed) > 0.25f)
                 {
                     framed = radius;
                     FrameSquad(radius);
@@ -477,7 +481,7 @@ public sealed partial class StrategyDiorama
             var distance = Mathf.Min(_orbitDistance, headroom / Mathf.Max(0.1f, Mathf.Sin(_orbitPitch * Mathf.Deg2Rad)));
             // Where even the closest framing would stand the camera outside the hall, the orbit
             // stops at the last bearing that kept it inside.
-            if (!InsideHall(focus, rotation, ref distance) || !InHall(focus + rotation * (Vector3.back * distance) + rotation * Vector3.right * (distance * StagePan())))
+            if (!InsideHall(focus, rotation, ref distance))
             {
                 _orbitYaw = _orbitYawTarget = goodYaw;
                 rotation = _stage.rotation * Quaternion.Euler(_orbitPitch, _orbitYaw, 0f);
@@ -489,6 +493,10 @@ public sealed partial class StrategyDiorama
             // And no further out than the hall's fittings leave room for: the camera comes in
             // along its own line until it stands clear of them.
             distance = ClearOfHall(focus, rotation, distance);
+            // What the hall allows changes in steps (its fittings are known by the cell), and
+            // the camera goes to it over a few frames.
+            shown = shown <= 0f ? distance : shown + (distance - shown) * (1f - MathF.Exp(-HallEasing * HitchStep(StageLongestStep)));
+            distance = shown;
             var pan = rotation * Vector3.right * (distance * StagePan());
             var (eye, facing) = (focus + rotation * (Vector3.back * distance) + pan, rotation);
             // Between Squads and Recruit the camera travels from the shot it had to its new one.
@@ -529,6 +537,7 @@ public sealed partial class StrategyDiorama
 
     // How long a newly shown squad is followed while it takes up its pose.
     private const float SquadSettleSeconds = 1.2f;
+    private const float SquadPoseSeconds = 0.4f;
 
     // Where the room has surfaces, in the set's own space: a grid of cells marked from the
     // faces of the room's own meshes. Its floor plan (OnHallFloor) keeps the camera inside the
@@ -642,6 +651,7 @@ public sealed partial class StrategyDiorama
     // How far back the camera stands clear of whatever first comes between it and the squad,
     // and how far apart the lines it looks along are.
     private const float HallClearance = 0.8f;
+    private const float HallEasing = 14f;
     private const float HallAbreast = 0.6f;
 
     private static System.Numerics.Vector3 Managed(Vector3 v) => new(v.x, v.y, v.z);
@@ -679,25 +689,44 @@ public sealed partial class StrategyDiorama
         return distance;
     }
 
-    private bool InHall(Vector3 point)
-    {
-        if (_stage == null)
-            return true;
-        var local = _stage.InverseTransformPoint(point);
-        return OnHallFloor(local);
-    }
-
     private bool InsideHall(Vector3 focus, Quaternion rotation, ref float distance)
     {
         if (_stage == null)
             return true;
         // Never closer than the footprint allows: a vehicle would swallow the camera.
         var closest = Mathf.Max(OrbitDistanceMin, _framedRadius * 1.6f);
+        // The camera stands back along its line and across by the shot's pan, and that is the
+        // place asked of the floor. The line's end alone can be clear at a distance where the
+        // camera, beside it, stands off the floor (in the room kept round the pillar), and
+        // then the bearing is refused where coming closer would do. Its place is a straight
+        // line of the distance, taken into the hall's space once: each distance asked of it
+        // is plain arithmetic, where Unity's maths is an interop call per operation.
+        var start = _stage.InverseTransformPoint(focus);
+        var along = _stage.InverseTransformVector(rotation * (Vector3.back + Vector3.right * StagePan()));
+        bool Stands(float at)
+        {
+            var local = start;
+            (local.x, local.z) = (start.x + along.x * at, start.z + along.z * at);
+            return OnHallFloor(local);
+        }
         for (int i = 0; i < 24; i++)
         {
-            var local = _stage.InverseTransformPoint(focus + rotation * (Vector3.back * distance));
-            if (OnHallFloor(local))
+            if (Stands(distance))
+            {
+                // The furthest it can stand, found between this step and the one before it:
+                // taken a whole step at a time, the camera hops in and out as it turns.
+                var (near, far) = (distance, i == 0 ? distance : distance / 0.92f);
+                for (var cut = 0; cut < 7 && far > near; cut++)
+                {
+                    var middle = (near + far) / 2f;
+                    if (Stands(middle))
+                        near = middle;
+                    else
+                        far = middle;
+                }
+                distance = near;
                 return true;
+            }
             if (distance * 0.92f <= closest)
                 return false;
             distance *= 0.92f;
@@ -711,11 +740,10 @@ public sealed partial class StrategyDiorama
     // narrower round a vehicle, whose far shot would otherwise swing out through the hall's walls.
     private float YawRange() => Mathf.Lerp(OrbitYawRange, 25f, Mathf.InverseLerp(3.5f, 5.5f, _framedRadius));
 
-    private float YawMin() => ArmoryYaw - YawRange();
     // To the right the swing stops short of the hall's pillar: past it the camera has the pillar
     // between it and the squad and closes right in on them to see round it.
     private const float OrbitYawRight = 50f;
-
+    private float YawMin() => ArmoryYaw - YawRange();
     private float YawMax() => ArmoryYaw + Mathf.Min(YawRange(), OrbitYawRight);
 
     private void FrameSquad(float radius)

@@ -196,6 +196,7 @@ public sealed partial class StrategyDiorama
         // hairline is on the picker. On the elements, since vanilla's rules for them outrank shell.uss.
         if (UI.Find(window, UiSelector.Name(VanillaUi.Elements.EquipmentPicker)) is { } picker)
         {
+            WatchPickerScroll(picker);
             Inline(picker, e => Border(e.style, 0.64f, SquadPanelLine), e => Border(e.style, null, null));
             Inline(UI.Find(picker, UiSelector.Name(VanillaUi.Elements.UnitWindowBackground)), e =>
             {
@@ -815,17 +816,22 @@ public sealed partial class StrategyDiorama
     {
         if (_squadWindow?.panel == null)
             return;
-        var stats = UI.Find(_squadWindow, UiSelector.Name(VanillaUi.Elements.AdditionalStats));
-        var column = UI.Find(_squadWindow, UiSelector.Name(VanillaUi.Elements.StatsColumn));
+        // Asked every frame: the two are looked for once a window, and again only if they
+        // have left it.
+        if (_statsWindow != _squadWindow || _statsRaised?.panel == null || _statsColumn?.panel == null)
+        {
+            _statsWindow = _squadWindow;
+            _statsRaised = UI.Find(_squadWindow, UiSelector.Name(VanillaUi.Elements.AdditionalStats));
+            _statsColumn = UI.Find(_squadWindow, UiSelector.Name(VanillaUi.Elements.StatsColumn));
+        }
+        var (stats, column) = (_statsRaised, _statsColumn);
         var row = column?.parent;
         if (stats == null || row == null || stats.parent != column)
             return;
         var (at, origin) = (stats.worldBound, row.worldBound);
         if (!(at.width > 1f) || !(origin.width > 1f))
             return;
-        var index = column.IndexOf(stats);
-        row.Add(stats);
-        _shellUndo.Add(() => column.Insert(Math.Min(index, column.childCount), stats));
+        MoveInto(row, stats);
         Inline(stats, e =>
         {
             var s = e.style;
@@ -842,6 +848,47 @@ public sealed partial class StrategyDiorama
             s.right = StyleKeyword.Null;
             s.bottom = StyleKeyword.Null;
             s.width = StyleKeyword.Null;
+        });
+    }
+
+    private VisualElement _statsWindow, _statsRaised, _statsColumn;
+
+    private const string PickerScrollWatchedClass = "wm-picker-scroll-watched";
+    private bool _pickerScrollPress;
+
+    // Vanilla shuts the equipment picker when a press ends off it. A drag of its scroll bar
+    // drifts off the picker's edge, which is beside the bar, and let go there would shut it. A
+    // press that began on the scroll bar is noted here, and the screen is not told of its end.
+    private void WatchPickerScroll(VisualElement picker)
+    {
+        if (picker.ClassListContains(PickerScrollWatchedClass))
+            return;
+        picker.AddToClassList(PickerScrollWatchedClass);
+        picker.RegisterCallback((EventCallback<PointerDownEvent>)(evt =>
+        {
+            _pickerScrollPress = false;
+            // Mission preparation has this panel too, and its screen's press end is not
+            // caught: a press noted there would wait for the armoury's next one and stop that.
+            if (_policyScreen != ArmoryScreen)
+                return;
+            for (var at = evt.target?.TryCast<VisualElement>(); at != null && at != picker; at = at.parent)
+                if (at.TryCast<Scroller>() != null)
+                {
+                    _pickerScrollPress = true;
+                    break;
+                }
+        }), TrickleDown.TrickleDown);
+    }
+
+    private void HookPickerScroll()
+    {
+        var target = VanillaUi.Targets.ArmoryPressEnd;
+        Context.Patches.Prefix(target.Type, target.Method, info =>
+        {
+            if (!_pickerScrollPress)
+                return;
+            _pickerScrollPress = false;
+            info.Skip = true;
         });
     }
 

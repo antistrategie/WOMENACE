@@ -63,6 +63,14 @@ public static class Diorama
 
     public static string Orbit(float yaw, float pitch, float zoomNotches) => StrategyDiorama.NudgeOrbit(yaw, pitch, zoomNotches);
 
+    // Rests the pointer on a place on a mission card (fractions of its width and height from
+    // its top left), as a mouse over it would, or takes it off with a negative place.
+    [MutatingVerb]
+    public static string CardHover(int index, float x, float y) => StrategyDiorama.CardHoverFromDev(index, x, y);
+
+    // Sets a number on the materials of the hologram shown for hire.
+    public static string HologramFloat(string name, float value) => StrategyDiorama.HologramFloatFromDev(name, value);
+
     // Renderers in the room whose name or material name contains a substring, with room-space
     // bounds (centre, size).
     public static string Find(string part)
@@ -576,6 +584,11 @@ public static class Diorama
     [MutatingVerb]
     public static string PrepFlatMap(bool shown) => StrategyDiorama.PrepFlatMapFromDev(shown);
 
+    // Mission preparation's flat view on or off, as its button does, or held part way between
+    // the two views (0 to 1) to look at the move. A negative amount lets it run.
+    [MutatingVerb]
+    public static string PrepFlat(bool flat, float held = -1f) => StrategyDiorama.PrepFlatFromDev(flat, held);
+
     [MutatingVerb]
     public static string PrepPointer(float x, float y) => StrategyDiorama.PrepPointerFromDev(x, y);
 
@@ -607,6 +620,11 @@ public static class Diorama
     public static string StarProbe(int step = 20) => StrategyDiorama.StarProbeFromDev(step);
 
     public static string Dolls() => StrategyDiorama.DollsFromDev();
+
+    // How far each model in a right hand was slid clear of its carrier's head, as last worked out.
+    public static string CarryReport() => StrategyDiorama.CarryReportFromDev();
+
+    public static string CarryProbe() => StrategyDiorama.CarryProbeFromDev();
 
     [MutatingVerb]
     public static string Parts(string nameStart, bool show) => StrategyDiorama.PartsFromDev(nameStart, show);
@@ -902,6 +920,38 @@ public static class Diorama
         var png = ImageConversion.EncodeToPNG(tex);
         System.IO.File.WriteAllBytes(path, (byte[])png);
         UnityEngine.Object.Destroy(tex);
+    }
+
+    // The screen on each of several frames in a row, without the UI, as <prefix>N.png. For
+    // telling what changes from one frame to the next (a flicker) from what moves over time.
+    public static string Burst(string prefix, int count)
+    {
+        var context = StrategyDiorama.SystemContext;
+        if (context == null)
+            return "no context";
+        context.Coroutines.Start(BurstFrames(prefix, count));
+        return $"capturing {count} frames";
+    }
+
+    private static System.Collections.IEnumerator BurstFrames(string prefix, int count)
+    {
+        var hidden = HideUi();
+        for (var i = 0; i < 5; i++)
+            yield return null;
+        var frames = new List<Texture2D>();
+        for (var i = 0; i < count; i++)
+        {
+            yield return new WaitForEndOfFrame();
+            frames.Add(ScreenCapture.CaptureScreenshotAsTexture());
+        }
+        ShowUi(hidden);
+        for (var i = 0; i < frames.Count; i++)
+        {
+            if (frames[i] == null)
+                continue;
+            System.IO.File.WriteAllBytes($"{prefix}{i + 1}.png", (byte[])ImageConversion.EncodeToPNG(frames[i]));
+            UnityEngine.Object.Destroy(frames[i]);
+        }
     }
 
     // Renders the room camera alone (no UI) into a PNG at a Windows path (Z:/ is the Linux root).

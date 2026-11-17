@@ -34,10 +34,11 @@
 #wm-shop-root .wm-shop-group { width: 50%; margin-bottom: 30px; }
 #wm-shop-root .wm-shop-sell-group { width: 100%; }
 #wm-shop-root .wm-shop-category { margin: 0 0 8px 0; padding: 0; font-size: 8px; letter-spacing: 0.8px; color: var(--ink-label); -unity-text-align: middle-left; }
-#wm-shop-root .wm-shop-slots { flex-direction: row; flex-wrap: wrap; }
-/* Four to a group's row with room to spare: a row that only just holds four drops the fourth
-   to a line of its own once anything narrows the group by a pixel. */
-#wm-shop-root .wm-shop-item { width: 48px; height: 48px; margin-right: 4px; margin-bottom: 7px; flex-shrink: 0; }
+/* A row's slots fill their group's width with the last one's gap over its edge. That gap is the
+   row's room to spare: a row that only just holds its slots drops the last to a line of its own
+   once anything narrows the group by a pixel. */
+#wm-shop-root .wm-shop-slots { flex-direction: row; flex-wrap: wrap; margin-right: -7px; }
+#wm-shop-root .wm-shop-item { width: 48px; height: 48px; margin-right: 7px; margin-bottom: 7px; flex-shrink: 0; }
 #wm-shop-root .wm-shop-item > MissionResultLootSlot { width: 48px; height: 48px; margin: 0; }
 #wm-shop-root .wm-shop-item #Pickable { margin: 0; left: 0; right: auto; width: 48px; height: 48px; }
 #wm-shop-root .wm-shop-price { position: absolute; right: 1px; bottom: 0; margin: 0; padding: 0 2px; background-color: rgba(0, 0, 0, 0.6); }

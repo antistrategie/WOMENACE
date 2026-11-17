@@ -35,7 +35,7 @@ public sealed partial class StrategyDiorama
 
     // Sizes in tiles: a chibi's height, a badge's where a squad has no chibi, a cell unit, and
     // the ring under a squad.
-    private const float ChibiTiles = 3.5f;
+    private const float ChibiTiles = 2.4f;
     // A chibi's picture is a sheet of her waiting loop: frames in a grid, read left to right and
     // top to bottom, each wider than it is tall, her feet this far up it (scripts/doll/chibi_frames.py).
     private const int ChibiFrames = 40;
@@ -47,7 +47,7 @@ public sealed partial class StrategyDiorama
     private const float ChibiBodyWidth = 0.45f;
     private const float BadgeTiles = 2.2f;
     private const float CellUnitTiles = 0.075f;
-    private const float RingTiles = 2f;
+    private const float RingTiles = 1.35f;
     private const float ChibiFeet = 0.06f;
     // The steepest angle a card is seen from, in degrees above its own level.
     private const float TokenSeenFrom = 22f;
@@ -250,9 +250,13 @@ public sealed partial class StrategyDiorama
                     _prepTokens[source.Pointer] = token;
                 }
                 seen.Add(source.Pointer);
-                // A marker's own box is empty or small: its middle is its place on the map, whose
-                // far side is the element's top.
-                var at = source.layout.center;
+                // Its place on the map, whose far side is the element's top, is the middle of what
+                // vanilla draws for it. That is the part the pointer picks, the element's first:
+                // the element itself is an empty box at a corner of an enemy's tile, with the
+                // marker drawn over the tile's middle.
+                var at = source.childCount > 0 && source.ElementAt(0).layout.width > 0f
+                    ? source.layout.position + source.ElementAt(0).layout.center
+                    : source.layout.center;
                 token.Tile = new Vector2(at.x / tileX, _prepMapSizeZ - at.y / tileZ);
                 switch (kind)
                 {
@@ -512,11 +516,14 @@ public sealed partial class StrategyDiorama
             ahead = camera.transform.up;
         ahead.y = 0f;
         var facing = Quaternion.LookRotation(ahead.normalized, Vector3.up) * Quaternion.Euler(Mathf.Max(0f, pitch - TokenSeenFrom), 0f, 0f);
+        // The words are placed in the layer, which stands in from the edges of a screen wider or
+        // taller than 16:9.
+        var origin = layer.worldBound.position;
         foreach (var token in _prepTokens.Values)
         {
             var foot = PrepMapPoint(token.Tile.x, token.Tile.y, 0.05f);
             // A token grows out of its tile as the map is built.
-            var up = PrepBuilt(token.Tile.x, token.Tile.y);
+            var up = PrepBuilt(token.Tile.x, token.Tile.y) * _prepTokensUp;
             if (!token.Heard && up > 0f)
             {
                 token.Heard = true;
@@ -561,9 +568,6 @@ public sealed partial class StrategyDiorama
             var at = RuntimePanelUtils.ScreenToPanel(layer.panel, new Vector2(screen.x, Screen.height - screen.y));
             var near = screen.z > 0f && Vector2.Distance(at, _prepPointerPanel) < ContactReach;
             token.Words.style.display = near ? DisplayStyle.Flex : DisplayStyle.None;
-            // The words are placed in the layer, which stands in from the edges of a screen wider
-            // or taller than 16:9.
-            var origin = layer.worldBound.position;
             token.Words.style.left = at.x - origin.x + 12f;
             token.Words.style.top = at.y - origin.y - 12f;
         }

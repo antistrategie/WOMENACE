@@ -160,36 +160,34 @@ internal sealed class WorkshopDisassemblyView(ModContext context)
         // there, so the first keeps its place, and does nothing where there is only the one.
         var kind = _selected.GetTemplate().GetID();
         var same = Disassemblable().Where(item => item.GetTemplate().GetID() == kind).ToList();
+        var all = new TextButton(Locale.Format("WOMENACE::ui/workshop/disassemble_all", "ALL x{0}", same.Count));
+        all.Root.name = "wm-disassembly-all";
+        all.Root.AddToClassList("wm-disassembly-action");
+        all.Root.AddToClassList("wm-disassembly-all");
+        all.Root.EnableInClassList("wm-disassembly-all--off", same.Count < 2);
+        all.Root.pickingMode = same.Count < 2 ? PickingMode.Ignore : PickingMode.Position;
+        all.OnClick(() =>
         {
-            var all = new TextButton(Locale.Format("WOMENACE::ui/workshop/disassemble_all", "ALL x{0}", same.Count));
-            all.Root.name = "wm-disassembly-all";
-            all.Root.AddToClassList("wm-disassembly-action");
-            all.Root.AddToClassList("wm-disassembly-all");
-            all.Root.EnableInClassList("wm-disassembly-all--off", same.Count < 2);
-            all.Root.pickingMode = same.Count < 2 ? PickingMode.Ignore : PickingMode.Position;
-            all.OnClick(() =>
+            if (same.Count < 2)
+                return;
+            var gained = new Dictionary<string, int>();
+            string error = null;
+            foreach (var item in same)
             {
-                if (same.Count < 2)
-                    return;
-                var gained = new Dictionary<string, int>();
-                string error = null;
-                foreach (var item in same)
+                var result = WeaponDisassembly.Run(item, _random, _context.Log);
+                if (!result.ok)
                 {
-                    var result = WeaponDisassembly.Run(item, _random, _context.Log);
-                    if (!result.ok)
-                    {
-                        error = result.error;
-                        break;
-                    }
-                    foreach (var id in result.Parts)
-                        gained[id] = gained.GetValueOrDefault(id) + 1;
+                    error = result.error;
+                    break;
                 }
-                _selected = null;
-                _feedback = error ?? string.Join(", ", gained.Select(part => $"+{part.Value} " + Templates.DefaultText(Templates.ById<CommodityTemplate>(part.Key)?.Title)));
-                Screen()?.UpdateWindow();
-            });
-            _disassembly.Add(all.Root);
-        }
+                foreach (var id in result.Parts)
+                    gained[id] = gained.GetValueOrDefault(id) + 1;
+            }
+            _selected = null;
+            _feedback = error ?? string.Join(", ", gained.Select(part => $"+{part.Value} " + Templates.DefaultText(Templates.ById<CommodityTemplate>(part.Key)?.Title)));
+            Screen()?.UpdateWindow();
+        });
+        _disassembly.Add(all.Root);
         var feedback = new Label(_feedback ?? "");
         feedback.AddToClassList("wm-disassembly-feedback");
         _disassembly.Add(feedback);

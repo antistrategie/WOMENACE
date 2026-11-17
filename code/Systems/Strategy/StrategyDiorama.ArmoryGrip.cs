@@ -19,6 +19,10 @@ public sealed partial class StrategyDiorama
     private sealed class Grip
     {
         public Transform Upper, Lower, Hand, Target;
+        // The hand keeps the turn the animation gave it, where a support hand takes its empty's.
+        public bool KeepsTurn;
+        // A right hand held clear of the head with what it carries, which has no empty to go to.
+        public Carried Carried;
     }
 
     private static readonly Dictionary<IntPtr, Grip> Grips = new();
@@ -85,13 +89,18 @@ public sealed partial class StrategyDiorama
         List<IntPtr> dead = null;
         foreach (var (key, grip) in Grips)
         {
-            if (grip.Upper == null || grip.Lower == null || grip.Hand == null || grip.Target == null)
+            if (grip.Upper == null || grip.Lower == null || grip.Hand == null
+                || (grip.Carried == null ? grip.Target == null : grip.Carried.Unit == null || grip.Carried.Head == null || grip.Carried.Socket == null))
             {
                 (dead ??= new()).Add(key);
                 continue;
             }
-            if (grip.Hand.gameObject.activeInHierarchy)
-                Solve(grip);
+            if (!grip.Hand.gameObject.activeInHierarchy)
+                continue;
+            if (grip.Carried == null)
+                Solve(grip, N(grip.Target.position));
+            else if (CarriedPlace(grip, out var place))
+                Solve(grip, place);
         }
         if (dead != null)
             foreach (var key in dead)
@@ -100,12 +109,12 @@ public sealed partial class StrategyDiorama
 
     // The maths runs in System.Numerics (Unity's is an interop call per operation, every frame):
     // the transforms are read once and the three rotations written back.
-    private static void Solve(Grip grip)
+    private static void Solve(Grip grip, Vec t)
     {
         var s = N(grip.Upper.position);
         var e = N(grip.Lower.position);
         var h = N(grip.Hand.position);
-        var t = N(grip.Target.position);
+        var held = grip.KeepsTurn ? grip.Hand.rotation : default;
         var a = Vec.Distance(s, e);
         var b = Vec.Distance(e, h);
         // A grip on the shoulder itself gives no direction to reach in.
@@ -143,7 +152,10 @@ public sealed partial class StrategyDiorama
 
         grip.Lower.rotation = U(turn * N(grip.Lower.rotation));
         grip.Upper.rotation = U(roll * swing * N(grip.Upper.rotation));
-        grip.Hand.rotation = U(N(grip.Target.rotation) * GripTurn);
+        if (grip.KeepsTurn)
+            grip.Hand.rotation = held;
+        else
+            grip.Hand.rotation = U(N(grip.Target.rotation) * GripTurn);
     }
 
     // A mission's IK turns the hand to the empty's rotation and then by this turn of its own,

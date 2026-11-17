@@ -113,6 +113,15 @@ public sealed partial class StrategyDiorama
             assemble.EnableInClassList("wm-workshop__off",
                 UIManager.Get()?.GetActiveScreen()?.TryCast<WorkshopUIScreen>()?.m_SelectedBlueprint?.OwnsPlayerAllCraftingMaterials() != true);
         var station = WorkshopStation;
+        // With no project picked there is nothing to say under the station, and the strip is
+        // not drawn: an empty box with a heading over nothing.
+        if (_shellRoot != null && Jiangyu.Game.Ui.UI.Find(_shellRoot, Jiangyu.Game.Ui.UiSelector.Name("AssemblePanel")) is { } strip)
+        {
+            var takes = Jiangyu.Game.Ui.UI.Find(strip, Jiangyu.Game.Ui.UiSelector.Name("ReqMaterialsContainer"));
+            var nothing = station == AssembleStation && (takes == null || takes.childCount == 0);
+            Inline(strip, e => e.style.visibility = nothing ? UnityEngine.UIElements.Visibility.Hidden : UnityEngine.UIElements.StyleKeyword.Null,
+                e => e.style.visibility = UnityEngine.UIElements.StyleKeyword.Null);
+        }
         var template = station == CalibrateStation
             ? CalibrationUISystem.Instance?.Picked?.Item?.GetTemplate()
             : WorkshopSystem.Instance?.WorkedOn(UIManager.Get()?.GetActiveScreen()?.TryCast<WorkshopUIScreen>());

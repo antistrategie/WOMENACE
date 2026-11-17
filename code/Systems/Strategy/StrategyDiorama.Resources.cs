@@ -124,8 +124,24 @@ public sealed partial class StrategyDiorama
         for (var i = 0; i < resources.childCount; i++)
         {
             var row = resources.ElementAt(i);
-            Set(row, () => { row.style.width = StyleKeyword.Auto; row.style.marginTop = 0; row.style.marginBottom = 0; row.style.alignItems = Align.Center; },
-                () => { row.style.width = StyleKeyword.Null; row.style.marginTop = StyleKeyword.Null; row.style.marginBottom = StyleKeyword.Null; row.style.alignItems = StyleKeyword.Null; });
+            // Vanilla's markup lets each row wrap, which stands its two resources one over the
+            // other when the row comes out a fraction narrower than they are. That is set on the
+            // element in the markup, where no stylesheet rule reaches it.
+            Set(row, () =>
+            {
+                row.style.width = StyleKeyword.Auto;
+                row.style.flexWrap = Wrap.NoWrap;
+                row.style.marginTop = 0;
+                row.style.marginBottom = 0;
+                row.style.alignItems = Align.Center;
+            }, () =>
+            {
+                row.style.width = StyleKeyword.Null;
+                row.style.flexWrap = StyleKeyword.Null;
+                row.style.marginTop = StyleKeyword.Null;
+                row.style.marginBottom = StyleKeyword.Null;
+                row.style.alignItems = StyleKeyword.Null;
+            });
         }
     }
 }

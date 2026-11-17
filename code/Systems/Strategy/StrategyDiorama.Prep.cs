@@ -542,7 +542,7 @@ public sealed partial class StrategyDiorama
                 && UI.Find(_shellRoot, UiSelector.Name(VanillaUi.Elements.SuppliesDelta))?.TryCast<Label>() is { } delta)
             {
                 // Vanilla colours its figure with tags, whose own digits are not the figure's.
-                var plain = System.Text.RegularExpressions.Regex.Replace(delta.text ?? "", "<[^>]*>", "");
+                var plain = Untagged(delta.text);
                 var amount = System.Text.RegularExpressions.Regex.Match(plain, "[0-9]+");
                 var left = amount.Success ? int.Parse(amount.Value) : 0;
                 var over = plain.Contains('-') && left > 0;

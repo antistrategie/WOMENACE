@@ -30,6 +30,8 @@ internal static class VanillaUi
     {
         // A screen document's own root, under which the screen's panels sit.
         internal const string ScreenRootClass = "screen-root";
+        // The tab bar, by the class vanilla's rules know it by.
+        internal const string TabBarClass = "strategy-navigation";
         // Mission preparation's header, which that screen shows by its own inline style.
         internal const string ScreenHeader = "ScreenHeader";
         // The tab bar (StrategyNavigation) and its parts.
@@ -306,7 +308,12 @@ internal static class VanillaUi
         internal static readonly Target HiringUpdateWindow = new("Il2CppMenace.UI.Strategy.HiringUIScreen", "UpdateWindow");
         internal static readonly Target HiringSlotClicked = new("Il2CppMenace.UI.Strategy.HiringUIScreen", "OnUnitSlotClicked");
 
-        internal static readonly Target[] All = { UpdateActiveCamera, UpdateBackgroundScene, BugReportRequestOpen, OpenScreen, HighlightMandatoryEvents, FactionSlotClicked, MissionBoardInit, UnitWindowSetLeader, UnitWindowRefresh, EquipmentAlternativePicked, SystemMapOpened, HiringUpdateWindow, HiringSlotClicked };
+        internal static readonly Target PrepUpdatePreview = new("Il2CppMenace.UI.Strategy.MissionPrepUIScreen", "UpdatePreview");
+        internal static readonly Target PrepUpdateZones = new("Il2CppMenace.UI.Strategy.MissionPrepUIScreen", "UpdateDeploymentZones");
+
+        internal static readonly Target ArmoryPressEnd = new("Il2CppMenace.UI.Strategy.ArmoryUIScreen", "OnPressEnd");
+
+        internal static readonly Target[] All = { ArmoryPressEnd, PrepUpdatePreview, PrepUpdateZones, UpdateActiveCamera, UpdateBackgroundScene, BugReportRequestOpen, OpenScreen, HighlightMandatoryEvents, FactionSlotClicked, MissionBoardInit, UnitWindowSetLeader, UnitWindowRefresh, EquipmentAlternativePicked, SystemMapOpened, HiringUpdateWindow, HiringSlotClicked };
     }
 
     // Resolves every patch target against the loaded game assemblies and logs the ones that are gone.

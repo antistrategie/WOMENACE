@@ -256,6 +256,11 @@ public sealed partial class StrategyDiorama
             UnityEngine.Object.Destroy(_prepMapTexture);
         if (_prepMapMesh != null)
             UnityEngine.Object.Destroy(_prepMapMesh);
+        // The flat view's picture is cut from the texture and goes with it. It is known by the
+        // texture's address, which the next texture may be given.
+        if (_prepFlatPicture != null)
+            UnityEngine.Object.Destroy(_prepFlatPicture);
+        (_prepFlatPicture, _prepFlatPictureOf) = (null, IntPtr.Zero);
         (_prepMap, _prepMapTexture, _prepMapOf, _prepMapAreas, _prepMapMesh, _prepMapFull, _prepMapStarts) = (null, null, IntPtr.Zero, null, null, null, null);
     }
 

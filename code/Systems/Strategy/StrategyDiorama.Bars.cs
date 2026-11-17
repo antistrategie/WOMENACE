@@ -43,11 +43,20 @@ public sealed partial class StrategyDiorama
         ShutBars(shell, BarsCutClass);
         for (var t = 0f; t < BarsCutSeconds; t += UnityEngine.Time.unscaledDeltaTime)
             yield return null;
+        // The screens change in one long frame, with the whole game stopped for it. The bars
+        // are shut before it by what is drawn, not by the clock: their move starts when the
+        // panel next styles them, which is later than the frame it was asked for in.
+        var shutter = UI.Find(shell, UiSelector.Name("wm-shutter-top"));
+        for (var t = 0f; shutter != null && shutter.resolvedStyle.translate.y < -0.5f && t < BarsShutMaxSeconds; t += UnityEngine.Time.unscaledDeltaTime)
+            yield return null;
+        // Black over everything while the screens change: the next screen draws a frame or two
+        // before its shell is on it. It is up for two frames first, so it is what the screen
+        // shows through the long one, whatever was left of the bars' move.
+        CoverCut();
+        yield return null;
+        yield return null;
         _cutting = false;
         _arrivedThroughBars = true;
-        // Black over everything while the screens change: the next screen draws a frame or two
-        // before its shell is on it.
-        CoverCut();
         NavigationMenu.Go(target);
         // A destination that did not open leaves the bars shut with nothing to open them.
         for (var t = 0f; t < CoverMaxSeconds; t += UnityEngine.Time.unscaledDeltaTime)
@@ -96,7 +105,8 @@ public sealed partial class StrategyDiorama
     private const float CoverMaxSeconds = 2.5f;
 
     private const string BarsCutClass = "wm-bars-cut";
-    private const float BarsCutSeconds = 0.26f;
+    private const float BarsCutSeconds = 0.2f;
+    private const float BarsShutMaxSeconds = 1f;
     // The room the last shell was in, and whether the bars were shut to leave it.
     private string _shellRoom;
     private bool _arrivedThroughBars;
@@ -105,7 +115,7 @@ public sealed partial class StrategyDiorama
     {
         shell.AddToClassList(paceClass);
         shell.AddToClassList(BarsClosedClass);
-        shell.parent?.AddToClassList(BarsClosedClass);
+        CoverVanilla(shell.parent, true);
         MoveBars(shell, null);
     }
 
@@ -114,13 +124,26 @@ public sealed partial class StrategyDiorama
         MoveBars(shell, BarsOpen);
         shell.RemoveFromClassList(BarsClosedClass);
         shell.RemoveFromClassList(paceClass);
-        shell.parent?.RemoveFromClassList(BarsClosedClass);
+        CoverVanilla(shell.parent, false);
     }
 
     private const string BarsLaunchClass = "wm-bars-launch";
     private const float BarsLaunchSeconds = 0.55f;
 
     private const string BarsClosedClass = "wm-bars-closed";
+    private const string CoveredClass = "wm-covered";
+
+    // Vanilla's own parts that stand over the bars (the resources, mission preparation's loadout
+    // bar) go and come with the bars' contents. They are told so themselves: a class on the
+    // screen's root has every element of the screen styled again, which on a screen of some
+    // hundreds of item slots is a long frame in the middle of the bars' move.
+    private static void CoverVanilla(VisualElement root, bool covered)
+    {
+        if (root == null)
+            return;
+        UI.Find(root, UiSelector.Class(VanillaUi.Elements.TabBarClass))?.EnableInClassList(CoveredClass, covered);
+        UI.Find(root, UiSelector.Name(VanillaUi.Elements.SuppliesPanel))?.EnableInClassList(CoveredClass, covered);
+    }
     private const string BarsEventClass = "wm-bars-event";
     // How tall shell.uss makes a bar, in panel pixels: what stands on a bar is placed by it.
     private const float BarHeight = 90f;
@@ -132,11 +155,14 @@ public sealed partial class StrategyDiorama
     // The black is the shell's two shutters, each half the screen, moved by a translate between
     // two pixel lengths so the move eases and nothing lays out again. False while the screen's
     // height is not known yet (shell.uss places the shutters until it is).
-    private static bool MoveBars(VisualElement shell, float? edge)
+    private bool MoveBars(VisualElement shell, float? edge)
     {
-        var height = shell.layout.height;
-        if (!(height > 1f) && shell.parent != null)
-            height = shell.parent.layout.height;
+        // The shell is as tall as the screen's root and what it reaches past the root above and
+        // below (PlaceShell). Its own layout is a frame behind a change in that reach, and a
+        // travel worked out from it leaves the black standing in the frame by as much.
+        var height = shell.parent != null ? shell.parent.layout.height : shell.layout.height;
+        if (shell == _shell && _shellInset is { } inset)
+            height += inset.Top + inset.Bottom;
         if (!(height > 1f))
             return false;
         var travel = height / 2f - (edge ?? height / 2f);
@@ -159,7 +185,7 @@ public sealed partial class StrategyDiorama
         shell.AddToClassList(BarsSnapClass);
         // The vanilla resources sit over the top bar and wait for it too.
         var root = shell.parent;
-        root?.AddToClassList(BarsClosedClass);
+        CoverVanilla(root, true);
         var placed = MoveBars(shell, null);
         yield return null;
         // A shell that has been replaced is left alone: its bars are no longer the screen's.
@@ -174,9 +200,22 @@ public sealed partial class StrategyDiorama
         shell.RemoveFromClassList(BarsSnapClass);
         // The shut bars are drawn now, so a cut's cover can go.
         UncoverCut();
-        // Held shut for a moment, so the room behind has drawn before it shows.
-        for (var t = 0f; t < BarsHeldSeconds; t += UnityEngine.Time.unscaledDeltaTime)
+        // Held shut for a moment, so the room behind has drawn before it shows, and for as long
+        // after as the frames come unevenly. The screen that has just opened is still loading
+        // for some frames, each of them a long one, and bars that opened over them would open
+        // in jerks. A long frame counts for little of the moment, so one stall does not use
+        // the whole of it up.
+        var (held, shut, even) = (0f, 0f, 0);
+        while (held < BarsHeldSeconds || (even < BarsEvenFrames && shut < BarsHeldMaxSeconds))
+        {
             yield return null;
+            if (shell.panel == null || _shell != shell)
+                yield break;
+            var frame = UnityEngine.Time.unscaledDeltaTime;
+            held += MathF.Min(frame, BarsEvenFrame);
+            shut += frame;
+            even = frame <= BarsEvenFrame ? even + 1 : 0;
+        }
         // A new campaign opens on the choice of its first leaders, with the bars shut behind the
         // dialog for as long as it is open, and then for the moment its dolls take to stand in
         // the room: the room shows with them in it.
@@ -204,10 +243,15 @@ public sealed partial class StrategyDiorama
             yield break;
         MoveBars(shell, BarsOpen);
         shell.RemoveFromClassList(BarsClosedClass);
-        root?.RemoveFromClassList(BarsClosedClass);
+        CoverVanilla(root, false);
     }
 
     private const float BarsHeldSeconds = 0.25f;
+    // A frame no longer than this is an even one. The bars open after this many in a row, or
+    // once they have been held for as long as anyone would wait.
+    private const float BarsEvenFrame = 0.04f;
+    private const int BarsEvenFrames = 5;
+    private const float BarsHeldMaxSeconds = 2f;
     private const float BarsDollsSeconds = 4f;
     private const string BarsSnapClass = "wm-bars-snap";
 }

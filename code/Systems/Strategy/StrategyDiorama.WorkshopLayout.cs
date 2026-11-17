@@ -79,7 +79,7 @@ public sealed partial class StrategyDiorama
         var centre = UI.Find(work, UiSelector.Name("Center"));
         var inner = stripWidth - 2f * WorkshopStripPad;
         var innerTall = WorkshopStripHeight - 2f * WorkshopStripPad;
-        Place(centre, WorkshopStripPad, WorkshopStripPad, inner, innerTall);
+        StandPart(centre, WorkshopStripPad, WorkshopStripPad, inner, innerTall);
         Inline(UI.Find(work, UiSelector.Name("ProjectPreview")), e => e.style.display = DisplayStyle.None, e => e.style.display = StyleKeyword.Null);
         var text = WorkshopImageWidth + WorkshopStripPad;
         if (centre != null && UI.Find(centre, UiSelector.Name(WorkshopNameName)) == null)
@@ -104,10 +104,10 @@ public sealed partial class StrategyDiorama
             _workedOnTemplate = IntPtr.Zero;
         }
         var headline = UI.Find(work, UiSelector.Name("ReqMaterialsHeadline"));
-        Place(headline, text, WorkshopHeadingTop, null, null);
+        StandPart(headline, text, WorkshopHeadingTop, null, null);
         Inline(headline, NavigationMenu.ApplyGameFont, e => e.style.unityFontDefinition = StyleKeyword.Null);
-        Place(UI.Find(work, UiSelector.Name("ReqMaterialsContainer")), text, WorkshopTakesTop, inner - text, null);
-        Place(UI.Find(work, UiSelector.Name("AssembleButton")), inner - WorkshopButtonWidth, 0f, WorkshopButtonWidth, WorkshopButtonHeight);
+        StandPart(UI.Find(work, UiSelector.Name("ReqMaterialsContainer")), text, WorkshopTakesTop, inner - text, null);
+        StandPart(UI.Find(work, UiSelector.Name("AssembleButton")), inner - WorkshopButtonWidth, 0f, WorkshopButtonWidth, WorkshopButtonHeight);
         Inline(UI.Find(work, UiSelector.Name("ReqMaterialsContainer")), e =>
         {
             // One row: more than fit it are drawn smaller (WorkshopSystem.FitRequired).
@@ -121,8 +121,9 @@ public sealed partial class StrategyDiorama
     }
 
     // Stands one of a window's parts at a place of its own in it, as wide and as tall as given
-    // or as what it holds.
-    private void Place(VisualElement part, float left, float top, float? width, float? height) =>
+    // or as what it holds. It does not share Place's name: a call to Place that gives both a
+    // left and a top would bind to this one, which takes the element out of its row.
+    private void StandPart(VisualElement part, float left, float top, float? width, float? height) =>
         Inline(part, e =>
         {
             var s = e.style;

@@ -64,6 +64,9 @@ Shader "Womenace/GfVfx"
         _Contrast ("Contrast", Float) = 1
         _Alpha ("Alpha", Float) = 1
         _AdditionalAlpha ("Additional Alpha", Float) = 1
+        // The mod's own dimmer, the same for every family. A family's brightness is not one:
+        // an effect many times brighter than the screen shows looks no different at a tenth.
+        _WmShown ("Shown (0 to 1)", Range(0, 1)) = 1
         _ShaderMode ("Shader Mode (0 custom data, 1 material)", Float) = 1
         _MainTexClamp ("Main Clamp", Float) = 0
         _MainPannerX ("Main Panner X", Float) = 0
@@ -175,7 +178,7 @@ Shader "Womenace/GfVfx"
                 float4 _MainTexFlow, _DissolveTexFlow;
                 float _ClipThreshold;
                 float _Family, _CardFade, _WmSrcBlend, _WmDstBlend, _WmCull, _WmZWrite;
-                float _Brightness, _Contrast, _Alpha, _AdditionalAlpha, _ShaderMode, _MainTexClamp;
+                float _Brightness, _Contrast, _Alpha, _AdditionalAlpha, _ShaderMode, _MainTexClamp, _WmShown;
                 float _MainPannerX, _MainPannerY, _PowerU, _PowerV, _DistortPower, _Dissolve, _Hardness, _EdgeWidth;
                 float _DepthMode, _CUTOUT, _MaskPannerX, _MaskPannerY, _TurbulencePannerX, _TurbulencePannerY, _TurbulencePower;
                 float _DissolvePannerX, _DissolvePannerY, _DissolveHardness, _DissolveEdgeWidth;
@@ -471,7 +474,9 @@ Shader "Womenace/GfVfx"
                     result = Billboard(input);
                 float3 colour = max(0.0, result.rgb) * GetCurrentExposureMultiplier();
                 colour = (colour == colour) ? colour : 0.0;
-                return float4(colour, saturate(result.a));
+                // Less of it shows by its alpha, or by its colour where the blend adds the
+                // colour whole.
+                return float4(colour * (_WmSrcBlend < 1.5 ? _WmShown : 1.0), saturate(result.a) * _WmShown);
             }
             ENDHLSL
         }

@@ -12,7 +12,7 @@
     height: 50%;
     background-color: rgb(0, 0, 0);
     transition-property: translate;
-    transition-duration: 0.5s;
+    transition-duration: 0.3s;
     transition-timing-function: ease-in-out-cubic;
 }
 /* Out of the frame, until the code knows the screen's height in pixels. */
@@ -29,7 +29,7 @@
     padding: 0 32px;
 }
 /* Shut, the bars' contents are hidden. They show once the bars have opened. */
-.wui-bar > * { transition-property: opacity; transition-duration: 0.3s; transition-delay: 0.25s; }
+.wui-bar > * { transition-property: opacity; transition-duration: 0.2s; transition-delay: 0.15s; }
 .wm-bars-closed .wui-bar > * { opacity: 0; transition-duration: 0s; transition-delay: 0s; }
 /* A story event plays between bare bars */
 .wm-bars-event .wui-bar > * { opacity: 0; transition-duration: 0.2s; transition-delay: 0s; }
@@ -156,7 +156,9 @@
 .wm-bars-launch .wui-shutter { transition-duration: 0.5s; transition-timing-function: ease-in-out-cubic; }
 
 /* A cut to another room: the bars shut fast */
-.wm-bars-cut .wui-shutter { transition-duration: 0.24s; transition-timing-function: ease-in-cubic; }
+/* They start from out of the frame, so a move that began slowly would show nothing for half
+   its time and then slam shut */
+.wm-bars-cut .wui-shutter { transition-duration: 0.18s; transition-timing-function: ease-in-out-sine; }
 
 /* The destinations: every screen in one row, grouped by the room it is in. Over each group the
    room's icon at the left and a line under it, gold over the room the screen is in. */
@@ -238,15 +240,14 @@
     justify-content: center;
 }
 .wm-shell-on .strategy-navigation { transition-property: opacity; transition-duration: 0.3s; transition-delay: 0.25s; }
-.wm-shell-on.wm-bars-closed .strategy-navigation { opacity: 0; transition-duration: 0s; transition-delay: 0s; }
+.wm-shell-on .strategy-navigation.wm-covered { opacity: 0; transition-duration: 0s; transition-delay: 0s; }
 .wm-shell-on.wm-bars-event .strategy-navigation { opacity: 0; transition-duration: 0.2s; transition-delay: 0s; }
 .wm-shell-on .strategy-navigation #Container { width: auto; background-color: rgba(0, 0, 0, 0); border-width: 0; padding: 0; margin: 0; }
 .wm-shell-on .strategy-navigation #Ship { display: none; }
 .wm-shell-on .strategy-navigation #Line { display: none; }
 .wm-shell-on .strategy-navigation #Buttons { display: none; }
 .wm-shell-on .strategy-navigation #Resources { flex-direction: row; align-items: center; width: auto; height: auto; background-color: rgba(0, 0, 0, 0); border-width: 0; padding: 0; margin: 0; }
-/* Vanilla lets a row of resources wrap, which would stand one over the other on the bar */
-.wm-shell-on .strategy-navigation #Resources > #Row { flex-direction: row; flex-wrap: nowrap; flex-shrink: 0; align-items: center; justify-content: flex-start; width: auto; max-width: none; height: auto; padding: 0; margin: 0; }
+.wm-shell-on .strategy-navigation #Resources > #Row { align-items: center; max-width: none; height: auto; padding: 0; margin: 0; }
 .wm-shell-on .strategy-navigation #Resources ResourceDisplayBig { flex-shrink: 0; }
 .wm-shell-on .strategy-navigation ResourceDisplayBig { flex-direction: row; align-items: stretch; background-color: rgb(0, 0, 0); border-width: 0.8px; border-color: var(--gold); }
 .wm-shell-on .strategy-navigation ResourceDisplayBig #Icon { display: none; }
@@ -295,7 +296,7 @@
 
 /* Mission preparation's loadout bar sits on the bottom bar and goes with its contents when it shuts */
 .wm-shell-on > #SuppliesPanel { transition-property: opacity; transition-duration: 0.15s; }
-.wm-shell-on.wm-bars-closed > #SuppliesPanel { opacity: 0; }
+.wm-shell-on > #SuppliesPanel.wm-covered { opacity: 0; }
 
 /* ---- Squads: vanilla's armoury as the roster, the room and the squad panel ---- */
 /* A row of equal tabs over a list */
@@ -492,7 +493,10 @@
 
 /* Mission preparation's off-map abilities, on the top bar: a caption over a row of squares, each
    an icon with its uses in the corner. */
-.wm-prep__abilities-caption { color: var(--ink-label); font-size: 8px; letter-spacing: 0.64px; padding: 0; margin: 0 0 4.8px 0; }
+/* A label's box is measured without its letter spacing, so its text runs out past the box's
+   right by the spacing of all its letters. The margin is that much, which brings the last
+   letter back over the right edge of the squares under it. */
+.wm-prep__abilities-caption { color: var(--ink-label); font-size: 8px; letter-spacing: 0.64px; padding: 0; margin: 0 6.5px 4.8px 0; }
 .wm-prep #OffmapAbilitiesPanel #OffmapAbilities { flex-direction: row; width: auto; height: auto; padding: 0; margin: 0; }
 .wm-prep MissionPrepOffmapAbility { width: 35.2px; height: 35.2px; margin: 0 0 0 4.8px; padding: 0; }
 .wm-prep MissionPrepOffmapAbility > #Pickable { position: relative; left: 0; top: 0; width: 35.2px; height: 35.2px; margin: 0; align-items: center; justify-content: center; background-color: rgb(0, 0, 0); border-width: 0.64px; border-color: var(--line-strong); }
@@ -616,12 +620,11 @@
 .wm-workshop .wm-disassembly-subtitle { margin: 3px 0 0 0; padding: 0; font-size: 8px; letter-spacing: 0.8px; color: var(--ink-meta); }
 .wm-workshop .wm-disassembly-heading { left: 150px; right: auto; top: 30px; height: 12px; margin: 0; padding: 0; font-size: 8px; letter-spacing: 0.8px; color: var(--ink-label); -unity-text-align: middle-left; }
 .wm-workshop .wm-disassembly-parts { left: 150px; right: auto; top: 49px; justify-content: flex-start; }
-.wm-workshop .wm-disassembly-action { left: auto; right: 10px; top: 10px; bottom: auto; width: 130px; height: 28px; background-image: none; background-color: rgb(0, 0, 0); border-width: 0.64px; border-color: var(--gold); border-radius: 0; }
+.wm-workshop .wm-disassembly-action { left: auto; right: 96px; top: 10px; bottom: auto; width: 130px; height: 28px; background-image: none; background-color: rgb(0, 0, 0); border-width: 0.64px; border-color: var(--gold); border-radius: 0; }
 .wm-workshop .wm-disassembly-action Label { font-size: 9px; letter-spacing: 1.2px; color: var(--gold); -unity-font-style: bold; }
 .wm-workshop .wm-disassembly-action:hover { background-color: rgb(54, 48, 29); }
 /* All of them at once, after the button for one on the strip's top line, so the parts under
    them have the strip's whole width. What was gained is said under the two. */
-.wm-workshop .wm-disassembly-action { right: 96px; }
 .wm-workshop .wm-disassembly-all { right: 10px; width: 80px; }
 .wm-workshop .wm-disassembly-all--off Label { color: var(--ink-meta); }
 .wm-workshop .wm-disassembly-all--off { opacity: 1; border-color: var(--line-strong); }
@@ -684,6 +687,10 @@
 .wm-oci .wm-pan-hint { left: 640px; }
 /* Mission preparation's map is between the frame's left and the roster, and so is its hint. */
 .wm-prep .wm-pan-hint { left: 322px; }
+.wm-prep .wm-pan-hint--low { left: 334px; bottom: 38px; }
+/* Mission preparation's button between its two views, a key cap that is pressed */
+.wm-pan-hint__toggle { margin-right: 9.6px; border-color: var(--gold); color: var(--gold); }
+.wm-pan-hint__toggle:hover { background-color: var(--gold); color: rgb(0, 0, 0); }
 
 /* The black market: vanilla's panels flat and black like the shell's own, with its titles, kind
    labels and hint in the shell's inks, and the Trade button as the shell's main action. */

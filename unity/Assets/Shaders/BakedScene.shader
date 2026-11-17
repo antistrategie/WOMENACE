@@ -302,6 +302,7 @@ Shader "Womenace/BakedScene"
             // reflection, 5 the live lights, 6 the sun, 7 the baked light, 8 what the fog adds,
             // or the full shading with 9 flat normals, 10 no probe reflection.
             float _WmDebugTerm;
+            float _WmRoomShade;
 
             // How open the surface is to the room around it, from the depth the prepass has laid
             // down: what stands within the radius and above the surface's own plane closes it.
@@ -521,7 +522,8 @@ Shader "Womenace/BakedScene"
                     }
                 }
                 colour += SAMPLE_TEXTURE2D(_GlowMap, sampler_GlowMap, input.uv0).rgb * _GlowColor.rgb;
-                colour = ApplyFog(colour, viewDepth) * GetCurrentExposureMultiplier();
+                // The room is darkened as a whole under the holotable's map (0 where nothing sets it).
+                colour = ApplyFog(colour, viewDepth) * GetCurrentExposureMultiplier() * (1.0 - _WmRoomShade);
 
                 // Planar reflection on surfaces lying in the floor plane, added after exposure (the
                 // mirror render is already exposed). GFL2's overlay: tint, fresnel to the power 0.85

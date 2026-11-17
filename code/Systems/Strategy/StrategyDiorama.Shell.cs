@@ -431,13 +431,16 @@ public sealed partial class StrategyDiorama
             root.Add(_shell);
             _shellRoot = root;
             ShareStyles(root);
+            // Before the shell is wired: wiring it runs its first frame at once, which places
+            // the shell and applies the screen again, and that may shut the bars to open them
+            // (the branch below). Moved after it, the bars would stand open while shut.
+            MoveBars(_shell, BarsOpen);
             WireShell();
             if (bar != null)
             {
                 AddResourceCaptions(bar);
                 LayOutResources(bar);
             }
-            MoveBars(_shell, BarsOpen);
             // The bars open on arriving in another room, and on the first arrival of all.
             var arrivedIn = LookFor(screenName).RoomKey;
             if (_arrivedThroughBars || _shellRoom != arrivedIn)
@@ -631,12 +634,15 @@ public sealed partial class StrategyDiorama
                 }
             }
             DriveLand();
+            DriveTableGrid();
+            DriveRoomShade();
             DrivePlanet();
             DriveStarMap();
             DriveSquads();
             DriveRecruit();
             DrivePrepMap();
             DrivePrep();
+            DrivePrepFlat();
             DrivePrepCamera();
             DrivePlanetCamera();
             DriveOci();
@@ -940,7 +946,7 @@ public sealed partial class StrategyDiorama
                 _shellRoot.EnableInClassList(ShellOnClass, false);
                 _shellRoot.EnableInClassList(HomeViewClass, false);
                 _shellRoot.EnableInClassList(OperationsViewClass, false);
-                _shellRoot.EnableInClassList(BarsClosedClass, false);
+                CoverVanilla(_shellRoot, false);
                 _shellRoot.EnableInClassList(BarsEventClass, false);
                 foreach (var caption in UI.FindAll(_shellRoot, UiSelector.Class(CaptionClass)))
                     caption.RemoveFromHierarchy();
@@ -983,13 +989,14 @@ public sealed partial class StrategyDiorama
         });
     }
 
-    // Set while a dev verb stands in for the key.
-    private static bool _devEscape;
-
     private static bool EscapeUsed()
     {
+#if JIANGYU_DEV
+        if (_devEscape)
+            return true;
+#endif
         var key = UnityEngine.InputSystem.Keyboard.current?.escapeKey;
-        return _devEscape || (key != null && (key.wasReleasedThisFrame || key.wasPressedThisFrame || key.isPressed));
+        return key != null && (key.wasReleasedThisFrame || key.wasPressedThisFrame || key.isPressed);
     }
 
     private bool StepBackOnEscape()

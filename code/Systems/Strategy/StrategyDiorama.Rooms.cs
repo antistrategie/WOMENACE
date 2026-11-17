@@ -554,5 +554,6 @@ public sealed partial class StrategyDiorama
         Shader.SetGlobalVector("_WmAo", Vector4.zero);
         Shader.SetGlobalVector("_WmReflectionShade", Vector4.zero);
         Shader.SetGlobalFloat("_WmDebugTerm", 0f);
+        Shader.SetGlobalFloat(RoomShadeId, _roomShade = 0f);
     }
 }

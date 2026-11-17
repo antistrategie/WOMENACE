@@ -1,4 +1,5 @@
 using UnityEngine;
+using Vec = System.Numerics.Vector3;
 
 namespace WOMENACE.Code;
 
@@ -149,6 +150,16 @@ public sealed partial class StrategyDiorama
         return $"{lines.Count} lines";
     }
 
+    internal static string HologramFloatFromDev(string name, float value)
+    {
+        var d = _instance;
+        if (d == null)
+            return "no diorama";
+        foreach (var material in d._candidateHolograms)
+            material.SetFloat(name, value);
+        return $"{d._candidateHolograms.Count} materials";
+    }
+
     // Dev: drive the orbit as a drag and a wheel would.
     internal static string NudgeOrbit(float yaw, float pitch, float zoomNotches)
     {
@@ -213,6 +224,9 @@ public sealed partial class StrategyDiorama
         var took = Time.realtimeSinceStartup - start;
         _measured = $"{frames / took:F1} fps ({took / frames * 1000f:F1} ms a frame, worst {worst * 1000f:F0} ms) at {Screen.width} x {Screen.height}";
     }
+
+    // Set while a dev verb stands in for the Escape key (EscapeUsed).
+    private static bool _devEscape;
 
     // Dev: runs the active screen's own answer to the back key, as Escape does.
     internal static string BackKeyFromDev()
@@ -823,5 +837,69 @@ public sealed partial class StrategyDiorama
                     lights++;
                 }
         return $"{lights} rig lights {(on ? "on" : "off")}";
+    }
+
+    // Dev: reads what each held hand carries afresh and says, part by part, how near its head
+    // comes to it as the hand goes out.
+    internal static string CarryProbeFromDev()
+    {
+        var lines = new List<string>();
+        foreach (var (_, grip) in Grips)
+        {
+            if (grip.Carried is not { } carried || carried.Unit == null)
+                continue;
+            var centre = N(carried.Head.position) + N(carried.Unit.up) * (CarryHeadRise * carried.Scale);
+            var (right, up, forward) = (Vec.Normalize(N(carried.Unit.right)), Vec.Normalize(N(carried.Unit.up)), Vec.Normalize(N(carried.Unit.forward)));
+            var outward = right * carried.Way.X + up * carried.Way.Y + forward * carried.Way.Z;
+            lines.Add($"{carried.Unit.parent?.name}: way {carried.Way.X:F2},{carried.Way.Y:F2},{carried.Way.Z:F2} (right, up, forward) head at {centre.X:F2},{centre.Y:F2},{centre.Z:F2} radius {CarryHeadRadius * carried.Scale:F3} scale {carried.Scale:F3} out now {carried.Out:F3}");
+            for (var i = 0; i < carried.Socket.childCount; i++)
+            {
+                var model = carried.Socket.GetChild(i);
+                var toModel = ToMat(model.worldToLocalMatrix);
+                var toWorld = ToMat(model.localToWorldMatrix);
+                foreach (var renderer in model.GetComponentsInChildren<Renderer>())
+                {
+                    if (!renderer.enabled)
+                        continue;
+                    var corners = new List<Vec>();
+                    var read = new List<string>();
+                    ReadTriangles(renderer.name, renderer, toModel, corners, read);
+                    if (corners.Count == 0)
+                    {
+                        lines.Add($"  {renderer.name}: {string.Join(", ", read)}");
+                        continue;
+                    }
+                    var (low, high) = (new Vec(float.MaxValue), new Vec(float.MinValue));
+                    foreach (var corner in corners)
+                    {
+                        var world = Vec.Transform(corner, toWorld);
+                        (low, high) = (Vec.Min(low, world), Vec.Max(high, world));
+                    }
+                    var near = new List<string>();
+                    for (var slid = 0f; slid <= 0.251f; slid += 0.05f)
+                    {
+                        // The hand is out by what it is now, so the ball starts that much nearer.
+                        var at = centre - outward * (slid - carried.Out);
+                        var nearest = float.MaxValue;
+                        for (var c = 0; c + 2 < corners.Count; c += 3)
+                            nearest = MathF.Min(nearest, Vec.Distance(NearestOnTriangle(at, Vec.Transform(corners[c], toWorld), Vec.Transform(corners[c + 1], toWorld), Vec.Transform(corners[c + 2], toWorld)), at));
+                        near.Add($"{slid * 100f:F0}:{nearest * 100f:F0}");
+                    }
+                    var b = renderer.bounds;
+                    lines.Add($"  {renderer.name}: {string.Join(", ", read)} spans {low.X:F2},{low.Y:F2},{low.Z:F2} to {high.X:F2},{high.Y:F2},{high.Z:F2} (renderer says {b.min.x:F2},{b.min.y:F2},{b.min.z:F2} to {b.max.x:F2},{b.max.y:F2},{b.max.z:F2}) head to it by cm out {string.Join(" ", near)}");
+                }
+            }
+        }
+        return lines.Count > 0 ? string.Join("\n", lines) : "no hand held";
+    }
+
+    // Dev: how far each held hand is out, and what was read of what is in it.
+    internal static string CarryReportFromDev()
+    {
+        var lines = new List<string>();
+        foreach (var (_, grip) in Grips)
+            if (grip.Carried is { } carried && carried.Unit != null)
+                lines.Add($"{carried.Unit.parent?.name} {carried.Key}: {carried.Out * 100f:F0} of {carried.Wanted * 100f:F0} cm, {(carried.Until > 0f ? "settling" : "kept")} ({string.Join(", ", carried.Read)})");
+        return lines.Count > 0 ? string.Join("; ", lines) : "no hand held";
     }
 }

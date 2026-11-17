@@ -51,8 +51,7 @@ public sealed partial class StrategyDiorama
             return;
         // The limit as vanilla prints it ("used / limit"), which is the one its bar is filled
         // against: the mission's own figure does not count what the operation adds to it.
-        var printed = System.Text.RegularExpressions.Regex.Matches(
-            System.Text.RegularExpressions.Regex.Replace(screen.m_SuppliesValue?.text ?? "", "<[^>]*>", ""), "[0-9]+");
+        var printed = System.Text.RegularExpressions.Regex.Matches(Untagged(screen.m_SuppliesValue?.text), "[0-9]+");
         var limit = printed.Count >= 2 ? int.Parse(printed[1].Value) : 0;
         var open = _squadWindow != null ? Affinity.LeaderOf(_squadWindow) : null;
         var selector = screen.m_UnitSelector;

@@ -75,10 +75,12 @@ public sealed partial class StrategyDiorama
             Context.Patches.Postfix(target.Type, target.Method, _ => ApplyScreenPolicy());
         HookBugReport();
         HookEscape();
+        HookPrepFlat();
         HookMandatoryMessages();
         HookFactionWindow();
         HookMissionBoard();
         HookSquadPanel();
+        HookPickerScroll();
         HookRecruit();
         Context.Coroutines.Start(WatchVideo());
     }
@@ -285,6 +287,13 @@ public sealed partial class StrategyDiorama
     // A frame's share of time for the mod's own motion: a frame that stalled for as long as a
     // hitch (a screen opening, a map being made) counts as a shorter one, so the motion is not
     // skipped past.
+    // What a label says without the tags vanilla colours it with, whose own digits are not its figures.
+    private static string Untagged(string text) => System.Text.RegularExpressions.Regex.Replace(text ?? "", "<[^>]*>", "");
+
+    // A value gone towards another by no more than a step.
+    private static float Towards(float value, float target, float step)
+        => target > value ? MathF.Min(target, value + step) : MathF.Max(target, value - step);
+
     private static float HitchStep(float longest) => HitchStep(longest, longest);
 
     private static float HitchStep(float hitch, float counted)

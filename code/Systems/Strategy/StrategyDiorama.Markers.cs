@@ -31,6 +31,11 @@ public sealed partial class StrategyDiorama
         // The card's renderer on a planet, whose place in the draw order follows the selection.
         public MeshRenderer Renderer;
         public bool Hover;
+        // The part of the marker under the pointer that has a tooltip of its own (its reward),
+        // when the pointer came onto it, and whether the tooltip is up.
+        public Il2CppMenace.UI.InteractiveElement Part;
+        public float PartSince;
+        public bool PartShown;
         // On a planet: its place on the unit globe and in the room, how far across the planet's
         // picture that is, its card's width and height in metres, and its marker's box.
         public NVector3 Spot;
@@ -271,6 +276,15 @@ public sealed partial class StrategyDiorama
             marker.Hover = false;
             if (marker.Poi?.panel != null)
                 marker.Poi.OnHoverEnd();
+            HoverPart(marker, null);
+        }));
+        // A part of the marker with a tooltip of its own shows it, as on vanilla's board. The
+        // card is the marker's whole box, so a place on the one is the same place on the other.
+        target.RegisterCallback((EventCallback<PointerMoveEvent>)(moved =>
+        {
+            var box = target.layout;
+            if (box.width > 0f && box.height > 0f)
+                HoverPart(marker, new Vector2(moved.localPosition.x / box.width, moved.localPosition.y / box.height));
         }));
         target.RegisterCallback((EventCallback<ClickEvent>)(_ =>
         {
@@ -279,6 +293,62 @@ public sealed partial class StrategyDiorama
         }));
         layer.Add(target);
         return target;
+    }
+
+    // How long the pointer rests on a part before its tooltip shows.
+    private const float PartTooltipSeconds = 0.35f;
+
+    // Notes the part of a marker under a place on its card (fractions of its width and height),
+    // or none. The marker is drawn in a panel of its own, where vanilla never finds the pointer
+    // over it, so its parts' tooltips are put up from here.
+    private static void HoverPart(Marker marker, Vector2? at)
+    {
+        Il2CppMenace.UI.InteractiveElement part = null;
+        var poi = marker.Poi;
+        if (at is { } place && poi?.panel != null)
+        {
+            var box = poi.worldBound;
+            var point = new Vector2(box.x + place.x * box.width, box.y + place.y * box.height);
+            var open = new Stack<VisualElement>();
+            open.Push(poi);
+            while (open.Count > 0)
+            {
+                var element = open.Pop();
+                for (var i = 0; i < element.childCount; i++)
+                    open.Push(element.ElementAt(i));
+                if (element.Pointer == poi.Pointer || !element.worldBound.Contains(point))
+                    continue;
+                var candidate = element.TryCast<Il2CppMenace.UI.InteractiveElement>();
+                if (candidate != null && candidate.HasTooltip())
+                    part = candidate;
+            }
+        }
+        if ((part != null ? part.Pointer : IntPtr.Zero) == (marker.Part != null ? marker.Part.Pointer : IntPtr.Zero))
+            return;
+        if (marker.PartShown)
+            UIManager.Get()?.RemoveActiveTooltip();
+        (marker.Part, marker.PartSince, marker.PartShown) = (part, Time.unscaledTime, false);
+    }
+
+    // Puts up the tooltip of the part the pointer has rested on.
+    private static void ShowPartTooltip(Marker marker)
+    {
+        if (marker.Part == null || marker.PartShown || Time.unscaledTime - marker.PartSince < PartTooltipSeconds)
+            return;
+        marker.PartShown = true;
+        if (marker.Part.panel == null || marker.Part.GetTooltipData() is not { } tooltip)
+            return;
+        UIManager.Get()?.AddTooltip(tooltip, marker.Part, false, true, false);
+    }
+
+    internal static string CardHoverFromDev(int index, float x, float y)
+    {
+        var d = _instance;
+        if (d == null || index < 0 || index >= d._markers.Count)
+            return $"no card {index} of {d?._markers.Count ?? 0}";
+        HoverPart(d._markers[index], x < 0f ? null : new Vector2(x, y));
+        var part = d._markers[index].Part;
+        return part != null ? $"over {part.GetIl2CppType().Name} #{part.name}" : "over no part with a tooltip";
     }
 
     // A quad's corners in its own space.
@@ -316,6 +386,7 @@ public sealed partial class StrategyDiorama
                 if (marker.Renderer != null)
                     marker.Renderer.sortingOrder = on ? PlanetSelectedOrder : PlanetCardOrder;
             }
+            ShowPartTooltip(marker);
             // The dark backing arrives with the picture, never ahead of it as a black card.
             material?.SetFloat(IntensityId, (marker.Hover ? CardHoverIntensity : CardIntensity) * _markerFade);
             material?.SetFloat(PlateId, CardPlate * _markerFade);
@@ -372,6 +443,10 @@ public sealed partial class StrategyDiorama
     {
         foreach (var marker in _markers)
         {
+            // A card taken away under the pointer is never told the pointer has left it, so
+            // the tooltip it put up goes with it.
+            if (marker.PartShown)
+                UIManager.Get()?.RemoveActiveTooltip();
             if (marker.Card != null)
                 UnityEngine.Object.Destroy(marker.Card);
             try { marker.Target?.RemoveFromHierarchy(); }

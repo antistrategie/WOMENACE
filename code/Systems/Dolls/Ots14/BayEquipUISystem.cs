@@ -571,6 +571,10 @@ public sealed class BayEquipUISystem : JiangyuSystem
     private static bool ListOpen(UnitWindowEquipment equipment)
         => equipment.m_EquipmentAlternativesContainer is { } list && list.visible;
 
+    // Whether vanilla says the open list is that of a slot other than her special weapon's.
+    private static bool ListIsAnotherSlots(UnitWindowEquipment equipment)
+        => equipment.m_SlotWithVisibleAlternatives is { } slot && slot.GetItemSlotType() != ItemSlot.InfantrySpecial;
+
     // Opens vanilla's list for her special-weapon slot, then watches for vanilla closing it.
     // The list is opened on the frame after the click: vanilla closes an open list on any
     // press that ends outside it and outside its slot, and the click on a tile is one, so a
@@ -597,14 +601,46 @@ public sealed class BayEquipUISystem : JiangyuSystem
         // Vanilla closes its list itself, on a click outside it or a change of unit. The
         // tile stops being the open one when it has.
         yield return null;
-        while (epoch == _pickEpoch)
+        for (var frame = 0; epoch == _pickEpoch; frame++)
         {
-            if (window.panel == null || !ListOpen(equipment))
+            // A click on another of her slots gives the open list to that slot, and it is no
+            // longer the tile's: its rows are that slot's to mark and to take off.
+            if (window.panel == null || !ListOpen(equipment) || ListIsAnotherSlots(equipment))
             {
                 ClosePicker(window);
                 yield break;
             }
+            // Vanilla makes the rows anew when the list is filtered or sorted.
+            if (frame % MarkEveryFrames == 0)
+                MarkHeldRow(equipment);
             yield return null;
+        }
+    }
+
+    private const int MarkEveryFrames = 8;
+
+    // Vanilla marks the row of what her own slot holds, which is nothing, so the row that takes
+    // a weapon off is always the marked one. The mark goes to the row of the weapon the open
+    // tile's slot holds, and to that row only when the slot is empty.
+    private void MarkHeldRow(UnitWindowEquipment equipment)
+    {
+        try
+        {
+            var list = equipment.m_EquipmentAlternativesContainer;
+            if (list == null || _pickSlot < 0)
+                return;
+            var held = Bay.LoadoutOrNull(Context)?[_pickSlot];
+            var kind = held != null ? Bay.ResolveItem(held)?.GetTemplate() : null;
+            foreach (var row in UI.FindAll(list, UiSelector.TypeName("EquipmentSlot")))
+            {
+                var item = row.TryCast<EquipmentSlot>()?.GetItem();
+                var marked = item == null ? kind == null : kind != null && item.GetTemplate()?.Pointer == kind.Pointer;
+                UI.Find(row, UiSelector.Name("Selected"))?.SetVisible(marked);
+            }
+        }
+        catch (Exception ex)
+        {
+            Context.Log.Warn($"bay ui: marking the held row failed: {ex.Message}");
         }
     }
 
@@ -633,8 +669,17 @@ public sealed class BayEquipUISystem : JiangyuSystem
         {
             var equipment = (info.Instance as Il2CppObjectBase)?.TryCast<UnitWindowEquipment>();
             var row = (info.Args[0] as Il2CppObjectBase)?.TryCast<EquipmentSlot>();
-            if (equipment == null || row == null || row.GetItemSlotType() != ItemSlot.InfantrySpecial
-                || Affinity.CharacterTag(equipment.m_Leader) != Bay.CharacterTag)
+            if (equipment == null || row == null || Affinity.CharacterTag(equipment.m_Leader) != Bay.CharacterTag)
+                return;
+            // The list's row that takes a weapon off carries no item. In a list a tile opened
+            // it empties that tile's slot, as a right click on the tile does.
+            if (row.GetItem() == null && _pickSlot >= 0 && _pickWindow?.TryCast<UnitWindow>()?.m_Equipment?.Pointer == equipment.Pointer)
+            {
+                info.Skip = true;
+                OnTileCleared(_pickWindow, _pickSlot);
+                return;
+            }
+            if (row.GetItemSlotType() != ItemSlot.InfantrySpecial)
                 return;
             // Her special weapons are the bay's and never her own slot's: vanilla's handler,
             // which would put the weapon in her hands, does not run for her, whatever comes
