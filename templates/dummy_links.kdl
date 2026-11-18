@@ -1,0 +1,246 @@
+patch "AccessoryTemplate" "accessory.ifak_first_aid_kit" {
+    // The game's text calls the bodies in a squad squaddies. Here they are a Doll's dummy links,
+    // so the game's descriptions that name them say dummies, word for word otherwise. The
+    // interface strings no template carries are replaced in DummyLinkTextSystem, and the
+    // keyword tooltips in text_tooltips.kdl. The perks of the game's own leaders keep their
+    // text, apart from the ones a Doll's perk tree offers.
+    set "Description" {
+        set "m_DefaultTranslation" """
+            The Individual First Aid Kit contains all tools and drugs needed to treat immediate battlefield trauma. Issuing it to a squad will substantially increase the chances of dummies surviving injuries.
+
+            #########
+
+            Increases Dummy Rescue Chance for this unit by $1% with $2 always being rescued. Does not stack.
+            """
+    }
+}
+
+patch "AccessoryTemplate" "accessory.morphidrin_patch_drugs" {
+    set "Description" {
+        set "m_DefaultTranslation" """
+            A slow release painkiller skin patch suppressing pain and allowing soldiers to keep fighting while recovering from injuries. 
+
+            #########
+
+            Removes "Injured" status effect while on a mission and increases hitpoints per dummy by $1.
+            """
+    }
+}
+
+patch "ConversationEffectsTemplate" "conv_effect_event_add_1_squaddies" {
+    set "Description" {
+        set "m_DefaultTranslation" "Gain $1 <link=\"squaddies\">Dummy</link>."
+    }
+}
+
+patch "ConversationEffectsTemplate" "conv_effect_event_add_2_squaddies" {
+    set "Description" {
+        set "m_DefaultTranslation" "Gain $1 <link=\"squaddies\">Dummies</link>."
+    }
+}
+
+patch "ConversationEffectsTemplate" "conv_effect_event_add_3_squaddies" {
+    set "Description" {
+        set "m_DefaultTranslation" "Gain $1 <link=\"squaddies\">Dummies</link>."
+    }
+}
+
+patch "PerkTemplate" "perk.buff" {
+    set "Description" {
+        set "m_DefaultTranslation" """
+            Two-a-days. Bear crawls. Suicides and shuttles. Momentary urges to die harden one against death itself.
+
+
+            <style="Highlight">• +$1 <link="hitpoints">HP</link> per <link="squaddies">Dummy</link>.
+            • Removes "encumbered" effect from heavy armor and weapons. </style>
+            """
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "+$1 HP per Dummy and removes \"encumbered\" effect."
+    }
+}
+
+patch "PerkTemplate" "perk.first_aid" {
+    set "Description" {
+        set "m_DefaultTranslation" """
+            TCR Health Care: Slapping a bandaid on a Marine so he can slap a bullet into an enemy.
+
+
+            <style="Highlight">• ACTIVATE: Heal a wounded Element and sets the target units morale to neutral. Can heal allied SL's.
+            • PASSIVE: Increases the chance to rescue dummies in ALL units by $1% with a minimum of $2.</style>
+            """
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "ACTIVATE: Heal an element to full HP. PASSIVE: Increase global Dummy Rescue Chance by $1%."
+    }
+}
+
+patch "PerkTemplate" "perk.gostepriimstvo_babushki" {
+    set "Description" {
+        set "m_DefaultTranslation" """
+            “Yaz is remarkably resourceful on the battlefield. Despite his notorious aggression, he knows when to time a quick spell to scrounge for gear, ammo, and patch up his men to keep the offensive going.”
+
+              – Lieutenant Hayflick
+
+
+            <style="Highlight">• ACTIVATE: 
+              - Refill $1% of Special and Squad Weapon ammo, minimum $2.
+              - Reduces <link="suppression">Suppression</link> by $3%.
+              - Heals one <link="squaddies">Dummy</link>.</style>
+            """
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "Refill Ammo, reduce Suppression, and heal a Dummy."
+    }
+}
+
+patch "PerkTemplate" "perk.juiced" {
+    set "Description" {
+        set "m_DefaultTranslation" """
+            “Kubra has turned her body into a mad chemist’s laboratory. Given her pursuits, it is our belief that she may have procured the first mixtures from a (REDACTED) barge, but suffice it to say her reaction to the injections were a little more controlled.”
+
+              – SAGE Analysis
+
+
+            <style="Highlight">• +$1 <link="hitpoints">HP</link> per <link="squaddies">Dummy</link>.</style>
+            """
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "+$1 HP per Dummy."
+    }
+}
+
+patch "PerkTemplate" "perk.jump_the_grenade" {
+    set "Description" {
+        set "m_DefaultTranslation" """
+            “The Planetary Jingwei is a corrupt order within the Wayback, but it is not without its true believers.” 
+
+              – Lieutenant Hayflick
+
+
+            <style="Highlight">• Enemy AoE attacks can now only hit $1 <link="squaddies">Dummy</link>.
+            </style>
+            """
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "Enemy AoE attacks only hit $1 Dummy."
+    }
+}
+
+patch "PerkTemplate" "perk.share_the_load" {
+    set "Description" {
+        set "m_DefaultTranslation" """
+            “Due to agreements forged out of the Earth-Mars conflicts, Mars does not have legal access to the same planetary shaping technology as the rest of the Core Worlds. This has left Martians needing to constantly adapt to new locales. However, this biological malus has led to interesting methods of overcoming challenges particularly by way of communal effort. Some of these methods might even supersede textbook TCR approaches, if I am being honest.” 
+
+              – Lieutenant Hayflick
+
+
+            <style="Highlight">• Increase Special Weapon uses by $1 for each <link="squaddies">Dummy</link> up to $2%.</style>
+            """
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "+$1 Special Weapon use for each Dummy up to $2%."
+    }
+}
+
+patch "ShipUpgradeTemplate" "oci.basic_command_room" {
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "<style=\"Highlight\">• +$1 <link=\"squaddies\">Dummies</link> for each completed mission.</style>"
+    }
+}
+
+patch "ShipUpgradeTemplate" "oci.basic_quarters" {
+    set "Description" {
+        set "m_DefaultTranslation" "Crew living quarters that house enlisted rank personnel. This increases the dummy maximum limit by $1 and casualty recovery rate by $2%."
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" """
+            <style="Highlight">• +$1 max <link="squaddies">Dummies.</link>
+            • +$2% chance to recover casualties.</style>
+            """
+    }
+}
+
+patch "ShipUpgradeTemplate" "oci.faction_unbent_command_room_upgrade_expanded_wayback_outreach_center" {
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "<style=\"Highlight\">• +$1 <link=\"squaddies\">Dummies</link> for each completed mission.</style>"
+    }
+}
+
+patch "ShipUpgradeTemplate" "oci.faction_unbent_command_room_wayback_outreach_center" {
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "<style=\"Highlight\">• +$1 <link=\"squaddies\">Dummies</link> for each completed mission.</style>"
+    }
+}
+
+patch "SkillTemplate" "passive.ifak_first_aid_kit" {
+    set "Description" {
+        set "m_DefaultTranslation" "Increases Dummy Rescue Chance for this unit by $1% with $2 always being rescued. Does not stack."
+    }
+}
+
+patch "SquaddieItemTemplate" "squaddie.recruitment_effort_small" {
+    set "Description" {
+        set "m_DefaultTranslation" "Recruit locals to join the fight aboard the Impetus. Add $1 <link=\"squaddies\">Dummies</link> to the manpower pool."
+    }
+}
+
+patch "StrategicAssetTemplate" "civilian_clinic" {
+    set "Description" {
+        set "m_DefaultTranslation" """
+            Local clinics aren’t exactly cutting edge health providers, but an on-spot MASH is vastly more efficient than achieving escape velocity to get back to the Imp.
+
+            - Upon completion, increases the rescue chance for <link="squaddies">Dummies</link> by $1% for the rest of this operation.
+            """
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "Upon completion, increases the rescue chance for <link=\"squaddies\">Dummies</link> by $1% for the rest of this operation."
+    }
+}
+
+patch "StrategicAssetTemplate" "hearts_and_minds" {
+    set "Description" {
+        set "m_DefaultTranslation" """
+            Whenever our friendly Marines complete a task, the first thing they should ask of the liberated locals: do you wish to know more? One would be surprised how often these first impressions lead to natives joining our cause.
+
+            - Upon completion, gain $1 <link="squaddies">Dummies</link>.
+            """
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "Upon completion, gain $1 <link=\"squaddies\">Dummies</link>."
+    }
+}
+
+patch "StrategicAssetTemplate" "new_recruits" {
+    set "Description" {
+        set "m_DefaultTranslation" """
+            The elements rescued from captivity offered to join our effort in the wayback. We welcome them on board!
+
+            - Gain $1 additional <link="squaddies">Dummies</link>.
+            """
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "Gain $1 additional <link=\"squaddies\">Dummies</link>."
+    }
+}
+
+patch "StrategicAssetTemplate" "secured_infrastruct" {
+    set "Description" {
+        set "m_DefaultTranslation" """
+            The relieved local force outpost provides a critical logistical advantage, serving as a staging node for planetary resupply routes throughout the remainder of the operation.
+
+            - Upon completion, increases  <link="supply_cost">supplies</link> by $1%. and increases the rescue chance for <link="squaddies">Dummies</link> by $2% for the rest of this operation.
+            """
+    }
+    set "ShortDescription" {
+        set "m_DefaultTranslation" "Upon completion, increases  <link=\"supply_cost\">supplies</link> by $1%. and increases the rescue chance for <link=\"squaddies\">Dummies</link> by $2% for the rest of this operation."
+    }
+}
+
+patch "EmotionalStatesConfig" "emotional_states_config" {
+    set "TriggerDescriptions" index=21 {
+        set "Text" {
+            set "m_DefaultTranslation" "Lost all <link=\"squaddies\">dummies</link>"
+        }
+    }
+}

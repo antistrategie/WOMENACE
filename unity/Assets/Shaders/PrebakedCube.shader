@@ -1,7 +1,8 @@
 // GFL2's gf_shader/scene/prebaked_cubemap_scene, from its compiled programs: a box drawn from the
 // inside (front faces culled) that shows a cube captured from the room, looked up by the
-// normalised object-space position with y negated. The ops room's floor mirror renders this box and
-// nothing else, so its reflection is a frozen image of the room (StrategyDiorama.Reflection.cs).
+// normalised object-space position with y negated. It is the ops room's floor mirror, a frozen image
+// of the room, which Womenace/BakedScene works out on the floor itself from the same box and cube
+// (StrategyDiorama.Reflection.cs), so this shader is only the box's material.
 Shader "Womenace/PrebakedCube"
 {
     Properties

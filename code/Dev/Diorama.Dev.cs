@@ -172,6 +172,30 @@ public static class Diorama
     // Saves the floor reflection's mirror render to a PNG at a Windows path.
     public static string SaveMirror(string path) => SavePng(StrategyDiorama.MirrorTexture, path, "no mirror");
 
+    // Writes vanilla's own mission preparation map picture, which the 2D view covers with the
+    // hologram's, to compare what each shows.
+    public static string VanillaMap(string path)
+    {
+        var map = Il2CppMenace.UI.UIManager.Get()?.GetActiveScreen()?.TryCast<Il2CppMenace.UI.Strategy.MissionPrepUIScreen>()?.m_MapTexture;
+        if (map == null)
+            return "no map picture";
+        var copy = RenderTexture.GetTemporary(map.width, map.height, 0, RenderTextureFormat.ARGB32);
+        Graphics.Blit(map, copy);
+        var written = SavePng(copy, path, "no copy");
+        RenderTexture.ReleaseTemporary(copy);
+        return written;
+    }
+
+    // A full collection in the game's own runtime and an unload of unused assets, as a long
+    // session reaches on its own, to find what the mod holds past its life.
+    [MutatingVerb]
+    public static string Collect()
+    {
+        Il2CppInterop.Runtime.IL2CPP.il2cpp_gc_collect(int.MaxValue);
+        Resources.UnloadUnusedAssets();
+        return "collected";
+    }
+
     private static string SavePng(RenderTexture rt, string path, string missing)
     {
         if (rt == null)
@@ -597,6 +621,24 @@ public static class Diorama
 
     public static string PrepState() => StrategyDiorama.PrepStateFromDev();
 
+    public static string PrepStructures() => StrategyDiorama.PrepStructuresFromDev();
+
+    public static string PlanetCards() => StrategyDiorama.PlanetCardsFromDev();
+
+    public static string FactionClaims() => StrategyDiorama.FactionClaimsFromDev();
+
+    public static string StagedBounds() => StrategyDiorama.StagedBoundsFromDev();
+
+    public static string GameFonts() => StrategyDiorama.GameFontsFromDev();
+
+    [MutatingVerb]
+    public static string FactionTrust(string template, int change) => StrategyDiorama.FactionTrustFromDev(template, change);
+
+    // Draws a structure on the deployment map as another kind (plain or marked), or as
+    // itself again with an empty kind.
+    [MutatingVerb]
+    public static string PrepKindAs(string template, string kind) => StrategyDiorama.PrepKindAsFromDev(template, kind);
+
     [MutatingVerb]
     public static string PrepDeployAll() => StrategyDiorama.PrepDeployAllFromDev();
 
@@ -620,6 +662,9 @@ public static class Diorama
     public static string StarProbe(int step = 20) => StrategyDiorama.StarProbeFromDev(step);
 
     public static string Dolls() => StrategyDiorama.DollsFromDev();
+
+    // The calibration doll's lowest point in the weapon room's space, against the floor.
+    public static string CalibrationFeet() => StrategyDiorama.CalibrationFeetFromDev();
 
     // How far each model in a right hand was slid clear of its carrier's head, as last worked out.
     public static string CarryReport() => StrategyDiorama.CarryReportFromDev();
@@ -945,6 +990,37 @@ public static class Diorama
             frames.Add(ScreenCapture.CaptureScreenshotAsTexture());
         }
         ShowUi(hidden);
+        for (var i = 0; i < frames.Count; i++)
+        {
+            if (frames[i] == null)
+                continue;
+            System.IO.File.WriteAllBytes($"{prefix}{i + 1}.png", (byte[])ImageConversion.EncodeToPNG(frames[i]));
+            UnityEngine.Object.Destroy(frames[i]);
+        }
+    }
+
+    // Goes to a navigation target and captures the screen, UI included, on each of the frames
+    // after, as <prefix>N.png. For what a screen shows before its layout settles.
+    [MutatingVerb]
+    public static string NavBurst(string target, string prefix, int count)
+    {
+        var context = StrategyDiorama.SystemContext;
+        if (context == null)
+            return "no context";
+        context.Coroutines.Start(NavBurstFrames(target, prefix, count));
+        return $"going to {target}, capturing {count} frames";
+    }
+
+    private static System.Collections.IEnumerator NavBurstFrames(string target, string prefix, int count)
+    {
+        yield return new WaitForEndOfFrame();
+        NavigationMenu.GoFromDev(target);
+        var frames = new List<Texture2D>();
+        for (var i = 0; i < count; i++)
+        {
+            yield return new WaitForEndOfFrame();
+            frames.Add(ScreenCapture.CaptureScreenshotAsTexture());
+        }
         for (var i = 0; i < frames.Count; i++)
         {
             if (frames[i] == null)

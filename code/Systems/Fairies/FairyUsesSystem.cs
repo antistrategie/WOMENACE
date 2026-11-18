@@ -23,7 +23,10 @@ public sealed class FairyUsesSystem : JiangyuSystem
         ("Is limited to {0} more uses per operation", "Is limited to {0} more uses per mission"),
     ];
 
-    private readonly HashSet<string> _abilities = new(StringComparer.Ordinal);
+    private static readonly HashSet<string> Abilities = new(StringComparer.Ordinal);
+
+    // Whether the off-map ability's uses come back every mission rather than every operation.
+    internal static bool RefillsEveryMission(string abilityId) => abilityId != null && Abilities.Contains(abilityId);
     private readonly HashSet<string> _skills = new(StringComparer.Ordinal);
 
     public override void OnInit()
@@ -42,12 +45,12 @@ public sealed class FairyUsesSystem : JiangyuSystem
     {
         try
         {
-            _abilities.Clear();
+            Abilities.Clear();
             _skills.Clear();
             var lodge = Templates.ById<ShipUpgradeTemplate>(FairyLodgeSystem.LodgeId,
                 msg => Context.Log.Warn($"fairy uses: {msg}"));
             Collect(lodge, 0);
-            Context.Log.Debug($"fairy uses: {_abilities.Count} fairy abilit(ies) refill every mission");
+            Context.Log.Debug($"fairy uses: {Abilities.Count} fairy abilit(ies) refill every mission");
         }
         catch (Exception ex)
         {
@@ -67,7 +70,7 @@ public sealed class FairyUsesSystem : JiangyuSystem
             var ability = effects[i]?.TryCast<GrantOffmapAbilityEffect>()?.OffmapAbility;
             if (ability == null)
                 continue;
-            _abilities.Add(ability.GetID());
+            Abilities.Add(ability.GetID());
             if (ability.SkillTemplate != null)
                 _skills.Add(ability.SkillTemplate.GetID());
         }
@@ -81,13 +84,13 @@ public sealed class FairyUsesSystem : JiangyuSystem
         try
         {
             var instances = StrategyState.Get()?.ActiveOffmapAbilities?.m_OffmapAbilityInstances;
-            if (instances == null || _abilities.Count == 0)
+            if (instances == null || Abilities.Count == 0)
                 return;
             var refilled = 0;
             for (var i = 0; i < instances.Count; i++)
             {
                 var instance = instances[i];
-                if (instance == null || !_abilities.Contains(instance.TemplateId ?? ""))
+                if (instance == null || !Abilities.Contains(instance.TemplateId ?? ""))
                     continue;
                 instance.RefillRemainingUses();
                 refilled++;

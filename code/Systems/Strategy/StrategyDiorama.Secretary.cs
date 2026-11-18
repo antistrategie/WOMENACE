@@ -364,8 +364,7 @@ public sealed partial class StrategyDiorama
         doll.transform.localScale = Vector3.one * RoomDollScale;
         if (spot.Pose == "Sit")
             doll.transform.localPosition += doll.transform.localRotation * SeatShift(doll);
-        var share = WindowShare(at);
-        ProbeLight(doll, _ops, share, share > 0f ? WindowLightFrom(doll, at) : null);
+        LightRoomDoll(doll, at);
     }
 
     // How far behind her root a sitter's hips are in the sit the seats' spots were set for.

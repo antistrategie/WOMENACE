@@ -400,6 +400,27 @@ public sealed partial class StrategyDiorama
         return $"pressed the squad window's button for {added} squads";
     }
 
+    // The structures on the open mission's map, by template, with how many tiles each covers and
+    // what can be entered (towers, bunkers, forest).
+    internal static string PrepStructuresFromDev()
+    {
+        var preview = UIManager.Get()?.GetActiveScreen()?.TryCast<MissionPrepUIScreen>()?.GetMission()?.GetPreview();
+        if (preview == null)
+            return "no preview";
+        var counts = new Dictionary<string, int>();
+        for (var z = 0; z < preview.SizeZ; z++)
+            for (var x = 0; x < preview.SizeX; x++)
+            {
+                var tile = preview.Tiles.GetTile(x, z);
+                var template = tile.m_EntityTemplate;
+                if (template == null)
+                    continue;
+                var key = $"{template.name} [{tile.GetEntityType()}, container {template.ContainerType}]";
+                counts[key] = counts.GetValueOrDefault(key) + 1;
+            }
+        return $"{preview.SizeX}x{preview.SizeZ}\n" + string.Join("\n", counts.OrderByDescending(c => c.Value).Select(c => $"{c.Value,4} {c.Key}"));
+    }
+
     internal static string PrepFlatMapFromDev(bool shown)
     {
         var d = _instance;

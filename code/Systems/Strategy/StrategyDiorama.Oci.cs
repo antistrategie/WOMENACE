@@ -51,6 +51,10 @@ public sealed partial class StrategyDiorama
     private const float OciSlotIcon = 40.5f;
     private const float OciPanelLeft = 908f;
     private const float OciPanelWidth = 340f;
+    // How far the ship panel's figures stand in from its sides, and the space between them and the
+    // operation's rows under them.
+    private const float OciFiguresInset = 20f;
+    private const float OciOperationGap = 8f;
     private const float OciStem = 10f;
     // A group's padding, its header's height, a slot's height with the gap under it, and the
     // room a slot keeps over itself for the name of its kind, which the group's header gives.
@@ -78,9 +82,16 @@ public sealed partial class StrategyDiorama
     // A group with the parts of its line, and the group the pointer is over.
     private readonly List<(VisualElement Group, Vector3 Anchor, VisualElement Stem, VisualElement Line, VisualElement Ring)> _ociGroups = new();
     private int _ociPicked = -1;
-    // Each slot's group, by the slot, and how many elements the slots' holder had when laid out.
+    // Each slot's group, by the slot, the slots' holder and how many elements it had when laid
+    // out, and whether a slot was left out of the layout because vanilla had not yet set it up.
     private readonly Dictionary<IntPtr, int> _ociSlotGroups = new();
+    private VisualElement _ociSlotsHolder;
     private int _ociSlotCount;
+    private bool _ociUnplaced;
+    // The slots whose kind is not known yet, asked again every few frames until one is.
+    private readonly List<ShipSlot> _ociUnresolved = new();
+    // A slot is drawn once it stands in its group, so none shows where vanilla puts it.
+    private const string OciPlacedClass = "wm-oci-slot--placed";
     // Frames the lines are still placed for after anything they follow last moved.
     private int _ociSettling;
 
@@ -204,8 +215,12 @@ public sealed partial class StrategyDiorama
         }
         if (_shotTravel < 1f)
             _ociSettling = 30;
-        // Slots added after the screen was laid out (the fairies') are given their places.
-        if (UnityEngine.Time.frameCount % 10 == 0 && UI.Find(_shellRoot, UiSelector.Name(VanillaUi.Elements.Slots)) is { } slots && slots.childCount != _ociSlotCount)
+        // Vanilla sets its slots up over the first frames the screen shows, and the fairies' come
+        // later: a slot added, or one set up after the last layout, is given its place at once.
+        var holder = _ociSlotsHolder?.panel != null ? _ociSlotsHolder
+            : UnityEngine.Time.frameCount % 10 == 0 ? UI.Find(_shellRoot, UiSelector.Name(VanillaUi.Elements.Slots)) : null;
+        if (holder != null && (holder.childCount != _ociSlotCount || _ociUnplaced
+            || (_ociUnresolved.Count > 0 && UnityEngine.Time.frameCount % 10 == 0 && OciSlotResolved())))
             LayOutOci(_shellRoot);
         PickOciGroup();
         if (_ociSettling > 0)
@@ -213,6 +228,18 @@ public sealed partial class StrategyDiorama
             _ociSettling--;
             PlaceOciLines(ship);
         }
+    }
+
+    private static Il2CppMenace.Strategy.ShipUpgradeSlotTemplate OciSlotTemplate(ShipSlot slot, Il2CppMenace.Strategy.ShipUpgrades ships) =>
+        slot.GetSlotTemplate() ?? ships?.GetSlotTemplateByIdx(slot.SlotIdx);
+
+    private bool OciSlotResolved()
+    {
+        var ships = Il2CppMenace.States.StrategyState.Get()?.ShipUpgrades;
+        foreach (var slot in _ociUnresolved)
+            if (slot != null && OciSlotTemplate(slot, ships)?.GetID() != null)
+                return true;
+        return false;
     }
 
     internal static string OciOrbitFromDev(float yaw, float distance)
@@ -312,22 +339,39 @@ public sealed partial class StrategyDiorama
             ship.text = called;
             _shellUndo.Add(() => ship.text = vanilla);
         }
-        // The planet and assets strip goes under the figures, in their panel.
+        // The operation's strip goes under the figures, in their panel, as its rows in mission
+        // select's box, lined up with the figures. Coming from mission select, the camera's travel
+        // has already begun fading the Operations panels in from nothing, and the fade lets go of a
+        // panel moved out of the shell, so the strip is made whole here.
         var corner = UI.Find(root, UiSelector.Name(VanillaUi.Elements.TopRightCorner));
         if (corner != null)
         {
             MoveInto(window, corner);
-            Inline(corner, e =>
+            InlineStyle(corner, s =>
             {
-                e.style.position = Position.Relative;
-                e.style.top = 0;
-                e.style.marginTop = 0;
-            }, e =>
+                s.position = Position.Relative;
+                s.top = 0;
+                s.left = StyleKeyword.Auto;
+                s.right = StyleKeyword.Auto;
+                s.flexDirection = FlexDirection.Column;
+                s.alignItems = Align.Stretch;
+                s.marginTop = OciOperationGap;
+                s.marginLeft = OciFiguresInset;
+                s.marginRight = OciFiguresInset;
+                s.opacity = StyleKeyword.Null;
+            }, s =>
             {
-                e.style.position = StyleKeyword.Null;
-                e.style.top = StyleKeyword.Null;
-                e.style.marginTop = StyleKeyword.Null;
+                s.position = StyleKeyword.Null;
+                s.top = StyleKeyword.Null;
+                s.left = StyleKeyword.Null;
+                s.right = StyleKeyword.Null;
+                s.flexDirection = StyleKeyword.Null;
+                s.alignItems = StyleKeyword.Null;
+                s.marginTop = StyleKeyword.Null;
+                s.marginLeft = StyleKeyword.Null;
+                s.marginRight = StyleKeyword.Null;
             });
+            DressOperationRows(corner, InlineStyle);
         }
 
         var lines = UI.Find(root, UiSelector.Name(OciLinesName));
@@ -359,7 +403,10 @@ public sealed partial class StrategyDiorama
         for (var i = 0; i < slots.childCount; i++)
             if (slots[i].TryCast<ShipSlot>() is { } one)
                 all.Add(one);
+        _ociSlotsHolder = slots;
         _ociSlotCount = slots.childCount;
+        _ociUnplaced = false;
+        _ociUnresolved.Clear();
         var ships = Il2CppMenace.States.StrategyState.Get()?.ShipUpgrades;
         // A group is as wide as a slot, and the groups are spread evenly across their row.
         var column = OciSlotWidth + OciGroupPad * 2f;
@@ -369,10 +416,13 @@ public sealed partial class StrategyDiorama
         _ociSlotGroups.Clear();
         foreach (var slot in all.OrderBy(s => s.SlotIdx))
         {
-            var template = slot.GetSlotTemplate() ?? ships?.GetSlotTemplateByIdx(slot.SlotIdx);
+            var template = OciSlotTemplate(slot, ships);
             var kind = template?.GetID();
             if (kind == null)
+            {
+                _ociUnresolved.Add(slot);
                 continue;
+            }
             var name = $"wm-oci-group-{kind}";
             var index = _ociGroups.FindIndex(g => g.Group.name == name);
             if (index < 0)
@@ -409,7 +459,7 @@ public sealed partial class StrategyDiorama
                 index = _ociGroups.Count - 1;
             }
             var down = held.GetValueOrDefault(index);
-            held[index] = down + OciSlotPitch;
+            held[index] = down + OciSlotPitch + (DressOciInfo(slot) ? OciInfoStrip : 0f);
             _ociSlotGroups[slot.Pointer] = index;
             // What the slot had is put back, since the fairies' slots are placed from code.
             var (position, left, top) = (slot.style.position, slot.style.left, slot.style.top);
@@ -433,6 +483,7 @@ public sealed partial class StrategyDiorama
                 e.style.top = top;
                 e.style.width = StyleKeyword.Null;
             });
+            Inline(slot, e => e.AddToClassList(OciPlacedClass), e => e.RemoveFromClassList(OciPlacedClass));
             // Vanilla gives the name's box a width and a height of its own, shorter than the
             // picture. Here it is the picture's height and runs to the slot's edge, as does
             // everything it stands in.

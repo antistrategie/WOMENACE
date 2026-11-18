@@ -50,6 +50,8 @@ Shader "Womenace/DollToonHair"
         // The way a window's light comes to a doll the strategy diorama lights by it (xyz), in
         // place of the sun's (w above a half).
         [HideInInspector] _KeyDirection ("Key Direction", Vector) = (0, 0, 0, 0)
+        [HideInInspector] _KeyColour ("Key Colour", Vector) = (0, 0, 0, 0)
+        [HideInInspector] _FaceRootUpright ("Face Root Upright", Float) = 0
         // Set by the strategy diorama on a doll standing in a GFL2 room: GFL2's own ramp and
         // ambient, and the room's reflection probe in place of the sky.
         [HideInInspector] _RoomLit ("Room Lit", Float) = 0

@@ -97,8 +97,10 @@ public sealed partial class StrategyDiorama
         public LightProbe[] LightProbes = System.Array.Empty<LightProbe>();
         // GFL2's reflection probes, in the room's space.
         public ReflectionProbe[] ReflectionProbes = System.Array.Empty<ReflectionProbe>();
-        // GFL2's pre-baked box, where its floor mirror shows that instead of the live room.
+        // GFL2's pre-baked box and its cube, where its floor mirror shows that instead of the live
+        // room. The box is never drawn: the floor reads the cube itself.
         public Renderer MirrorBox;
+        public Texture MirrorCube;
     }
 
     private readonly record struct LightProbe(Vector3 Position, float SunOcclusion, Vector4[] Sh);
@@ -158,8 +160,7 @@ public sealed partial class StrategyDiorama
         _shadowQuality = -1;
         set.ReflectionProbes = ReadReflectionProbes(set.Root);
         set.MirrorBox = set.Root.transform.Find("_MirrorBox")?.GetComponent<MeshRenderer>();
-        if (set.MirrorBox != null)
-            set.MirrorBox.gameObject.layer = ReflectionVolumeLayer;
+        set.MirrorCube = set.MirrorBox?.sharedMaterial?.GetTexture("_Cubemap");
         SpawnEffects(set);
         ExtendScenery(set.Root);
         Context.Log.Info($"strategy diorama: spawned {set.Asset} with {set.LiveLights.Count} live lights, {set.LightProbes.Length} light probes");
@@ -484,7 +485,7 @@ public sealed partial class StrategyDiorama
         return (sh, occlusion, total);
     }
 
-    private static void ProbeLight(GameObject unit, RoomSet set, float sun = 0f, Vector3? keyFrom = null)
+    private static void ProbeLight(GameObject unit, RoomSet set, float sun = 0f, Vector3? keyFrom = null, Color? keyColour = null)
     {
         if (unit == null || set?.Root == null || set.LightProbes.Length == 0)
             return;
@@ -516,6 +517,13 @@ public sealed partial class StrategyDiorama
             block.SetFloat("_KeyOcclusion", Mathf.Max(sun, occlusion / total));
             // The way her key comes from, where it is a window's light and not the sun's.
             block.SetVector("_KeyDirection", keyFrom is { } from ? new Vector4(from.x, from.y, from.z, 1f) : Vector4.zero);
+            // The face shader's frame: GFL2's sweep reads the light in the skin's root space, and
+            // the rooms' bodies are rooted at a bone standing upright with them, where the rig
+            // the shader's frame is for has its root turned half over.
+            var root = renderer.TryCast<SkinnedMeshRenderer>()?.rootBone;
+            block.SetFloat("_FaceRootUpright", root != null && Vector3.Dot(root.up, unit.transform.up) > 0f ? 1f : 0f);
+            // Her key's colour, where it is the lamps' light and not the sun's.
+            block.SetVector("_KeyColour", keyColour is { } c ? new Vector4(c.r, c.g, c.b, 1f) : Vector4.zero);
             // The doll shaders' room terms: GFL2's own ramp and ambient, and the room's reflection
             // probe in place of the sky.
             block.SetFloat("_RoomLit", 1f);

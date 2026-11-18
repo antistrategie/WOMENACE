@@ -509,7 +509,8 @@ namespace Womenace.EditorTools
         }
 
         // GFL2's pre-baked mirror box (gf_shader/scene/prebaked_cubemap_scene on a unit cube) as a
-        // disabled "_MirrorBox" renderer, which StrategyDiorama's mirror camera alone draws.
+        // disabled "_MirrorBox" renderer. It is never drawn: StrategyDiorama hands its cube and
+        // its transform to the floor shader, which reads the cube where the mirror would see it.
         private static void AddMirrorBox(GameObject instance, string src, string dst, MirrorBoxEntry box)
         {
             if (string.IsNullOrEmpty(box?.file))

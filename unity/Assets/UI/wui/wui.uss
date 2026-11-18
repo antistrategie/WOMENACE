@@ -25,6 +25,10 @@
     --dim: rgba(2, 8, 12, 0.55);
 }
 
+/* MENACE's face, Jura Bold, shipped with the mod (UI/fonts) so no font of the game's is held.
+   Doubled so it outranks a vanilla element's own rule for its font. */
+.wm-game-font.wm-game-font { -unity-font-definition: url("../fonts/Jura-Bold-SDF.asset"); }
+
 /* Holographic panel with corner brackets */
 .wui-holo {
     background-color: var(--holo-fill);

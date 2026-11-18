@@ -13,8 +13,11 @@ namespace WOMENACE.Code;
 //
 // The ops room's GFL2 mirror reflects one layer, a box showing a cube pre-baked from the room
 // (Womenace/PrebakedCube), so its reflection is a frozen image with no characters or effects in
-// it. A set carrying that box has the mirror camera render the box alone. The refitting room has
-// no such box and mirrors the live room.
+// it. For a set carrying that box, Womenace/BakedScene finds where the mirror would see the box
+// through each floor pixel and reads the cube there, and no mirror is rendered: HDRP's work for
+// a camera costs about as much again as the room (2 ms of 5 at 1440p) whatever its resolution.
+// The refitting and weapon rooms have no such box and mirror the live room, with the passes that
+// only refine the image left out.
 //
 // The mirror camera is a proper rotation (mirrored position and forward, up flipped), so nothing
 // renders inside out: it keeps the reflection's right and turns its up over, so its image is the
@@ -35,6 +38,27 @@ public sealed partial class StrategyDiorama
     private static readonly int PlanarTextureId = Shader.PropertyToID("_WmPlanarReflection");
     private static readonly int PlanarParamsId = Shader.PropertyToID("_WmPlanarParams");
     private static readonly int PlanarTintId = Shader.PropertyToID("_WmPlanarTint");
+    private static readonly int PlanarCubeId = Shader.PropertyToID("_WmPlanarCube");
+    private static readonly int PlanarCubeSizeId = Shader.PropertyToID("_WmPlanarCubeSize");
+    private static readonly int PlanarBoxId = Shader.PropertyToID("_WmPlanarBox");
+
+    // The mirror's image is blurred and added faintly over the floor, so the screen-space effects,
+    // volumetrics, motion vectors and post effects that would refine it are left out of its render.
+    // Its shadow maps stay, for the characters' shadows in it.
+    private static readonly FrameSettingsField[] MirrorSkips =
+    {
+        FrameSettingsField.SSAO, FrameSettingsField.SSR, FrameSettingsField.TransparentSSR, FrameSettingsField.SSGI,
+        FrameSettingsField.ContactShadows, FrameSettingsField.ScreenSpaceShadows, FrameSettingsField.Volumetrics,
+        FrameSettingsField.ReprojectionForVolumetrics, FrameSettingsField.VolumetricClouds, FrameSettingsField.MotionVectors,
+        FrameSettingsField.ObjectMotionVectors, FrameSettingsField.TransparentsWriteMotionVector, FrameSettingsField.Decals,
+        FrameSettingsField.Refraction, FrameSettingsField.Distortion, FrameSettingsField.LowResTransparent,
+        FrameSettingsField.SubsurfaceScattering, FrameSettingsField.Transmission, FrameSettingsField.StopNaN,
+        FrameSettingsField.DepthOfField, FrameSettingsField.MotionBlur, FrameSettingsField.PaniniProjection,
+        FrameSettingsField.Bloom, FrameSettingsField.LensFlareScreenSpace, FrameSettingsField.LensFlareDataDriven,
+        FrameSettingsField.LensDistortion, FrameSettingsField.ChromaticAberration, FrameSettingsField.Vignette,
+        FrameSettingsField.FilmGrain, FrameSettingsField.Dithering, FrameSettingsField.Antialiasing,
+        FrameSettingsField.CustomPostProcess,
+    };
 
     private GameObject _mirror;
     private Camera _mirrorCamera;
@@ -62,6 +86,7 @@ public sealed partial class StrategyDiorama
         hd.antialiasing = HDAdditionalCameraData.AntialiasingMode.None;
         hd.clearColorMode = HDAdditionalCameraData.ClearColorMode.Color;
         hd.backgroundColorHDR = Color.black;
+        SkipMirrorPasses(hd);
 
         // Its own volume: the room's exposure and no tonemapping or screen effects, so the texture
         // holds exposed linear light the floor can add straight in.
@@ -79,6 +104,31 @@ public sealed partial class StrategyDiorama
         volume.sharedProfile = profile;
 
         _mirrorRoutine = Context.Coroutines.Start(FollowMirror());
+    }
+
+    // The interop hands the frame settings out as copies, so their bits are set on the copies' own
+    // words and the copies written back whole.
+    private static void SkipMirrorPasses(HDAdditionalCameraData hd)
+    {
+        var settings = hd.m_RenderingPathCustomFrameSettings;
+        var mask = hd.renderingPathCustomFrameSettingsOverrideMask;
+        foreach (var field in MirrorSkips)
+        {
+            var bit = 1ul << ((int)field & 63);
+            if ((int)field < 64)
+            {
+                mask.mask.data1 |= bit;
+                settings.bitDatas.data1 &= ~bit;
+            }
+            else
+            {
+                mask.mask.data2 |= bit;
+                settings.bitDatas.data2 &= ~bit;
+            }
+        }
+        hd.m_RenderingPathCustomFrameSettings = settings;
+        hd.renderingPathCustomFrameSettingsOverrideMask = mask;
+        hd.customRenderingSettings = true;
     }
 
     private System.Collections.IEnumerator FollowMirror()
@@ -112,15 +162,26 @@ public sealed partial class StrategyDiorama
         if (UnityEngine.Time.frameCount <= _mirrorHeldFrame)
             return;
         var set = _active;
+        var shown = set?.Root != null && set.Root.activeInHierarchy && _roomCamera != null && _roomCamera.isActiveAndEnabled;
         var resolution = MirrorResolution();
-        var live = resolution > 0f && set?.Root != null && set.Root.activeInHierarchy && _roomCamera != null && _roomCamera.isActiveAndEnabled;
-        if (!live)
+        if (!shown || (resolution <= 0f && set.MirrorCube == null))
         {
             Shader.SetGlobalVector(PlanarParamsId, Vector4.zero);
             return;
         }
         var look = set.Look;
         var planeY = set.Root.transform.TransformPoint(0f, set.MirrorFloor, 0f).y;
+        if (set.MirrorCube != null)
+        {
+            // The box costs the floor a few sums, so it shows at every shadow quality. Its blur mip
+            // is the live mirror's: a half-screen render, then the look's blur.
+            Shader.SetGlobalColor(PlanarTintId, look.MirrorTint);
+            Shader.SetGlobalTexture(PlanarCubeId, set.MirrorCube);
+            Shader.SetGlobalFloat(PlanarCubeSizeId, set.MirrorCube.width);
+            Shader.SetGlobalMatrix(PlanarBoxId, set.MirrorBox.transform.worldToLocalMatrix);
+            Shader.SetGlobalVector(PlanarParamsId, new Vector4(planeY, look.MirrorStrength, look.MirrorBlur + 1f, 1f));
+            return;
+        }
         // The blur is a mip of a half-screen render: a larger render takes more mips for the same blur.
         var planar = new Vector4(planeY, look.MirrorStrength, Mathf.Max(0f, look.MirrorBlur + Mathf.Log(resolution / 0.5f, 2f)), 0f);
         Shader.SetGlobalColor(PlanarTintId, look.MirrorTint);
@@ -140,8 +201,7 @@ public sealed partial class StrategyDiorama
             Shader.SetGlobalTexture(PlanarTextureId, _mirrorTexture);
         }
         _mirrorCamera.targetTexture = _mirrorTexture;
-        var box = set.MirrorBox;
-        _mirrorCamera.cullingMask = box != null ? 1 << ReflectionVolumeLayer : _roomCamera.cullingMask;
+        _mirrorCamera.cullingMask = _roomCamera.cullingMask;
 
         var eye = _roomCamera.transform.position;
         var forward = _roomCamera.transform.forward;
@@ -165,17 +225,14 @@ public sealed partial class StrategyDiorama
         // The floor itself draws in the mirror render and must not read the texture it is being
         // drawn into, or each frame's reflection would carry the last.
         Shader.SetGlobalVector(PlanarParamsId, Vector4.zero);
-        // The box draws only in this render: the room camera must never see it.
-        if (box != null)
-            box.enabled = true;
+        ShowNamePlates(false);
         try
         {
             _mirrorCamera.Render();
         }
         finally
         {
-            if (box != null)
-                box.enabled = false;
+            ShowNamePlates(true);
         }
         Shader.SetGlobalVector(PlanarParamsId, planar);
     }

@@ -95,7 +95,7 @@ public sealed partial class StrategyDiorama
         (VanillaUi.Elements.PromotionPoints, "WOMENACE::ui/shell/promotion", "PROMOTION"),
         (VanillaUi.Elements.OciPoints, "WOMENACE::ui/shell/oci_points", "O.C.I."),
         (VanillaUi.Elements.Authority, "WOMENACE::ui/shell/authority", "AUTHORITY"),
-        (VanillaUi.Elements.Squaddies, "WOMENACE::ui/shell/squaddies", "SQUADDIES"),
+        (VanillaUi.Elements.Squaddies, "WOMENACE::ui/shell/dummies", "DUMMIES"),
     };
 
     // A destination on the bottom row: its button, the room whose group it stands in, where it
@@ -415,6 +415,7 @@ public sealed partial class StrategyDiorama
         {
             RemoveShell();
             var tree = Context.Assets.Load<VisualTreeAsset>(ShellUxml);
+            FontWarmupSystem.WarmLoaded();
             if (tree == null)
                 return false;
             _shell = tree.Instantiate();
@@ -589,6 +590,17 @@ public sealed partial class StrategyDiorama
             _shellUndo.Add(() => undo(element));
         // Layouts that take a style's value before they change it ask this set whether
         // the value is still vanilla's.
+        _inlined.Add(element.Pointer);
+    }
+
+    // Inline, for a layout written against an element's style alone.
+    private void InlineStyle(VisualElement element, Action<IStyle> apply, Action<IStyle> undo)
+    {
+        if (element == null)
+            return;
+        apply(element.style);
+        if (_inlinedStyles.Add((element.Pointer, undo.Method)))
+            _shellUndo.Add(() => undo(element.style));
         _inlined.Add(element.Pointer);
     }
 

@@ -258,9 +258,10 @@ internal static class VanillaUi
         internal const string ShipInfoWindow = "ShipInfoWindow";
         // The ship upgrades screen's holder of its module slots.
         internal const string Slots = "Slots";
-        // The ship window's name of the ship, and the box a module slot's name stands in.
+        // The ship window's name of the ship, the box a module slot's name stands in, and the name.
         internal const string ShipName = "ShipName";
         internal const string SlotLabelContainer = "LabelContainer";
+        internal const string SlotModuleName = "NameLabel";
         // Inside the messages panel: its scroll view, the rows' holders and a row's parts.
         internal const string EventsScrollView = "EventsScrollView";
         internal const string SlotsContainer = "SlotsContainer";

@@ -10,7 +10,8 @@ namespace WOMENACE.Code;
 // room's GFL2 heights, turned to face the room camera as they faced the vanilla one, and each unit
 // lit by its own camera-relative doll rig, as a single doll is. The rest of ArmoryScene stops
 // drawing (its renderers, its camera and the name labels, which track the vanilla camera), and
-// everything goes back on leaving.
+// everything goes back on leaving. The names lie on the floor in front of the units instead
+// (StrategyDiorama.SquadNames.cs).
 //
 // The room camera orbits the squad: right-drag turns it, the wheel zooms, both ignored over UI
 // panels. It starts like MENACE's armoury shot, further out and above, looking down but close
@@ -181,6 +182,7 @@ public sealed partial class StrategyDiorama
             // Toward the starting room camera, flattened: the squad turns so the side the vanilla
             // camera saw faces it.
             var towardCamera = _stage.rotation * (Quaternion.Euler(0f, ArmoryYaw, 0f) * Vector3.back);
+            _squadFacing = towardCamera;
             foreach (var name in SquadRoots)
             {
                 var root = vanilla.transform.Find(name);
@@ -243,6 +245,7 @@ public sealed partial class StrategyDiorama
             staged.Root.localScale = staged.Scale;
         }
         _stagedRoots.Clear();
+        ClearNamePlates();
         _roomLitUnits.Clear();
         _squadSignature = 0;
         foreach (var (renderer, block) in _probeLitUnits.Values)
@@ -379,19 +382,31 @@ public sealed partial class StrategyDiorama
                 continue;
             var has = false;
             var bounds = new Bounds();
-            foreach (var renderer in staged.Root.GetComponentsInChildren<Renderer>())
-            {
-                if (!renderer.enabled || renderer.TryCast<ParticleSystemRenderer>() != null)
-                    continue;
-                if (!has) { bounds = renderer.bounds; has = true; }
-                else bounds.Encapsulate(renderer.bounds);
-            }
+            AddSquadBounds(staged.Root, ref bounds, ref has);
             if (!has)
                 continue;
             var offset = _stage.TransformPoint(ArmoryStand) - bounds.center;
             offset.y = 0f;
             if (offset.sqrMagnitude > 0.01f)
                 staged.Root.position += offset;
+        }
+    }
+
+    // What a squad is measured by: its units' solid surfaces. A see-through renderer is an effect,
+    // not the unit's shape: a vehicle's headlights carry halo quads metres across, which would
+    // stand the camera far back and aim it off the hull.
+    private static bool FramesSquad(Renderer renderer) =>
+        renderer.enabled && renderer.TryCast<ParticleSystemRenderer>() == null
+        && (renderer.sharedMaterial is not { } material || material.renderQueue < TransparentQueueStart);
+
+    private static void AddSquadBounds(Transform root, ref Bounds bounds, ref bool has)
+    {
+        foreach (var renderer in root.GetComponentsInChildren<Renderer>())
+        {
+            if (!FramesSquad(renderer))
+                continue;
+            if (!has) { bounds = renderer.bounds; has = true; }
+            else bounds.Encapsulate(renderer.bounds);
         }
     }
 
@@ -410,13 +425,7 @@ public sealed partial class StrategyDiorama
         {
             if (staged.Root == null || !staged.Root.gameObject.activeInHierarchy)
                 continue;
-            foreach (var renderer in staged.Root.GetComponentsInChildren<Renderer>())
-            {
-                if (!renderer.enabled || renderer.TryCast<ParticleSystemRenderer>() != null)
-                    continue;
-                if (!has) { bounds = renderer.bounds; has = true; }
-                else bounds.Encapsulate(renderer.bounds);
-            }
+            AddSquadBounds(staged.Root, ref bounds, ref has);
         }
         var stand = _stage.TransformPoint(ArmoryStand);
         if (!has)
@@ -442,7 +451,8 @@ public sealed partial class StrategyDiorama
         while (_camera != null && _stage != null)
         {
             // The controller respawns the units on every selection, so their grips and their light
-            // are found again on the frame the new squad appears.
+            // are found again on the frame the new squad appears. Its name plates are placed by
+            // the settling below, which runs on the same frame.
             if (SquadChanged())
             {
                 TrackGrips();
@@ -456,6 +466,7 @@ public sealed partial class StrategyDiorama
             if (Time.unscaledTime < settledAt && Time.unscaledTime >= refocusAt)
             {
                 CentreSquad();
+                PlaceNamePlates();
                 aim = SquadFocus(out var radius);
                 // A new selection (infantry to vehicle and back) re-frames the shot. A walker
                 // takes little more room than a squad, and all of it upwards. Units measure

@@ -41,6 +41,24 @@ public sealed partial class StrategyDiorama
     private static readonly Color32 PrepRoofEdge = new(150, 215, 245, 255);
     private static readonly Color32 PrepWallTop = new(110, 180, 215, 255);
     private static readonly Color32 PrepWallFoot = new(14, 34, 48, 255);
+    // What vanilla marks on its own map (towers and bunkers a squad can garrison, a weapon cache),
+    // in violet, a hue nothing else on the map has: the zone is gold, civilians orange, enemies red
+    // and objectives white.
+    private static readonly Color32 PrepMarkedRoof = new(92, 50, 150, 255);
+    private static readonly Color32 PrepMarkedEdge = new(205, 155, 255, 255);
+    private static readonly Color32 PrepMarkedWallTop = new(170, 120, 240, 255);
+    private static readonly Color32 PrepMarkedWallFoot = new(26, 12, 46, 255);
+
+    // What a structure is on the map, which its roof, edge and walls are shaded for.
+    private enum PrepStructure : byte { Plain, Marked }
+
+    // Dev builds can draw a structure as another kind, to see a kind no mission at hand has.
+    static partial void PrepKindOverride(string template, ref PrepStructure kind);
+
+    // Vanilla's own map gives a structure its own colour where its template asks (towers, bunkers,
+    // the weapon cache).
+    private static PrepStructure PrepKind(Il2CppMenace.Tactical.EntityTemplate template) =>
+        template != null && template.OverrideMissionPreviewColor ? PrepStructure.Marked : PrepStructure.Plain;
 
     private GameObject _prepMap;
     private Texture2D _prepMapTexture;
@@ -287,6 +305,7 @@ public sealed partial class StrategyDiorama
         var tiles = preview.Tiles;
         var heights = new float[sizeX, sizeZ];
         var names = new string[sizeX, sizeZ];
+        var kinds = new PrepStructure[sizeX, sizeZ];
         var roads = new bool[sizeX, sizeZ];
         var rough = new bool[sizeX, sizeZ];
         var ground = new float[sizeX, sizeZ];
@@ -307,6 +326,8 @@ public sealed partial class StrategyDiorama
                     continue;
                 }
                 names[x, z] = tile.m_EntityTemplate != null ? tile.m_EntityTemplate.name : "";
+                kinds[x, z] = PrepKind(tile.m_EntityTemplate);
+                PrepKindOverride(names[x, z], ref kinds[x, z]);
                 heights[x, z] = PrepHeight(names[x, z]);
             }
         }
@@ -357,7 +378,9 @@ public sealed partial class StrategyDiorama
                 var road = Road(x, z);
                 var hatched = !built && !zone[x, z] && !road && rough[x, z];
                 var inZone = zone[x, z] ? (refused[x, z] ? (road ? PrepZoneRefusedRoad : PrepZoneRefused) : road ? PrepZoneRoad : PrepZone) : default;
-                var fill = built ? PrepRoof : zone[x, z] ? inZone : road ? PrepRoad : PrepGround;
+                var kind = built ? kinds[x, z] : PrepStructure.Plain;
+                var (roof, roofEdge) = kind == PrepStructure.Marked ? (PrepMarkedRoof, PrepMarkedEdge) : (PrepRoof, PrepRoofEdge);
+                var fill = built ? roof : zone[x, z] ? inZone : road ? PrepRoad : PrepGround;
                 for (var j = 0; j < p; j++)
                 {
                     for (var i = 0; i < p; i++)
@@ -377,9 +400,7 @@ public sealed partial class StrategyDiorama
                             edge = (i == 0 && Lit(x - 1, z) <= lit) || (j == 0 && Lit(x, z - 1) <= lit)
                                 || (i == p - 1 && Lit(x + 1, z) < lit) || (j == p - 1 && Lit(x, z + 1) < lit);
                         }
-                        // A road is one strip: no line is drawn between two of its tiles.
-                        var within = road && !zone[x, z] && (i > 0 || Road(x - 1, z)) && (j > 0 || Road(x, z - 1)) && (i > 0 || j > 0 || Road(x - 1, z - 1));
-                        var pixel = edge && !within ? (built ? PrepRoofEdge : lit == 2 ? PrepZoneGrid : lit == 1 ? PrepZoneRefusedGrid : PrepGrid)
+                        var pixel = edge ? (built ? roofEdge : lit == 2 ? PrepZoneGrid : lit == 1 ? PrepZoneRefusedGrid : PrepGrid)
                             : hatched && (i + j) % 4 == 0 ? PrepRough : fill;
                         // The zone is outlined where it ends, its refused part included.
                         if (!built && zone[x, z] && ((i < 2 && Lit(x - 1, z) == 0) || (i >= p - 2 && Lit(x + 1, z) == 0)
@@ -399,12 +420,11 @@ public sealed partial class StrategyDiorama
         }
         for (var j = 0; j < p; j++)
         {
-            // Three shades side by side: a wall's own, the zone's and the zone's refused part's.
+            // The wall shades side by side, foot to top (PrepWallShades).
             for (var i = 0; i < width; i++)
             {
-                var kind = i * 3 / width;
-                pixels[(sizeZ * p + j) * width + i] = kind == 0 ? Color32.Lerp(PrepWallFoot, PrepWallTop, j / (p - 1f))
-                    : Color32.Lerp(kind == 2 ? PrepZone : PrepZoneRefused, kind == 2 ? PrepZoneGrid : PrepZoneRefusedGrid, j / (p - 1f));
+                var (foot, top) = PrepWallShades[i * PrepWallShades.Length / width];
+                pixels[(sizeZ * p + j) * width + i] = Color32.Lerp(foot, top, j / (p - 1f));
             }
         }
         _prepMapTexture = new Texture2D(width, height, TextureFormat.RGBA32, false) { filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp };
@@ -433,10 +453,11 @@ public sealed partial class StrategyDiorama
             triangles.Add(first); triangles.Add(first + 2); triangles.Add(first + 3);
         }
         Vector2 Uv(float x, float z) => new(x / sizeX, z / sizeZ * mapV);
-        // A wall takes the shade of the tile whose side it is.
-        void Wall(float x0, float z0, float x1, float z1, float foot, float top, int lit)
+        // A wall takes the shade of the tile whose side it is: its structure's, or the zone's.
+        int Shade(int x, int z) => heights[x, z] > 0f ? (kinds[x, z] == PrepStructure.Marked ? 3 : 0) : Lit(x, z);
+        void Wall(float x0, float z0, float x1, float z1, float foot, float top, int shade)
         {
-            var u = (lit == 2 ? 2.5f : lit == 1 ? 1.5f : 0.5f) / 3f;
+            var u = (shade + 0.5f) / PrepWallShades.Length;
             Face(At(x0, z0, foot), At(x1, z1, foot), At(x1, z1, top), At(x0, z0, top),
                 new Vector2(u, wallFoot), new Vector2(u, wallFoot), new Vector2(u, wallTop), new Vector2(u, wallTop));
         }
@@ -456,10 +477,10 @@ public sealed partial class StrategyDiorama
                     Face(At(x, z, ground[x, z]), At(x + 1, z, ground[x, z]), At(x + 1, z + 1, ground[x, z]), At(x, z + 1, ground[x, z]), Uv(x, z), Uv(x + 1, z), Uv(x + 1, z + 1), Uv(x, z + 1));
                 else
                     Face(At(x, z, top), At(x + 1, z, top), At(x + 1, z + 1, top), At(x, z + 1, top), Uv(x, z), Uv(x + 1, z), Uv(x + 1, z + 1), Uv(x, z + 1));
-                if (Top(x - 1, z) < top) Wall(x, z, x, z + 1, Top(x - 1, z), top, heights[x, z] > 0f ? 0 : Lit(x, z));
-                if (Top(x + 1, z) < top) Wall(x + 1, z, x + 1, z + 1, Top(x + 1, z), top, heights[x, z] > 0f ? 0 : Lit(x, z));
-                if (Top(x, z - 1) < top) Wall(x, z, x + 1, z, Top(x, z - 1), top, heights[x, z] > 0f ? 0 : Lit(x, z));
-                if (Top(x, z + 1) < top) Wall(x, z + 1, x + 1, z + 1, Top(x, z + 1), top, heights[x, z] > 0f ? 0 : Lit(x, z));
+                if (Top(x - 1, z) < top) Wall(x, z, x, z + 1, Top(x - 1, z), top, Shade(x, z));
+                if (Top(x + 1, z) < top) Wall(x + 1, z, x + 1, z + 1, Top(x + 1, z), top, Shade(x, z));
+                if (Top(x, z - 1) < top) Wall(x, z, x + 1, z, Top(x, z - 1), top, Shade(x, z));
+                if (Top(x, z + 1) < top) Wall(x, z + 1, x + 1, z + 1, Top(x, z + 1), top, Shade(x, z));
             }
         }
         var mesh = new Mesh { name = "WOMENACE_PrepMap", vertices = vertices.ToArray(), uv = uvs.ToArray(), triangles = triangles.ToArray() };
@@ -485,6 +506,16 @@ public sealed partial class StrategyDiorama
         }
         Context.Log.Info($"strategy diorama: mission map on the table, {sizeX} by {sizeZ} tiles, {vertices.Count} vertices");
     }
+
+    // The walls' shades, by Shade: a structure's, the zone's refused part's, the zone's, then the
+    // marked structures'.
+    private static readonly (Color32 Foot, Color32 Top)[] PrepWallShades =
+    {
+        (PrepWallFoot, PrepWallTop),
+        (PrepZoneRefused, PrepZoneRefusedGrid),
+        (PrepZone, PrepZoneGrid),
+        (PrepMarkedWallFoot, PrepMarkedWallTop),
+    };
 
     private static bool Same(string[,] names, int x, int z, int nx, int nz) =>
         nx >= 0 && nz >= 0 && nx < names.GetLength(0) && nz < names.GetLength(1) && names[nx, nz] == names[x, z];

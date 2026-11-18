@@ -6,6 +6,110 @@ namespace WOMENACE.Code;
 // Hooks for the diorama dev verbs (code/Dev/Diorama.Dev.cs). *.Dev.cs files stay out of release builds.
 public sealed partial class StrategyDiorama
 {
+    // Dev: each story faction's trust level, upgrades taken and whether it has more to give, with
+    // whether a claim waits and whether the Dinergate is calling.
+    // Dev: changes a story faction's trust, by its template id, and lays the shell out again so the
+    // board and the Dinergate take it in.
+    internal static string FactionTrustFromDev(string template, int change)
+    {
+        var factions = Il2CppMenace.States.StrategyState.Get()?.StoryFactions?.m_Factions;
+        if (factions == null)
+            return "no factions";
+        foreach (var faction in factions.Values)
+            if (faction?.GetTemplate()?.name == template)
+            {
+                faction.ChangeTrust(change);
+                _instance?.ApplyHome(_instance._homeScreen, _instance._homeRoomShown);
+                return $"{template}: level {faction.GetTrustLevel()}, total {faction.GetTotalTrust()}";
+            }
+        return "no faction " + template;
+    }
+
+    // Every element on any panel carrying the game font class, with the font it draws in.
+    internal static string GameFontsFromDev()
+    {
+        var lines = new List<string>();
+        void Walk(string document, UnityEngine.UIElements.VisualElement e)
+        {
+            if (e.ClassListContains(NavigationMenu.GameFontClass))
+            {
+                var label = e.TryCast<UnityEngine.UIElements.TextElement>() ?? FirstText(e);
+                var font = label?.resolvedStyle.unityFontDefinition.fontAsset;
+                lines.Add($"{document}/{e.name}: {(font != null ? font.name : "none")} ({label?.text})");
+            }
+            for (var i = 0; i < e.childCount; i++)
+                Walk(document, e[i]);
+        }
+        static UnityEngine.UIElements.TextElement FirstText(UnityEngine.UIElements.VisualElement e)
+        {
+            for (var i = 0; i < e.childCount; i++)
+                if ((e[i].TryCast<UnityEngine.UIElements.TextElement>() ?? FirstText(e[i])) is { } found)
+                    return found;
+            return null;
+        }
+        foreach (var document in UnityEngine.Object.FindObjectsOfType<UnityEngine.UIElements.UIDocument>())
+            if (document?.rootVisualElement is { } root)
+                Walk(document.name, root);
+        return lines.Count > 0 ? string.Join("\n", lines) : "no game font elements";
+    }
+
+    internal static string FactionClaimsFromDev()
+    {
+        var factions = Il2CppMenace.States.StrategyState.Get()?.StoryFactions?.m_Factions;
+        if (factions == null)
+            return "no factions";
+        var lines = new List<string>();
+        foreach (var faction in factions.Values)
+            if (faction != null)
+                lines.Add($"{faction.GetTemplate()?.name}: level {faction.GetTrustLevel()}, taken {faction.GetUnlockedUpgradeCount()}, more {faction.HasLockedUpgrades()}, status {faction.GetStatus()}");
+        lines.Add($"claim waits {FactionUnlockWaiting()}, notice {_instance?.DinergateNotice}");
+        return string.Join("\n", lines);
+    }
+
+    // Dev: mission select's card places as the view starts, in the shell's pixels across, against
+    // the side panels' inner edges the cards keep between.
+    internal static string PlanetCardsFromDev()
+    {
+        var d = _instance;
+        var camera = d?._camera != null ? d._camera.GetComponent<Camera>() : null;
+        if (camera == null)
+            return "no camera";
+        var (fov, shift, lift) = (camera.fieldOfView, d._lensShift, d._lensLift);
+        d.SetLens(camera, PlanetFraming.Fov, PlanetFraming.Shift, PlanetFraming.Lift);
+        var lens = camera.projectionMatrix;
+        d.SetLens(camera, fov, shift, lift);
+        var perSeen = lens.m00 * 2f * Mathf.Tan(PlanetFraming.Fov * 0.5f * Mathf.Deg2Rad);
+        var block = Mathf.Min(1f, 16f / 9f / camera.aspect);
+        float Shell(float seen) => ((perSeen * seen - lens.m02 + 1f) / 2f - 0.5f) / block * 1280f + 640f;
+        var free = d.PlanetFreeAcross();
+        var lines = new List<string> { $"free {Shell(free.Left):0} to {Shell(free.Right):0}" };
+        foreach (var marker in d._markers)
+            lines.Add($"{marker.Poi?.name}: place at {Shell(SeenAtStart(new Vector3(marker.Surface.X, marker.Surface.Y, marker.Surface.Z)).X):0}");
+        return string.Join("\n", lines);
+    }
+
+    // Dev: structures drawn on the deployment map as another kind, by template name.
+    private static readonly Dictionary<string, PrepStructure> PrepKindsAs = new();
+
+    static partial void PrepKindOverride(string template, ref PrepStructure kind)
+    {
+        if (template != null && PrepKindsAs.TryGetValue(template, out var drawn))
+            kind = drawn;
+    }
+
+    internal static string PrepKindAsFromDev(string template, string kind)
+    {
+        if (string.IsNullOrEmpty(kind))
+            PrepKindsAs.Remove(template);
+        else if (Enum.TryParse<PrepStructure>(kind, true, out var drawn))
+            PrepKindsAs[template] = drawn;
+        else
+            return "kind is plain or marked";
+        if (_instance != null)
+            _instance._prepMapOf = IntPtr.Zero;
+        return $"{template} drawn as {(string.IsNullOrEmpty(kind) ? "itself" : kind)}, the map builds again";
+    }
+
     // Dev: a plan of the Squads hall from above, in the stage's own axes, 0.4 metres to a
     // character: '#' where a room piece stands between knee and head height, 'T' the staged
     // squad, 'S' the stand. x runs across the page (low to high), z down it (high to low). A room
@@ -402,6 +506,33 @@ public sealed partial class StrategyDiorama
         return $"{property} = {value} on {count} renderers named {nameStart}*";
     }
 
+    // The staged units' renderers the shot is framed by, each with its type and its box about the
+    // stand, and the radius and aim the framing takes from them.
+    internal static string StagedBoundsFromDev()
+    {
+        var d = _instance;
+        if (d?._stage == null || d._stagedRoots.Count == 0)
+            return "nothing staged";
+        var stand = d._stage.TransformPoint(ArmoryStand);
+        var lines = new List<string>();
+        foreach (var staged in d._stagedRoots)
+        {
+            if (staged.Root == null || !staged.Root.gameObject.activeInHierarchy)
+                continue;
+            lines.Add($"== {staged.Root.name}");
+            foreach (var renderer in staged.Root.GetComponentsInChildren<Renderer>())
+            {
+                if (!FramesSquad(renderer))
+                    continue;
+                var b = renderer.bounds;
+                lines.Add($"  {renderer.GetIl2CppType().Name} {renderer.name}: centre {b.center - stand} extents {b.extents} mat {renderer.sharedMaterial?.name}");
+            }
+        }
+        var focus = d.SquadFocus(out var radius);
+        lines.Add($"radius {radius:F2}, aim {focus - stand}");
+        return string.Join("\n", lines);
+    }
+
     // Sets what lights the staged squad, to tell its lights apart: the share of the sun's key
     // its units take, and whether the room's lamps that light characters and the units' own
     // rigs are on.
@@ -472,8 +603,8 @@ public sealed partial class StrategyDiorama
             foreach (var spot in DollSpots)
             {
                 var chest = new Vector3(spot.Position.x, d.FloorAt(spot) + ChestHeight, spot.Position.z);
-                var feet = new Vector3(spot.Position.x, d.FloorAt(spot), spot.Position.z);
-                rows.Add($"  {spot.Name}: lamps reach {d.LampsReach(chest):F1} (theirs from {LampsReachLevel}), baked light {d.BakedBrightness(feet):F3}, sun share {d.WindowShare(feet):F2}");
+                var lamps = d.Lamps(chest);
+                rows.Add($"  {spot.Name}: lamps reach {lamps.Reach:F1} (theirs from {LampsReachLevel}) from {lamps.From:F2} colour {lamps.Colour}");
             }
         foreach (var probe in set.LightProbes.OrderBy(p => (p.Position - at).sqrMagnitude).Take(count))
             rows.Add($"  probe at {probe.Position} {(probe.Position - at).magnitude:F2} m away, sun {probe.SunOcclusion:F2}, ambient ({probe.Sh[0].w:F3}, {probe.Sh[1].w:F3}, {probe.Sh[2].w:F3})");
@@ -901,5 +1032,25 @@ public sealed partial class StrategyDiorama
             if (grip.Carried is { } carried && carried.Unit != null)
                 lines.Add($"{carried.Unit.parent?.name} {carried.Key}: {carried.Out * 100f:F0} of {carried.Wanted * 100f:F0} cm, {(carried.Until > 0f ? "settling" : "kept")} ({string.Join(", ", carried.Read)})");
         return lines.Count > 0 ? string.Join("; ", lines) : "no hand held";
+    }
+
+    internal static string CardHoverFromDev(int index, float x, float y)
+    {
+        var d = _instance;
+        if (d == null || index < 0 || index >= d._markers.Count)
+            return $"no card {index} of {d?._markers.Count ?? 0}";
+        HoverPart(d._markers[index], x < 0f ? null : new Vector2(x, y));
+        var part = d._markers[index].Part;
+        return part != null ? $"over {part.GetIl2CppType().Name} #{part.name}" : "over no part with a tooltip";
+    }
+
+    // Dev: the calibration doll's lowest point in the weapon room's space, against the floor.
+    internal static string CalibrationFeetFromDev()
+    {
+        var d = _instance;
+        var doll = d?._calibrationDoll;
+        if (doll == null)
+            return "no calibration doll";
+        return $"{doll.name}: lowest {d.LowestPoint(doll):F3}, floor {LoungeFloor:F3}";
     }
 }

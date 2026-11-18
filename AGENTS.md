@@ -39,7 +39,7 @@ Use the implementation and its adjacent comments as the authority for current be
 - `Systems/Transmog/` for outfits and the shared outfit and weapon skin picker. `Systems/Dolls/FormSwapSystem.cs` handles infantry, pilot, or mech form changes.
 - `Systems/Procurement/` for reward pools, pity, limited claims, and permanent Curios unlocks.
 - `Systems/Ssr/` and `Systems/Elements/` for imprint bonuses, elemental build-up, Phase effects, and HUD gauges. A kit that makes a victim take more damage from an element registers the multiplier with `ElementsSystem.RegisterVictimDamageMult`, which both the hit path and the hover preview read.
-- `Systems/Dolls/` for bespoke per-Doll kits, one folder per Doll, plus the form-swap system they share.
+- `Systems/Dolls/` for bespoke per-Doll kits, one folder per Doll, plus the form-swap system they share. `DummyLinkNameSystem` names the squaddies in a Doll's squad by her GFL2 body model (`BodyModels`) and a serial.
 - `Systems/Fairies/` for Fairy Lodge unlocks and off-map abilities.
 - `Systems/Enemies/` for added enemy units: the AoE shapes and skill AI configs their templates cannot author, and `ArmyShareSystem`, which keeps each unit at a fixed share of its army lists when other mods grow them.
 - `Systems/NewGame/` for WOMENACE campaign options, Doll roster selection, vanilla leader filtering, and dummy-link limits.
@@ -95,8 +95,9 @@ Install locations differ on every machine. Find the game, Jiangyu and editor pat
 3. Check that every string-registered Harmony target still exists (`Context.Patches.Prefix("Il2Cpp...", "<Method>", ...)`). The compiler cannot see them.
 4. Run `jiangyu templates index`, then `jiangyu templates baseline audit` for template field changes. Event handler types are not in that baseline. `jiangyu templates query <Handler>` shows a handler's current fields.
 5. Check description placeholder paths (`path="EventHandlers[n]..."`) into any handler whose fields changed. Placeholders resolve when the text is shown and render as `?` once the path is gone, and nothing reports it at boot.
-6. If the update adds a planet with a mission select video, fit its edge with `scripts/diorama/planet_edge.py` and add its line to `PlanetEdges`. Until then the planet shows the land view and nothing else is affected.
-7. Ship with `jiangyu compile --release` and then `jiangyu package`. Before shipping, check that the DLL carries no dev verb classes.
+6. Check every `index=` patch into a list the game owns (`grep -rn 'index=' templates`). The self-check reports only an index past the end of its list. An update that inserts or reorders entries moves the patch onto another entry with no warning. Inspect each list and confirm the entry at each index is still the intended one, by a field that names it.
+7. If the update adds a planet with a mission select video, fit its edge with `scripts/diorama/planet_edge.py` and add its line to `PlanetEdges`. Until then the planet shows the land view and nothing else is affected.
+8. Ship with `jiangyu compile --release` and then `jiangyu package`. Before shipping, check that the DLL carries no dev verb classes.
 
 If the Unity version changed, compile is blocked until the matching editor is installed. If no mods load and `Latest.log` is tiny, MelonLoader has mixed stale Cpp2IL output with the new game. Delete `MelonLoader/Dependencies/Il2CppAssemblyGenerator/Cpp2IL/cpp2il_out` and boot again.
 
@@ -137,6 +138,7 @@ Record expensive findings next to the code they constrain. Add a short repositor
 - `SkillTemplate.CustomAoEShape` and `AOETiles` are Odin-serialised and cannot be authored in KDL. A footprint other than a radius needs an `ICustomAoEShape` assigned by a system, with `GetAoERadius` returning 0 or the generic radius ring is drawn too. A handler template's fields read through a fresh interop wrapper come back as their initialisers, so read authored numbers off the handler instance the skill carries.
 - `SpawnTileEffect.ChancePerTileFromCenter` is a per-tile falloff (-100 spawns on the aimed tile only, 0 spawns on every tile). A tile holds one spawned object effect, so when two handlers spawn on the same tile the later handler wins.
 - `IsLimitedUses` with `Uses N` is a per-turn budget, on a perk-granted skill too. A per-mission charge is a hidden marker effect added on first use with `LimitUsability` on the skill.
+- `VisualElement.RemoveAt`, `.hierarchy` and `styleSheets` go through value types the interop boxes, and a garbage collection can free the box while it is in use: `ObjectCollectedException`, and on the planets screen a crash. Remove an element with its own `RemoveFromHierarchy()`, reach a scroll view's parts through its named properties (`contentViewport`, `contentContainer`), and read stylesheets through `styleSheetList`.
 - Localised text substitutes only `$1` to `$6`. `BaseLocalizedString` builds its token table once with six entries (static constructor, RVA `0x501F70`), so a seventh placeholder renders as a literal `$7`. Compile and format do not catch it. Name a vanilla effect whose own tooltip carries the number instead of binding a seventh value.
 
 ## Sourcing from the GFL2 client

@@ -107,6 +107,7 @@ public sealed partial class StrategyDiorama
                 s.height = StyleKeyword.Null;
                 s.flexWrap = StyleKeyword.Null;
                 s.marginTop = StyleKeyword.Null;
+                tiles.pickingMode = PickingMode.Position;
             });
         }
         scroll.style.left = PrepRosterLeft;
@@ -120,6 +121,17 @@ public sealed partial class StrategyDiorama
         // Vanilla starts its block of tiles below its own header.
         tiles.style.marginTop = 0;
 
+        // Only the tiles and the scrollbar take the pointer. The rest of the roster's column lies
+        // over the map, which a click, a drag or the wheel there reaches. A wheel over the tiles
+        // still scrolls the roster, which its tiles pass the event up to.
+        // The scroll view's own parts are reached by name: walking its hierarchy goes through a
+        // value type the interop boxes, which a collection can free while it is in use.
+        scroll.pickingMode = PickingMode.Ignore;
+        if (scroll.TryCast<ScrollView>() is { } list)
+            foreach (var part in new[] { list.contentViewport?.parent, list.contentViewport, list.contentContainer })
+                if (part != null)
+                    part.pickingMode = PickingMode.Ignore;
+        tiles.pickingMode = PickingMode.Ignore;
     }
 
     // The roster's left edge: its tiles and scrollbar end a gap short of the squad panel.
@@ -233,12 +245,23 @@ public sealed partial class StrategyDiorama
     private const string PrepSuppliesUsesName = "wm-prep-supplies-uses";
     // Vanilla sizes the bar's parts for a bar this wide, so the panel is exactly that.
     private const float PrepSuppliesWidth = 368f;
-    private const float PrepSuppliesHeight = 56f;
+    // Two rows, the words and figures over the bar, the line of words on a backing of its own.
+    private const float PrepSuppliesHeight = 37f;
+    private const float PrepSuppliesLineHeight = 13f;
+    // The loadout and its total at one size, and what the open squad uses and what is left a
+    // size under them, the figures told apart by their colour.
+    private const float PrepSuppliesFontSize = 9f;
+    private const float PrepSuppliesSmallFontSize = 7.5f;
+    // How far the words stand in from the backing's sides, and how far the backing reaches over
+    // the line, so the line sits in its middle.
+    private const float PrepSuppliesInset = 6f;
+    private const float PrepSuppliesBackingOver = 2f;
+    private const string PrepSuppliesBoxName = "wm-prep-supplies-box";
     private const float PrepSuppliesBarTop = 15f;
     private const float PrepSuppliesBarHeight = 22f;
 
-    // Vanilla's loadout box on the bottom bar, without its frame: a line of words and numbers,
-    // the bar under it, and under that what the open squad uses, which vanilla prints on the bar.
+    // Vanilla's loadout box on the bottom bar, without its frame: a line of words and numbers on
+    // a backing, with what the open squad uses (which vanilla prints on the bar), and the bar under it.
     // The loadout bar stands midway between the two buttons of the bottom bar, wherever the shell
     // has laid them out, which is not the middle of the bar: the buttons are not the same width.
     // Until both have a place the bar keeps the middle of the bottom bar.
@@ -326,16 +349,32 @@ public sealed partial class StrategyDiorama
                 s.width = StyleKeyword.Null;
                 s.height = StyleKeyword.Null;
                 s.backgroundColor = StyleKeyword.Null;
+                s.unityTextAlign = StyleKeyword.Null;
             });
         }
-        Put(VanillaUi.Elements.SuppliesLoadout, 0f, null, 2.2f, s =>
+        // The words and figures of different sizes share one line, each centred on it.
+        void Line(IStyle s, UnityEngine.TextAnchor anchor)
         {
-            s.fontSize = 8f;
+            s.height = PrepSuppliesLineHeight;
+            s.unityTextAlign = anchor;
+        }
+        Put(VanillaUi.Elements.SuppliesLoadout, PrepSuppliesInset, null, 0f, s =>
+        {
+            Line(s, UnityEngine.TextAnchor.MiddleLeft);
+            s.fontSize = PrepSuppliesFontSize;
             s.letterSpacing = 0.64f;
             s.color = SquadMetaInk;
         });
-        Put(VanillaUi.Elements.SuppliesDelta, null, 26f, 0f, s => s.fontSize = 10.4f);
-        Put(VanillaUi.Elements.SuppliesValue, null, 62f, 0f, s => s.fontSize = 10.4f);
+        Put(VanillaUi.Elements.SuppliesDelta, null, 26f + PrepSuppliesInset, 0f, s =>
+        {
+            s.fontSize = PrepSuppliesSmallFontSize;
+            Line(s, UnityEngine.TextAnchor.MiddleRight);
+        });
+        Put(VanillaUi.Elements.SuppliesValue, null, 62f + PrepSuppliesInset, 0f, s =>
+        {
+            s.fontSize = PrepSuppliesFontSize;
+            Line(s, UnityEngine.TextAnchor.MiddleRight);
+        });
         Put(VanillaUi.Elements.SuppliesBar, 0f, null, PrepSuppliesBarTop, s =>
         {
             s.width = PrepSuppliesWidth;
@@ -347,8 +386,8 @@ public sealed partial class StrategyDiorama
         Inline(UI.Find(panel, UiSelector.Name(VanillaUi.Elements.SuppliesSelected)), e => e.style.opacity = 0f, e => e.style.opacity = StyleKeyword.Null);
         foreach (var (name, style, left, right, top) in new[]
                  {
-                     (PrepSuppliesLeftName, "wm-prep__supplies-left", (float?)null, (float?)0f, 1.6f),
-                     (PrepSuppliesUsesName, "wm-prep__supplies-uses", (float?)0f, (float?)null, PrepSuppliesBarTop + PrepSuppliesBarHeight + 4.8f),
+                     (PrepSuppliesLeftName, "wm-prep__supplies-left", (float?)null, (float?)PrepSuppliesInset, 0f),
+                     (PrepSuppliesUsesName, "wm-prep__supplies-uses", (float?)PrepSuppliesInset, (float?)null, 0f),
                  })
         {
             if (UI.Find(panel, UiSelector.Name(name)) != null)
@@ -358,11 +397,25 @@ public sealed partial class StrategyDiorama
             label.style.left = left is { } l ? l : StyleKeyword.Auto;
             label.style.right = right is { } r ? r : StyleKeyword.Auto;
             label.style.top = top;
+            Line(label.style, right != null ? UnityEngine.TextAnchor.MiddleRight : UnityEngine.TextAnchor.MiddleLeft);
             panel.Add(label);
             _shellUndo.Add(label.RemoveFromHierarchy);
         }
         if (UI.Find(panel, UiSelector.Name(PrepSuppliesLeftName))?.TryCast<Label>() is { } leftWord)
             leftWord.text = Locale.Text("WOMENACE::ui/prep/left", "LEFT");
+        // A solid backing behind the loadout's line of words and figures, so it reads over
+        // whatever of the map the camera puts under it.
+        if (UI.Find(panel, UiSelector.Name(PrepSuppliesBoxName)) == null)
+        {
+            var box = new VisualElement { name = PrepSuppliesBoxName, pickingMode = PickingMode.Ignore };
+            box.AddToClassList("wm-prep__supplies-box");
+            box.style.left = box.style.right = 0f;
+            // As wide as the bar and down to it, with room round the words.
+            box.style.top = -PrepSuppliesBackingOver;
+            box.style.height = PrepSuppliesBarTop + PrepSuppliesBackingOver;
+            panel.Insert(0, box);
+            _shellUndo.Add(box.RemoveFromHierarchy);
+        }
         LayOutPrepSections(panel);
         // Where the loadout's limit is on the bar. Vanilla draws it into the bar's backing
         // picture, which is not shown here, and fills the bar so that the limit is always this far
@@ -382,6 +435,7 @@ public sealed partial class StrategyDiorama
     }
 
     private const string PrepSuppliesLimitName = "wm-prep-supplies-limit";
+    private const float PrepSuppliesUsesGap = 8f;
     private const float PrepSuppliesLimitAt = 268f;
     private const float PrepSuppliesLimitReach = 3f;
 
@@ -564,6 +618,11 @@ public sealed partial class StrategyDiorama
                     : Locale.Format("WOMENACE::ui/prep/uses", "{0} USES <color=#EBC95D>{1}</color>", who.ToUpperInvariant(), figure.text);
                 if (usesLine.text != line)
                     usesLine.text = line;
+                // On the loadout's line, after its caption, whose width the language decides.
+                var loadoutWord = UI.Find(_shellRoot, UiSelector.Name(VanillaUi.Elements.SuppliesLoadout));
+                var after = loadoutWord != null ? loadoutWord.resolvedStyle.width : float.NaN;
+                if (after > 0f)
+                    usesLine.style.left = PrepSuppliesInset + after + PrepSuppliesUsesGap;
             }
 
             var chips = UI.Find(row, UiSelector.Name(PrepChipsName));

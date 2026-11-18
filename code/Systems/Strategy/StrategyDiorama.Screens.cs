@@ -82,6 +82,7 @@ public sealed partial class StrategyDiorama
         HookSquadPanel();
         HookPickerScroll();
         HookRecruit();
+        HookOciInfo();
         Context.Coroutines.Start(WatchVideo());
     }
 

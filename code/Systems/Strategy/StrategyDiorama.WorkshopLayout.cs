@@ -105,7 +105,7 @@ public sealed partial class StrategyDiorama
         }
         var headline = UI.Find(work, UiSelector.Name("ReqMaterialsHeadline"));
         StandPart(headline, text, WorkshopHeadingTop, null, null);
-        Inline(headline, NavigationMenu.ApplyGameFont, e => e.style.unityFontDefinition = StyleKeyword.Null);
+        Inline(headline, NavigationMenu.ApplyGameFont, e => e.RemoveFromClassList(NavigationMenu.GameFontClass));
         StandPart(UI.Find(work, UiSelector.Name("ReqMaterialsContainer")), text, WorkshopTakesTop, inner - text, null);
         StandPart(UI.Find(work, UiSelector.Name("AssembleButton")), inner - WorkshopButtonWidth, 0f, WorkshopButtonWidth, WorkshopButtonHeight);
         Inline(UI.Find(work, UiSelector.Name("ReqMaterialsContainer")), e =>

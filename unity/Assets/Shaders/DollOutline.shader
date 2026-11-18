@@ -63,6 +63,7 @@ Shader "Womenace/DollOutline"
         // with the transforms, so nothing else needs including for those.
         #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
         #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
+        #include "DollRoomFog.hlsl"
 
         TEXTURE2D(_BaseMap);
         SAMPLER(sampler_BaseMap);
@@ -84,6 +85,9 @@ Shader "Womenace/DollOutline"
         // whose colour pass vanished while its motion pass still drew would be
         // invisible geometry writing depth.
         float _WomenaceOutlinesOff;
+
+        // Set on a doll the diorama lights in a strategy room, which takes the room's fog.
+        float _RoomLit;
 
         // A single clipped point: zero-area triangles outside the depth range,
         // so a disabled hull rasterises nothing.
@@ -278,7 +282,7 @@ Shader "Womenace/DollOutline"
                 // divide by PI is the same illuminance-to-radiance step the surface
                 // uses, and the exposure multiply puts it in the pre-exposed buffer
                 // everything else is written into.
-                return float4(colour * keyColour / PI * GetCurrentExposureMultiplier(), 1.0);
+                return float4(DollRoomFog(colour * keyColour / PI, input.positionCS.w, _RoomLit) * GetCurrentExposureMultiplier(), 1.0);
             }
             ENDHLSL
         }

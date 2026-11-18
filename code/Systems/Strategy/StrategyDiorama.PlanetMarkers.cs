@@ -33,6 +33,8 @@ public sealed partial class StrategyDiorama
     private const float CardRingUp = 8.4f;
     // The chibi stands at the card's left, this much of her height clear of its icon.
     private const float ChibiBeside = 0.1f;
+    // How far a card's box keeps from the side panels, in the shell's units.
+    private const float CardPanelClear = 8f;
 
     // A mission's place in the planet's picture (across, up) from its place on vanilla's board.
     private static Vector2 PlanetSlot(Vector2 board)
@@ -56,10 +58,35 @@ public sealed partial class StrategyDiorama
         return (Vector3.Dot(from, right) * perMetre, Vector3.Dot(from, up) * perMetre, perMetre);
     }
 
+    // Where the side panels' inner edges fall as the view starts, in SeenAtStart's units: the
+    // operation's column at the left and the selected mission's at the right. The lens is read as
+    // the room camera draws with it at the planet's view, its shift and its fit to the screen
+    // included, and then given back.
+    private (float Left, float Right) PlanetFreeAcross()
+    {
+        var camera = _camera != null ? _camera.GetComponent<Camera>() : null;
+        if (camera == null)
+            return (float.NegativeInfinity, float.PositiveInfinity);
+        var (fov, shift, lift) = (camera.fieldOfView, _lensShift, _lensLift);
+        SetLens(camera, PlanetFraming.Fov, PlanetFraming.Shift, PlanetFraming.Lift);
+        var lens = camera.projectionMatrix;
+        SetLens(camera, fov, shift, lift);
+        // Across the picture (-1 to 1) a place is m00 * (across / depth) - m02, and SeenAtStart
+        // counts across / depth in the view's heights.
+        var perSeen = lens.m00 * 2f * Mathf.Tan(PlanetFraming.Fov * 0.5f * Mathf.Deg2Rad);
+        if (Mathf.Abs(perSeen) < 0.0001f)
+            return (float.NegativeInfinity, float.PositiveInfinity);
+        // The shell is the middle 16:9 of a wider screen.
+        var block = Mathf.Min(1f, 16f / 9f / camera.aspect);
+        float Seen(float panel) => ((0.5f + (panel / 1280f - 0.5f) * block) * 2f - 1f + lens.m02) / perSeen;
+        return (Seen(OpsColumnLeft + OpsColumnWidth + CardPanelClear), Seen(1280f - MissionColumnRight - MissionColumnWidth - CardPanelClear));
+    }
+
     // Stands a card on the planet for each mission shown: upright on its place on the surface,
-    // which the ring under its icon marks. No card may cover another, so each card's box on the
-    // screen as the view starts (the card, and the room at its left for the chibi) is moved off
-    // the boxes it meets, with room between them, until none meet. The boxes are measured on
+    // which the ring under its icon marks. No card may cover another or stand under a side panel,
+    // so each card's box on the screen as the view starts (the card, and the room at its left for
+    // the chibi) is kept between the panels and moved off the boxes it meets, with room between
+    // them, until none meet. The boxes are measured on
     // the screen and not in the picture: the picture is on a globe, where equal parts of it are
     // not equal lengths on the screen, and a card is larger the further off it stands.
     private void ShowPlanetMarkers(IReadOnlyList<MissionPoi> pois, GameObject template, VisualElement layer, PlanetShape planet)
@@ -79,6 +106,7 @@ public sealed partial class StrategyDiorama
         var right = Vector3.Cross(Vector3.up, forward).normalized;
         var unturn = Quaternion.Inverse(planet.Turn);
         var aspect = PlanetFrameHeight / PlanetFrameWidth;
+        var free = PlanetFreeAcross();
         // Whether a place in the room is seen over the planet's picture as the view starts: the
         // line of sight to it meets the globe on the part the picture covers.
         bool OverPlanet(Vector3 place)
@@ -93,11 +121,14 @@ public sealed partial class StrategyDiorama
             return spot.z < 0f && across > CardBoxEdge && across < 1f - CardBoxEdge && up > CardBoxEdge && up < 1f - CardBoxEdge;
         }
         // Whether a card's whole box, standing upright on its place and square to the view, is
-        // seen over the planet.
+        // seen over the planet and between the side panels.
         bool Contained(Vector2 size, Vector2 at)
         {
             var surface = planet.InRoom(planet.OnSphere(at.x, at.y, out var onPlanet));
             if (!onPlanet)
+                return false;
+            var seen = Measure(size, at).Box;
+            if (seen.xMin < free.Left || seen.xMax > free.Right)
                 return false;
             var width = PlanetCardWidth * size.x / CardWidth * Mathf.Clamp(Vector3.Distance(surface, eye) / PlanetCardDistance, PlanetCardNearScale, PlanetCardFarScale);
             var height = width * size.y / size.x;
@@ -106,8 +137,8 @@ public sealed partial class StrategyDiorama
             return OverPlanet(surface - right * left - Vector3.up * below) && OverPlanet(surface - right * left + Vector3.up * above)
                 && OverPlanet(surface + right * far - Vector3.up * below) && OverPlanet(surface + right * far + Vector3.up * above);
         }
-        // A box that stands out past the planet is brought in: across the picture first, so the
-        // cards keep the heights their missions gave them, and then up or down it.
+        // A box that stands out past the planet or under a panel is brought in: across the picture
+        // first, so the cards keep the heights their missions gave them, and then up or down it.
         Vector2 Contain(Vector2 size, Vector2 at)
         {
             at = new Vector2(Mathf.Clamp01(at.x), Mathf.Clamp01(at.y));

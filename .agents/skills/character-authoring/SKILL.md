@@ -102,6 +102,18 @@ Tags gate which items each unit can equip.
 
 **The `InventoryFilterPatch` filter only runs in the strategy-mode loadout dropdown** (`UnitWindowEquipment.UpdateEquipmentAlternatives` → `SortedFilteredItemList.GetSortedAndFilteredItems`). Other UI paths (blackmarket, debug menus) bypass it, so `OnlyEquipableBy` is documentation-only there.
 
+## Body model
+
+A Doll's dummy links are named after her GFL2 body model and a serial (`SSD-62D #0047`), which `DummyLinkNameSystem` writes onto every squaddie her squad takes. The model comes from `BodyModels` (`code/Systems/Dolls/BodyModels.cs`), keyed by the `wmgfl_<character>` tag, so a new Doll needs her line there. A Doll without one leaves vanilla's soldier names on her squaddies.
+
+Read the code from the client's tables rather than a wiki. `scripts/doll/body_models.py` prints every character's body model from `GunCharacterData` (the line her GFL2 profile shows):
+
+```bash
+uv run scripts/doll/body_models.py "<GFL2>/GF2_Exilium_Data/LocalCache/Data/Table" <name>
+```
+
+Use the Steam client's `Table` folder, because the CN install has none. Use the code exactly as printed, spaces included (`SST-05A3 SEP`). A Doll with an alternate body in GFL2 takes the one her templates are named for (WOMENACE's Nemesis is Nemesis: Gnosis, `OBSRV-PRT-00`, not Nemesis's `SST-05A2`).
+
 ## Sprite slots
 
 Several portrait/badge fields exist on both `UnitLeaderTemplate` and `EntityTemplate`. MENACE's UI is inconsistent about which one it reads. For an Infantry leader clone (`UnitActorType == 0`):

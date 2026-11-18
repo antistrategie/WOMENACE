@@ -38,9 +38,11 @@ public sealed partial class StrategyDiorama
             var title = hud?.m_NameLabel;
             if (title == null)
                 return;
+            // Each part takes itself out. The parent's RemoveAt goes through its hierarchy, a value
+            // type the interop boxes, and a collection can free the box while it is in use.
             for (var i = name.childCount - 1; i >= 0; i--)
-                if (name.ElementAt(i).name is PlanetPlateName or PlanetRepName)
-                    name.RemoveAt(i);
+                if (name.ElementAt(i) is { name: PlanetPlateName or PlanetRepName } part)
+                    part.RemoveFromHierarchy();
             // The room behind the map is bright in places, so every name stands on a dark plate,
             // and its parts with it.
             var plate = new VisualElement { name = PlanetPlateName, pickingMode = PickingMode.Ignore };
@@ -88,7 +90,7 @@ public sealed partial class StrategyDiorama
             beside.style.backgroundImage = new StyleBackground(picture);
             name.Add(beside);
         }
-        catch (Exception ex) { Context.Log.Warn($"strategy diorama: planet standing failed: {ex.GetType().Name}: {ex.Message}"); }
+        catch (Exception ex) { Context.Log.Warn($"strategy diorama: planet standing failed: {ex}"); }
     }
 
     // The plate takes in the name and every part beside and under it.

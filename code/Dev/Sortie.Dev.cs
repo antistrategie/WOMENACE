@@ -45,6 +45,45 @@ public static class Sortie
         };
     }
 
+    // End the current operation, cancelled, as abandoning it from mission select would. Nothing is
+    // saved: a later load brings it back.
+    [MutatingVerb]
+    public static object EndOperation()
+    {
+        var operation = Operations.Current();
+        if (operation == null)
+            return new { error = "no current operation" };
+        Operations.Finish(operation, cancel: true);
+        return new { ended = Operations.Name(operation) };
+    }
+
+    // Every available operation's missions, by index, for OpenMission.
+    public static object Missions()
+    {
+        var operations = Operations.Available();
+        var lines = new List<string>();
+        for (var o = 0; o < operations.Count; o++)
+        {
+            var missions = Operations.Missions(operations[o]);
+            for (var m = 0; m < missions.Count; m++)
+                lines.Add($"{o}/{m} {Operations.Name(operations[o])}: {missions[m]?.GetTemplate()?.name}");
+        }
+        return lines;
+    }
+
+    // Open the prep screen for one mission of one available operation, to look at its map.
+    [MutatingVerb]
+    public static object OpenMission(int operation, int mission)
+    {
+        var operations = Operations.Available();
+        if (operation < 0 || operation >= operations.Count)
+            return new { error = $"{operations.Count} operations available" };
+        var missions = Operations.Missions(operations[operation]);
+        if (mission < 0 || mission >= missions.Count || missions[mission] == null)
+            return new { error = $"{missions.Count} missions in that operation" };
+        return new { opened = MissionPrepUIScreen.TryOpen(missions[mission]) };
+    }
+
     // Open the prep screen for the operation's current mission.
     [MutatingVerb]
     public static object Open()

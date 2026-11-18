@@ -63,6 +63,8 @@ CBUFFER_START(UnityPerMaterial)
     float _KeyOcclusion;
     float _RoomLit;
     float4 _KeyDirection;
+    float4 _KeyColour;
+    float _FaceRootUpright;
     float _UseRoomReflection;
     float _FaceSpecIntensity;
     float _SpecUVYOffset;
@@ -141,6 +143,10 @@ bool GetKeyLight(out float3 L, out float3 colour)
     // light comes (xyz, towards it) in place of the sun's own way.
     if (_KeyDirection.w > 0.5)
         L = normalize(_KeyDirection.xyz);
+    // A doll the diorama lights from the room's lamps takes their colour (rgb, illuminance) in
+    // place of the sun's.
+    if (_KeyColour.w > 0.5)
+        colour = _KeyColour.rgb;
     return true;
 }
 
@@ -324,6 +330,10 @@ float FaceSdf(float2 sdfUV, float3 lightWS, out float faceSdfRaw, out float2 lig
     // Corrected here rather than in the bake because the rig half of it
     // belongs to the skeleton she is retargeted onto, not to her mesh.
     float3 localDir = -TransformWorldToObjectDir(lightWS, false);
+    // A body whose skin is rooted at a bone standing upright with her (the strategy rooms' dolls,
+    // rooted at the hips) has no half turn to undo, and keeps only the X correction.
+    if (_FaceRootUpright > 0.5)
+        localDir.yz = -localDir.yz;
     float2 shrunk = normalize(localDir).xz;
     float yFactor = (1.0 - abs(shrunk.y)) * 0.5 + 0.5;
     float2 faceLightDir2D = normalize(shrunk);
@@ -368,6 +378,8 @@ float FaceSdf(float2 sdfUV, float3 lightWS, out float faceSdfRaw, out float2 lig
 float FaceGlint(float2 sdfUV, float3 N, float3 viewDirWS, float faceSdfRaw, float2 lightCompass)
 {
     float3 cameraOS = -TransformWorldToObject(float3(0.0, 0.0, 0.0));
+    if (_FaceRootUpright > 0.5)
+        cameraOS.yz = -cameraOS.yz;
     float2 cameraCompass = normalize(cameraOS.xz);
     float2 compass = normalize(lerp(lightCompass, cameraCompass, 0.85));
     float gate = clamp(saturate(-compass.y - 0.70710678) * 3.41421356, 0.01, 0.99);

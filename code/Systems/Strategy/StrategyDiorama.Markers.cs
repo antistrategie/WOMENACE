@@ -341,16 +341,6 @@ public sealed partial class StrategyDiorama
         UIManager.Get()?.AddTooltip(tooltip, marker.Part, false, true, false);
     }
 
-    internal static string CardHoverFromDev(int index, float x, float y)
-    {
-        var d = _instance;
-        if (d == null || index < 0 || index >= d._markers.Count)
-            return $"no card {index} of {d?._markers.Count ?? 0}";
-        HoverPart(d._markers[index], x < 0f ? null : new Vector2(x, y));
-        var part = d._markers[index].Part;
-        return part != null ? $"over {part.GetIl2CppType().Name} #{part.name}" : "over no part with a tooltip";
-    }
-
     // A quad's corners in its own space.
     private static readonly Vector3[] MarkerCorners = { new(-0.5f, -0.5f, 0f), new(0.5f, -0.5f, 0f), new(-0.5f, 0.5f, 0f), new(0.5f, 0.5f, 0f) };
 

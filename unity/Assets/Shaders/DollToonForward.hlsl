@@ -18,6 +18,7 @@
 // context they have no reason to carry.
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/EntityLighting.hlsl"
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/BuiltinGIUtilities.hlsl"
+#include "DollRoomFog.hlsl"
 
 // ambientDiffuse, the composite's second term.
 //
@@ -313,7 +314,7 @@ float4 frag(Varyings input, bool isFrontFace : SV_IsFrontFace) : SV_TARGET
     // value. This multiply puts the result at the same scale as
     // everything else HDRP renders, and the frame's own tonemap and
     // grade finish it from there.
-    float3 lit = (key + hair + extra + ambient + ibl) * GetCurrentExposureMultiplier();
+    float3 lit = DollRoomFog(key + hair + extra + ambient + ibl, input.positionCS.w, _RoomLit) * GetCurrentExposureMultiplier();
     #ifdef DOLL_FORWARD_TRANSPARENT
     // The blend weight. The _da albedo carries the coverage, and the tint's
     // alpha scales it so a material can fade as a whole.

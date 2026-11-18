@@ -129,11 +129,13 @@ public sealed partial class ShopSystem : JiangyuSystem
         _grid = UI.Find(root, UiSelector.Name("wm-shop-grid"));
         _scroll = UI.Find(root, UiSelector.Name("wm-shop-scroll"))?.TryCast<ScrollView>();
         // What the list says with nothing to sell: in the list's own element and beside what
-        // scrolls, so it is hidden with the list.
+        // scrolls, so it is hidden with the list. It goes in the viewport's holder, reached by
+        // name: the scroll view's hierarchy is a value type the interop boxes, which a collection
+        // can free while it is in use.
         _empty = new Label(Locale.Text("WOMENACE::ui/kalina/no_stock", "No items to sell.").ToUpperInvariant()) { pickingMode = PickingMode.Ignore };
         _empty.AddToClassList("wm-shop-empty");
         _empty.SetVisible(false);
-        _scroll.hierarchy.Add(_empty);
+        (_scroll.contentViewport.parent ?? _scroll.contentViewport).Add(_empty);
         ConstrainVerticalScroll(_scroll);
         _artwork = new ShopArtwork(Context);
         _currency = new ShopCurrency(_artwork);

@@ -259,6 +259,11 @@ public sealed partial class StrategyDiorama
     // Where a doll with no sitting loop stands instead: between the table and the other
     // armchair, turned to the hall.
     private static readonly Vector3 LoungeStand = new(-24.3f, 19.19f, -96.6f);
+    // The lounge's floor height, in the weapon room's space.
+    private const float LoungeFloor = 19.19f;
+    // How far a seated doll's soles stay above it, and how far back she may lean to keep them there.
+    private const float SoleClearance = 0.005f;
+    private const float MaxSeatedLean = 15f;
     // How far a sitter's hip joints are above what she sits on.
     private const float SeatedHipHeight = 0.09f;
     private const int CalibrationDollRelightFrames = 30;
@@ -351,6 +356,7 @@ public sealed partial class StrategyDiorama
                         lift = Mathf.Max(lift, ThighOverSeat - over);
                     }
                     doll.transform.localPosition = LoungeSeat + LoungeSeatFacing * new Vector3(-hips.x, SeatedHipHeight + lift - hips.y, forward);
+                    ClearOfFloor(doll, doll.transform.localPosition + LoungeSeatFacing * hips);
                 }
             }
             else
@@ -364,6 +370,70 @@ public sealed partial class StrategyDiorama
         }
         if (_calibrationDoll != null && (lit || Time.frameCount % CalibrationDollRelightFrames == 0))
             LightDoll(_calibrationDoll, SquadLightScale);
+    }
+
+    // The lowest point of a doll's body as it is posed now, in the weapon room's space: its full
+    // detail meshes baked in their pose.
+    private float LowestPoint(GameObject doll) => Lowest(doll).y;
+
+    private Vector3 Lowest(GameObject doll)
+    {
+        var lowest = new Vector3(0f, float.PositiveInfinity, 0f);
+        var room = _weaponSet.Root.transform;
+        foreach (var renderer in doll.GetComponentsInChildren<SkinnedMeshRenderer>())
+        {
+            if (renderer.name.Contains("_LOD") && !renderer.name.EndsWith("_LOD0"))
+                continue;
+            var baked = new Mesh();
+            try
+            {
+                renderer.BakeMesh(baked, false);
+                var toRoom = room.worldToLocalMatrix * renderer.transform.localToWorldMatrix;
+                foreach (var vertex in baked.vertices)
+                {
+                    var at = toRoom.MultiplyPoint3x4(vertex);
+                    if (at.y < lowest.y)
+                        lowest = at;
+                }
+            }
+            finally
+            {
+                UnityEngine.Object.Destroy(baked);
+            }
+        }
+        return lowest;
+    }
+
+    // A long-shinned doll seated on the cushion has her soles through the floor (Voymastina's by
+    // 8 cm). She leans back about her hips until they are clear of it, as a lounging sitter does,
+    // which swings her feet forward and up, and is lifted for what the furthest lean leaves. Her
+    // lowest point is read again after each step, as the heel may give way to the toe.
+    private void ClearOfFloor(GameObject doll, Vector3 hips)
+    {
+        var room = _weaponSet.Root.transform;
+        var leant = 0f;
+        for (var step = 0; step < 4; step++)
+        {
+            var low = Lowest(doll);
+            var under = LoungeFloor + SoleClearance - low.y;
+            if (under <= 0f)
+                return;
+            // The point's place about her hips, along the way she faces and up.
+            var facing = room.InverseTransformDirection(doll.transform.forward);
+            var from = low - hips;
+            var along = facing.x * from.x + facing.z * from.z;
+            var reach = Mathf.Sqrt(along * along + from.y * from.y);
+            var now = Mathf.Atan2(from.y, along);
+            var wanted = Mathf.Asin(Mathf.Clamp((from.y + under) / Mathf.Max(reach, 1e-4f), -1f, 1f));
+            var lean = Mathf.Min((wanted - now) * Mathf.Rad2Deg, MaxSeatedLean - leant);
+            if (lean <= 0.01f)
+            {
+                doll.transform.localPosition += Vector3.up * under;
+                return;
+            }
+            doll.transform.RotateAround(room.TransformPoint(hips), doll.transform.right, -lean);
+            leant += lean;
+        }
     }
 
     // How a weapon's model is turned for its barrel to point one way and its top another. Models

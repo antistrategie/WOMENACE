@@ -45,7 +45,7 @@ public sealed partial class StrategyDiorama
     private const float ChibiFrameAspect = 1.5f;
     // The part of a frame's width she stands in, for the pointer.
     private const float ChibiBodyWidth = 0.45f;
-    private const float BadgeTiles = 2.2f;
+    private const float BadgeTiles = 1.5f;
     private const float CellUnitTiles = 0.075f;
     private const float RingTiles = 1.35f;
     private const float ChibiFeet = 0.06f;
@@ -88,6 +88,9 @@ public sealed partial class StrategyDiorama
         public bool Plays;
         public float Phase;
         public int Frame = -1;
+        // The chibi or badge the card shows. The game's badges share one atlas, so the texture
+        // alone does not tell one squad's from another's.
+        public IntPtr Shown;
     }
 
     private readonly Dictionary<IntPtr, Token> _prepTokens = new();
@@ -99,7 +102,6 @@ public sealed partial class StrategyDiorama
     private RenderTexture _tokensTexture;
     private VisualElement _tokensPanel;
     private Texture2D _tokenRing;
-    private StyleFontDefinition _tokenFont;
     private int _prepTokenTick;
     private bool _prepChibisOff;
     private readonly GameObject[] _dragMarks = new GameObject[2];
@@ -214,9 +216,6 @@ public sealed partial class StrategyDiorama
         if (!TexturePanel("WOMENACE_PrepTokens", shell, texels, texels, TokenPanelScale,
             out _tokensHost, out _tokensSettings, out _tokensTexture, out _tokensPanel))
             return null;
-        // The cells' words are in the shell's face, which that panel has no rule for.
-        if (UI.Find(_shellRoot, UiSelector.Name("wm-shell-title")) is { } title)
-            _tokenFont = title.resolvedStyle.unityFontDefinition;
         return _tokensPanel;
     }
 
@@ -270,8 +269,10 @@ public sealed partial class StrategyDiorama
                             : leader?.GetTemplate()?.Badge
                                 ?? UI.Find(source, UiSelector.Name(VanillaUi.Elements.PrepDeployedImage))?.resolvedStyle.backgroundImage.sprite;
                         var picture = chibi != null ? chibi : badge != null ? badge.texture : null;
-                        if (material != null && picture != null && material.GetTexture("_MainTex") != picture)
+                        var showing = chibi != null ? chibi.Pointer : badge != null ? badge.Pointer : IntPtr.Zero;
+                        if (material != null && picture != null && token.Shown != showing)
                         {
+                            token.Shown = showing;
                             material.SetTexture("_MainTex", picture);
                             // A badge may be one of many on a shared sheet: only its own part is shown.
                             var part = badge != null ? badge.textureRect : new Rect(0f, 0f, picture.width, picture.height);
@@ -453,7 +454,9 @@ public sealed partial class StrategyDiorama
             s.fontSize = 11f;
             s.letterSpacing = 1f;
             s.unityTextAlign = TextAnchor.MiddleLeft;
-            s.unityFontDefinition = _tokenFont;
+            // In the shell's face, which the cells' panel has no rule for.
+            if (UI.Find(_shellRoot, UiSelector.Name("wm-shell-title")) is { } title)
+                s.unityFontDefinition = title.resolvedStyle.unityFontDefinition;
             token.Cell.Add(token.Name);
         }
 

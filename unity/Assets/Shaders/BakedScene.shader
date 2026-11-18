@@ -287,9 +287,15 @@ Shader "Womenace/BakedScene"
             // GFL2's linear fog: colour (rgb), and its start and end distances (zw).
             float4 _WmFogColor;
             float4 _WmFogLinear;
-            // The planar floor reflection (StrategyDiorama.Reflection.cs): a mirror render of the
-            // room, (plane world height, strength, blur mip, unused), and its tint.
+            // The planar floor reflection (StrategyDiorama.Reflection.cs), (plane world height,
+            // strength, blur mip, 1 where it is a pre-baked box), and its tint. A live room's is a
+            // mirror render. A pre-baked box is GFL2's prebaked_cubemap_scene: a unit box (world to
+            // box space in _WmPlanarBox) showing a cube of _WmPlanarCubeSize texels a face, looked up
+            // by the normalised box-space point with y negated.
             TEXTURE2D(_WmPlanarReflection); SAMPLER(sampler_WmPlanarReflection);
+            TEXTURECUBE(_WmPlanarCube); SAMPLER(sampler_WmPlanarCube);
+            float4x4 _WmPlanarBox;
+            float _WmPlanarCubeSize;
             float4 _WmPlanarParams;
             float4 _WmPlanarTint;
             // How far a surface's reflection of the room is dimmed where its baked light is dark
@@ -417,6 +423,20 @@ Shader "Womenace/BakedScene"
                 return f0 * ab.x + ab.y;
             }
 
+            // Where the box shows through a point on the floor, as a mirror camera under the floor
+            // would see it: the box's inside faces, along the line from the eye mirrored in the floor
+            // through the point. Its w is 0 where that face lies under the floor, which a mirror's
+            // near plane on the floor drops.
+            float4 BoxPoint(float3 eyeWS, float3 floorWS)
+            {
+                float3 eye = mul(_WmPlanarBox, float4(eyeWS.x, 2.0 * _WmPlanarParams.x - eyeWS.y, eyeWS.z, 1.0)).xyz;
+                float3 along = mul(_WmPlanarBox, float4(floorWS, 1.0)).xyz - eye;
+                float3 inverse = 1.0 / along;
+                float3 far = max((-0.5 - eye) * inverse, (0.5 - eye) * inverse);
+                float exit = min(min(far.x, far.y), far.z);
+                return float4(eye + along * exit, exit >= 1.0 ? 1.0 : 0.0);
+            }
+
             // GFL2's linear fog over a colour at this view depth. GFL2 adds UE4's exponential height
             // fog on top, whose parameters its own code packs from the volume, and the packing is
             // not in the scene's data: read as UE4 packs them, the room hazes over far past a GFL2
@@ -531,6 +551,19 @@ Shader "Womenace/BakedScene"
                 if (_WmPlanarParams.y > 0.0 && _Unlit < 0.5)
                 {
                     float onPlane = saturate(1.0 - abs(positionWS.y - _WmPlanarParams.x) / 0.1) * step(0.9, n.y);
+                    float4 boxed = 0.0;
+                    float boxLod = 0.0;
+                    if (_WmPlanarParams.w > 0.5)
+                    {
+                        // The cube's mip is the one the box would be drawn with at this pixel, and
+                        // the blur mip on top of it stands for a blurred mirror render's.
+                        float3 eyeWS = GetAbsolutePositionWS(float3(0.0, 0.0, 0.0));
+                        float3 direction = normalize(BoxPoint(eyeWS, positionWS).xyz);
+                        float spread = max(length(ddx(direction)), length(ddy(direction)));
+                        boxLod = log2(max(spread * _WmPlanarCubeSize * 0.5, 1e-4)) + _WmPlanarParams.z;
+                        boxed = BoxPoint(eyeWS, positionWS + float3(N.x - n.x, 0.0, N.z - n.z) * (0.03 * viewDepth));
+                        boxed.xyz = normalize(boxed.xyz);
+                    }
                     if (onPlane > 0.0)
                     {
                         // The mirror camera keeps the reflection's right and turns its up over, so
@@ -538,7 +571,9 @@ Shader "Womenace/BakedScene"
                         float2 screenUv = input.positionCS.xy * _ScreenSize.zw;
                         screenUv.y = 1.0 - screenUv.y;
                         screenUv += (N.xz - n.xz) * 0.03;
-                        float3 mirrored = SAMPLE_TEXTURE2D_LOD(_WmPlanarReflection, sampler_WmPlanarReflection, screenUv, _WmPlanarParams.z).rgb;
+                        float3 mirrored = _WmPlanarParams.w > 0.5
+                            ? SAMPLE_TEXTURECUBE_LOD(_WmPlanarCube, sampler_WmPlanarCube, boxed.xyz * float3(1.0, -1.0, 1.0), boxLod).rgb * GetCurrentExposureMultiplier() * boxed.w
+                            : SAMPLE_TEXTURE2D_LOD(_WmPlanarReflection, sampler_WmPlanarReflection, screenUv, _WmPlanarParams.z).rgb;
                         float planarFresnel = min(pow(1.0 - NdotV, 0.85), 0.75);
                         colour += mirrored * _WmPlanarTint.rgb * planarFresnel * onPlane * _WmPlanarParams.y * occlusion;
                     }

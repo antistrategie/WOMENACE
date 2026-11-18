@@ -22,7 +22,7 @@ public sealed partial class StrategyDiorama
             var material = renderer.sharedMaterial;
             // Holograms, light shafts, glows and decals are drawn in the air and on walls, and
             // stop nothing.
-            if (!renderer.enabled || mesh == null || !mesh.isReadable || material == null || material.renderQueue > 2450)
+            if (!renderer.enabled || mesh == null || !mesh.isReadable || material == null || material.renderQueue >= TransparentQueueStart)
                 continue;
             if (!meshes.TryGetValue(mesh.Pointer, out var data))
                 meshes[mesh.Pointer] = data = (mesh.vertices, mesh.triangles);

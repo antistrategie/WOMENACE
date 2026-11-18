@@ -174,4 +174,52 @@ patch "TextTooltipsConfig" "text_tooltips_config" {
             append "m_Placeholders" bind="PerkTemplate" "perk.voymastina_monarch" path="EventHandlers[0].RepairFraction" format="percent"
         }
     }
+    // The game's own keyword entries for squaddies, in the dummy links' words.
+    set "Tooltips" index=12 {
+        set "TooltipHeading" {
+            set "m_DefaultTranslation" "Dummy Links"
+        }
+        set "TooltipText" {
+            set "m_DefaultTranslation" """
+                Dummies are the elements assigned to a squad, linked bodies its leader fights with. Each squad can take on up to 8 dummies. Each dummy adds their <link="hitpoints">Hitpoints</link> to the squad's hitpoint total and their <link="armor_durability">Armor Durability</link> to the armor durability total.
+
+                Dummies are persistent and known by their serial numbers. They are lost for good if killed in combat, except when they are rescued. Then they will be wounded and available again for the next operation.
+
+                Wounded Dummies: {1}
+                Max. Dummies: {0}
+                """
+        }
+    }
+    set "Tooltips" index=30 {
+        set "TooltipHeading" {
+            set "m_DefaultTranslation" "Dummies - Manpower"
+        }
+        set "TooltipText" {
+            set "m_DefaultTranslation" "Up to 8 <link=\"squaddies\">dummies</link> can be added to each squad leader. Each dummy will take one additional set of armor and squad weapon and will increase the hitpoint pool of a unit."
+        }
+    }
+    set "Tooltips" index=48 {
+        set "TooltipHeading" {
+            set "m_DefaultTranslation" "Initial Dummies"
+        }
+        set "TooltipText" {
+            set "m_DefaultTranslation" "Choose with how many <link=\"squaddies\">Dummies</link> you start the game."
+        }
+    }
+    set "Tooltips" index=70 {
+        set "TooltipHeading" {
+            set "m_DefaultTranslation" "Max. Dummies"
+        }
+        set "TooltipText" {
+            set "m_DefaultTranslation" "The maximum amount of <link=\"squaddies\">Dummies</link> on the Impetus. When the capacity is reached no more dummies can be added by OCIs, events or through other ways. To expand this build more quarters."
+        }
+    }
+    set "Tooltips" index=72 {
+        set "TooltipHeading" {
+            set "m_DefaultTranslation" "Dummy Rescue Mode"
+        }
+        set "TooltipText" {
+            set "m_DefaultTranslation" "Determines how many dummies can be rescued after being downed in a mission. Setting this to \"none\" will lead to no dummies being rescued at all."
+        }
+    }
 }

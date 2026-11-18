@@ -147,6 +147,7 @@ Shader "Womenace/DollEye"
 
             #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
+            #include "DollRoomFog.hlsl"
             #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/AmbientProbe.hlsl"
 
             TEXTURE2D(_BaseMap);
@@ -162,6 +163,8 @@ Shader "Womenace/DollEye"
                 float _SpecularParallax;
                 float _ShadowIntensity;
             CBUFFER_END
+            // Set on a doll the diorama lights in a strategy room, which takes the room's fog.
+            float _RoomLit;
 
             struct Attributes
             {
@@ -229,7 +232,7 @@ Shader "Womenace/DollEye"
                 float3 ambient = sh / max(1e-4, dot(sh, lumWeights)) * dot(flat3, lumWeights);
 
                 float3 lit = direct + albedo * ambient;
-                return float4(lit * GetCurrentExposureMultiplier(), 1.0);
+                return float4(DollRoomFog(lit, input.positionCS.w, _RoomLit) * GetCurrentExposureMultiplier(), 1.0);
             }
             ENDHLSL
         }

@@ -508,8 +508,9 @@
 /* Mission preparation's loadout on the bottom bar: vanilla's box without its frame. The bar's
    parts are vanilla's, at the bar's own height. */
 .wm-prep #SuppliesPanel #SuppliesBar > VisualElement { top: 0; height: 8px; }
-.wm-prep__supplies-left { position: absolute; margin: 0; padding: 0; color: rgb(83, 201, 156); font-size: 8px; letter-spacing: 0.64px; }
-.wm-prep__supplies-uses { position: absolute; margin: 0; padding: 0; color: var(--ink-meta); font-size: 7.2px; letter-spacing: 0.58px; }
+.wm-prep__supplies-left { position: absolute; margin: 0; padding: 0; color: rgb(83, 201, 156); font-size: 7.5px; letter-spacing: 0.64px; }
+.wm-prep__supplies-uses { position: absolute; margin: 0; padding: 0; color: var(--ink-meta); font-size: 7.5px; letter-spacing: 0.64px; }
+.wm-prep__supplies-box { position: absolute; background-color: rgba(0, 0, 0, 0.92); }
 /* The loadout bar's sections, a squad each: a dark line between two, its badge in its middle,
    the open squad's lit. One that is not deployed yet is pale, and red past the limit. */
 .wm-prep__sections { position: absolute; left: 0; overflow: hidden; }
@@ -673,9 +674,11 @@
 .wm-oci-group-rule { flex-grow: 1; height: 0.8px; background-color: var(--line-strong); }
 /* Vanilla shows and hides the label itself, so it is made see-through. */
 .wm-oci #Slots #SlotNameLabel { opacity: 0; }
-/* An ability module's kind, delay and uses are on its icon in the ship's panel, and are left
-   off its slot, where they would run the group down over the ship. */
-.wm-oci #Slots #InfoPanel { opacity: 0; }
+/* An ability module's kind, delay and uses, on one strip the slot's width under it in the
+   look of vanilla's panel there, and a slot drawn only once it stands in its group. */
+.wm-oci #Slots .wm-oci-slot-info { align-self: stretch; height: 20px; margin: 0; padding: 0 7px; font-size: 11.5px; -unity-text-align: middle-left; white-space: nowrap; background-color: rgba(36, 29, 23, 0.87); }
+.wm-oci #Slots > * { opacity: 0; }
+.wm-oci #Slots > .wm-oci-slot--placed { opacity: 1; }
 .wm-oci-stem { position: absolute; width: 1.1px; margin-left: -0.55px; background-color: rgba(121, 233, 245, 0.75); }
 .wm-oci-line { position: absolute; height: 1.1px; margin-top: -0.55px; transform-origin: left center; background-color: rgba(121, 233, 245, 0.75); }
 .wm-oci-ring { position: absolute; width: 9px; height: 9px; margin-left: -4.5px; margin-top: -4.5px; border-radius: 4.5px; border-width: 1.2px; border-color: rgb(121, 233, 245); }

@@ -9,7 +9,7 @@ clone "PerkTemplate" from="perk.gostepriimstvo_babushki" id="perk.mechty_sleep_a
         set "m_DefaultTranslation" "Sleep Aid Kit"
     }
     set "ShortDescription" {
-        set "m_DefaultTranslation" "Remove Suppression, heal a Squaddie, +$1% DEF. Ends the turn."
+        set "m_DefaultTranslation" "Remove Suppression, heal a Dummy, +$1% DEF. Ends the turn."
         clear "m_Placeholders"
         append "m_Placeholders" bind="SkillTemplate" "effect.mechty_sleep_aid" path="EventHandlers[0].Properties[0].AmountMult" format="bonus-percent"
     }
@@ -20,7 +20,7 @@ clone "PerkTemplate" from="perk.gostepriimstvo_babushki" id="perk.mechty_sleep_a
 
             <style="Highlight">• ACTIVATE:
               - Removes all <link="suppression">Suppression</link>.
-              - Heals one <link="squaddies">Squaddie</link>.
+              - Heals one <link="squaddies">Dummy</link>.
               - +$1% <link="defense">Defense</link> until the end of the SL's next turn.
               - Ends the SL's turn.
 

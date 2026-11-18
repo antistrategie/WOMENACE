@@ -81,9 +81,46 @@ public sealed partial class StrategyDiorama
             drawn.receiveShadows = false;
             _starMapParts.Add((renderer, copy, IsOperationMarker(renderer.transform, source)));
         }
+        LiftStarMapQueues();
         SyncStarMap();
         Context.Log.Info($"strategy diorama: system map over the table, {_starMapParts.Count} of vanilla's meshes");
     }
+
+    // The map's see-through parts (planets 2986, markers 3000, lines 3010) are drawn after the
+    // dolls' see-through ones (3000), keeping their own order. Drawn before, a doll's veil or cape
+    // standing behind the map, which writes no depth, is painted over the planets in front of it.
+    // The materials are vanilla's own, whose map is not drawn while this one is, and are given back
+    // their queues with the copy.
+    private const int StarMapAfterDolls = 3001;
+    private readonly List<(Material Material, int Queue)> _starMapQueues = new();
+
+    private void LiftStarMapQueues()
+    {
+        var lowest = int.MaxValue;
+        var seen = new HashSet<IntPtr>();
+        foreach (var (_, copy, _) in _starMapParts)
+            foreach (var material in copy.GetComponent<MeshRenderer>().sharedMaterials)
+                if (material != null && material.renderQueue >= TransparentQueueStart && seen.Add(material.Pointer))
+                {
+                    _starMapQueues.Add((material, material.renderQueue));
+                    lowest = Math.Min(lowest, material.renderQueue);
+                }
+        if (lowest >= StarMapAfterDolls)
+            return;
+        foreach (var (material, queue) in _starMapQueues)
+            material.renderQueue = queue + StarMapAfterDolls - lowest;
+    }
+
+    private void RestoreStarMapQueues()
+    {
+        foreach (var (material, queue) in _starMapQueues)
+            if (material != null)
+                material.renderQueue = queue;
+        _starMapQueues.Clear();
+    }
+
+    // Where Unity's see-through queues begin (AlphaTest ends at 2450).
+    private const int TransparentQueueStart = 2451;
 
     // Whether a part belongs to an operation's marker, which vanilla names by this prefix.
     private static bool IsOperationMarker(Transform part, Transform root)
@@ -434,6 +471,7 @@ public sealed partial class StrategyDiorama
     private void ClearStarMap()
     {
         RestoreStarMapCamera();
+        RestoreStarMapQueues();
         if (_starMap != null)
             UnityEngine.Object.Destroy(_starMap);
         (_starMap, _starMapSource) = (null, null);

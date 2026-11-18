@@ -124,127 +124,7 @@ public sealed partial class StrategyDiorama
         if (corner != null)
         {
             BoxUp(corner, OpsColumnTop);
-            for (var i = 0; i < corner.childCount; i++)
-                Dress(corner.ElementAt(i), s =>
-                {
-                    s.flexDirection = FlexDirection.Column;
-                    s.flexWrap = Wrap.NoWrap;
-                    s.alignItems = Align.Stretch;
-                    s.width = Length.Percent(100);
-                    s.marginTop = 0;
-                    s.marginBottom = 0;
-                }, s =>
-                {
-                    s.flexDirection = StyleKeyword.Null;
-                    s.flexWrap = StyleKeyword.Null;
-                    s.alignItems = StyleKeyword.Null;
-                    s.width = StyleKeyword.Null;
-                    s.marginTop = StyleKeyword.Null;
-                    s.marginBottom = StyleKeyword.Null;
-                });
-            foreach (var type in VanillaUi.Elements.OperationDisplays)
-            {
-                var display = UI.Find(corner, UiSelector.TypeName(type));
-                Dress(display, s =>
-                {
-                    s.width = Length.Percent(100);
-                    s.marginLeft = 0;
-                    s.marginRight = 0;
-                    s.marginTop = 0;
-                    s.marginBottom = 5;
-                }, s =>
-                {
-                    s.width = StyleKeyword.Null;
-                    s.marginLeft = StyleKeyword.Null;
-                    s.marginRight = StyleKeyword.Null;
-                    s.marginTop = StyleKeyword.Null;
-                    s.marginBottom = StyleKeyword.Null;
-                });
-                // The planet's row keeps its own width: stretched, its icons stretch with it.
-                var spread = type != VanillaUi.Elements.OperationPlanetDisplay;
-                Dress(display != null ? UI.Find(display, UiSelector.Name(VanillaUi.Elements.Pickable)) : null, s =>
-                {
-                    s.backgroundColor = UnityEngine.Color.clear;
-                    s.paddingLeft = 0;
-                    s.paddingRight = 0;
-                    if (spread)
-                    {
-                        s.width = Length.Percent(100);
-                        s.justifyContent = Justify.SpaceBetween;
-                    }
-                    else
-                        s.alignSelf = Align.FlexStart;
-                }, s =>
-                {
-                    s.backgroundColor = StyleKeyword.Null;
-                    s.width = StyleKeyword.Null;
-                    s.paddingLeft = StyleKeyword.Null;
-                    s.paddingRight = StyleKeyword.Null;
-                    s.justifyContent = StyleKeyword.Null;
-                    s.alignSelf = StyleKeyword.Null;
-                });
-                // A display's caption is the box's small label, on one line.
-                foreach (var caption in display != null ? UI.FindAll(display, UiSelector.Type<Label>()).Where(l => VanillaUi.Elements.OperationCaptions.Contains(l.name) || string.IsNullOrEmpty(l.name)).ToList() : new List<VisualElement>())
-                    Dress(caption, s =>
-                    {
-                        s.fontSize = 10;
-                        s.color = InkLabel;
-                        s.whiteSpace = WhiteSpace.NoWrap;
-                        s.width = StyleKeyword.Auto;
-                        s.flexGrow = 1;
-                    }, s =>
-                    {
-                        s.fontSize = StyleKeyword.Null;
-                        s.color = StyleKeyword.Null;
-                        s.whiteSpace = StyleKeyword.Null;
-                        s.width = StyleKeyword.Null;
-                        s.flexGrow = StyleKeyword.Null;
-                    });
-            }
-            // The planet leads the box, over the progress: vanilla's row holds them the other way round.
-            if (corner.childCount > 0)
-                Dress(corner.ElementAt(0), s => s.flexDirection = FlexDirection.ColumnReverse, s => s.flexDirection = StyleKeyword.Null);
-            // The light conditions' caption sits level with their row of icons, not with the row and
-            // the pointer under it together.
-            var light = UI.Find(corner, UiSelector.Name(VanillaUi.Elements.OperationCaptions[1]));
-            var icons = UI.Find(corner, UiSelector.Name(VanillaUi.Elements.LightConditionIcons));
-            Dress(light, s =>
-            {
-                s.alignSelf = Align.FlexStart;
-                s.height = icons != null && icons.layout.height > 1f ? icons.layout.height : LightIconsHeight;
-                s.unityTextAlign = UnityEngine.TextAnchor.MiddleLeft;
-                s.marginTop = 0;
-                s.marginBottom = 0;
-                s.paddingTop = 0;
-                s.paddingBottom = 0;
-            }, s =>
-            {
-                s.alignSelf = StyleKeyword.Null;
-                s.height = StyleKeyword.Null;
-                s.unityTextAlign = StyleKeyword.Null;
-                s.marginTop = StyleKeyword.Null;
-                s.marginBottom = StyleKeyword.Null;
-                s.paddingTop = StyleKeyword.Null;
-                s.paddingBottom = StyleKeyword.Null;
-            });
-            // The progress strip's own row spans the box, its bar at the right.
-            var progress = UI.Find(corner, UiSelector.TypeName(VanillaUi.Elements.OperationDisplays[0]));
-            var strip = progress != null ? UI.Find(progress, UiSelector.Name(VanillaUi.Elements.Row)) : null;
-            Dress(strip, s =>
-            {
-                s.width = Length.Percent(100);
-                s.marginLeft = 0;
-                s.paddingLeft = 0;
-            }, s =>
-            {
-                s.width = StyleKeyword.Null;
-                s.marginLeft = StyleKeyword.Null;
-                s.paddingLeft = StyleKeyword.Null;
-            });
-            // The faction's icon has empty space inside its picture: it is drawn back by that much, so
-            // what shows of it starts where the rows' text does.
-            Dress(UI.Find(corner, UiSelector.Name(VanillaUi.Elements.OperationFactionIcon)), s => s.marginLeft = FactionIconInset, s => s.marginLeft = StyleKeyword.Null);
-            Dress(UI.Find(corner, UiSelector.Name(VanillaUi.Elements.OperationProgressBar)), s => s.width = OpsProgressBarWidth, s => s.width = StyleKeyword.Null);
+            DressOperationRows(corner, Dress);
         }
 
         // Vanilla's mission markers become the column's second box, a list. Where each stood on
@@ -303,6 +183,135 @@ public sealed partial class StrategyDiorama
         yield return null;
         if (_shell != null)
             ApplyHome(_homeScreen, _homeRoomShown);
+    }
+
+    // Styles the operation's strip as rows of a box in the shell's style: progress, planet, light and
+    // assets each a row across it without a backing of its own, under a small caption. Mission select
+    // boxes it at the left of the table and O.C.I. puts it in the ship's panel, each taking the styles
+    // off again its own way.
+    private void DressOperationRows(VisualElement corner, Action<VisualElement, Action<IStyle>, Action<IStyle>> dress)
+    {
+        for (var i = 0; i < corner.childCount; i++)
+            dress(corner.ElementAt(i), s =>
+            {
+                s.flexDirection = FlexDirection.Column;
+                s.flexWrap = Wrap.NoWrap;
+                s.alignItems = Align.Stretch;
+                s.width = Length.Percent(100);
+                s.marginTop = 0;
+                s.marginBottom = 0;
+            }, s =>
+            {
+                s.flexDirection = StyleKeyword.Null;
+                s.flexWrap = StyleKeyword.Null;
+                s.alignItems = StyleKeyword.Null;
+                s.width = StyleKeyword.Null;
+                s.marginTop = StyleKeyword.Null;
+                s.marginBottom = StyleKeyword.Null;
+            });
+        foreach (var type in VanillaUi.Elements.OperationDisplays)
+        {
+            var display = UI.Find(corner, UiSelector.TypeName(type));
+            dress(display, s =>
+            {
+                s.width = Length.Percent(100);
+                s.marginLeft = 0;
+                s.marginRight = 0;
+                s.marginTop = 0;
+                s.marginBottom = 5;
+            }, s =>
+            {
+                s.width = StyleKeyword.Null;
+                s.marginLeft = StyleKeyword.Null;
+                s.marginRight = StyleKeyword.Null;
+                s.marginTop = StyleKeyword.Null;
+                s.marginBottom = StyleKeyword.Null;
+            });
+            // The planet's row keeps its own width: stretched, its icons stretch with it.
+            var spread = type != VanillaUi.Elements.OperationPlanetDisplay;
+            dress(display != null ? UI.Find(display, UiSelector.Name(VanillaUi.Elements.Pickable)) : null, s =>
+            {
+                s.backgroundColor = UnityEngine.Color.clear;
+                s.paddingLeft = 0;
+                s.paddingRight = 0;
+                if (spread)
+                {
+                    s.width = Length.Percent(100);
+                    s.justifyContent = Justify.SpaceBetween;
+                }
+                else
+                    s.alignSelf = Align.FlexStart;
+            }, s =>
+            {
+                s.backgroundColor = StyleKeyword.Null;
+                s.width = StyleKeyword.Null;
+                s.paddingLeft = StyleKeyword.Null;
+                s.paddingRight = StyleKeyword.Null;
+                s.justifyContent = StyleKeyword.Null;
+                s.alignSelf = StyleKeyword.Null;
+            });
+            // A display's caption is the box's small label, on one line.
+            foreach (var caption in display != null ? UI.FindAll(display, UiSelector.Type<Label>()).Where(l => VanillaUi.Elements.OperationCaptions.Contains(l.name) || string.IsNullOrEmpty(l.name)).ToList() : new List<VisualElement>())
+                dress(caption, s =>
+                {
+                    s.fontSize = 10;
+                    s.color = InkLabel;
+                    s.whiteSpace = WhiteSpace.NoWrap;
+                    s.width = StyleKeyword.Auto;
+                    s.flexGrow = 1;
+                }, s =>
+                {
+                    s.fontSize = StyleKeyword.Null;
+                    s.color = StyleKeyword.Null;
+                    s.whiteSpace = StyleKeyword.Null;
+                    s.width = StyleKeyword.Null;
+                    s.flexGrow = StyleKeyword.Null;
+                });
+        }
+        // The planet leads the box, over the progress: vanilla's row holds them the other way round.
+        if (corner.childCount > 0)
+            dress(corner.ElementAt(0), s => s.flexDirection = FlexDirection.ColumnReverse, s => s.flexDirection = StyleKeyword.Null);
+        // The light conditions' caption sits level with their row of icons, not with the row and
+        // the pointer under it together.
+        var light = UI.Find(corner, UiSelector.Name(VanillaUi.Elements.OperationCaptions[1]));
+        var icons = UI.Find(corner, UiSelector.Name(VanillaUi.Elements.LightConditionIcons));
+        dress(light, s =>
+        {
+            s.alignSelf = Align.FlexStart;
+            s.height = icons != null && icons.layout.height > 1f ? icons.layout.height : LightIconsHeight;
+            s.unityTextAlign = UnityEngine.TextAnchor.MiddleLeft;
+            s.marginTop = 0;
+            s.marginBottom = 0;
+            s.paddingTop = 0;
+            s.paddingBottom = 0;
+        }, s =>
+        {
+            s.alignSelf = StyleKeyword.Null;
+            s.height = StyleKeyword.Null;
+            s.unityTextAlign = StyleKeyword.Null;
+            s.marginTop = StyleKeyword.Null;
+            s.marginBottom = StyleKeyword.Null;
+            s.paddingTop = StyleKeyword.Null;
+            s.paddingBottom = StyleKeyword.Null;
+        });
+        // The progress strip's own row spans the box, its bar at the right.
+        var progress = UI.Find(corner, UiSelector.TypeName(VanillaUi.Elements.OperationDisplays[0]));
+        var strip = progress != null ? UI.Find(progress, UiSelector.Name(VanillaUi.Elements.Row)) : null;
+        dress(strip, s =>
+        {
+            s.width = Length.Percent(100);
+            s.marginLeft = 0;
+            s.paddingLeft = 0;
+        }, s =>
+        {
+            s.width = StyleKeyword.Null;
+            s.marginLeft = StyleKeyword.Null;
+            s.paddingLeft = StyleKeyword.Null;
+        });
+        // The faction's icon has empty space inside its picture: it is drawn back by that much, so
+        // what shows of it starts where the rows' text does.
+        dress(UI.Find(corner, UiSelector.Name(VanillaUi.Elements.OperationFactionIcon)), s => s.marginLeft = FactionIconInset, s => s.marginLeft = StyleKeyword.Null);
+        dress(UI.Find(corner, UiSelector.Name(VanillaUi.Elements.OperationProgressBar)), s => s.width = OpsProgressBarWidth, s => s.width = StyleKeyword.Null);
     }
 
     // Turns a vanilla container into the left column's box.

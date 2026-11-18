@@ -278,8 +278,25 @@ public sealed partial class StrategyDiorama
             else
                 Context.Coroutines.Start(ShowListsAfter(messages, factions, seq));
         }
-        // The Dinergate calls for attention while messages wait and the board is shut.
-        SetDinergateNotice(unread > 0 && !_intelOpen);
+        // The Dinergate calls for attention while messages wait, or a faction's upgrade waits to be
+        // claimed where the board lists the factions, and the board is shut.
+        SetDinergateNotice(!_intelOpen && (unread > 0 || (factions != null && FactionUnlockWaiting())));
+    }
+
+    // Whether a faction the player knows has an O.C.I. upgrade waiting to be claimed in its window.
+    // The window offers one for each trust level the faction has reached past the upgrades already
+    // taken, while it has upgrades left to give (StoryFactionWindow.OnTrustChanged). A faction not
+    // yet met, or destroyed, is not listed to claim from.
+    private static bool FactionUnlockWaiting()
+    {
+        var factions = Il2CppMenace.States.StrategyState.Get()?.StoryFactions?.m_Factions;
+        if (factions == null)
+            return false;
+        foreach (var faction in factions.Values)
+            if (faction != null && faction.GetStatus() == Il2CppMenace.Strategy.StoryFactionStatus.Known
+                && faction.GetTrustLevel() > faction.GetUnlockedUpgradeCount() && faction.HasLockedUpgrades())
+                return true;
+        return false;
     }
 
     // The vanilla lists the board shows, as last placed.

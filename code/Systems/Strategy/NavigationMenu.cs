@@ -46,6 +46,7 @@ internal static partial class NavigationMenu
         {
             var host = UIManager.Get()?.GetLayer(PermanentUILayers.Dialogs) ?? UIManager.Get()?.GetPermanentLayersRoot();
             var tree = context.Assets.Load<VisualTreeAsset>(Uxml);
+            FontWarmupSystem.WarmLoaded();
             if (host == null || tree == null)
             {
                 context.Log.Warn($"navigation: cannot open (host {(host != null)}, uxml {(tree != null)})");
@@ -91,20 +92,11 @@ internal static partial class NavigationMenu
     }
 
     // The dialogs layer does not inherit the screens' font, so the menu would fall back to the
-    // panel default. MENACE's UI face is Jura (Jura-Bold SDF / Jura-Regular SDF, loaded by the game).
-    private static UnityEngine.TextCore.Text.FontAsset _jura;
-    internal static void ApplyGameFont(VisualElement root)
-    {
-        if (_jura == null)
-            foreach (var asset in Resources.FindObjectsOfTypeAll<UnityEngine.TextCore.Text.FontAsset>())
-                if (asset != null && asset.name == "Jura-Bold SDF")
-                {
-                    _jura = asset;
-                    break;
-                }
-        if (_jura != null)
-            root.style.unityFontDefinition = new StyleFontDefinition(FontDefinition.FromSDFFont(_jura));
-    }
+    // panel default. MENACE's UI face is Jura Bold, which the mod ships (UI/fonts) and wui.uss gives
+    // this class, so nothing here holds a font of the game's.
+    internal const string GameFontClass = "wm-game-font";
+
+    internal static void ApplyGameFont(VisualElement root) => root.AddToClassList(GameFontClass);
 
     // The room behind the menu, rendered small and smoothed up a step: GFL2's menu blur.
     private static void Blur(Camera roomCamera)
