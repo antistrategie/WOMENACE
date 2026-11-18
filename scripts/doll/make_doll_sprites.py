@@ -69,7 +69,7 @@ import cv2
 import numpy as np
 
 REPO = Path(__file__).resolve().parents[2]
-ASSETS = REPO / "assets" / "additions"
+ASSETS = REPO / "assets"
 DATA = Path(__file__).resolve().parent / "data"
 SCANLINES = DATA / "slot_inactive_scanlines.json"
 

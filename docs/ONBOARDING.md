@@ -121,9 +121,9 @@ Eventually, through enough experience you'll build up a mental model of how data
 
 This is the part of the mod is mostly visual, so there's not much I can go through with you here, but let's go over some general concepts.
 
-**We add, we don't replace.** Everything WOMENACE ships is a *new* thing sitting alongside vanilla MENACE; Never is a vanilla asset overwritten. So all of it lands under `assets/additions/`. Even if we want to "replace" something, we ship it as an addition and point the thing we want to replace to our new addition instead of "replacing" the old thing.
+**We add, we don't replace.** Everything WOMENACE ships is a *new* thing sitting alongside vanilla MENACE; Never is a vanilla asset overwritten. So all of it lands under `assets/`. Even if we want to "replace" something, we ship it as an addition and point the thing we want to replace to our new addition instead of "replacing" the old thing.
 
-Anything in `assets/additions/` should be self-explanatory, I'm sure you know how audio and image files work and how to edit them.
+Anything in `assets/` should be self-explanatory, I'm sure you know how audio and image files work and how to edit them.
 
 The real meat is in `unity/` which is a full Unity project, though not setup as much as you would when actually making the game. We need this for the visual half of a MENACE unit (its mesh, skeleton, materials, animations) that ships as a Unity *prefab* packed into an AssetBundle, and the only thing that can build one of those is Unity itself. So `unity/` is where the 3D work happens, and a couple of Jiangyu bake utilities turn your raw models into game-ready prefabs.
 

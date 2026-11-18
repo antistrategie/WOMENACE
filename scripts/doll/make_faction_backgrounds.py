@@ -31,7 +31,7 @@ import numpy as np
 
 REPO = Path(__file__).resolve().parents[2]
 LOGOS = Path(__file__).resolve().parent / "data" / "faction_logos"
-OUT = REPO / "assets" / "additions" / "textures" / "factions"
+OUT = REPO / "assets" / "textures" / "factions"
 
 # faction: (logo file, colour as RGB[, logo scale[, logo shift]]). Shift moves the logo sideways by
 # a fraction of the disc radius (negative = left), for a narrow logo the portrait would hide. The scale enlarges a logo whose shape reads

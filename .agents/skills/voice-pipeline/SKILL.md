@@ -9,7 +9,7 @@ description: End-to-end voice authoring for a MENACE character: transcribe sourc
 
 How a character's voice barks get from raw audio rips to triggering in-game. Five tools + one runtime pattern:
 
-1. `scripts/voice/transcribe.py`: OpenAI ASR + MT → `assets/additions/audio/<char>/.trans.csv`
+1. `scripts/voice/transcribe.py`: OpenAI ASR + MT → `assets/audio/<char>/.trans.csv`
 2. `scripts/voice/normalize_audio.py`: LUFS-normalise raw clips to match vanilla MENACE bark loudness
 3. `templates/<char>/voice/soundbank.kdl`: SoundBank clone that registers the WAVs as a runtime bank
 4. `templates/<char>/voice/{arrivals,clicks,enemy,misc,movement,objectives,responses}.kdl`: ConversationTemplate clones that fire those bank entries on in-game events
@@ -18,7 +18,7 @@ How a character's voice barks get from raw audio rips to triggering in-game. Fiv
 ## Pipeline at a glance
 
 ```
-[ rip dir of *.wav ] ──cp+rename──▶ [ assets/additions/audio/<char>/*.wav ]
+[ rip dir of *.wav ] ──cp+rename──▶ [ assets/audio/<char>/*.wav ]
                                               │
                                               ├─normalize_audio.py──▶ same files, LUFS-aligned
                                               │
@@ -45,7 +45,7 @@ Source the character's voice clips (typically a community rip, GFL2 voice files 
 VO_Cheyenne_JP_VO_Cheyenne_Single_Login_001.wav → Single_Login_001.wav
 ```
 
-Three source dirs typically: main VO + ServR_ (server-room) + Bedroom_. Merge into one flat dir at `assets/additions/audio/<char>/`. The cleaned filenames double as bank item names (see SoundBank section).
+Three source dirs typically: main VO + ServR_ (server-room) + Bedroom_. Merge into one flat dir at `assets/audio/<char>/`. The cleaned filenames double as bank item names (see SoundBank section).
 
 ## 2. Normalise to vanilla loudness
 
@@ -53,8 +53,8 @@ Source rips are usually ~10–12 dB louder than vanilla MENACE barks. Run:
 
 ```bash
 uv run --script scripts/voice/normalize_audio.py \
-  --reference assets/additions/audio/<reference_char> \
-  --target assets/additions/audio/<char>
+  --reference assets/audio/<reference_char> \
+  --target assets/audio/<char>
 ```
 
 The reference is a character whose audio is already normalised to vanilla. Median LUFS ≈ −28. `--dry-run` to preview deltas without writing.
@@ -64,7 +64,7 @@ The reference is a character whose audio is already normalised to vanilla. Media
 `transcribe.py` uses OpenAI's `gpt-4o-transcribe` for JP ASR and `gpt-5` (or override via `--translate-model`) for JP→EN translation. Output is `<source>/.trans.csv` with columns `filename, transcript, english, note`.
 
 ```bash
-uv run --script scripts/voice/transcribe.py assets/additions/audio/<char>
+uv run --script scripts/voice/transcribe.py assets/audio/<char>
 ```
 
 Reads `OPENAI_API_KEY` from `.env` at the repo root via `python-dotenv`. The .env file is `.gitignore`-protected.
@@ -100,7 +100,7 @@ clone "SoundBank" from="tactical_barks_carda_va_full_mid" id="wmgfl_tactical_bar
 }
 ```
 
-**Filename-as-name convention**: each Sound's `name` field equals the WAV filename (without `.wav`). Bank itemId references in conversation/squad-leader templates use this same name. The asset path (e.g. `<character>/Single_Login_001`) is the Jiangyu-derived addition asset name (strips `assets/additions/audio/`).
+**Filename-as-name convention**: each Sound's `name` field equals the WAV filename (without `.wav`). Bank itemId references in conversation/squad-leader templates use this same name. The asset path (e.g. `<character>/Single_Login_001`) is the Jiangyu-derived addition asset name (strips `assets/audio/`).
 
 **Exception**: weapon SoundBanks need multiple variations per Sound (so the engine picks randomly for shot-to-shot variety). For those, the Sound name is a semantic shorthand (e.g. `rf_shot`) and the variations are the per-shot files. See [`weapon-pipeline`](../weapon-pipeline/SKILL.md). Voice banks are one-Sound-per-clip and use filename-as-name.
 
@@ -179,7 +179,7 @@ The `set "Nodes" { ... }` block fully replaces the parent's Nodes: your `append 
 
 ## Browse + play locally
 
-`scripts/voice/serve.py` runs a tiny http.server at `localhost:8765` that walks `assets/additions/audio/`, finds every dir with a `.trans.csv`, and serves a table view: filename / JP / EN / per-row play button. Useful for:
+`scripts/voice/serve.py` runs a tiny http.server at `localhost:8765` that walks `assets/audio/`, finds every dir with a `.trans.csv`, and serves a table view: filename / JP / EN / per-row play button. Useful for:
 
 - Hand-correcting `english` cells in the CSV when the model garbled a translation
 - Picking which `itemId` to wire into a specific conversation event (you can hear the line first)

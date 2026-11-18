@@ -679,7 +679,7 @@ internal static class AimInput
 // played through a 2D AudioSource of their own rather than a SoundBank: a
 // bank buys positional audio and bus routing a flat overlay has no use for.
 // Audio additions register under "<folder>__<file>", so clips in
-// assets/additions/audio/cheyanne/ carry the cheyanne__ prefix; the bare name
+// assets/audio/cheyanne/ carry the cheyanne__ prefix; the bare name
 // is kept as a fallback because the two failure logs read the same, which is
 // what hid the prefix for a run.
 internal static class CheyanneAimSound

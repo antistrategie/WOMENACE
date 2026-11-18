@@ -18,7 +18,7 @@ Reads OPENAI_API_KEY from the environment. Writes <source>/.trans.csv with
 columns: filename, transcript, english, note.
 
 Usage:
-    uv run --script transcribe.py assets/additions/audio/cheyanne
+    uv run --script transcribe.py assets/audio/cheyanne
     uv run --script transcribe.py path/to/clips --asr-model gpt-4o-transcribe --translate-model gpt-5
 """
 from __future__ import annotations

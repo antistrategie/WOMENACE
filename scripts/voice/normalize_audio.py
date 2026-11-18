@@ -18,7 +18,7 @@ in place. Preserves sample rate and channel count.
 Usage:
     uv run --script normalize_audio.py \\
         --reference ~/.local/share/jiangyu/cache/exports/ \\
-        --target /home/justin/dev/github.com/antistrategie/WOMENACE/assets/additions/audio/voymastina/
+        --target /home/justin/dev/github.com/antistrategie/WOMENACE/assets/audio/voymastina/
 
 Add --dry-run to see the report without writing files.
 """

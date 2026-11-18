@@ -10,7 +10,7 @@ description: End-to-end weapon authoring for MENACE: OBJ + textures → Blender 
 Adding a new weapon model + audio that a character (or anyone tag-allowed) can equip. Three sub-pipelines that chain together:
 
 1. **Model**: OBJ → `bake_weapon.py` (Blender) → `raw.glb` with attach-point empties → manual nudge → `BakeWeapon.cs` (Unity) → addition prefab.
-2. **Audio**: source WAV(s) → `bake_*_audio.py` (DSP) → close + distant variants under `assets/additions/audio/weapons/<class>/` → SoundBank clone.
+2. **Audio**: source WAV(s) → `bake_*_audio.py` (DSP) → close + distant variants under `assets/audio/weapons/<class>/` → SoundBank clone.
 3. **KDL**: WeaponTemplate clone (model + icons + skills + tag gate) + per-fire-mode Skill clones (audio routing).
 
 ## Pick a parent weapon
@@ -129,7 +129,7 @@ Generate via Gemini's image model, fed the source render plus four vanilla MENAC
 3. Prompt: repaint the source in the reference art style, preserve geometry exactly, side profile, white background, same dimensions.
 4. Crop/resize the result for `IconEquipment` and `IconSkillBar`.
 
-Save the three PNGs to `assets/additions/sprites/weapon/<name>/{Icon,IconEquipment,IconSkillBar}.png`. The asset names become `weapon/<name>/Icon` etc in KDL.
+Save the three PNGs to `assets/sprites/weapon/<name>/{Icon,IconEquipment,IconSkillBar}.png`. The asset names become `weapon/<name>/Icon` etc in KDL.
 
 ## 5. WeaponTemplate clone
 
@@ -161,7 +161,7 @@ One clip is enough, and two gives a bit of variety. For a bolt-action sniper, yo
 
 Bake script (per-weapon): converts source WAV(s) to 96 kHz mono, derives a distant variant via lowpass(4 kHz) + 5 early reflections at 38/75/135/220/310 ms. Pattern in `/tmp/bake_m200_audio.py` for the M200 / `rf` class.
 
-Output lands at `assets/additions/audio/weapons/<class>/<name>_NN.wav`. The `weapons/` subdir keeps weapon SFX grouped separately from character voice barks.
+Output lands at `assets/audio/weapons/<class>/<name>_NN.wav`. The `weapons/` subdir keeps weapon SFX grouped separately from character voice barks.
 
 ### SoundBank clone
 
@@ -264,7 +264,7 @@ unity/Assets/
 ├── Authored/weapon/<name>/           Blender output: raw.glb + textures/ (+ controller.json for an animated weapon)
 └── Prefabs/weapon/<name>/            BakeWeapon output: main.prefab + baked.mat (+ weapon.controller)
 
-assets/additions/
+assets/
 ├── audio/weapons/<class>/            Custom gunshot WAVs (96 kHz, close + distant)
 └── sprites/weapon/<name>/            Icon / IconEquipment / IconSkillBar PNGs
 

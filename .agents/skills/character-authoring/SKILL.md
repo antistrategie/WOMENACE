@@ -43,7 +43,7 @@ templates/dolls/<character>/
 
 A perk that several characters share lives in `templates/perks/<perk>.kdl` instead. Every KDL file starts with its first `clone` or `patch` node, never with a comment: the formatter drops the first node of a comment-led file.
 
-Sprite/texture assets live separately under `assets/additions/sprites/<character>/` and `assets/additions/textures/<character>/`. KDL refs use `asset="<character>/<basename>"` regardless of source category.
+Sprite/texture assets live separately under `assets/sprites/<character>/` and `assets/textures/<character>/`. KDL refs use `asset="<character>/<basename>"` regardless of source category.
 
 ## squad_leader.kdl (the spine)
 

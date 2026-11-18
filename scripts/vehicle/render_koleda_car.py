@@ -17,7 +17,7 @@ import bpy
 from mathutils import Vector
 
 BLEND = "/home/justin/Downloads/Koleda_Supercar/Koleda_Supercar_base.blend"
-OUT = "/home/justin/dev/github.com/antistrategie/WOMENACE/assets/additions/sprites/sinner"
+OUT = "/home/justin/dev/github.com/antistrategie/WOMENACE/assets/sprites/sinner"
 
 bpy.ops.wm.open_mainfile(filepath=BLEND)
 os.makedirs(OUT, exist_ok=True)

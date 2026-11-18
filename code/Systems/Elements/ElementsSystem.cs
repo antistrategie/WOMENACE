@@ -50,7 +50,7 @@ public sealed class ElementsSystem : JiangyuSystem
 
     // Leaf names of the greyscale gauge textures under unity/Assets/UI/Icons/
     // elements/, bundled together as icons__elements.bundle. They live there
-    // because the template sprite tree under assets/additions/sprites is NOT
+    // because the template sprite tree under assets/sprites is NOT
     // reachable through Context.Assets.
     private static readonly string[] GaugeTextures =
     {

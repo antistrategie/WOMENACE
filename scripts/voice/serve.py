@@ -7,7 +7,7 @@ Run from the repo root:
 Then open http://localhost:8765/. Pick a character; play the WAV files
 alongside their JP transcript and EN translation.
 
-Discovers any directory under assets/additions/audio/ that has a .trans.csv
+Discovers any directory under assets/audio/ that has a .trans.csv
 file, however deep (sextans keeps her VO in sextans/voice/ beside the sword
 SFX). Pure stdlib; no extra deps.
 """
@@ -22,7 +22,7 @@ from pathlib import Path
 from urllib.parse import unquote
 
 REPO = Path(__file__).resolve().parents[2]
-AUDIO_ROOT = REPO / 'assets/additions/audio'
+AUDIO_ROOT = REPO / 'assets/audio'
 TEMPLATES_ROOT = REPO / 'templates'
 PORT = 8765
 

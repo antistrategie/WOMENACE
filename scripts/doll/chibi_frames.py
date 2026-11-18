@@ -380,7 +380,7 @@ def render_many(rig_dir: Path, work: Path, poses, *, skin=None, hide=(), scale=4
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("rig", nargs="?", help="the rig's name in the client")
-    parser.add_argument("doll", nargs="?", help="the doll's sprite folder under assets/additions/sprites")
+    parser.add_argument("doll", nargs="?", help="the doll's sprite folder under assets/sprites")
     parser.add_argument("--bundles", type=Path, required=True, help="the client's AssetBundles_Windows folder")
     parser.add_argument("--work", type=Path, default=WORK)
     parser.add_argument("--out", type=Path, help="the sheet to write, in place of the doll's sprite")
@@ -420,7 +420,7 @@ def main():
             raise SystemExit(f"{args.rig} has no animation '{name}': {', '.join(durations)}")
     if len(parts) > 1 and not args.out:
         parser.error("a sheet of several animations needs --out")
-    out = args.out or REPO / "assets" / "additions" / "sprites" / args.doll / f"chibi_{parts[0][0]}.png"
+    out = args.out or REPO / "assets" / "sprites" / args.doll / f"chibi_{parts[0][0]}.png"
     count = sum(frames for _, frames in parts)
     poses = [{"animation": name, "time": i * durations[name] / frames} for name, frames in parts for i in range(frames)]
     skin = args.skin or (args.rig if args.rig in info["skins"] else None)
