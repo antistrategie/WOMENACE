@@ -1,0 +1,751 @@
+patch "LoadingQuoteConfig" "loading_quote_config" {
+    // Lines GFL2 gives its Dolls, in place of vanilla's quotes. The config still carries
+    // vanilla's 100 localised strings, so each quote takes a LocaIdx past them, and its text
+    // carries no category or field, so the game shows the line as written instead of
+    // looking up a vanilla quote under the same key.
+    clear "Quotes"
+    append "Quotes" {
+        set "LocaIdx" 100
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“You want to know why the name Alva? It's a reference to the \"alpha wolf\"... \"She\" gave me that name.” – Alva"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 101
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“My value doesn't come from comparisons with others, but from my presence and my contribution. This is the most valuable lesson I've learned from my experiences.” – Alva"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 102
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“What I do during downtime...? Oh, I choose to perform maintenance on my guns, they don't come by easily after all.” – Andoris"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 103
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Huh? I, um, I didn't do anything... I was just checking the detonator's switch... I mean, it would be bad if we needed it and it didn't work, right?” – Asteria"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 104
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Just so you know, there's no point begging for your life.” – Basti"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 105
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“What does Big Sis usually talk about with you, Commander? Do you guys talk about me? I really want to know!” – Belka"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 106
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“I don't get it. What does Big Sis see in Mechty...? If it's the ability to sleep, I can do that too!” – Belka"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 107
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Are relationships between Dolls considered a \"Doll-to-Doll connection\"? I've been learning how to manage those recently...” – Cecilia"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 108
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Because of her missions, Miss Makiatto is always hard to track down... Even though I trust her abilities, I still worry about her...” – Centaureissi"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 109
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Caretaker, I want the latest video game, buy it for me—! Huh? Why not? Isn't Caretaker supposed to take care of the genius Cheeta?” – Cheeta"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 110
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Should I... do something to make my presence more felt?” – Cheyanne"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 111
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Touching someone's head so casually comes with a price, y'know? Not even the Commander is an exception~” – Colphne"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 112
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Uwow—Just look at the time! Commander? Are you still working? Work-life balance is very important, you know—These are doctor's orders, you have to obey.” – Colphne"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 113
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Whether in music creation or combat, Zhaohui has helped me a lot. \"Cold on the outside, warm on the inside\"—I guess that's how you'd describe her, right?” – Daiyan"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 114
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Do you see it? Flames are bursting forth from the darkness, and here I stand.” – Dushevnaya"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 115
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“A new journey... It calls to me. I shall shatter the darkness and return triumphant.” – Dushevnaya"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 116
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“The signs from the atmosphere... hmm, warm and bright days, perfect for doing nothing at all.” – Dushevnaya"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 117
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“They say there's nothing new under the sun, but just how many people have experienced all those things? Hearing about and actually experiencing things are different.” – Eagletta"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 118
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Not sure what to do? Why not start by praising me, hehe~” – Faelynn"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 119
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Formulating new pharmaceuticals always entails limitless unknown possibilities. And that feeling is... ah... it's bliss.” – Florence"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 120
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Stable trust leads to perfect victories.” – Groza"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 121
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Ahhh, I'm so nervous, there's going to be a review meeting with Klukai this afternoon! I mean, I haven't really messed up recently, but I'm still nervous... oooh...” – Harpsy"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 122
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“I read some interesting stories, which I can tell you before bedtime. Don't worry, they're folk tales from various regions, not ghost stories~” – Helen"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 123
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Lately, doesn't everyone seem so stressed and unhappy? Hehe, it's my turn to lighten the mood!” – Jiangyu"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 124
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Just watch me. I'll show you how a true elite Doll perfectly completes a mission.” – Klukai"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 125
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“As I use them so often during missions, I've grown fond of motorbikes without even realizing it. I guess that's something I've gained unexpectedly.” – Klukai"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 126
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“You DO know I can clearly see the expression on your face and where you're looking, right?” – Koleda"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 127
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“I picked the name Koleda myself. At first, it was a declaration that I'd be back, but now... I guess it's just a statement of fact.” – Koleda"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 128
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“How did you even manage to operate this vehicle by yourself at the beginning? It's been three days and I still haven't finished exploring it.” – Koleda"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 129
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Fun fact: I'm the youngest in Task Force DEFY. That means I'm the little sister, so you remember to be lenient with me.” – Koleda"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 130
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“No... joking around like that would mean admitting Voymastina is my big sister. Let's just pretend I didn't say anything.” – Koleda"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 131
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“What, is it your first time seeing this? Real skill is shown with a blade in your hand!” – Krolik"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 132
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Wha—! T-These aren't rabbit ears! ...Tch, why are you asking? Did you finish the mission yet?!” – Krolik"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 133
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Now, what kind of surprise should I prepare next...?” – Lenna"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 134
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Everytime I see Klukai working hard, I can't help but want to bully her a little... Ah, you don't have to keep that a secret, Commander.” – Leva"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 135
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Let me handle the paperwork... er... where are those documents I sorted yesterday?!” – Lewis"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 136
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Three crates of ammo, five crates of rations, two medical pouches— Okay, I've got it! ...Um, actually... how many medical pouches was it again?” – Liushih"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 137
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Hehe... A devil? Oh, you wound me. I'm just approaching you to adjust your clothes. What kind of devil would do that?” – Loreley"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 138
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Hmph, I can't believe you actually gave me a mission like this... No, wait, I, I never said I wouldn't do it!” – Makiatto"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 139
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“This is a dessert made using a recipe Centaureissi gave me. Do you like to try it? I-It's not like I made it especially for you or anything!” – Makiatto"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 140
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Wow, this fluffiness... and the meowing... W-What are you looking at?! I don't like cats! I just happened to stumble upon this video!” – Makiatto"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 141
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“By the way, why didn't you say anything when you—ugh. If you don't want to answer, then don't!” – Makiatto"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 142
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Hoh, why does Vepley have such strength? Could it be that... Her backpack is actually a souped-up external battery?” – Mechty"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 143
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Once I accepted that I am trash, I became invincible!— This is my new forum signature and account status. Not bad, right?” – Mechty"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 144
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“If only things could be like in the comics and the next panel would just show \"Mission Accomplished\"...” – Mechty"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 145
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Ksenia is a reliable comrade, and I'll keep a close eye on her to make sure she doesn't fall for the abyssal allure of money!” – Mosin-Nagant"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 146
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Learning to say no is a good thing, but if Papasha could be a bit more firm when she says it, that'd be even better.” – Mosin-Nagant"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 147
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“The youngsters keep saying my strategies are outdated, but I'll show them—ignore the wisdom of their elders, and you'll suffer the consequences!” – Nagant"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 148
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Hey, hey, hey! You youngsters seriously don't have faith in my life experience? There's no way I'd get scammed! Eh? N-no way, right?” – Nagant"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 149
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“No matter what you do, you must do it with dignity! That's the most important lesson I've learned as a senior!” – Nagant"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 150
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Hearken to... the prayer of wisdom.” – Nemesis"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 151
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“No, Boss, I'm not slacking off! I'm just wondering what your idea of “justice” is!” – Nikketa"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 152
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Order received! For honor and mission!” – Papasha"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 153
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Hm? You want to pat my head, Commander? Please, go ahead, I don't mind. But don't be fooled by my size; I'm really strong, so feel free to count on me!” – Peri"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 154
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Kro... lik... Sounds vaguely familiar. Is it some kind of exotic food?” – Peritya"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 155
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Important data must always be recorded, while unimportant details need to be removed.” – Peritya"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 156
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Get away from me, human! Wait... Why do you have that look on your face? Aren't you used to this already? Ahhhhh, forget it, you don't have to get too far away...” – Phaetusa"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 157
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Perhaps you're different from all the other humans I've met... But I won't lower my guard. I'm watching you.” – Phaetusa"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 158
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“My name comes from an old poem—pronounced \"Qiongjiu\". It means virtuous talent as precious as jade. I hope to live up to the meaning of my name.” – Qiongjiu"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 159
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Frostfall Squad's budget has exceeded by 35% this quarter. Although I was mentally prepared for it, but... sigh... Is the excess because of Cheeta, or Lind?” – Qiongjiu"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 160
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Sabrina used up all her salami, but when I suggested substituting with lap cheungs instead, she said no. Why is that? What's wrong with lap cheungs?” – Qiuhua"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 161
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“You're asking about my injuries from our previous battle? You don't need to worry about that. Rather, you should think about our budget for our next mission.” – Robella"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 162
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Commander, here's the... what is it? This ruckus... is it Sop again? I take my eyes off her for a moment and she— Sop! SOP! STOP!” – Robella"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 163
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Let's pack some extra snacks and food. It's for the sake of a successful mission, after all.” – Sabrina"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 164
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Tonight's dinner? It's a new dish Groza and I came up with together. Pretty good, right? Commander... are you okay? Commander, are you alright?!” – Sabrina"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 165
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Truck-senpai's words are deceptive. The truth is... she's really concerned about you, just like me.” – Sakura"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 166
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“There are actually a lot of interesting people and places in the contaminated zone... If only everyone's lives could be a little easier.” – Sakura"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 167
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“The cradle that hatched me was nothing more than a dead tomb. The gestation before my advent was merely the process of dying... that is what third-generation Dolls are.” – Sextans"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 168
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“They all look up towards \"Nirvana\", but they do not know that \"Nirvana\" is watching them as well.” – Sextans"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 169
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“\"Mother\" wants to touch the gods, and so she offered us up to this gala of deicide. I look forward to seeing her ring her death knell with her own staff.” – Sextans"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 170
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Compared to my previous colleagues, the Dolls around you seem a little... simpler. How did you tolerate this chaotic clamor for so long?” – Sextans"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 171
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Hmm... how should I combine fighting with performing? Eh? Is Vepley thinking about this too? Then I need to figure out how to outdo her!” – Sharkry"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 172
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Sniffsniff, sniffsniffsniffsniff...” – Soppo"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 173
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“The café is the busiest in the morning and right after noon... Some people chase time, while some enjoy their time. Commander, which of these will you be doing today?” – Springfield"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 174
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Commander, regarding the storeroom utilization improvement we discussed last time... I've created a detailed area plan, please have a look.” – Suomi"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 175
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Running into trouble? Let's put our heads together and figure it out. Huh? I'm not completely out of touch with reality, you know.” – Tololo"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 176
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“As for places I'd like to visit... I want to go see the place that shares my name—the Cerro-Tololo Observatory.” – Tololo"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 177
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“What seems distant is never truly out of reach. If humanity can reach for the stars, then we can certainly achieve our ultimate dreams.” – Tololo"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 178
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“A way to relax? You've come to the right person. I recommend the \"Soul Extractor\", it's a great stress-relief tool!” – Ullrid"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 179
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Popping this bubblewrap is so comfy...” – Ullrid"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 180
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“...I became H.I.D.E. 404's Team B's squad leader only because of a random misjudgement from Klukai.” – Vector"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 181
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“It's not that Ruchey is always following me, it's me always following Ruchey. It probably sounds weird, but this is how I maintain my friendship with her.” – Vector"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 182
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Yawn... pulled an all-nighter rehearsing again... No, Vepley needs to stay focused!” – Vepley"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 183
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Spreading happiness to everyone is Vepley's job☆” – Vepley"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 184
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“There is no doubt that Alva is a capable leader. Therefore, I will execute her orders without hesitation, even if I do not understand her intentions.” – Voymastina"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 185
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Raw performance is not everything. For \"the strongest Doll\", tactics, efficiency, and experience... all of these are essential.” – Voymastina"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 186
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Task Force DEFY's members are not given to casual conversation. This is probably because when we start talking, the subject of certain people inevitably comes up.” – Voymastina"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 187
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“I have a few suggestions to make about Vector's mission plan... Huh? This is Klukai's plan? Then... never mind.” – Welrod"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 188
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“The way I see it, when the law fails to punish true villains, someone's got to step up and make sure justice is done.” – Welrod"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 189
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Your intellect will always be your most reliable weapon.” – Welrod"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 190
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Y-you can tell I'm nervous? It's that obvious? Actually... I've got a performance coming up next week…” – Yoohee"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 191
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Sharkry is so dependable; she always looks after her juniors and knows exactly how to motivate them… I wonder if I could be like her one day…” – Yoohee"
+        }
+    }
+    append "Quotes" {
+        set "LocaIdx" 192
+        set "Text" {
+            set "m_CategoryName" ""
+            set "m_FieldName" ""
+            set "m_DefaultTranslation" "“Team management? To me, it's like conducting an orchestra—you need to bring out the strengths of each instrument in the ensemble and achieve a perfect harmony.” – Zhaohui"
+        }
+    }
+}

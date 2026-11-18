@@ -369,7 +369,7 @@
 }
 .wm-squads UnitWindow #TabsHeader .tab-button-selected { border-bottom-color: var(--gold); }
 .wm-squads UnitWindow #TabsHeader .tab-button-label,
-.wm-squads UnitWindow #TabsHeader .tab-button-selected-label { font-size: 8px; letter-spacing: 0.8px; -unity-text-align: middle-center; color: var(--ink-meta); }
+.wm-squads UnitWindow #TabsHeader .tab-button-selected-label { font-size: 8px; letter-spacing: 0.8px; -unity-text-align: middle-center; color: var(--ink-meta); flex-grow: 1; margin: 0; padding: 0; }
 .wm-squads UnitWindow #TabsHeader .tab-button-selected-label { color: var(--gold); }
 .wm-squads UnitWindow #TabsHeader .tab-button:hover .tab-button-label { color: var(--gold); }
 
@@ -418,6 +418,9 @@
 /* Roster tiles: a hairline each, gold on the chosen one */
 .wm-squads ArmoryUnitSelectSlot > #Pickable { border-width: 0.64px; border-color: var(--line); }
 .wm-squads ArmoryUnitSelectSlot #Selected { background-image: none; border-width: 1.9px; border-color: var(--gold); }
+/* The badge on a tile is a square sprite in a taller box, so it is fitted rather than stretched */
+.wm-squads ArmoryUnitSelectSlot #BadgeImage,
+.wm-prep #UnitsContainer #BadgeImage { -unity-background-scale-mode: scale-to-fit; }
 /* The Affinity tab's level in large figures, and its bar */
 .wm-squads__level { flex-direction: row; align-items: flex-end; flex-shrink: 0; margin: 2px 0 6px 0; }
 .wm-squads__level-number { color: var(--ink); font-size: 27px; padding: 0; margin: 0 8px 0 0; }
