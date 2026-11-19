@@ -15,7 +15,7 @@ public sealed partial class StrategyDiorama
     // A hologram quad in the room: the holotable's own quad and shader, showing a texture.
     private GameObject Quad(GameObject template, string name, Texture texture)
     {
-        var quad = UnityEngine.Object.Instantiate(template, _room.transform, false);
+        var quad = UnityEngine.Object.Instantiate(template, _scene.Room.transform, false);
         quad.name = name;
         quad.SetActive(true);
         var material = quad.GetComponent<MeshRenderer>()?.material;

@@ -98,7 +98,7 @@ public sealed partial class StrategyDiorama
     // picture of a thing that has none (armour, a calibration core) on a card.
     private void ShowWorkedOnWeapon()
     {
-        var room = _weaponSet.Root;
+        var room = _scene.Weapon.Root;
         if (room == null)
             return;
         // Vanilla greys the Assemble button's word where the project's materials are short and

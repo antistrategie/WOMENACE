@@ -89,7 +89,7 @@ public sealed partial class StrategyDiorama
         var prefab = Context.Assets.Load<GameObject>(ElmoAsset);
         if (prefab == null || HologramMaterial() == null)
             return null;
-        _oci.Ship = UnityEngine.Object.Instantiate(prefab, _room.transform, false);
+        _oci.Ship = UnityEngine.Object.Instantiate(prefab, _scene.Room.transform, false);
         _oci.Ship.name = OciShipName;
         _oci.Ship.transform.localPosition = OciShipFoot;
         _oci.Ship.transform.localRotation = OciShipFacing;
@@ -118,7 +118,7 @@ public sealed partial class StrategyDiorama
 
     private void DriveOci()
     {
-        var on = _policyScreen == VanillaUi.Screens.ShipUpgrades && _room != null && _camera != null && _active == _ops
+        var on = _policyScreen == VanillaUi.Screens.ShipUpgrades && _scene.Room != null && _scene.Camera != null && _scene.Active == _scene.Ops
             && _shellRoot?.panel != null;
         if (!on)
         {
@@ -177,9 +177,9 @@ public sealed partial class StrategyDiorama
             // The camera keeps clear of the room's walls all the way round.
             var (target, way) = (N(OciFraming.Target), PlanetOrbitWay(_oci.Yaw, _oci.Start.Tilt));
             var local = target + way * ClearDistance(target, way, _oci.Distance, OciNearest);
-            var eye = _room.transform.TransformPoint(new Vector3(local.X, local.Y, local.Z));
-            var focus = _room.transform.TransformPoint(OciFraming.Target);
-            _shot = (eye, Quaternion.LookRotation(focus - eye, _room.transform.up), OciFraming.Fov, OciFraming.Shift);
+            var eye = _scene.Room.transform.TransformPoint(new Vector3(local.X, local.Y, local.Z));
+            var focus = _scene.Room.transform.TransformPoint(OciFraming.Target);
+            _shot = (eye, Quaternion.LookRotation(focus - eye, _scene.Room.transform.up), OciFraming.Fov, OciFraming.Shift);
             _oci.Settling = 30;
         }
         if (_shotTravel < 1f)
@@ -244,7 +244,7 @@ public sealed partial class StrategyDiorama
     // Each group's line runs from under its middle to its part of the hull, as the camera sees it.
     private void PlaceOciLines(GameObject ship)
     {
-        var camera = _camera.GetComponent<Camera>();
+        var camera = _scene.Camera.GetComponent<Camera>();
         var panel = _shellRoot.panel;
         foreach (var (group, anchor, stem, line, ring) in _oci.Groups)
         {
@@ -281,7 +281,7 @@ public sealed partial class StrategyDiorama
     {
         var slots = UI.Find(root, UiSelector.Name(VanillaUi.Elements.Slots));
         var window = UI.Find(root, UiSelector.Name(VanillaUi.Elements.ShipInfoWindow));
-        if (slots == null || window == null || _active != _ops)
+        if (slots == null || window == null || _scene.Active != _scene.Ops)
             return;
         if (!root.ClassListContains(OciClass))
         {

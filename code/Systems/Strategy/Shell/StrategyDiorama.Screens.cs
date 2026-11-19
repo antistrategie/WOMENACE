@@ -115,15 +115,15 @@ public sealed partial class StrategyDiorama
             var homeView = show && OnHomeView(name);
             // The strategy layer runs in MissionPreparation after a load but in the Title scene for
             // a new campaign, so the room spawns on the first room screen in whatever scene that is.
-            if (_room == null && show && Enabled && !_spawning && _spawnFailedIn != UnityEngine.SceneManagement.SceneManager.GetActiveScene().name)
+            if (_scene.Room == null && show && Enabled && !_spawning && _spawnFailedIn != UnityEngine.SceneManagement.SceneManager.GetActiveScene().name)
             {
                 _spawning = true;
                 try { Spawn(); } finally { _spawning = false; }
                 // A room that would not spawn is not tried again in this scene: the layer stays vanilla.
-                if (_room == null)
+                if (_scene.Room == null)
                     _spawnFailedIn = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
             }
-            if (_room == null || _camera == null)
+            if (_scene.Room == null || _scene.Camera == null)
             {
                 ClearHome();
                 return;
@@ -154,22 +154,22 @@ public sealed partial class StrategyDiorama
                     _hiddenVanilla = null;
                 }
                 // The Workshop is in the weapon room, and in the ops room if that would not spawn.
-                var set = workshop && !shop && SpawnSet(_weaponSet) != null ? _weaponSet : _ops;
+                var set = workshop && !shop && SpawnSet(_scene.Weapon) != null ? _scene.Weapon : _scene.Ops;
                 if (!staged)
                     ActivateSet(set);
-                _camera.SetActive(true);
+                _scene.Camera.SetActive(true);
                 // The sun lights the room's characters, and nothing of a screen that shows no room.
                 if (_life.ShadowLight != null)
                     _life.ShadowLight.enabled = true;
-                var camera = _camera.GetComponent<Camera>();
+                var camera = _scene.Camera.GetComponent<Camera>();
                 if (camera != null)
                     camera.enabled = true;
                 // The refitting room puts the room's dolls away, so they are placed only where they show.
                 if (!staged)
                 {
                     Frame(shop ? ShopSystem.IsProcurementOpen ? MachineFraming : ShopFraming
-                        : homeView || (workshop && set == _ops) ? null : FramingFor(name), set.Root.transform);
-                    if (set == _ops)
+                        : homeView || (workshop && set == _scene.Ops) ? null : FramingFor(name), set.Root.transform);
+                    if (set == _scene.Ops)
                         PlaceRoomDolls();
                 }
                 RestTableCamera(onTable ? vanilla : null, !homeView);
@@ -190,9 +190,9 @@ public sealed partial class StrategyDiorama
                 SetStarMap(null);
                 if (_shotLive && float.IsPositiveInfinity(_shotLeftAt))
                     _shotLeftAt = Time.unscaledTime;
-                if (_active?.Root != null)
-                    _active.Root.SetActive(false);
-                _camera.SetActive(false);
+                if (_scene.Active?.Root != null)
+                    _scene.Active.Root.SetActive(false);
+                _scene.Camera.SetActive(false);
                 if (_life.ShadowLight != null)
                     _life.ShadowLight.enabled = false;
                 // A vanilla background we hid for a room screen comes back when it is current again.
@@ -216,7 +216,7 @@ public sealed partial class StrategyDiorama
     // Moves the room camera to a screen's framing, or the room's own shot when it has none.
     private void Frame(Framing? framing, Transform space)
     {
-        var camera = _camera.GetComponent<Camera>();
+        var camera = _scene.Camera.GetComponent<Camera>();
         (Vector3 Position, Quaternion Rotation, float Fov, float Shift) shot;
         if (framing is { } f)
         {
@@ -225,7 +225,7 @@ public sealed partial class StrategyDiorama
             shot = (eye, Quaternion.LookRotation(target - eye, Vector3.up), f.Fov, f.Shift);
         }
         else
-            shot = (_anchor.position, _anchor.rotation, RoomFov, 0f);
+            shot = (_scene.Anchor.position, _scene.Anchor.rotation, RoomFov, 0f);
         // Vanilla asks for the same screen's camera many times over, which changes nothing.
         var same = _shotLive && Nullable.Equals(_shotFraming, framing);
         _shotFraming = framing;
@@ -248,14 +248,14 @@ public sealed partial class StrategyDiorama
         if (stayed)
         {
             Cue(TableCue.Travel);
-            _shotFrom = (_camera.transform.position, _camera.transform.rotation, camera.fieldOfView, _lensShift);
+            _shotFrom = (_scene.Camera.transform.position, _scene.Camera.transform.rotation, camera.fieldOfView, _lensShift);
             _shotTravel = 0f;
             // Each room has a side that is not for showing: the weapon room's doorway opens on
             // nothing, and the ops room's back, behind the Dinergate, is not dressed. A turn
             // between two shots that would pass that side on its shorter way round goes the
             // other way, by the room's far end.
-            Vector3? unseen = _weaponSet.Root != null && space == _weaponSet.Root.transform ? WeaponRoomDoorway
-                : _room != null && space == _room.transform ? OpsRoomBack : null;
+            Vector3? unseen = _scene.Weapon.Root != null && space == _scene.Weapon.Root.transform ? WeaponRoomDoorway
+                : _scene.Room != null && space == _scene.Room.transform ? OpsRoomBack : null;
             if (unseen is { } side)
             {
                 var away = space.TransformDirection(side);
@@ -272,7 +272,7 @@ public sealed partial class StrategyDiorama
             return;
         }
         _shotTravel = 1f;
-        _camera.transform.SetPositionAndRotation(shot.Position, shot.Rotation);
+        _scene.Camera.transform.SetPositionAndRotation(shot.Position, shot.Rotation);
         SetLens(camera, shot.Fov, shot.Shift, _shotLift);
     }
 
@@ -338,11 +338,11 @@ public sealed partial class StrategyDiorama
     // with nobody listening nothing is heard. The room camera listens whenever none of them does.
     private void KeepListening()
     {
-        if (_camera == null || (Time.unscaledTime > _earsKeenUntil && Time.unscaledTime - _earsCheckedAt < 0.5f))
+        if (_scene.Camera == null || (Time.unscaledTime > _earsKeenUntil && Time.unscaledTime - _earsCheckedAt < 0.5f))
             return;
         _earsCheckedAt = Time.unscaledTime;
         if (_ears == null)
-            _ears = _camera.GetComponent<AudioListener>() ?? _camera.AddComponent<AudioListener>();
+            _ears = _scene.Camera.GetComponent<AudioListener>() ?? _scene.Camera.AddComponent<AudioListener>();
         var others = false;
         foreach (var ear in UnityEngine.Object.FindObjectsOfType<AudioListener>())
             others |= ear != _ears && ear.enabled;
@@ -366,12 +366,12 @@ public sealed partial class StrategyDiorama
     // holotable's hologram and the view's panels arrive over the travel's second half.
     private void DriveRoomCamera()
     {
-        if (_camera == null || !_camera.activeSelf)
+        if (_scene.Camera == null || !_scene.Camera.activeSelf)
             return;
         KeepListening();
         if (!_shotLive)
             return;
-        var camera = _camera.GetComponent<Camera>();
+        var camera = _scene.Camera.GetComponent<Camera>();
         if (camera == null)
             return;
         if (_shotTravel < 1f)
@@ -387,7 +387,7 @@ public sealed partial class StrategyDiorama
             var facing = _shotVia is { } via
                 ? Quaternion.Slerp(Quaternion.Slerp(_shotFrom.Rotation, via, k), Quaternion.Slerp(via, _shot.Rotation, k), k)
                 : Quaternion.Slerp(_shotFrom.Rotation, _shot.Rotation, k);
-            _camera.transform.SetPositionAndRotation(Vector3.Lerp(_shotFrom.Position, _shot.Position, k), facing);
+            _scene.Camera.transform.SetPositionAndRotation(Vector3.Lerp(_shotFrom.Position, _shot.Position, k), facing);
             SetLens(camera, Mathf.Lerp(_shotFrom.Fov, _shot.Fov, k), Mathf.Lerp(_shotFrom.Shift, _shot.Shift, k), Mathf.Lerp(_shotLiftFrom, _shotLift, k));
             SetOperationsFade(Ease.OutCubic(Mathf.Clamp01((t - 0.5f) * 2f)));
             return;
@@ -398,7 +398,7 @@ public sealed partial class StrategyDiorama
             _shotTravelling = false;
             SetOperationsFade(1f);
         }
-        _camera.transform.SetPositionAndRotation(_shot.Position, _shot.Rotation);
+        _scene.Camera.transform.SetPositionAndRotation(_shot.Position, _shot.Rotation);
         if (_lensShift != _shot.Shift || _lensLift != _shotLift || camera.fieldOfView != _shot.Fov)
             SetLens(camera, _shot.Fov, _shot.Shift, _shotLift);
     }
@@ -515,7 +515,7 @@ public sealed partial class StrategyDiorama
 
     private void HoldVideo(Il2CppMenace.UI.VideoOverlay video)
     {
-        var room = _camera != null ? _camera.GetComponent<Camera>() : null;
+        var room = _scene.Camera != null ? _scene.Camera.GetComponent<Camera>() : null;
         if (room != null && room.enabled)
             room.enabled = false;
         if (_shell != null && _shell.style.display != UnityEngine.UIElements.DisplayStyle.None)
@@ -545,7 +545,7 @@ public sealed partial class StrategyDiorama
         _tableVideo = false;
         try
         {
-            var room = _camera != null ? _camera.GetComponent<Camera>() : null;
+            var room = _scene.Camera != null ? _scene.Camera.GetComponent<Camera>() : null;
             if (room != null)
                 room.enabled = true;
             if (_shell != null)

@@ -19,9 +19,9 @@ public sealed partial class StrategyDiorama
     private System.Collections.IEnumerator LaunchMission(VisualElement shell)
     {
         var button = _shellRoot != null ? UI.Find(_shellRoot, UiSelector.Name(_actionPrimary))?.TryCast<InteractiveElement>() : null;
-        if (button == null || !button.IsInteractable() || _cutting)
+        if (button == null || !button.IsInteractable() || _scene.Cutting)
             yield break;
-        _cutting = true;
+        _scene.Cutting = true;
         bool barsFirst;
         // A launch that throws would otherwise leave every later room cut refused.
         try
@@ -41,7 +41,7 @@ public sealed partial class StrategyDiorama
         }
         finally
         {
-            _cutting = false;
+            _scene.Cutting = false;
         }
         var yes = FindDialogButton(VanillaUi.Elements.YesButton);
         if (shell.panel == null || _shell != shell)

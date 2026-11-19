@@ -37,7 +37,7 @@ public sealed partial class StrategyDiorama
     // camera. With no operation running there is no area to show, and it is put away.
     private void DriveLand()
     {
-        if (_room == null)
+        if (_scene.Room == null)
             return;
         if (_missions.LandLayers.Count == 0 || _missions.LandLayers[0].Layer == null)
         {
@@ -45,7 +45,7 @@ public sealed partial class StrategyDiorama
             _missions.Curtain = default;
             _missions.LandShown = null;
             _missions.LandFill = null;
-            foreach (var t in _room.GetComponentsInChildren<Transform>(true))
+            foreach (var t in _scene.Room.GetComponentsInChildren<Transform>(true))
             {
                 if (t.parent == null || t.parent.name != TableEffects)
                     continue;
@@ -54,7 +54,7 @@ public sealed partial class StrategyDiorama
                     // Only the layers GFL2 has switched on. The rest stay off.
                     if (t.gameObject.activeSelf)
                     {
-                        _missions.LandLayers.Add((t, _room.transform.InverseTransformPoint(t.position), t.localScale));
+                        _missions.LandLayers.Add((t, _scene.Room.transform.InverseTransformPoint(t.position), t.localScale));
                         if (t.name == LandFillNode && _missions.LandFill == null)
                         {
                             _missions.LandFill = t.GetComponent<Renderer>()?.material;
@@ -64,7 +64,7 @@ public sealed partial class StrategyDiorama
                     }
                 }
                 else if (t.name == CurtainNode && t.gameObject.activeInHierarchy && _missions.Curtain.Node == null)
-                    _missions.Curtain = (t, _room.transform.InverseTransformPoint(t.position), t.localScale);
+                    _missions.Curtain = (t, _scene.Room.transform.InverseTransformPoint(t.position), t.localScale);
             }
             ApplyLand(Ease.InOutCubic(_missions.LandAmount));
         }
@@ -94,7 +94,7 @@ public sealed partial class StrategyDiorama
         if (_missions.Curtain.Node != null)
         {
             _missions.Curtain.Node.localScale = Vector3.Scale(_missions.Curtain.Scale, Vector3.Lerp(Vector3.one, CurtainScale, amount));
-            _missions.Curtain.Node.position = _room.transform.TransformPoint(_missions.Curtain.Place + Vector3.up * lift);
+            _missions.Curtain.Node.position = _scene.Room.transform.TransformPoint(_missions.Curtain.Place + Vector3.up * lift);
         }
         foreach (var (layer, place, scale) in _missions.LandLayers)
         {
@@ -106,7 +106,7 @@ public sealed partial class StrategyDiorama
             layer.localScale = scale * grow;
             var shift = (LandCentre - (place + LandFromPivot * grow)) * amount;
             shift.y = lift;
-            layer.position = _room.transform.TransformPoint(place + shift);
+            layer.position = _scene.Room.transform.TransformPoint(place + shift);
         }
     }
 

@@ -27,7 +27,7 @@ public sealed partial class StrategyDiorama
     {
         if (!_life.DollRigs.TryGetValue(doll.Pointer, out var rig) || rig[0] == null)
             _life.DollRigs[doll.Pointer] = rig = BuildRig(doll);
-        var away = _camera != null ? doll.transform.position - _camera.transform.position : doll.transform.forward;
+        var away = _scene.Camera != null ? doll.transform.position - _scene.Camera.transform.position : doll.transform.forward;
         away.y = 0f;
         var frame = Quaternion.LookRotation(away.sqrMagnitude > 1e-6f ? away : Vector3.forward, Vector3.up);
         var chest = doll.transform.position + Vector3.up * 1.3f;

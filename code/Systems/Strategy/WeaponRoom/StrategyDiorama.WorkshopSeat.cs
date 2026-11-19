@@ -37,7 +37,7 @@ public sealed partial class StrategyDiorama
     private void ShowCalibrationDoll()
     {
         var lit = false;
-        var room = _weaponSet.Root;
+        var room = _scene.Weapon.Root;
         var instance = WorkshopStation == CalibrateStation ? CalibrationUISystem.Instance?.Picked : null;
         var leader = instance?.Leader;
         // The doll who carries the weapon, or for one in stock the doll whose weapon it is.
@@ -125,7 +125,7 @@ public sealed partial class StrategyDiorama
                 doll.transform.localPosition = LoungeStand;
             }
             // The room's own light on her, as on every doll in a room, and her rig at once.
-            ProbeLight(doll, _weaponSet);
+            ProbeLight(doll, _scene.Weapon);
             lit = true;
         }
         if (_weaponRoom.CalibrationDoll != null && (lit || Time.frameCount % CalibrationDollRelightFrames == 0))
@@ -147,7 +147,7 @@ public sealed partial class StrategyDiorama
     // The lowest point of her feet, and of her whole body for the dev verb.
     private (Vector3 feet, Vector3 whole) LowestPoints(GameObject doll)
     {
-        var room = _weaponSet.Root.transform;
+        var room = _scene.Weapon.Root.transform;
         var feet = new List<(Vector3 ankle, Vector3 toes, float reach)>();
         var animator = doll.GetComponentInChildren<Animator>();
         if (animator != null && animator.isHuman)
@@ -222,7 +222,7 @@ public sealed partial class StrategyDiorama
     // lowest point is read again after each step, as the heel may give way to the toe.
     private void ClearOfFloor(GameObject doll, Vector3 hips)
     {
-        var room = _weaponSet.Root.transform;
+        var room = _scene.Weapon.Root.transform;
         var leant = 0f;
         for (var step = 0; step < 4; step++)
         {

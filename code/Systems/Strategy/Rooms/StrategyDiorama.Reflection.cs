@@ -63,9 +63,9 @@ public sealed partial class StrategyDiorama
 
     private void SpawnMirror()
     {
-        if (_camera == null || _life.Mirror != null)
+        if (_scene.Camera == null || _life.Mirror != null)
             return;
-        _life.RoomCamera = _camera.GetComponent<Camera>();
+        _life.RoomCamera = _scene.Camera.GetComponent<Camera>();
         _life.Mirror = new GameObject("WOMENACE_StrategyRoomMirror") { layer = ReflectionVolumeLayer };
         _life.MirrorCamera = _life.Mirror.AddComponent<Camera>();
         _life.MirrorCamera.depth = _life.RoomCamera.depth - 0.5f;
@@ -162,7 +162,7 @@ public sealed partial class StrategyDiorama
     {
         if (UnityEngine.Time.frameCount <= _life.MirrorHeldFrame)
             return;
-        var set = _active;
+        var set = _scene.Active;
         var shown = set?.Root != null && set.Root.activeInHierarchy && _life.RoomCamera != null && _life.RoomCamera.isActiveAndEnabled;
         var resolution = MirrorResolution();
         if (!shown || (resolution <= 0f && set.MirrorCube == null))

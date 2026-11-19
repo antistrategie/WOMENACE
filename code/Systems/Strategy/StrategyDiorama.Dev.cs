@@ -71,7 +71,7 @@ public sealed partial class StrategyDiorama
     internal static string PlanetCardsFromDev()
     {
         var d = _instance;
-        var camera = d?._camera != null ? d._camera.GetComponent<Camera>() : null;
+        var camera = d?._scene.Camera != null ? d._scene.Camera.GetComponent<Camera>() : null;
         if (camera == null)
             return "no camera";
         var (fov, shift, lift) = (camera.fieldOfView, d._lensShift, d._lensLift);
@@ -117,9 +117,9 @@ public sealed partial class StrategyDiorama
     internal static string HallPlanFromDev(float reach, float cx = 0f, float cz = 0f, float floor = 0f, float cell = 0.4f)
     {
         var d = _instance;
-        if (d?._room == null)
+        if (d?._scene.Room == null)
             return "no room";
-        var stage = d._staging.Stage != null ? d._staging.Stage : d._room.transform;
+        var stage = d._staging.Stage != null ? d._staging.Stage : d._scene.Room.transform;
         var side = (int)(reach * 2f / cell);
         var grid = new char[side, side];
         for (var z = 0; z < side; z++)
@@ -177,7 +177,7 @@ public sealed partial class StrategyDiorama
             }
             pieces++;
             var box = mesh.bounds;
-            var eye = Local(d._camera.transform.position);
+            var eye = Local(d._scene.Camera.transform.position);
             var (ex, ez) = ((int)((eye.x + reach) / cell), (int)((eye.z + reach) / cell));
             if (ex >= 0 && ez >= 0 && ex < side && ez < side)
                 grid[ex, ez] = 'C';
@@ -245,9 +245,9 @@ public sealed partial class StrategyDiorama
             var m = r.sharedMaterial;
             var colour = m != null && m.HasProperty("_BaseColor") ? m.GetColor("_BaseColor").ToString() : m != null && m.HasProperty("_Color") ? m.GetColor("_Color").ToString() : "";
             var texture = m != null && m.HasProperty("_MainTex") && m.mainTexture != null ? m.mainTexture.name : "";
-            lines.Add($"{PathOf(r.transform)} | {(m != null ? m.name : "none")} | {(m != null ? m.shader.name : "")} | {colour} | {texture} | centre {r.bounds.center} size {r.bounds.size} | room {(d?._room != null ? d._room.transform.InverseTransformPoint(r.bounds.center).ToString("F2") : "")} yaw {r.transform.eulerAngles.y - (d?._room != null ? d._room.transform.eulerAngles.y : 0f):F0}");
+            lines.Add($"{PathOf(r.transform)} | {(m != null ? m.name : "none")} | {(m != null ? m.shader.name : "")} | {colour} | {texture} | centre {r.bounds.center} size {r.bounds.size} | room {(d?._scene.Room != null ? d._scene.Room.transform.InverseTransformPoint(r.bounds.center).ToString("F2") : "")} yaw {r.transform.eulerAngles.y - (d?._scene.Room != null ? d._scene.Room.transform.eulerAngles.y : 0f):F0}");
         }
-        var camera = d?._camera != null ? d._camera.GetComponent<Camera>() : null;
+        var camera = d?._scene.Camera != null ? d._scene.Camera.GetComponent<Camera>() : null;
         if (camera != null)
             lines.Add($"camera at {camera.transform.position} facing {camera.transform.forward} clear {camera.clearFlags} background {camera.backgroundColor}");
         System.IO.File.WriteAllLines(path, lines.ToArray());
@@ -294,7 +294,7 @@ public sealed partial class StrategyDiorama
         var lines = new System.Collections.Generic.List<string> { $"quality {before} -> {(quality >= 0 ? quality : before)}" };
         if (d._life.ShadowLight != null)
             lines.Add(Res(d._life.ShadowLight));
-        foreach (var set in d.Sets)
+        foreach (var set in d._scene.Sets)
             if (set?.LiveLights != null)
                 foreach (var light in set.LiveLights)
                     if (light != null && light.shadows != LightShadows.None)
@@ -365,7 +365,7 @@ public sealed partial class StrategyDiorama
     {
         var d = _instance;
         var camera = RoomCamera;
-        var set = room == "weapon" ? d?._weaponSet : room == "refit" ? d?._refitSet : d?._ops;
+        var set = room == "weapon" ? d?._scene.Weapon : room == "refit" ? d?._scene.Refit : d?._scene.Ops;
         if (d == null || camera == null || d.SpawnSet(set) == null)
             return "no room camera or no such room";
         d.ActivateSet(set);
@@ -384,10 +384,10 @@ public sealed partial class StrategyDiorama
     {
         var d = _instance;
         var camera = RoomCamera;
-        if (d == null || camera == null || d._room == null)
+        if (d == null || camera == null || d._scene.Room == null)
             return "no room camera";
-        var eye = d._room.transform.TransformPoint(new Vector3(ex, ey, ez));
-        var target = d._room.transform.TransformPoint(new Vector3(tx, ty, tz));
+        var eye = d._scene.Room.transform.TransformPoint(new Vector3(ex, ey, ez));
+        var target = d._scene.Room.transform.TransformPoint(new Vector3(tx, ty, tz));
         camera.transform.SetPositionAndRotation(eye, Quaternion.LookRotation(target - eye, Vector3.up));
         camera.fieldOfView = fov;
         camera.orthographic = false;
@@ -413,19 +413,19 @@ public sealed partial class StrategyDiorama
     {
         var d = _instance;
         var camera = RoomCamera;
-        if (camera == null || d?._room == null)
+        if (camera == null || d?._scene.Room == null)
             return "no room camera";
-        var room = d._room.transform;
+        var room = d._scene.Room.transform;
         // The picture is the room as the home camera faces it: its top is room -x, its right room +z.
         var rotation = Quaternion.LookRotation(room.TransformDirection(Vector3.down), room.TransformDirection(Vector3.left));
-        d._camera.transform.SetPositionAndRotation(room.TransformPoint(new Vector3(cx, height, cz)), rotation);
+        d._scene.Camera.transform.SetPositionAndRotation(room.TransformPoint(new Vector3(cx, height, cz)), rotation);
         d.SetLens(camera, camera.fieldOfView, 0f, 0f);
         camera.orthographic = true;
         camera.orthographicSize = halfHeight;
         camera.nearClipPlane = near;
-        d._shot = (d._camera.transform.position, rotation, camera.fieldOfView, 0f);
+        d._shot = (d._scene.Camera.transform.position, rotation, camera.fieldOfView, 0f);
         d._shotTravel = 1f;
-        return $"plan over ({cx}, {cz}) from {height}, {halfHeight * 2f} m tall, {halfHeight * 2f * camera.aspect} m wide, near {near}; anchor {room.InverseTransformPoint(d._anchor.position)} looking {room.InverseTransformDirection(d._anchor.forward)}";
+        return $"plan over ({cx}, {cz}) from {height}, {halfHeight * 2f} m tall, {halfHeight * 2f * camera.aspect} m wide, near {near}; anchor {room.InverseTransformPoint(d._scene.Anchor.position)} looking {room.InverseTransformDirection(d._scene.Anchor.forward)}";
     }
 
     // Makes the room camera orthographic at a half height in room units, or perspective again at 0.
@@ -473,17 +473,17 @@ public sealed partial class StrategyDiorama
     internal static string PartsFromDev(string nameStart, bool show)
     {
         var d = _instance;
-        if (d?._active?.Root == null)
+        if (d?._scene.Active?.Root == null)
             return "no room";
         var (count, lines) = (0, new List<string>());
-        foreach (var renderer in d._active.Root.GetComponentsInChildren<Renderer>(true))
+        foreach (var renderer in d._scene.Active.Root.GetComponentsInChildren<Renderer>(true))
         {
             if (!renderer.name.StartsWith(nameStart, StringComparison.Ordinal))
                 continue;
             renderer.enabled = show;
             count++;
             if (lines.Count < 14)
-                lines.Add($"  {renderer.name} [{renderer.sharedMaterial?.name}, {renderer.sharedMaterial?.shader?.name}, queue {renderer.sharedMaterial?.renderQueue}] at {d._active.Root.transform.InverseTransformPoint(renderer.bounds.center)} size {renderer.bounds.size} active {renderer.gameObject.activeInHierarchy}");
+                lines.Add($"  {renderer.name} [{renderer.sharedMaterial?.name}, {renderer.sharedMaterial?.shader?.name}, queue {renderer.sharedMaterial?.renderQueue}] at {d._scene.Active.Root.transform.InverseTransformPoint(renderer.bounds.center)} size {renderer.bounds.size} active {renderer.gameObject.activeInHierarchy}");
         }
         return $"{count} renderers named {nameStart}* {(show ? "shown" : "hidden")}\n" + string.Join("\n", lines);
     }
@@ -493,10 +493,10 @@ public sealed partial class StrategyDiorama
     internal static string PartsSetFromDev(string nameStart, string property, float value)
     {
         var d = _instance;
-        if (d?._active?.Root == null)
+        if (d?._scene.Active?.Root == null)
             return "no room";
         var count = 0;
-        foreach (var renderer in d._active.Root.GetComponentsInChildren<Renderer>(true))
+        foreach (var renderer in d._scene.Active.Root.GetComponentsInChildren<Renderer>(true))
         {
             if (!renderer.name.StartsWith(nameStart, StringComparison.Ordinal))
                 continue;
@@ -539,7 +539,7 @@ public sealed partial class StrategyDiorama
     internal static string SquadLightFromDev(float sun, bool lamps, bool rigs)
     {
         var d = _instance;
-        if (d?._active?.Root == null || d._staging.StagedRoots.Count == 0)
+        if (d?._scene.Active?.Root == null || d._staging.StagedRoots.Count == 0)
             return "nothing staged";
         var block = new MaterialPropertyBlock();
         var renderers = 0;
@@ -553,7 +553,7 @@ public sealed partial class StrategyDiorama
                     renderers++;
                 }
         var lit = 0;
-        foreach (var light in d._active.LiveLights)
+        foreach (var light in d._scene.Active.LiveLights)
             if (light != null && LightsCharacters(light))
             {
                 light.enabled = lamps;
@@ -567,7 +567,7 @@ public sealed partial class StrategyDiorama
     internal static string BarePoseFromDev(string tag, float x, float y, float z, float yaw)
     {
         var d = _instance;
-        if (d == null || d._room == null)
+        if (d == null || d._scene.Room == null)
             return "no room";
         var doll = d.SpawnDoll(tag, "WOMENACE_BarePose");
         if (doll == null)
@@ -576,7 +576,7 @@ public sealed partial class StrategyDiorama
         doll.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
         foreach (var animator in doll.GetComponentsInChildren<Animator>())
             animator.enabled = false;
-        ProbeLight(doll, d._ops);
+        ProbeLight(doll, d._scene.Ops);
         return $"{doll.name} stands bare at ({x}, {y}, {z})";
     }
 
@@ -586,7 +586,7 @@ public sealed partial class StrategyDiorama
     internal static string ProbesNearFromDev(float x, float y, float z, int count)
     {
         var d = _instance;
-        var set = d?._active;
+        var set = d?._scene.Active;
         if (set?.Root == null)
             return "no room";
         var at = new Vector3(x, y + 0.9f, z);
@@ -599,7 +599,7 @@ public sealed partial class StrategyDiorama
         foreach (var light in set.LiveLights)
             if (light != null)
                 rows.Add($"  light {light.name} {light.type} at {set.Root.transform.InverseTransformPoint(light.transform.position)} intensity {light.intensity:F2} range {light.range:F1} characters {LightsCharacters(light)} room {LightsRoom(light)}");
-        if (set == d._ops)
+        if (set == d._scene.Ops)
             foreach (var spot in DollSpots)
             {
                 var chest = new Vector3(spot.Position.x, d.FloorAt(spot) + ChestHeight, spot.Position.z);
@@ -615,12 +615,12 @@ public sealed partial class StrategyDiorama
     internal static string DollsFromDev()
     {
         var d = _instance;
-        if (d == null || d._room == null)
+        if (d == null || d._scene.Room == null)
             return "no room";
         var rows = new List<string>();
         foreach (var doll in d._life.Crew)
             if (doll != null)
-                rows.Add($"{doll.name} at {d._room.transform.InverseTransformPoint(doll.transform.position)} yaw {doll.transform.localEulerAngles.y:F0} {(doll.activeInHierarchy ? "shown" : "hidden")}"
+                rows.Add($"{doll.name} at {d._scene.Room.transform.InverseTransformPoint(doll.transform.position)} yaw {doll.transform.localEulerAngles.y:F0} {(doll.activeInHierarchy ? "shown" : "hidden")}"
                     + (d._life.CrewSeatShifts.TryGetValue(doll, out var shift) ? $", seated {shift.z:F2} forward and {shift.x:F2} right of her spot" : "")
                     + ", plays " + PlayingFromDev(doll));
         return string.Join("\n", rows);
@@ -672,16 +672,16 @@ public sealed partial class StrategyDiorama
     internal static string AimCamera(float x, float y, float z, float tx, float ty, float tz, float fov)
     {
         var d = _instance;
-        if (d?._camera == null || d._room == null)
+        if (d?._scene.Camera == null || d._scene.Room == null)
             return "no room camera";
-        var from = d._room.transform.TransformPoint(new Vector3(x, y, z));
-        var to = d._room.transform.TransformPoint(new Vector3(tx, ty, tz));
-        d._camera.transform.SetPositionAndRotation(from, Quaternion.LookRotation(to - from, Vector3.up));
-        var camera = d._camera.GetComponent<Camera>();
+        var from = d._scene.Room.transform.TransformPoint(new Vector3(x, y, z));
+        var to = d._scene.Room.transform.TransformPoint(new Vector3(tx, ty, tz));
+        d._scene.Camera.transform.SetPositionAndRotation(from, Quaternion.LookRotation(to - from, Vector3.up));
+        var camera = d._scene.Camera.GetComponent<Camera>();
         if (fov > 0)
             camera.fieldOfView = fov;
         // The shot the room camera holds, or its director puts the camera back next frame.
-        d._shot = (d._camera.transform.position, d._camera.transform.rotation, camera.fieldOfView, d._lensShift);
+        d._shot = (d._scene.Camera.transform.position, d._scene.Camera.transform.rotation, camera.fieldOfView, d._lensShift);
         d._shotTravel = 1f;
         return $"camera at ({x}, {y}, {z}) looking at ({tx}, {ty}, {tz}), fov {camera.fieldOfView}";
     }
@@ -689,9 +689,9 @@ public sealed partial class StrategyDiorama
     internal static string ResetCamera()
     {
         var d = _instance;
-        if (d?._camera == null)
+        if (d?._scene.Camera == null)
             return "no room camera";
-        d.Frame(null, d._room.transform);
+        d.Frame(null, d._scene.Room.transform);
         return "camera reset";
     }
 
@@ -746,7 +746,7 @@ public sealed partial class StrategyDiorama
     internal static string StagePosesFromDev(string name)
     {
         var d = _instance;
-        if (d?._room == null)
+        if (d?._scene.Room == null)
             return "no room";
         foreach (var old in d._staged)
             if (old != null)
@@ -765,7 +765,7 @@ public sealed partial class StrategyDiorama
             doll.transform.localPosition = new Vector3(-8.7f - i * 0.85f, -1.0f, -2.99f);
             doll.transform.localRotation = Quaternion.Euler(0f, 20f, 0f);
             doll.transform.localScale = Vector3.one * RoomDollScale;
-            ProbeLight(doll, d._ops);
+            ProbeLight(doll, d._scene.Ops);
             var animator = doll.GetComponentInChildren<Animator>();
             if (d._poses == null)
                 d._poses = d.PosesPrefab()?.GetComponent<Animator>()?.runtimeAnimatorController;
@@ -793,7 +793,7 @@ public sealed partial class StrategyDiorama
     internal static string SeatDollFromDev(string name, string spotName)
     {
         var d = _instance;
-        if (d?._room == null)
+        if (d?._scene.Room == null)
             return "no room";
         var at = Array.FindIndex(DollSpots, s => s.Name == spotName);
         if (at < 0)
@@ -819,7 +819,7 @@ public sealed partial class StrategyDiorama
     internal static string PlanetOrbitFromDev(float turn, float tilt, float distance)
     {
         var d = _instance;
-        if (d?._room == null)
+        if (d?._scene.Room == null)
             return "no room";
         var start = PlanetOrbitStart();
         d._missions.PlanetYawTarget = Mathf.Clamp(start.Yaw + turn, start.Yaw - PlanetOrbitTurnBack, start.Yaw + PlanetOrbitTurnOn);
@@ -892,7 +892,7 @@ public sealed partial class StrategyDiorama
             var renderer = card != null ? card.GetComponent<MeshRenderer>() : null;
             var material = renderer != null ? renderer.material : null;
             lines.Add($"  open {marker.Open:F2} selected {marker.Selected} box {marker.Box} width {marker.Width:F2} order {renderer?.sortingOrder} target {(marker.Target != null ? $"{marker.Target.resolvedStyle.display} {marker.Target.resolvedStyle.left:F0},{marker.Target.resolvedStyle.top:F0} {marker.Target.resolvedStyle.width:F0}x{marker.Target.resolvedStyle.height:F0}" : "none")} interactable {(marker.Poi?.panel != null ? marker.Poi.IsInteractable().ToString() : "no panel")}");
-            lines.Add(card == null ? "card gone" : $"card at {d._room.transform.InverseTransformPoint(card.transform.position)} scale {card.transform.localScale} active {card.activeInHierarchy} renderer {renderer != null && renderer.enabled} intensity {material?.GetFloat("_Intensity")} reveal {material?.GetFloat("_Reveal")} plate {material?.GetFloat("_Plate")} texture {(material?.mainTexture != null ? material.mainTexture.name : "none")} uv {(material != null && material.HasProperty("_UvRect") ? material.GetVector("_UvRect").ToString() : "")} poi panel {marker.Poi?.panel != null}");
+            lines.Add(card == null ? "card gone" : $"card at {d._scene.Room.transform.InverseTransformPoint(card.transform.position)} scale {card.transform.localScale} active {card.activeInHierarchy} renderer {renderer != null && renderer.enabled} intensity {material?.GetFloat("_Intensity")} reveal {material?.GetFloat("_Reveal")} plate {material?.GetFloat("_Plate")} texture {(material?.mainTexture != null ? material.mainTexture.name : "none")} uv {(material != null && material.HasProperty("_UvRect") ? material.GetVector("_UvRect").ToString() : "")} poi panel {marker.Poi?.panel != null}");
         }
         return string.Join("\n", lines);
     }
@@ -914,7 +914,7 @@ public sealed partial class StrategyDiorama
     internal static string HallLineFromDev()
     {
         var d = _instance;
-        if (d?._staging.Stage == null || d._staging.HallSolid == null || d._camera == null)
+        if (d?._staging.Stage == null || d._staging.HallSolid == null || d._scene.Camera == null)
             return "no hall map";
         var rotation = d._staging.Stage.rotation * Quaternion.Euler(d._staging.OrbitPitch, d._staging.OrbitYaw, 0f);
         var centre = d.SquadFocus(out _);
@@ -922,7 +922,7 @@ public sealed partial class StrategyDiorama
         var back = d._staging.Stage.InverseTransformDirection(rotation * Vector3.back + rotation * Vector3.right * d.StagePan());
         var right = d._staging.Stage.InverseTransformDirection(rotation * Vector3.right) * HallAbreast;
         var up = d._staging.Stage.InverseTransformDirection(rotation * Vector3.up) * HallAbreast;
-        var eye = d._staging.Stage.InverseTransformPoint(d._camera.transform.position);
+        var eye = d._staging.Stage.InverseTransformPoint(d._scene.Camera.transform.position);
         var lines = new List<string> { $"focus {at}, camera {eye} ({(eye - at).magnitude:F1} m out), wanted {d._staging.OrbitDistance:F1}, radius {d._staging.FramedRadius:F1}, pitch {d._staging.OrbitPitch:F0}, yaw {d._staging.OrbitYaw:F0}" };
         for (var dist = 2f; dist <= 24f; dist += 0.4f)
         {
@@ -1052,7 +1052,7 @@ public sealed partial class StrategyDiorama
         var doll = d?._weaponRoom.CalibrationDoll;
         if (doll == null)
             return "no calibration doll";
-        var room = d._weaponSet.Root.transform;
+        var room = d._scene.Weapon.Root.transform;
         var animator = doll.GetComponentInChildren<Animator>();
         string Joint(HumanBodyBones bone)
         {

@@ -67,7 +67,7 @@ public sealed partial class StrategyDiorama
             _life.CrewSpots.Clear();
             _life.CrewSeatShifts.Clear();
             _life.CrewFidgets.Clear();
-            if (_room == null)
+            if (_scene.Room == null)
                 return;
             // Only dolls the player has hired stand in the room, in roster order, so each keeps
             // her spot for as long as the roster stays as it is.
@@ -144,7 +144,7 @@ public sealed partial class StrategyDiorama
     // dolls are in it when it shows.
     private bool RoomAwaitsDolls()
     {
-        if (_room == null || _active != _ops || _life.Crew.Count > 0)
+        if (_scene.Room == null || _scene.Active != _scene.Ops || _life.Crew.Count > 0)
             return false;
         var hired = StrategyState.Get()?.Roster?.m_HiredLeaders;
         return hired == null || hired.Count == 0 || HiredDollTags().Count > 0;
@@ -171,7 +171,7 @@ public sealed partial class StrategyDiorama
     {
         // Each leader chosen for a new campaign is hired on the spot: the room waits for the
         // whole choice and brings them in once.
-        if (_room == null || _active != _ops || Time.unscaledTime - _life.CrewCheckedAt < 1f || PickingLeaders())
+        if (_scene.Room == null || _scene.Active != _scene.Ops || Time.unscaledTime - _life.CrewCheckedAt < 1f || PickingLeaders())
             return;
         _life.CrewCheckedAt = Time.unscaledTime;
         if (!RefreshRoomDolls())
@@ -220,9 +220,9 @@ public sealed partial class StrategyDiorama
         if (_life.PoseProbe == null)
         {
             var prefab = PosesPrefab();
-            if (prefab == null || _room == null)
+            if (prefab == null || _scene.Room == null)
                 return false;
-            var probe = UnityEngine.Object.Instantiate(prefab, _room.transform, false);
+            var probe = UnityEngine.Object.Instantiate(prefab, _scene.Room.transform, false);
             probe.name = "WOMENACE_PoseProbe";
             foreach (var renderer in probe.GetComponentsInChildren<Renderer>(true))
                 renderer.enabled = false;
@@ -241,7 +241,7 @@ public sealed partial class StrategyDiorama
         // Her hair and cloth move: the spring system hears of bodies the outfit system hands out,
         // and the room places its dolls itself.
         SpringBoneSystem.Instance?.NoteBodyPrefab(prefab);
-        var doll = UnityEngine.Object.Instantiate(prefab, _room.transform, false);
+        var doll = UnityEngine.Object.Instantiate(prefab, _scene.Room.transform, false);
         doll.name = name + ":" + asset.Split('/')[0];
         doll.transform.localScale = Vector3.one * RoomDollScale;
         // Her contact shadow on the floor.
@@ -309,7 +309,7 @@ public sealed partial class StrategyDiorama
     // probes. The armoury hides the room's dolls, and the room's next screen shows them again.
     private void PlaceRoomDolls(bool spawned = false)
     {
-        if (_room == null)
+        if (_scene.Room == null)
             return;
         // A doll wears her squad leader's outfit as it is now, and the room holds the roster as
         // it is now: either changing on another screen brings the room's dolls in again.
@@ -381,7 +381,7 @@ public sealed partial class StrategyDiorama
         var floor = spot.Position.y;
         try
         {
-            var room = _room.transform;
+            var room = _scene.Room.transform;
             var world = room.TransformPoint(spot.Position);
             var best = float.PositiveInfinity;
             foreach (var renderer in room.GetComponentsInChildren<MeshRenderer>())

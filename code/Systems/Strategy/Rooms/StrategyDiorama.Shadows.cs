@@ -32,7 +32,7 @@ public sealed partial class StrategyDiorama
         _life.ShadowQuality = quality;
         var resolution = quality <= 1 ? 1024 : quality == 2 ? 2048 : 4096;
         _life.ShadowLight?.GetComponent<HDAdditionalLightData>()?.SetShadowResolution(resolution);
-        foreach (var set in Sets)
+        foreach (var set in _scene.Sets)
             foreach (var light in set.LiveLights)
                 if (light != null && light.shadows != LightShadows.None)
                     light.GetComponent<HDAdditionalLightData>()?.SetShadowResolution(resolution / 2);
@@ -43,7 +43,7 @@ public sealed partial class StrategyDiorama
         try
         {
             var go = new GameObject("WOMENACE_RoomShadowLight");
-            go.transform.SetParent(_camera.transform.parent, false);
+            go.transform.SetParent(_scene.Camera.transform.parent, false);
             _life.ShadowLight = go.AddComponent<Light>();
             _life.ShadowLight.type = LightType.Directional;
             _life.ShadowLight.shadows = LightShadows.Soft;

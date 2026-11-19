@@ -104,12 +104,12 @@ public sealed partial class StrategyDiorama
         }
         // Nothing is asked of the clock while there is no shop open and no basket standing.
         if ((open || _shop.CartFor != 0) && UnityEngine.Time.frameCount % ShopCardFrames == 0)
-            ShowShopCart(open && !procurement && _room != null && _active == _ops);
+            ShowShopCart(open && !procurement && _scene.Room != null && _scene.Active == _scene.Ops);
         if (_shop.Arriving.Count > 0)
             RaiseShopCards();
         if (_shop.PullOn)
             return;
-        var wanted = procurement && _room != null && _camera != null && _active == _ops;
+        var wanted = procurement && _scene.Room != null && _scene.Camera != null && _scene.Active == _scene.Ops;
         if (wanted && _shop.Machine == null)
         {
             ShowMachine(PullMachineHeight, 0f, 0f);
@@ -156,7 +156,7 @@ public sealed partial class StrategyDiorama
         _shop.Cards.Clear();
         _shop.CardMaterials.Clear();
         var marker = MarkerTemplate();
-        if (_shop.Basket.Count == 0 || HologramMaterial() == null || _room == null || marker == null)
+        if (_shop.Basket.Count == 0 || HologramMaterial() == null || _scene.Room == null || marker == null)
         {
             _shop.Standing.Clear();
             return;
@@ -212,7 +212,7 @@ public sealed partial class StrategyDiorama
             var shape = picture.rect;
             var widest = Mathf.Max(shape.width, shape.height);
             var material = IconHologram(picture);
-            material.SetFloat(HologramFloorId, _room.transform.TransformPoint(foot).y);
+            material.SetFloat(HologramFloorId, _scene.Room.transform.TransformPoint(foot).y);
             material.SetFloat(HologramHeightId, size * 1.3f);
             var arriving = !_shop.Standing.Contains(item.Pointer);
             material.SetFloat(HologramRevealId, arriving ? 0f : ShopCardRevealed);
@@ -222,7 +222,7 @@ public sealed partial class StrategyDiorama
                 _shop.Arriving.Add((material, Time.unscaledTime));
             for (var behind = 0; behind < Mathf.Min(count, ShopCardsDeep); behind++)
             {
-                var card = IconCard(_room.transform, picture, size);
+                var card = IconCard(_scene.Room.transform, picture, size);
                 card.name = "wm-shop-card";
                 // Each stands on the table, a little behind the one in front of it.
                 card.transform.localPosition = foot + new Vector3(behind * size * 0.05f, size * shape.height / widest / 2f, -behind * size * 0.1f);

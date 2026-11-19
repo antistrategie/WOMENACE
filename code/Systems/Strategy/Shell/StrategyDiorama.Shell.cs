@@ -143,7 +143,7 @@ public sealed partial class StrategyDiorama
 
     private void GoTo(Destination destination)
     {
-        _arriveAtStation = null;
+        _scene.ArriveAtStation = null;
         if (destination.Station < 0)
         {
             // Kalina's shop opens over the Workshop's own screen, where calibration's panels
@@ -158,8 +158,8 @@ public sealed partial class StrategyDiorama
             GoToStation(destination.Station);
             return;
         }
-        _arriveAtStation = destination.Station;
-        _arriveAtStationUntil = UnityEngine.Time.unscaledTime + ArriveAtStationSeconds;
+        _scene.ArriveAtStation = destination.Station;
+        _scene.ArriveAtStationUntil = UnityEngine.Time.unscaledTime + ArriveAtStationSeconds;
         GoTo(VanillaNavigation.Target.Workshop);
     }
 
@@ -173,10 +173,10 @@ public sealed partial class StrategyDiorama
         // Judged by the last screen that wore the shell, since vanilla passes through others between.
         var steppedBack = _lastShellScreen == VanillaUi.Screens.OperationSelect || _lastShellScreen == VanillaUi.Screens.MissionPrep
             || _lastShellScreen == screenName;
-        if (arriving && (!steppedBack || _arriveOnOperations))
+        if (arriving && (!steppedBack || _scene.ArriveOnOperations))
         {
-            _homeView = _arriveOnOperations ? HomeView.Operations : HomeView.Home;
-            _arriveOnOperations = false;
+            _homeView = _scene.ArriveOnOperations ? HomeView.Operations : HomeView.Home;
+            _scene.ArriveOnOperations = false;
         }
         if (arriving && _intelOnReturn)
         {
@@ -455,17 +455,17 @@ public sealed partial class StrategyDiorama
             }
             // The bars open on arriving in another room, and on the first arrival of all.
             var arrivedIn = LookFor(screenName).RoomKey;
-            if (_arrivedThroughBars || _shellRoom != arrivedIn)
+            if (_scene.ArrivedThroughBars || _scene.ShellRoom != arrivedIn)
                 Context.Coroutines.Start(OpenBars(_shell));
-            _arrivedThroughBars = false;
-            _shellRoom = arrivedIn;
+            _scene.ArrivedThroughBars = false;
+            _scene.ShellRoom = arrivedIn;
         }
-        else if (_arrivedThroughBars)
+        else if (_scene.ArrivedThroughBars)
         {
             // A cut that stayed on this screen (Kalina's shop to the workshop under it): the
             // bars it shut open here.
-            _arrivedThroughBars = false;
-            _shellRoom = LookFor(screenName).RoomKey;
+            _scene.ArrivedThroughBars = false;
+            _scene.ShellRoom = LookFor(screenName).RoomKey;
             Context.Coroutines.Start(OpenBars(_shell));
         }
         // The bars cover the screen's panels, and the vanilla resources sit on the top bar.
@@ -659,7 +659,7 @@ public sealed partial class StrategyDiorama
             tag.EnableInClassList("wui-tag--off", !visible);
             tag.EnableInClassList("wui-tag--hover", visible && _life.DinergateHover);
             // The holotable's tag: a click on the table goes to Operations.
-            var tableVisible = !eventPlaying && camera != null && camera.isActiveAndEnabled && _room != null
+            var tableVisible = !eventPlaying && camera != null && camera.isActiveAndEnabled && _scene.Room != null
                 && OnHomeView(_policyScreen) && !_intelOpen && !covered;
             if (tableTag != null)
             {
@@ -667,7 +667,7 @@ public sealed partial class StrategyDiorama
                 tableTag.EnableInClassList("wui-tag--hover", tableVisible && _life.TableHover);
                 if (tableVisible && shell.panel != null)
                 {
-                    var at = camera.WorldToScreenPoint(_room.transform.TransformPoint(TableTagPoint));
+                    var at = camera.WorldToScreenPoint(_scene.Room.transform.TransformPoint(TableTagPoint));
                     var place = RuntimePanelUtils.ScreenToPanel(shell.panel, new UnityEngine.Vector2(at.x, UnityEngine.Screen.height - at.y));
                     tableTag.style.left = place.x - tableTag.resolvedStyle.width / 2f;
                     tableTag.style.top = place.y - tableTag.resolvedStyle.height;
@@ -742,21 +742,21 @@ public sealed partial class StrategyDiorama
             if (_policyScreen == VanillaUi.Screens.Workshop && (_shellShop != ShopSystem.IsShopOpen || _workshopStation != WorkshopStation))
                 ApplyScreenPolicy();
             // Arrived from another screen by a station's button: the Workshop turns to that station.
-            if (_arriveAtStation is { } station)
+            if (_scene.ArriveAtStation is { } station)
             {
-                if (UnityEngine.Time.unscaledTime > _arriveAtStationUntil)
-                    _arriveAtStation = null;
+                if (UnityEngine.Time.unscaledTime > _scene.ArriveAtStationUntil)
+                    _scene.ArriveAtStation = null;
                 else if (_policyScreen == VanillaUi.Screens.Workshop && !ShopSystem.IsShopOpen
                     && UI.Find(_shellRoot, UiSelector.Name(WorkshopPanelsName))?.panel != null)
                 {
                     if (WorkshopStation == station)
-                        _arriveAtStation = null;
+                        _scene.ArriveAtStation = null;
                     else
                         SetStation(station);
                 }
             }
             // What it shows follows what is picked, looked at a few times a second.
-            if (_policyScreen == VanillaUi.Screens.Workshop && _active == _weaponSet && !ShopSystem.IsShopOpen
+            if (_policyScreen == VanillaUi.Screens.Workshop && _scene.Active == _scene.Weapon && !ShopSystem.IsShopOpen
                 && UnityEngine.Time.frameCount % WorkshopLookFrames == 0)
             {
                 ShowWorkedOnWeapon();
@@ -833,7 +833,7 @@ public sealed partial class StrategyDiorama
                 SetHomeView(HomeView.Operations);
                 return;
             }
-            _arriveOnOperations = true;
+            _scene.ArriveOnOperations = true;
             GoTo(VanillaNavigation.Target.Bridge);
         });
         Click("wm-shell-back", () =>

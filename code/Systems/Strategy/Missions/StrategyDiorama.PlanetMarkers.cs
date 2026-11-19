@@ -64,7 +64,7 @@ public sealed partial class StrategyDiorama
     // included, and then given back.
     private (float Left, float Right) PlanetFreeAcross()
     {
-        var camera = _camera != null ? _camera.GetComponent<Camera>() : null;
+        var camera = _scene.Camera != null ? _scene.Camera.GetComponent<Camera>() : null;
         if (camera == null)
             return (float.NegativeInfinity, float.PositiveInfinity);
         var (fov, shift, lift) = (camera.fieldOfView, _lensShift, _lensLift);
@@ -278,7 +278,7 @@ public sealed partial class StrategyDiorama
 
 
     // The camera's place in room space.
-    private NVector3 PlanetEye() => _camera != null ? N(_room.transform.InverseTransformPoint(_camera.transform.position)) : N(PlanetFraming.Eye);
+    private NVector3 PlanetEye() => _scene.Camera != null ? N(_scene.Room.transform.InverseTransformPoint(_scene.Camera.transform.position)) : N(PlanetFraming.Eye);
 
     // Upright and square to the camera from a place in the room: the turn about the upright,
     // and that turn's cosine and sine for placing things beside it.

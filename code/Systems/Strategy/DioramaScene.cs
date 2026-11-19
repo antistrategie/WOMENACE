@@ -45,20 +45,4 @@ public sealed partial class StrategyDiorama
     }
 
     private DioramaScene _scene = new();
-
-    // The scene's parts under the names the partials have always used.
-    private GameObject _room { get => _scene.Room; set => _scene.Room = value; }
-    private GameObject _camera { get => _scene.Camera; set => _scene.Camera = value; }
-    private Transform _anchor { get => _scene.Anchor; set => _scene.Anchor = value; }
-    private RoomSet _ops => _scene.Ops;
-    private RoomSet _refitSet => _scene.Refit;
-    private RoomSet _weaponSet => _scene.Weapon;
-    private RoomSet[] Sets => _scene.Sets;
-    private RoomSet _active { get => _scene.Active; set => _scene.Active = value; }
-    private string _shellRoom { get => _scene.ShellRoom; set => _scene.ShellRoom = value; }
-    private bool _arrivedThroughBars { get => _scene.ArrivedThroughBars; set => _scene.ArrivedThroughBars = value; }
-    private bool _cutting { get => _scene.Cutting; set => _scene.Cutting = value; }
-    private bool _arriveOnOperations { get => _scene.ArriveOnOperations; set => _scene.ArriveOnOperations = value; }
-    private int? _arriveAtStation { get => _scene.ArriveAtStation; set => _scene.ArriveAtStation = value; }
-    private float _arriveAtStationUntil { get => _scene.ArriveAtStationUntil; set => _scene.ArriveAtStationUntil = value; }
 }

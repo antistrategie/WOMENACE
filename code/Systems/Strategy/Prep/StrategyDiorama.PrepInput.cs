@@ -69,14 +69,14 @@ public sealed partial class StrategyDiorama
         var (halfAcross, halfAlong) = (_prep.MapSizeX * _prep.MapTile / 2f, _prep.MapSizeZ * _prep.MapTile / 2f);
         var corners = new Vector3[8];
         for (var i = 0; i < 8; i++)
-            corners[i] = _room.transform.TransformPoint(PrepMapCentre + new Vector3((i & 1) == 0 ? -halfAlong : halfAlong, (i & 4) == 0 ? 0f : PrepFitHeight, (i & 2) == 0 ? -halfAcross : halfAcross));
-        var focus = _room.transform.TransformPoint(PrepOrbitFocus);
-        var upright = _room.transform.TransformDirection(Vector3.left);
+            corners[i] = _scene.Room.transform.TransformPoint(PrepMapCentre + new Vector3((i & 1) == 0 ? -halfAlong : halfAlong, (i & 4) == 0 ? 0f : PrepFitHeight, (i & 2) == 0 ? -halfAcross : halfAcross));
+        var focus = _scene.Room.transform.TransformPoint(PrepOrbitFocus);
+        var upright = _scene.Room.transform.TransformDirection(Vector3.left);
 
         // The map's box in the picture from a tilt and a distance, with the lens unshifted.
         (float Left, float Right, float Top, float Bottom) Seen(float tilt, float distance)
         {
-            var eye = _room.transform.TransformPoint(PrepOrbitFocus + new Vector3(Mathf.Cos(tilt) * distance, Mathf.Sin(tilt) * distance, 0f));
+            var eye = _scene.Room.transform.TransformPoint(PrepOrbitFocus + new Vector3(Mathf.Cos(tilt) * distance, Mathf.Sin(tilt) * distance, 0f));
             var facing = Quaternion.LookRotation(focus - eye, upright);
             var (across, up, ahead) = (facing * Vector3.right, facing * Vector3.up, facing * Vector3.forward);
             var box = (Left: float.MaxValue, Right: float.MinValue, Top: float.MinValue, Bottom: float.MaxValue);
@@ -122,7 +122,7 @@ public sealed partial class StrategyDiorama
 
     private void DrivePrepCamera()
     {
-        var on = _policyScreen == VanillaUi.Screens.MissionPrep && _room != null && _camera != null && _shellRoot?.panel != null;
+        var on = _policyScreen == VanillaUi.Screens.MissionPrep && _scene.Room != null && _scene.Camera != null && _shellRoot?.panel != null;
         if (!on)
         {
             _prep.OrbitOn = false;
@@ -175,11 +175,11 @@ public sealed partial class StrategyDiorama
         var ceiling = PrepOrbitCeiling + (PrepOrbitCeilingOverTable - PrepOrbitCeiling) * overTable;
         var distance = MathF.Min(_prep.Distance, (ceiling - PrepOrbitFocus.y) / MathF.Max(0.1f, MathF.Sin(pitch)));
         var out3 = Quaternion.Euler(0f, _prep.Yaw, 0f) * new Vector3(Mathf.Cos(pitch) * distance, Mathf.Sin(pitch) * distance, 0f);
-        var eye = _room.transform.TransformPoint(PrepOrbitFocus + out3);
-        var focus = _room.transform.TransformPoint(PrepOrbitFocus);
+        var eye = _scene.Room.transform.TransformPoint(PrepOrbitFocus + out3);
+        var focus = _scene.Room.transform.TransformPoint(PrepOrbitFocus);
         // The camera's top points along its bearing, which is the upright seen from any tilt and
         // still has a direction looking straight down.
-        var top = _room.transform.TransformDirection(Quaternion.Euler(0f, _prep.Yaw, 0f) * Vector3.left);
+        var top = _scene.Room.transform.TransformDirection(Quaternion.Euler(0f, _prep.Yaw, 0f) * Vector3.left);
         var facing = Quaternion.LookRotation(focus - eye, top);
         // The room camera's shot follows the orbit, and the camera travels to it on arriving.
         // Where the ceiling keeps the camera nearer than it was asked to stand, the lens is
@@ -226,14 +226,14 @@ public sealed partial class StrategyDiorama
     private void DrivePrepInput()
     {
         _prep.PointerTile = null;
-        if (_shellRoot == null || _policyScreen != VanillaUi.Screens.MissionPrep || _prep.Map == null || _camera == null)
+        if (_shellRoot == null || _policyScreen != VanillaUi.Screens.MissionPrep || _prep.Map == null || _scene.Camera == null)
             return;
         // In the flat view the pointer is on vanilla's map itself, which stands where it is seen.
         if (_prep.Flat || _prep.FlatAmount > 0f)
             return;
         var column = UI.Find(_shellRoot, UiSelector.Name(VanillaUi.Elements.MapColumn));
         var preview = column != null ? UI.Find(column, UiSelector.Name(VanillaUi.Elements.PrepPreview)) : null;
-        var camera = _camera.GetComponent<Camera>();
+        var camera = _scene.Camera.GetComponent<Camera>();
         if (preview == null || camera == null || column.panel == null || preview.layout.width <= 0f)
             return;
 

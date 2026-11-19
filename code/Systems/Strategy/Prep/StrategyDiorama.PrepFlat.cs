@@ -29,7 +29,7 @@ public sealed partial class StrategyDiorama
     private void DrivePrepFlat()
     {
         _prep.FlatShot = null;
-        var column = _shellRoot != null && _policyScreen == VanillaUi.Screens.MissionPrep && _prep.Map != null && _room != null
+        var column = _shellRoot != null && _policyScreen == VanillaUi.Screens.MissionPrep && _prep.Map != null && _scene.Room != null
             ? UI.Find(_shellRoot, UiSelector.Name(VanillaUi.Elements.MapColumn)) : null;
         var preview = column != null ? UI.Find(column, UiSelector.Name(VanillaUi.Elements.PrepPreview)) : null;
         if (preview == null || column.panel == null || preview.layout.width <= 0f || _prep.MapTile <= 0f)
@@ -138,7 +138,7 @@ public sealed partial class StrategyDiorama
             var fov = 2f * MathF.Atan(MathF.Tan(PrepFraming.Fov * Mathf.Deg2Rad / 2f) * _prep.LensScale / lens) * Mathf.Rad2Deg;
             // The frame's down is the room's x and its right the room's z, seen from over the table.
             var eye = PrepMapCentre + new Vector3(-(middle.y - 360f) / perMetre, PrepFlatEye, -(middle.x - 640f) / perMetre);
-            _prep.FlatShot = (_room.transform.TransformPoint(eye), fov);
+            _prep.FlatShot = (_scene.Room.transform.TransformPoint(eye), fov);
         }
     }
 
@@ -150,7 +150,7 @@ public sealed partial class StrategyDiorama
         if (_prep.FlatAmount <= 0f || _prep.FlatShot is not { } flat)
             return orbit;
         var along = Math.Clamp(Ease.InOutCubic(_prep.FlatAmount), 0f, 1f);
-        var down = Quaternion.LookRotation(_room.transform.TransformDirection(Vector3.down), _room.transform.TransformDirection(Vector3.left));
+        var down = Quaternion.LookRotation(_scene.Room.transform.TransformDirection(Vector3.down), _scene.Room.transform.TransformDirection(Vector3.left));
         return (Vector3.Lerp(orbit.Position, flat.Eye, along), Quaternion.Slerp(orbit.Rotation, down, along), orbit.Fov + (flat.Fov - orbit.Fov) * along, orbit.Shift * (1f - along));
     }
 

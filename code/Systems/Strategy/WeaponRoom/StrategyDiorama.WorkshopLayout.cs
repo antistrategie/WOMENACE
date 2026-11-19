@@ -36,7 +36,7 @@ public sealed partial class StrategyDiorama
         // Kalina's shop puts these windows away and shows its own.
         if (ShopSystem.IsShopOpen)
             return;
-        if (materials == null || work == null || projects == null || _active != _weaponSet)
+        if (materials == null || work == null || projects == null || _scene.Active != _scene.Weapon)
         {
             Fit(panels, WindowScale, 50, 0);
             return;

@@ -13,12 +13,12 @@ public sealed partial class StrategyDiorama
     // solid, so they would show through a briefing's planet as dotted lines across it.
     private void ShowTableSparks(bool show)
     {
-        if (show == _life.TableSparksShown || _room == null)
+        if (show == _life.TableSparksShown || _scene.Room == null)
             return;
         _life.TableSparksShown = show;
         _life.SparkRenderers.RemoveAll(r => r == null);
         if (_life.SparkRenderers.Count == 0)
-            foreach (var t in _room.GetComponentsInChildren<Transform>(true))
+            foreach (var t in _scene.Room.GetComponentsInChildren<Transform>(true))
                 if (t.name == TableEffects)
                     foreach (var sparks in t.GetComponentsInChildren<ParticleSystemRenderer>(true))
                         if (sparks.name.StartsWith(TableSparks, StringComparison.Ordinal))
@@ -38,13 +38,13 @@ public sealed partial class StrategyDiorama
 
     private void DriveTableGrid()
     {
-        if (_room == null)
+        if (_scene.Room == null)
             return;
         if (_life.TableTopMaterials.Count == 0 || _life.TableTopMaterials[0].Material == null)
         {
             _life.TableTopMaterials.Clear();
             _life.TableTopDimmed = 0f;
-            foreach (var t in _room.GetComponentsInChildren<Transform>(true))
+            foreach (var t in _scene.Room.GetComponentsInChildren<Transform>(true))
             {
                 if (t.parent == null || t.parent.name != TableEffects || t.GetComponent<Renderer>() is not { } part)
                     continue;

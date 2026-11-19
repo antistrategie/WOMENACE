@@ -49,7 +49,7 @@ public sealed partial class StrategyDiorama : JiangyuSystem
     private System.Collections.IEnumerator RoomDriver(GameObject room)
     {
         var failed = false;
-        while (room != null && _room == room)
+        while (room != null && _scene.Room == room)
         {
             try
             {
@@ -100,25 +100,25 @@ public sealed partial class StrategyDiorama : JiangyuSystem
     {
         try
         {
-            _room = SpawnSet(_ops);
-            if (_room == null)
+            _scene.Room = SpawnSet(_scene.Ops);
+            if (_scene.Room == null)
                 return;
             // The rooms' few dolls are small on screen and still have their hair and cloth simulated.
             SpringBoneSystem.MaxSimulatedLod = RoomSimulatedLod;
-            _anchor = _room.transform.Find("_CameraAnchor");
-            if (_anchor == null)
+            _scene.Anchor = _scene.Room.transform.Find("_CameraAnchor");
+            if (_scene.Anchor == null)
                 throw new InvalidOperationException("the ops room has no _CameraAnchor");
             SpawnCamera();
             SpawnDinergate();
             SpawnRoomDolls();
             SpawnMirror();
-            ActivateSet(_ops);
+            ActivateSet(_scene.Ops);
             // Before the first screen's shell, so on each frame the room has moved before the
             // shell places what it lays over it.
-            Context.Coroutines.Start(RoomDriver(_room));
+            Context.Coroutines.Start(RoomDriver(_scene.Room));
             // The UI manager has already set up the first screen's background by now.
             ApplyScreenPolicy();
-            Context.Log.Info($"strategy diorama: spawned, camera at depth {_camera.GetComponent<Camera>().depth}, {Camera.allCamerasCount} cameras in scene");
+            Context.Log.Info($"strategy diorama: spawned, camera at depth {_scene.Camera.GetComponent<Camera>().depth}, {Camera.allCamerasCount} cameras in scene");
         }
         catch (Exception ex)
         {
@@ -133,9 +133,9 @@ public sealed partial class StrategyDiorama : JiangyuSystem
         foreach (var other in Camera.allCameras)
             if (other != null)
                 depth = Mathf.Max(depth, other.depth);
-        _camera = new GameObject("WOMENACE_StrategyRoomCamera");
-        _camera.transform.SetPositionAndRotation(_anchor.position, _anchor.rotation);
-        var camera = _camera.AddComponent<Camera>();
+        _scene.Camera = new GameObject("WOMENACE_StrategyRoomCamera");
+        _scene.Camera.transform.SetPositionAndRotation(_scene.Anchor.position, _scene.Anchor.rotation);
+        var camera = _scene.Camera.AddComponent<Camera>();
         camera.fieldOfView = RoomFov;
         camera.nearClipPlane = 0.05f;
         camera.farClipPlane = 500f;
@@ -145,8 +145,8 @@ public sealed partial class StrategyDiorama : JiangyuSystem
         // The game applies its quality settings to every camera whenever a screen opens and expects
         // HDRP camera data and a Volume beside each one. The room camera reads volumes on its own
         // layer only, so neither it nor the game's cameras touch the other's.
-        _camera.layer = VolumeLayer;
-        var hdCamera = _camera.AddComponent<HDAdditionalCameraData>();
+        _scene.Camera.layer = VolumeLayer;
+        var hdCamera = _scene.Camera.AddComponent<HDAdditionalCameraData>();
         hdCamera.volumeLayerMask = 1 << VolumeLayer;
         // Past the end of a set's outdoor scenery a window shows the camera's own background:
         // the pale of the sky at the horizon, where HDRP's own is a deep blue.
@@ -157,7 +157,7 @@ public sealed partial class StrategyDiorama : JiangyuSystem
         // The camera's own volume, under each set's: GFL2's neutral exposure, no sky (reflections
         // come from the room's probes alone), no HDRP fog (Womenace/BakedScene fogs the room as GFL2
         // does), no screen-space AO, and the shadow light's settings.
-        var volume = _camera.AddComponent<Volume>();
+        var volume = _scene.Camera.AddComponent<Volume>();
         volume.isGlobal = true;
         volume.priority = 100f;
         var profile = ScriptableObject.CreateInstance<VolumeProfile>();
@@ -170,7 +170,7 @@ public sealed partial class StrategyDiorama : JiangyuSystem
         volume.sharedProfile = profile;
         // The player's anti-aliasing and post quality from the first frame, not only from the next
         // screen that opens.
-        Il2CppMenace.PlayerSettings.PersistentPlayerSettings.DisplaySettings.ApplyQualitySettings(_camera.GetComponent<Camera>(), volume);
+        Il2CppMenace.PlayerSettings.PersistentPlayerSettings.DisplaySettings.ApplyQualitySettings(_scene.Camera.GetComponent<Camera>(), volume);
     }
 
     // Volume components are created and set as plain objects: the game's IL2CPP build carries no
@@ -212,10 +212,10 @@ public sealed partial class StrategyDiorama : JiangyuSystem
         ShowMachine(0f, 0f, 0f);
         ClearShopCart();
         ClearSets();
-        if (_camera != null)
+        if (_scene.Camera != null)
         {
-            DestroyProfile(_camera.GetComponent<Volume>()?.sharedProfile);
-            UnityEngine.Object.Destroy(_camera);
+            DestroyProfile(_scene.Camera.GetComponent<Volume>()?.sharedProfile);
+            UnityEngine.Object.Destroy(_scene.Camera);
         }
         ClearMarkers();
         ClearPlanet();
@@ -273,9 +273,9 @@ public sealed partial class StrategyDiorama : JiangyuSystem
         }
     }
 
-    internal static GameObject Room => _instance?._room;
+    internal static GameObject Room => _instance?._scene.Room;
     internal static ModContext SystemContext => _instance?.Context;
 
-    internal static Camera RoomCamera => _instance?._camera?.GetComponent<Camera>();
+    internal static Camera RoomCamera => _instance?._scene.Camera?.GetComponent<Camera>();
 
 }

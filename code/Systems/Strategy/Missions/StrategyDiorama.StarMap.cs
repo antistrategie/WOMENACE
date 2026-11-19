@@ -22,7 +22,7 @@ public sealed partial class StrategyDiorama
     // Shows the copy of a vanilla system map scene over the table, or puts it away.
     private void SetStarMap(GameObject vanilla)
     {
-        if (vanilla == null || _room == null)
+        if (vanilla == null || _scene.Room == null)
         {
             if (_missions.StarMap != null && _missions.StarMap.activeSelf)
             {
@@ -51,7 +51,7 @@ public sealed partial class StrategyDiorama
         ClearStarMap();
         _missions.StarMapSource = vanilla;
         _missions.StarMap = new GameObject("WOMENACE_StarMap");
-        _missions.StarMap.transform.SetParent(_room.transform, false);
+        _missions.StarMap.transform.SetParent(_scene.Room.transform, false);
         _missions.StarMap.transform.localPosition = _missions.StarPosition;
         _missions.StarMap.transform.localScale = Vector3.one * _missions.StarScale;
         var source = vanilla.transform;
@@ -63,7 +63,7 @@ public sealed partial class StrategyDiorama
             if (filter == null || filter.sharedMesh == null || renderer.name.StartsWith(StarMapRays, StringComparison.Ordinal))
                 continue;
             var copy = new GameObject(renderer.name);
-            copy.layer = _room.layer;
+            copy.layer = _scene.Room.layer;
             var t = copy.transform;
             t.SetParent(_missions.StarMap.transform, false);
             // Where it stands in vanilla's scene, kept as it is: vanilla's camera looks the way the
@@ -182,7 +182,7 @@ public sealed partial class StrategyDiorama
     // names through that camera, so both follow the room's view of the copy.
     private void DriveStarMap()
     {
-        if (_missions.StarMap == null || !_missions.StarMap.activeSelf || _missions.StarMapSource == null || _camera == null)
+        if (_missions.StarMap == null || !_missions.StarMap.activeSelf || _missions.StarMapSource == null || _scene.Camera == null)
         {
             RestoreStarMapCamera();
             return;
@@ -197,7 +197,7 @@ public sealed partial class StrategyDiorama
             return;
         }
         var mapCamera = _missions.StarMapSource.GetComponentInChildren<Camera>(true);
-        var roomCamera = _camera.GetComponent<Camera>();
+        var roomCamera = _scene.Camera.GetComponent<Camera>();
         if (mapCamera == null || roomCamera == null)
             return;
         if (_missions.StarMapCamera != mapCamera)

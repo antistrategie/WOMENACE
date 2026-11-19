@@ -177,7 +177,7 @@ public sealed partial class StrategyDiorama
 
     private void DriveMarket()
     {
-        var on = _policyScreen == VanillaUi.Screens.BlackMarket && _room != null && _camera != null && _active == _ops
+        var on = _policyScreen == VanillaUi.Screens.BlackMarket && _scene.Room != null && _scene.Camera != null && _scene.Active == _scene.Ops
             && _shellRoot?.panel != null;
         if (!on || !MarketPicture())
         {
@@ -368,7 +368,7 @@ public sealed partial class StrategyDiorama
     private void LayOutMarket(VisualElement root)
     {
         var panels = UI.Find(root, UiSelector.Name(VanillaUi.Elements.Panels));
-        if (panels == null || _active != _ops)
+        if (panels == null || _scene.Active != _scene.Ops)
             return;
         if (!root.ClassListContains(MarketClass))
         {

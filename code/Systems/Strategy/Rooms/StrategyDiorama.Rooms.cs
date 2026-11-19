@@ -196,11 +196,11 @@ public sealed partial class StrategyDiorama
     // equivalents. Enabled only while the set is active.
     private GameObject SpawnSetVolume(RoomSet set)
     {
-        if (_camera == null)
+        if (_scene.Camera == null)
             return null;
         var look = set.Look;
-        var go = new GameObject("WOMENACE_SetVolume_" + set.Asset.Split('/')[1]) { layer = _camera.layer };
-        go.transform.SetParent(_camera.transform, false);
+        var go = new GameObject("WOMENACE_SetVolume_" + set.Asset.Split('/')[1]) { layer = _scene.Camera.layer };
+        go.transform.SetParent(_scene.Camera.transform, false);
         var volume = go.AddComponent<UnityEngine.Rendering.Volume>();
         volume.isGlobal = true;
         volume.priority = 200f;
@@ -240,11 +240,11 @@ public sealed partial class StrategyDiorama
     // Mission prep has its own music and so has each room (StrategyMusicSystem).
     private void DriveMusic()
     {
-        if (_active == null)
+        if (_scene.Active == null)
             return;
         StrategyMusicSystem.Drive(_policyScreen == VanillaUi.Screens.MissionPrep,
-            _active == _weaponSet ? StrategyMusicSystem.Room.Workshop
-            : _active == _refitSet ? StrategyMusicSystem.Room.Refitting
+            _scene.Active == _scene.Weapon ? StrategyMusicSystem.Room.Workshop
+            : _scene.Active == _scene.Refit ? StrategyMusicSystem.Room.Refitting
             : StrategyMusicSystem.Room.Ops);
     }
 
@@ -255,15 +255,15 @@ public sealed partial class StrategyDiorama
         if (set?.Root == null)
             return;
         set.Root.SetActive(true);
-        if (_active == set)
+        if (_scene.Active == set)
             return;
-        if (_active?.Root != null)
+        if (_scene.Active?.Root != null)
         {
-            _active.Root.SetActive(false);
-            if (_active.Volume != null)
-                _active.Volume.GetComponent<UnityEngine.Rendering.Volume>().enabled = false;
+            _scene.Active.Root.SetActive(false);
+            if (_scene.Active.Volume != null)
+                _scene.Active.Volume.GetComponent<UnityEngine.Rendering.Volume>().enabled = false;
         }
-        _active = set;
+        _scene.Active = set;
         if (set.Volume == null)
             set.Volume = SpawnSetVolume(set);
         if (set.Volume != null)
@@ -532,7 +532,7 @@ public sealed partial class StrategyDiorama
     // Destroys what the sets made. The sets themselves go with the scene (DioramaScene).
     private void ClearSets()
     {
-        foreach (var set in Sets)
+        foreach (var set in _scene.Sets)
         {
             if (set.Root != null)
                 UnityEngine.Object.Destroy(set.Root);

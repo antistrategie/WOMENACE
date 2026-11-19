@@ -200,7 +200,7 @@ public sealed partial class StrategyDiorama
         }
         if (_missions.PlanetLay > 0f)
             EndPlanetLay();
-        var onScreen = _room != null && _policyScreen == VanillaUi.Screens.MissionSelect;
+        var onScreen = _scene.Room != null && _policyScreen == VanillaUi.Screens.MissionSelect;
         // A new visit asks again: the operation's time of day, and so its video, may have moved on.
         if (!onScreen)
             _missions.PlanetOperation = IntPtr.Zero;
@@ -431,7 +431,7 @@ public sealed partial class StrategyDiorama
         if (_missions.PlanetPlayer == null)
         {
             var host = new GameObject("WOMENACE_PlanetVideo");
-            host.transform.SetParent(_room.transform, false);
+            host.transform.SetParent(_scene.Room.transform, false);
             _missions.PlanetPlayer = host.AddComponent<VideoPlayer>();
             _missions.PlanetPlayer.playOnAwake = false;
             _missions.PlanetPlayer.isLooping = true;

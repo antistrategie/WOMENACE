@@ -31,7 +31,7 @@ public sealed partial class StrategyDiorama
         if (d == null || !Enabled || d._shop.PullOn)
             return false;
         // Made here for the shop, it goes when the shop is done with it, as one DriveShop makes.
-        if (d._shop.Machine == null && d._room != null && d._camera != null && d._active == d._ops)
+        if (d._shop.Machine == null && d._scene.Room != null && d._scene.Camera != null && d._scene.Active == d._scene.Ops)
         {
             ShowMachine(PullMachineHeight, 0f, 0f);
             d._shop.MachineForShop = d._shop.Machine != null;
@@ -266,7 +266,7 @@ public sealed partial class StrategyDiorama
     internal static string ShowMachine(float height, float along, float yaw)
     {
         var d = _instance;
-        if (d?._room == null)
+        if (d?._scene.Room == null)
             return "no room";
         d.StopMachineCamera();
         foreach (var material in d._shop.MachineMaterials)
@@ -289,7 +289,7 @@ public sealed partial class StrategyDiorama
             return "no machine prefab or hologram material";
         // The model is 1.94 m tall.
         const float modelHeight = 1.94f;
-        var machine = UnityEngine.Object.Instantiate(prefab, d._room.transform, false);
+        var machine = UnityEngine.Object.Instantiate(prefab, d._scene.Room.transform, false);
         machine.name = "wm-machine";
         machine.transform.localPosition = new Vector3(OciShipFoot.x + along, OciShipFoot.y, OciShipFoot.z);
         machine.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
@@ -527,7 +527,7 @@ public sealed partial class StrategyDiorama
     private System.Collections.IEnumerator FollowMachineCamera(float seconds)
     {
         var node = _shop.MachineCameraNode;
-        var up = _room.transform.up;
+        var up = _scene.Room.transform.up;
         var (from, lift, started) = (_shot, _shotLift, Time.unscaledTime);
         while (node != null && _shop.Machine != null)
         {

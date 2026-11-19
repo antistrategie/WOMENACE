@@ -49,7 +49,7 @@ public sealed partial class StrategyDiorama
 
     private void DrivePlanetCamera()
     {
-        var on = _policyScreen == VanillaUi.Screens.MissionSelect && _homeView == HomeView.Operations && _room != null && _camera != null
+        var on = _policyScreen == VanillaUi.Screens.MissionSelect && _homeView == HomeView.Operations && _scene.Room != null && _scene.Camera != null
             && _shellRoot?.panel != null && _missions.Planet != null && _missions.PlanetMoment > 0f && _missions.PlanetLay <= 0f;
         if (!on)
         {
@@ -93,9 +93,9 @@ public sealed partial class StrategyDiorama
             return;
         _missions.PlanetShotFor = (_missions.PlanetYaw, _missions.PlanetTilt, _missions.PlanetDistance);
         var local = PlanetOrbitEye(_missions.PlanetYaw, _missions.PlanetTilt, ClearDistance(_missions.PlanetYaw, _missions.PlanetTilt, _missions.PlanetDistance));
-        var eye = _room.transform.TransformPoint(new Vector3(local.X, local.Y, local.Z));
-        var focus = _room.transform.TransformPoint(PlanetFraming.Target);
-        _shot = (eye, Quaternion.LookRotation(focus - eye, _room.transform.up), PlanetFraming.Fov, PlanetFraming.Shift);
+        var eye = _scene.Room.transform.TransformPoint(new Vector3(local.X, local.Y, local.Z));
+        var focus = _scene.Room.transform.TransformPoint(PlanetFraming.Target);
+        _shot = (eye, Quaternion.LookRotation(focus - eye, _scene.Room.transform.up), PlanetFraming.Fov, PlanetFraming.Shift);
     }
 
     // Whether the pointer is over the room: nothing of the shell's or vanilla's panels under it.
@@ -113,18 +113,18 @@ public sealed partial class StrategyDiorama
 
     private void MapRoom()
     {
-        if (_missions.RoomSolid != null && _missions.RoomMapped == _room.Pointer)
+        if (_missions.RoomSolid != null && _missions.RoomMapped == _scene.Room.Pointer)
             return;
         var size = (RoomMapTo - RoomMapFrom) / RoomCell;
         var (nx, ny, nz) = ((int)size.x, (int)size.y, (int)size.z);
         var solid = new bool[nx, ny, nz];
-        var (pieces, faces) = WalkSolidFaces(_room.transform, RoomCell, 120, (p, _) =>
+        var (pieces, faces) = WalkSolidFaces(_scene.Room.transform, RoomCell, 120, (p, _) =>
         {
             var (cx, cy, cz) = ((int)MathF.Floor((p.X - RoomMapFrom.x) / RoomCell), (int)MathF.Floor((p.Y - RoomMapFrom.y) / RoomCell), (int)MathF.Floor((p.Z - RoomMapFrom.z) / RoomCell));
             if (cx >= 0 && cy >= 0 && cz >= 0 && cx < nx && cy < ny && cz < nz)
                 solid[cx, cy, cz] = true;
         });
-        (_missions.RoomSolid, _missions.RoomMapped) = (solid, _room.Pointer);
+        (_missions.RoomSolid, _missions.RoomMapped) = (solid, _scene.Room.Pointer);
         Context.Log.Info($"strategy diorama: the room round the table is mapped from {faces} faces of {pieces} pieces");
     }
 

@@ -194,7 +194,7 @@ public sealed partial class StrategyDiorama
     // Builds the hologram once the screen's preview is ready, again when the deployment zone changes size, and puts it away with the screen.
     private void DrivePrepMap()
     {
-        if (_room == null || _policyScreen != VanillaUi.Screens.MissionPrep)
+        if (_scene.Room == null || _policyScreen != VanillaUi.Screens.MissionPrep)
         {
             ClearPrepMap();
             return;

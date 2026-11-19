@@ -91,7 +91,7 @@ public sealed partial class StrategyDiorama
         ClearMarkers();
         var template = MarkerTemplate();
         var layer = _shell != null ? UI.Find(_shell, UiSelector.Name("wm-markers")) : null;
-        if (template == null || layer == null || _room == null || _missions.CardsTexture == null)
+        if (template == null || layer == null || _scene.Room == null || _missions.CardsTexture == null)
             return;
         // Where the operation's planet is known the cards stand on it, in place of the land.
         if (CurrentPlanet() is { } planet)
@@ -217,7 +217,7 @@ public sealed partial class StrategyDiorama
     // The room's hologram quad, which the cards are copies of.
     private GameObject MarkerTemplate()
     {
-        var found = _room != null ? _room.transform.Find("_HoloScreen") : null;
+        var found = _scene.Room != null ? _scene.Room.transform.Find("_HoloScreen") : null;
         return found != null ? found.gameObject : null;
     }
 

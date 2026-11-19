@@ -35,19 +35,19 @@ public sealed partial class StrategyDiorama
         try
         {
             var prefab = Context.Assets.Load<GameObject>(DinergateAsset);
-            if (prefab == null || _room == null)
+            if (prefab == null || _scene.Room == null)
             {
                 Context.Log.Warn($"strategy diorama: '{DinergateAsset}' is not in the bundles");
                 return;
             }
-            _life.Dinergate = UnityEngine.Object.Instantiate(prefab, _room.transform, false);
+            _life.Dinergate = UnityEngine.Object.Instantiate(prefab, _scene.Room.transform, false);
             _life.Dinergate.name = "WOMENACE_Dinergate";
             _life.DinergateAnimator = _life.Dinergate.GetComponentInChildren<Animator>(true);
             GlowDinergate();
             AttachDinergateEffects();
             PlaceDinergate();
             _life.DinergateProjecting = false;
-            ProbeLight(_life.Dinergate, _ops);
+            ProbeLight(_life.Dinergate, _scene.Ops);
             Context.Coroutines.Start(WatchClicks(_life.Dinergate));
             Context.Log.Info($"strategy diorama: dinergate at {DinergatePosition}, animator {(_life.DinergateAnimator != null ? "found" : "missing")}");
         }
@@ -129,11 +129,11 @@ public sealed partial class StrategyDiorama
 
     private void PlaceDinergate()
     {
-        if (_life.Dinergate == null || _room == null)
+        if (_life.Dinergate == null || _scene.Room == null)
             return;
         var t = _life.Dinergate.transform;
         t.localPosition = DinergatePosition;
-        var toCamera = _room.transform.InverseTransformPoint(_anchor.position) - DinergatePosition;
+        var toCamera = _scene.Room.transform.InverseTransformPoint(_scene.Anchor.position) - DinergatePosition;
         var yaw = Mathf.Atan2(toCamera.x, toCamera.z) * Mathf.Rad2Deg;
         _life.DinergateYaw = yaw;
         t.localRotation = Quaternion.Euler(0f, yaw, 0f);
@@ -162,13 +162,13 @@ public sealed partial class StrategyDiorama
         var toPosition = DinergatePosition;
         var toRotation = Quaternion.Euler(0f, _life.DinergateYaw, 0f);
         var camera = RoomCamera;
-        if (up && camera != null && _room != null)
+        if (up && camera != null && _scene.Room != null)
         {
             // Along the camera's own right and back axes, a line from the middle height of the
             // screen stays at that height, so the projection runs level across the view.
             var view = camera.transform;
-            var aim = _room.transform.InverseTransformDirection((view.right - view.forward * DinergateProjectingTowardsCamera).normalized);
-            var level = _room.transform.InverseTransformDirection(view.right);
+            var aim = _scene.Room.transform.InverseTransformDirection((view.right - view.forward * DinergateProjectingTowardsCamera).normalized);
+            var level = _scene.Room.transform.InverseTransformDirection(view.right);
             level.y = 0f;
             // The projection's axis and source, as the body carries them.
             var fire = ProjectionNode(dinergate);
@@ -240,7 +240,7 @@ public sealed partial class StrategyDiorama
     // Whether a screen point is over the Dinergate, nothing drawn in front of it.
     private bool OverDinergate(Vector2 screenPoint)
     {
-        var camera = _camera != null ? _camera.GetComponent<Camera>() : null;
+        var camera = _scene.Camera != null ? _scene.Camera.GetComponent<Camera>() : null;
         if (camera == null || !camera.isActiveAndEnabled || _life.Dinergate == null || PointerOverUi(screenPoint))
             return false;
         var ray = camera.ScreenPointToRay(new Vector3(screenPoint.x, screenPoint.y, 0f));
@@ -289,7 +289,7 @@ public sealed partial class StrategyDiorama
     private bool OverTable(Vector2 screenPoint)
     {
         var camera = RoomCamera;
-        if (camera == null || !camera.isActiveAndEnabled || _room == null || _shell == null || _intelOpen || !OnHomeView(_policyScreen))
+        if (camera == null || !camera.isActiveAndEnabled || _scene.Room == null || _shell == null || _intelOpen || !OnHomeView(_policyScreen))
             return false;
         // The table's tag is a part of it.
         var tag = _life.TableTag;
@@ -302,8 +302,8 @@ public sealed partial class StrategyDiorama
         var sign = 0f;
         for (var i = 0; i < TableTop.Length; i++)
         {
-            var a = camera.WorldToScreenPoint(_room.transform.TransformPoint(TableTop[i]));
-            var b = camera.WorldToScreenPoint(_room.transform.TransformPoint(TableTop[(i + 1) % TableTop.Length]));
+            var a = camera.WorldToScreenPoint(_scene.Room.transform.TransformPoint(TableTop[i]));
+            var b = camera.WorldToScreenPoint(_scene.Room.transform.TransformPoint(TableTop[(i + 1) % TableTop.Length]));
             if (a.z <= 0f || b.z <= 0f)
                 return false;
             var side = (b.x - a.x) * (screenPoint.y - a.y) - (b.y - a.y) * (screenPoint.x - a.x);

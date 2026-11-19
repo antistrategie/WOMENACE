@@ -23,7 +23,7 @@ public sealed partial class StrategyDiorama
     // cut happens behind them, and the next screen's shell opens them.
     private void GoTo(VanillaNavigation.Target target)
     {
-        if (_cutting)
+        if (_scene.Cutting)
             return;
         var from = _policyScreen != null ? LookFor(_policyScreen).RoomKey : null;
         if (_shell == null || from == RoomOf(target) || !VanillaNavigation.Available(target))
@@ -36,7 +36,7 @@ public sealed partial class StrategyDiorama
 
     private System.Collections.IEnumerator CutTo(VanillaNavigation.Target target, VisualElement shell)
     {
-        _cutting = true;
+        _scene.Cutting = true;
         Sound.Click();
         ShutBars(shell, BarsCutClass);
         for (var t = 0f; t < BarsCutSeconds; t += UnityEngine.Time.unscaledDeltaTime)
@@ -53,15 +53,15 @@ public sealed partial class StrategyDiorama
         CoverCut();
         yield return null;
         yield return null;
-        _cutting = false;
-        _arrivedThroughBars = true;
+        _scene.Cutting = false;
+        _scene.ArrivedThroughBars = true;
         VanillaNavigation.Go(target);
         // A destination that did not open leaves the bars shut with nothing to open them.
         for (var t = 0f; t < CoverMaxSeconds; t += UnityEngine.Time.unscaledDeltaTime)
             yield return null;
-        if (_arrivedThroughBars && _shell == shell && shell.panel != null)
+        if (_scene.ArrivedThroughBars && _shell == shell && shell.panel != null)
         {
-            _arrivedThroughBars = false;
+            _scene.ArrivedThroughBars = false;
             Context.Coroutines.Start(OpenBars(shell));
         }
     }

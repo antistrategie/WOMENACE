@@ -633,7 +633,7 @@ public sealed partial class StrategyDiorama
     // camera round it.
     private void StageRecruit()
     {
-        if (_room == null || _camera == null)
+        if (_scene.Room == null || _scene.Camera == null)
             return;
         if (_staging.RecruitStand != null)
             return;
@@ -642,13 +642,13 @@ public sealed partial class StrategyDiorama
         TravelFrom(from);
         try
         {
-            var refit = SpawnSet(_refitSet);
+            var refit = SpawnSet(_scene.Refit);
             if (refit != null)
             {
-                ActivateSet(_refitSet);
+                ActivateSet(_scene.Refit);
                 MapHall(refit.transform);
             }
-            _staging.Stage = (refit ?? _room).transform;
+            _staging.Stage = (refit ?? _scene.Room).transform;
             _staging.RecruitStand = new GameObject("WOMENACE_Candidate");
             _staging.RecruitStand.transform.SetParent(_staging.Stage, false);
             _staging.RecruitStand.transform.localPosition = ArmoryStand;

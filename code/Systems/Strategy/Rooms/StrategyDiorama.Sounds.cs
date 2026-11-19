@@ -22,7 +22,7 @@ public sealed partial class StrategyDiorama
     {
         var cue = _life.CurrentTableCue;
         _life.CurrentTableCue = TableCue.None;
-        var listening = _room != null && _roomShown && !_tableVideo;
+        var listening = _scene.Room != null && _roomShown && !_tableVideo;
         try
         {
             if (listening && cue != TableCue.None)

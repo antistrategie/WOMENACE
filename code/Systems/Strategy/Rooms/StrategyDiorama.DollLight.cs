@@ -26,9 +26,9 @@ public sealed partial class StrategyDiorama
     {
         var lamps = Lamps(feet + Vector3.up * ChestHeight);
         if (lamps.Reach >= LampsReachLevel)
-            ProbeLight(doll, _ops, 1f, Leant(doll, lamps.From), LampKeyColour(lamps.Colour));
+            ProbeLight(doll, _scene.Ops, 1f, Leant(doll, lamps.From), LampKeyColour(lamps.Colour));
         else
-            ProbeLight(doll, _ops, 1f, Leant(doll, WindowLightFrom(feet)));
+            ProbeLight(doll, _scene.Ops, 1f, Leant(doll, WindowLightFrom(feet)));
     }
 
     // The lamps' colour at the sun's key's brightness, so a doll under them is as well lit as one
@@ -37,7 +37,7 @@ public sealed partial class StrategyDiorama
     // is pointed along it.
     private Color LampKeyColour(Color lamps)
     {
-        var sun = _ops.Sun != null && LightsCharacters(_ops.Sun) ? _ops.Sun.color.linear * (_ops.Sun.intensity * Mathf.PI) : Color.black;
+        var sun = _scene.Ops.Sun != null && LightsCharacters(_scene.Ops.Sun) ? _scene.Ops.Sun.color.linear * (_scene.Ops.Sun.intensity * Mathf.PI) : Color.black;
         var bright = Luminance(sun);
         var level = Luminance(lamps);
         return level > 1e-6f ? lamps * (bright / level) : sun;
@@ -60,10 +60,10 @@ public sealed partial class StrategyDiorama
     // other.
     private Vector3 WindowLightFrom(Vector3 feet)
     {
-        var (sh, _, total) = BlendProbes(_ops, feet + Vector3.up * ChestHeight);
+        var (sh, _, total) = BlendProbes(_scene.Ops, feet + Vector3.up * ChestHeight);
         // The probes' first band points the way their light comes from, a colour at a time.
         var from = (new Vector3(sh[0].x, sh[0].y, sh[0].z) * 0.3f + new Vector3(sh[1].x, sh[1].y, sh[1].z) * 0.59f + new Vector3(sh[2].x, sh[2].y, sh[2].z) * 0.11f) / total;
-        from = _room.transform.TransformDirection(from);
+        from = _scene.Room.transform.TransformDirection(from);
         from.y = 0f;
         return from.sqrMagnitude > 1e-8f ? from.normalized : Vector3.zero;
     }
@@ -75,8 +75,8 @@ public sealed partial class StrategyDiorama
         var reach = 0f;
         var from = Vector3.zero;
         var colour = Color.black;
-        var at = _room.transform.TransformPoint(chest);
-        foreach (var light in _ops.LiveLights)
+        var at = _scene.Room.transform.TransformPoint(chest);
+        foreach (var light in _scene.Ops.LiveLights)
         {
             if (light == null || !LightsCharacters(light))
                 continue;

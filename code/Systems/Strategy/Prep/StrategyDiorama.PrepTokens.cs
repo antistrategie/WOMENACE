@@ -99,7 +99,7 @@ public sealed partial class StrategyDiorama
     {
         var layer = _shellRoot != null && _policyScreen == VanillaUi.Screens.MissionPrep
             ? UI.Find(_shellRoot, UiSelector.Name(PrepTokensName)) : null;
-        if (layer == null || _prep.Map == null || _camera == null || layer.panel == null)
+        if (layer == null || _prep.Map == null || _scene.Camera == null || layer.panel == null)
         {
             if (_prep.Tokens.Count > 0)
                 ClearPrepTokens();
@@ -478,7 +478,7 @@ public sealed partial class StrategyDiorama
 
     private void PlacePrepTokens(VisualElement layer, (IntPtr Squad, Vector2Int Now, Vector2Int From, bool Valid)? drag)
     {
-        var camera = _camera.GetComponent<Camera>();
+        var camera = _scene.Camera.GetComponent<Camera>();
         if (camera == null)
             return;
         // Every card is square to the view, not turned towards the eye: turned, a card off to one

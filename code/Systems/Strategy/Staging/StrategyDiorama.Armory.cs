@@ -70,7 +70,7 @@ public sealed partial class StrategyDiorama
     {
         if (_staging.CurrentStageShot.ScreenX is not { } x)
             return _staging.CurrentStageShot.Pan;
-        var camera = _camera != null ? _camera.GetComponent<Camera>() : null;
+        var camera = _scene.Camera != null ? _scene.Camera.GetComponent<Camera>() : null;
         var width = _shellRoot?.panel?.visualTree?.worldBound.width ?? 0f;
         if (camera == null || !(width > 1f))
             return _staging.CurrentStageShot.Pan;
@@ -86,7 +86,7 @@ public sealed partial class StrategyDiorama
 
     // Where the camera stands while something is staged, or nothing when the hall is not showing.
     private (Vector3 Position, Quaternion Rotation)? StagePose() =>
-        _staging.Stage != null && _camera != null ? (_camera.transform.position, _camera.transform.rotation) : null;
+        _staging.Stage != null && _scene.Camera != null ? (_scene.Camera.transform.position, _scene.Camera.transform.rotation) : null;
 
     private void TravelFrom((Vector3 Position, Quaternion Rotation)? from)
     {
@@ -114,7 +114,7 @@ public sealed partial class StrategyDiorama
 
     private void StageArmory(GameObject vanilla)
     {
-        if (vanilla == null || _room == null || _camera == null)
+        if (vanilla == null || _scene.Room == null || _scene.Camera == null)
             return;
         if (_staging.ArmoryVanilla == vanilla)
         {
@@ -130,10 +130,10 @@ public sealed partial class StrategyDiorama
         _staging.CurrentStageShot = SquadShot;
         try
         {
-            var refit = SpawnSet(_refitSet);
+            var refit = SpawnSet(_scene.Refit);
             if (refit != null)
-                ActivateSet(_refitSet);
-            _staging.Stage = (refit ?? _room).transform;
+                ActivateSet(_scene.Refit);
+            _staging.Stage = (refit ?? _scene.Room).transform;
             if (refit != null)
             {
                 MapHall(refit.transform);
@@ -238,8 +238,8 @@ public sealed partial class StrategyDiorama
         _staging.ArmoryVanilla = null;
         ClearRecruitStand();
         _staging.Stage = null;
-        if (_active == _refitSet)
-            ActivateSet(_ops);
+        if (_scene.Active == _scene.Refit)
+            ActivateSet(_scene.Ops);
     }
 
     // Each unit takes the set's light probes where it stands.
@@ -268,7 +268,7 @@ public sealed partial class StrategyDiorama
 
     private void ProbeLightSquad()
     {
-        var set = _active;
+        var set = _scene.Active;
         foreach (var staged in _staging.StagedRoots)
             if (staged.Root != null && staged.Root.gameObject.activeInHierarchy)
                 for (int i = 0; i < staged.Root.childCount; i++)
@@ -415,7 +415,7 @@ public sealed partial class StrategyDiorama
         var dragging = false;
         var goodYaw = ArmoryYaw;
         var shown = 0f;
-        while (_camera != null && _staging.Stage != null)
+        while (_scene.Camera != null && _staging.Stage != null)
         {
             // The controller respawns the units on every selection, so their grips and their light
             // are found again on the frame the new squad appears. Its name plates are placed by
@@ -485,8 +485,8 @@ public sealed partial class StrategyDiorama
                 eye = Vector3.Lerp(_staging.StageFrom.Position, eye, along);
                 facing = Quaternion.Slerp(_staging.StageFrom.Rotation, facing, along);
             }
-            _camera.transform.SetPositionAndRotation(eye, facing);
-            var camera = _camera.GetComponent<Camera>();
+            _scene.Camera.transform.SetPositionAndRotation(eye, facing);
+            var camera = _scene.Camera.GetComponent<Camera>();
             if (camera != null)
                 SetLens(camera, ArmoryFov, 0f, 0f);
             LightSquad();
