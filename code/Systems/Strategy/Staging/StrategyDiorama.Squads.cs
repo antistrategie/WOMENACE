@@ -389,10 +389,10 @@ public sealed partial class StrategyDiorama
     private static System.Collections.IEnumerator ReopenSquads()
     {
         yield return null;
-        NavigationMenu.Go(NavigationMenu.Target.Bridge);
+        VanillaNavigation.Go(VanillaNavigation.Target.Bridge);
         yield return null;
         yield return null;
-        NavigationMenu.Go(NavigationMenu.Target.Armory);
+        VanillaNavigation.Go(VanillaNavigation.Target.Armory);
     }
 
     private static VisualElement MiniButton(string name, string text, Action pressed)

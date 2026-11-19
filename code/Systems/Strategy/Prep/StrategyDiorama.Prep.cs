@@ -87,7 +87,8 @@ public sealed partial class StrategyDiorama
         var scroll = UI.Find(row, UiSelector.Name(PrepRosterName));
         if (scroll == null)
         {
-            var (home, index) = (tiles.parent, tiles.parent.IndexOf(tiles));
+            var home = tiles.parent;
+            var putBack = PutBack(tiles);
             scroll = Scrolling(tiles);
             scroll.name = PrepRosterName;
             // The tiles never run wider than the list, so nothing scrolls sideways.
@@ -98,7 +99,7 @@ public sealed partial class StrategyDiorama
             var made = scroll;
             _shellUndo.Add(() =>
             {
-                home.Insert(Math.Min(index, home.childCount), tiles);
+                putBack();
                 made.RemoveFromHierarchy();
                 var s = tiles.style;
                 s.alignSelf = StyleKeyword.Null;
@@ -165,9 +166,8 @@ public sealed partial class StrategyDiorama
             return;
         if (info.parent != row)
         {
-            var (home, index) = (info.parent, info.parent.IndexOf(info));
+            _shellUndo.Add(PutBack(info));
             row.Insert(0, info);
-            _shellUndo.Add(() => home.Insert(Math.Min(index, home.childCount), info));
         }
         Inline(info, e =>
         {
@@ -465,7 +465,7 @@ public sealed partial class StrategyDiorama
             panel.BringToFront();
             return;
         }
-        var (home, index) = (panel.parent, panel.parent.IndexOf(panel));
+        var putBack = PutBack(panel);
         root.Add(panel);
         var caption = new Label(Locale.Text("WOMENACE::ui/prep/abilities", "O.C.I. ABILITIES")) { name = PrepAbilitiesCaptionName, pickingMode = PickingMode.Ignore };
         caption.AddToClassList("wm-prep__abilities-caption");
@@ -489,7 +489,7 @@ public sealed partial class StrategyDiorama
             s.width = StyleKeyword.Null;
             s.height = StyleKeyword.Null;
             s.alignItems = StyleKeyword.Null;
-            home.Insert(Math.Min(index, home.childCount), panel);
+            putBack();
         });
     }
 

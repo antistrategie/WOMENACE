@@ -107,18 +107,18 @@ public sealed partial class StrategyDiorama
 
     // A destination on the bottom row: its button, the room whose group it stands in, where it
     // goes, and for the Workshop, which is one screen doing three things, the station.
-    private readonly record struct Destination(string Element, string RoomKey, NavigationMenu.Target Target, int Station = -1);
+    private readonly record struct Destination(string Element, string RoomKey, VanillaNavigation.Target Target, int Station = -1);
 
     private static readonly Destination[] Destinations =
     {
-        new("wm-nav-oci", OpsRoomKey, NavigationMenu.Target.Oci),
-        new("wm-nav-market", OpsRoomKey, NavigationMenu.Target.Market),
-        new("wm-nav-kalina", OpsRoomKey, NavigationMenu.Target.Shop),
-        new("wm-nav-roster", RefittingRoomKey, NavigationMenu.Target.Armory),
-        new("wm-nav-recruit", RefittingRoomKey, NavigationMenu.Target.Hiring),
-        new("wm-nav-assembly", WeaponRoomKey, NavigationMenu.Target.Workshop, AssembleStation),
-        new("wm-nav-disassembly", WeaponRoomKey, NavigationMenu.Target.Workshop, DisassembleStation),
-        new("wm-nav-calibration", WeaponRoomKey, NavigationMenu.Target.Workshop, CalibrateStation),
+        new("wm-nav-oci", OpsRoomKey, VanillaNavigation.Target.Oci),
+        new("wm-nav-market", OpsRoomKey, VanillaNavigation.Target.Market),
+        new("wm-nav-kalina", OpsRoomKey, VanillaNavigation.Target.Shop),
+        new("wm-nav-roster", RefittingRoomKey, VanillaNavigation.Target.Armory),
+        new("wm-nav-recruit", RefittingRoomKey, VanillaNavigation.Target.Hiring),
+        new("wm-nav-assembly", WeaponRoomKey, VanillaNavigation.Target.Workshop, AssembleStation),
+        new("wm-nav-disassembly", WeaponRoomKey, VanillaNavigation.Target.Workshop, DisassembleStation),
+        new("wm-nav-calibration", WeaponRoomKey, VanillaNavigation.Target.Workshop, CalibrateStation),
     };
 
     private static readonly (string Element, string RoomKey)[] DestinationGroups =
@@ -130,12 +130,12 @@ public sealed partial class StrategyDiorama
 
     private static bool IsHere(Destination destination, string screenName) => destination.Target switch
     {
-        NavigationMenu.Target.Oci => screenName == VanillaUi.Screens.ShipUpgrades,
-        NavigationMenu.Target.Market => screenName == VanillaUi.Screens.BlackMarket,
-        NavigationMenu.Target.Shop => screenName == VanillaUi.Screens.Workshop && ShopSystem.IsShopOpen,
-        NavigationMenu.Target.Armory => screenName == VanillaUi.Screens.Armory,
-        NavigationMenu.Target.Hiring => screenName == VanillaUi.Screens.Hiring,
-        NavigationMenu.Target.Workshop => screenName == VanillaUi.Screens.Workshop && !ShopSystem.IsShopOpen
+        VanillaNavigation.Target.Oci => screenName == VanillaUi.Screens.ShipUpgrades,
+        VanillaNavigation.Target.Market => screenName == VanillaUi.Screens.BlackMarket,
+        VanillaNavigation.Target.Shop => screenName == VanillaUi.Screens.Workshop && ShopSystem.IsShopOpen,
+        VanillaNavigation.Target.Armory => screenName == VanillaUi.Screens.Armory,
+        VanillaNavigation.Target.Hiring => screenName == VanillaUi.Screens.Hiring,
+        VanillaNavigation.Target.Workshop => screenName == VanillaUi.Screens.Workshop && !ShopSystem.IsShopOpen
             && WorkshopStation == destination.Station,
         _ => false,
     };
@@ -155,7 +155,7 @@ public sealed partial class StrategyDiorama
         {
             // Kalina's shop opens over the Workshop's own screen, where calibration's panels
             // would stay under it.
-            if (destination.Target == NavigationMenu.Target.Shop && _policyScreen == VanillaUi.Screens.Workshop)
+            if (destination.Target == VanillaNavigation.Target.Shop && _policyScreen == VanillaUi.Screens.Workshop)
                 CalibrationUISystem.Instance?.Close();
             GoTo(destination.Target);
             return;
@@ -167,7 +167,7 @@ public sealed partial class StrategyDiorama
         }
         _arriveAtStation = destination.Station;
         _arriveAtStationUntil = UnityEngine.Time.unscaledTime + ArriveAtStationSeconds;
-        GoTo(NavigationMenu.Target.Workshop);
+        GoTo(VanillaNavigation.Target.Workshop);
     }
 
     // Arriving on a home screen shows Home. Closing an operation's briefing returns to the map it
@@ -424,7 +424,7 @@ public sealed partial class StrategyDiorama
         var document = UIManager.Get()?.GetActiveScreen()?.m_Container?.rootVisualElement;
         var root = document != null ? UI.Find(document, UiSelector.Class(VanillaUi.Elements.ScreenRootClass)) : null;
         // Mission preparation has no tab bar, and so no resources on its top bar, as in vanilla.
-        var bar = NavigationMenu.ActiveTabBar();
+        var bar = VanillaNavigation.ActiveTabBar();
         if (root == null || (bar == null && screenName != VanillaUi.Screens.MissionPrep)
             || (bar != null && !VanillaUi.Require(Context, screenName, bar, VanillaUi.Elements.TabBarButtons, VanillaUi.Elements.TabBarResources)))
             return false;
@@ -446,7 +446,7 @@ public sealed partial class StrategyDiorama
             _shellInset = null;
             UI.Localise(_shell);
             // MENACE's bold face (Jura-Bold), set outright as the shell's font.
-            NavigationMenu.ApplyGameFont(_shell);
+            VanillaNavigation.ApplyGameFont(_shell);
             root.Add(_shell);
             _shellRoot = root;
             ShareStyles(root);
@@ -602,13 +602,7 @@ public sealed partial class StrategyDiorama
         if (element == null)
             return;
         apply(element);
-        // Once for each style on each element, however often the layout is applied: an element
-        // styled from several places has each of them taken off.
-        if (_inlinedStyles.Add((element.Pointer, undo.Method)))
-            _shellUndo.Add(() => undo(element));
-        // Layouts that take a style's value before they change it ask this set whether
-        // the value is still vanilla's.
-        _inlined.Add(element.Pointer);
+        Remember(element, undo.Method, () => undo(element));
     }
 
     // Inline, for a layout written against an element's style alone.
@@ -617,17 +611,40 @@ public sealed partial class StrategyDiorama
         if (element == null)
             return;
         apply(element.style);
-        if (_inlinedStyles.Add((element.Pointer, undo.Method)))
-            _shellUndo.Add(() => undo(element.style));
+        Remember(element, undo.Method, () => undo(element.style));
+    }
+
+    // How to put a vanilla element back where it stands now among its siblings, after the shell
+    // has moved it elsewhere: its vanilla layout depends on its place.
+    private static Action PutBack(VisualElement element)
+    {
+        var (home, index) = (element.parent, element.parent?.IndexOf(element) ?? 0);
+        return () =>
+        {
+            if (home != null)
+                home.Insert(Math.Min(index, home.childCount), element);
+        };
+    }
+
+    private void Remember(VisualElement element, System.Reflection.MethodInfo undoMethod, Action undo)
+    {
+        // Once for each style on each element, however often the layout is applied: an element
+        // styled from several places has each of them taken off.
+        if (_inlinedStyles.Add((element.Pointer, undoMethod)))
+            _shellUndo.Add(undo);
+        // Layouts that take a style's value before they change it ask this set whether
+        // the value is still vanilla's.
         _inlined.Add(element.Pointer);
     }
 
     private readonly HashSet<IntPtr> _inlined = new();
     private readonly HashSet<(IntPtr, System.Reflection.MethodInfo)> _inlinedStyles = new();
 
-    // The Dinergate's tag follows it on screen. It shows on the Home view while the board is shut,
-    // and lights up while the pointer is over the Dinergate.
-    private System.Collections.IEnumerator FollowDinergate(VisualElement shell)
+    // The shell's own work every frame, for as long as it is the screen's: its tags, the Intel
+    // board, the actions, a story event over the screen and the workshop's stations. The
+    // Dinergate's tag follows it on screen. It shows on the Home view while the board is shut,
+    // and lights up while the pointer is over the Dinergate. The room's own work is RoomDriver's.
+    private System.Collections.IEnumerator DriveShell(VisualElement shell)
     {
         var tag = UI.Find(shell, UiSelector.Name("wm-dg-tag"));
         var tableTag = _tableTag = UI.Find(shell, UiSelector.Name("wm-table-tag"));
@@ -663,25 +680,6 @@ public sealed partial class StrategyDiorama
                     tableTag.style.top = place.y - tableTag.resolvedStyle.height;
                 }
             }
-            DriveLand();
-            DriveTableGrid();
-            DriveRoomShade();
-            DrivePlanet();
-            DriveStarMap();
-            DriveSquads();
-            DriveRecruit();
-            DrivePrepMap();
-            DrivePrep();
-            DrivePrepFlat();
-            DrivePrepCamera();
-            DrivePlanetCamera();
-            DriveOci();
-            DriveMarket();
-            DriveShop();
-            DriveMusic();
-            DriveTableSounds();
-            DriveRoomCamera();
-            DriveRoomDolls();
             DrivePanHint(shell, covered);
             // The screen's size can change under the shell (a resolution chosen in the options).
             if ((placed -= UnityEngine.Time.unscaledDeltaTime) <= 0f)
@@ -689,11 +687,6 @@ public sealed partial class StrategyDiorama
                 placed = 0.25f;
                 PlaceShell(shell);
             }
-            DrivePrepInput();
-            DrivePrepTokens();
-            // The table's markers follow the camera and the selection.
-            if (_markers.Count > 0)
-                RefreshMarkers(false);
             // Vanilla places its faction window again as it opens it.
             if (_intelOpen && _factionWindow?.panel != null && _factionWindow.resolvedStyle.display != DisplayStyle.None)
                 PlaceFactionWindow();
@@ -751,19 +744,10 @@ public sealed partial class StrategyDiorama
                         SetIntel(true);
                 }
             }
-            // Kalina's shop opens and shuts on the workshop screen without a screen change.
-            if (_policyScreen == VanillaUi.Screens.Workshop && _shellShop != ShopSystem.IsShopOpen)
-            {
+            // Kalina's shop opens and shuts on the workshop screen without a screen change, and its
+            // stations change what it is doing, with the camera going between them.
+            if (_policyScreen == VanillaUi.Screens.Workshop && (_shellShop != ShopSystem.IsShopOpen || _workshopStation != WorkshopStation))
                 ApplyScreenPolicy();
-                ApplyHome(_homeScreen, _homeRoomShown);
-            }
-            // Its stations change what it is doing without a screen change too, and the camera
-            // goes between them.
-            else if (_policyScreen == VanillaUi.Screens.Workshop && _workshopStation != WorkshopStation)
-            {
-                ApplyScreenPolicy();
-                ApplyHome(_homeScreen, _homeRoomShown);
-            }
             // Arrived from another screen by a station's button: the Workshop turns to that station.
             if (_arriveAtStation is { } station)
             {
@@ -857,14 +841,14 @@ public sealed partial class StrategyDiorama
                 return;
             }
             _arriveOnOperations = true;
-            GoTo(NavigationMenu.Target.Bridge);
+            GoTo(VanillaNavigation.Target.Bridge);
         });
         Click("wm-shell-back", () =>
         {
             if (_policyScreen != null && HomeScreens.Contains(_policyScreen))
                 SetHomeView(HomeView.Home);
             else
-                GoTo(NavigationMenu.Target.Bridge);
+                GoTo(VanillaNavigation.Target.Bridge);
         });
         Click("wm-act-primary", () =>
         {
@@ -876,7 +860,7 @@ public sealed partial class StrategyDiorama
         Click("wm-act-secondary", () => ClickVanilla(_actionSecondary));
         Click("wm-board-close", () => SetIntel(false));
         Click("wm-board-blocker", StepBackFromIntel);
-        Context.Coroutines.Start(FollowDinergate(_shell));
+        Context.Coroutines.Start(DriveShell(_shell));
         foreach (var destination in Destinations)
             Click(destination.Element, () => GoTo(destination));
     }
@@ -884,11 +868,7 @@ public sealed partial class StrategyDiorama
     private void Click(string name, Action onClick)
     {
         var item = UI.Find(_shell, UiSelector.Name(name));
-        item?.RegisterCallback((EventCallback<ClickEvent>)(_ =>
-        {
-            if (!NavigationMenu.IsOpen)
-                onClick();
-        }));
+        item?.RegisterCallback((EventCallback<ClickEvent>)(_ => onClick()));
     }
 
     private readonly List<Action> _shellUndo = new();
@@ -933,7 +913,7 @@ public sealed partial class StrategyDiorama
             if (item == null)
                 continue;
             var here = IsHere(destination, screenName);
-            var available = here || NavigationMenu.Available(destination.Target);
+            var available = here || VanillaNavigation.Available(destination.Target);
             item.EnableInClassList("wui-nav-btn--off", !available);
             item.EnableInClassList("wui-nav-btn--here", here);
             item.pickingMode = available && !here ? PickingMode.Position : PickingMode.Ignore;
@@ -1031,7 +1011,7 @@ public sealed partial class StrategyDiorama
 
     private bool StepBackOnEscape()
     {
-        if (!Enabled || _shell == null || _policyScreen == null || NavigationMenu.IsOpen)
+        if (!Enabled || _shell == null || _policyScreen == null)
             return false;
         // The Intel board steps back on Escape by its own watch.
         if (_intelOpen)

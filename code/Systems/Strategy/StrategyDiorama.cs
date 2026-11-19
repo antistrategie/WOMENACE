@@ -42,7 +42,59 @@ public sealed partial class StrategyDiorama : JiangyuSystem
     // what the diorama made outside the scene, so everything is torn down as on removal.
     public override void OnSceneLoaded(int buildIndex, string sceneName)
     {
+        // A room that would not spawn in the last scene is tried again in this one.
+        _spawnFailedIn = null;
         Remove();
+    }
+
+    // The room's work every frame, for as long as it stands, with or without a shell on the
+    // screen: its camera, sounds and music, and every station's drive. A drive that throws is
+    // reported once and the others go on.
+    private System.Collections.IEnumerator RoomDriver(GameObject room)
+    {
+        var failed = false;
+        while (room != null && _room == room)
+        {
+            try
+            {
+                DriveRoom();
+            }
+            catch (Exception ex)
+            {
+                if (!failed)
+                    Context.Log.Warn($"strategy diorama: room drive failed: {ex.GetType().Name}: {ex.Message}");
+                failed = true;
+            }
+            yield return null;
+        }
+    }
+
+    private void DriveRoom()
+    {
+        DriveLand();
+        DriveTableGrid();
+        DriveRoomShade();
+        DrivePlanet();
+        DriveStarMap();
+        DriveSquads();
+        DriveRecruit();
+        DrivePrepMap();
+        DrivePrep();
+        DrivePrepFlat();
+        DrivePrepCamera();
+        DrivePlanetCamera();
+        DriveOci();
+        DriveMarket();
+        DriveShop();
+        DriveMusic();
+        DriveTableSounds();
+        DriveRoomCamera();
+        DriveRoomDolls();
+        DrivePrepInput();
+        DrivePrepTokens();
+        // The table's markers follow the camera and the selection.
+        if (_markers.Count > 0)
+            RefreshMarkers(false);
     }
 
     private const int RoomSimulatedLod = 4;
@@ -64,6 +116,9 @@ public sealed partial class StrategyDiorama : JiangyuSystem
             SpawnRoomDolls();
             SpawnMirror();
             ActivateSet(_ops);
+            // Before the first screen's shell, so on each frame the room has moved before the
+            // shell places what it lays over it.
+            Context.Coroutines.Start(RoomDriver(_room));
             // The UI manager has already set up the first screen's background by now.
             ApplyScreenPolicy();
             Context.Log.Info($"strategy diorama: spawned, camera at depth {_camera.GetComponent<Camera>().depth}, {Camera.allCamerasCount} cameras in scene");

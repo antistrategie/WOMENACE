@@ -447,9 +447,8 @@ public sealed partial class StrategyDiorama
     {
         if (element?.parent == null || element.parent == to)
             return;
-        var (home, index) = (element.parent, element.parent.IndexOf(element));
+        _shellUndo.Add(PutBack(element));
         to.Add(element);
-        _shellUndo.Add(() => home.Insert(Math.Min(index, home.childCount), element));
     }
 
     // Shows whoever vanilla has selected: a candidate as a hologram with her panel, the doll just

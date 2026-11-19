@@ -67,8 +67,7 @@ public sealed partial class StrategyDiorama
             panel.BringToFront();
             return;
         }
-        var parent = panel.parent;
-        var index = parent.IndexOf(panel);
+        var putBack = PutBack(panel);
         var was = panel.resolvedStyle.position;
         root.Add(panel);
         panel.style.position = Position.Absolute;
@@ -85,8 +84,7 @@ public sealed partial class StrategyDiorama
             panel.style.width = StyleKeyword.Null;
             panel.style.bottom = StyleKeyword.Null;
             panel.style.top = StyleKeyword.Null;
-            if (parent != null)
-                parent.Insert(Math.Min(index, parent.childCount), panel);
+            putBack();
         });
     }
 

@@ -6,7 +6,7 @@
 """Fit the edge of a planet in MENACE's mission select video, for the strategy diorama.
 
 Mission select shows the operation's planet as a part of a globe over the holotable
-(code/Systems/Strategy/StrategyDiorama.Planet.cs). The picture is vanilla's video of the planet
+(code/Systems/Strategy/Missions/StrategyDiorama.Planet.cs). The picture is vanilla's video of the planet
 from orbit, and each pixel is placed on a sphere from the circle the planet's edge is a part of.
 That circle is the one thing recorded per planet: its centre and radius in pixels of a 1600 by 900
 frame, in the PlanetEdges table. A planet without a line there keeps the land view.

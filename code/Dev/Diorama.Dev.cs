@@ -361,11 +361,11 @@ public static class Diorama
 
     public static string CameraReset() => StrategyDiorama.ResetCamera();
 
-    // The navigation screen: what each destination maps to right now, and going to one
-    // (Bridge, Armory, Hiring, Oci, Market, Workshop, Shop) as a click on it would.
-    public static string NavState() => NavigationMenu.Describe() + "; open " + NavigationMenu.IsOpen;
+    // What each tab bar destination maps to right now, and going to one (Bridge, Armory, Hiring,
+    // Oci, Market, Workshop, Shop) as a click on its tab would.
+    public static string NavState() => VanillaNavigation.Describe();
 
-    public static string NavGo(string target) => NavigationMenu.GoFromDev(target);
+    public static string NavGo(string target) => VanillaNavigation.GoFromDev(target);
 
 
     public static string HomeView(string view) => StrategyDiorama.SetHomeViewFromDev(view);
@@ -730,8 +730,6 @@ public static class Diorama
     // Opens (On) or closes (Off) the Intel board.
     public static string Intel(string state) => StrategyDiorama.IntelFromDev(state);
 
-    public static string NavClose() { NavigationMenu.Close(); return "closed"; }
-
     // The active screen, the background prefab it asks for, the background the UI manager has
     // instantiated, and the enabled cameras.
     public static string Bg()
@@ -1014,7 +1012,7 @@ public static class Diorama
     private static System.Collections.IEnumerator NavBurstFrames(string target, string prefix, int count)
     {
         yield return new WaitForEndOfFrame();
-        NavigationMenu.GoFromDev(target);
+        VanillaNavigation.GoFromDev(target);
         var frames = new List<Texture2D>();
         for (var i = 0; i < count; i++)
         {

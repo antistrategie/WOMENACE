@@ -93,7 +93,7 @@ public sealed partial class StrategyDiorama
             name.style.left = text;
             // The strip's words are in the shell's face, as the words of Taking apart are:
             // vanilla's window would give them its own.
-            NavigationMenu.ApplyGameFont(name);
+            VanillaNavigation.ApplyGameFont(name);
             centre.Add(image);
             centre.Add(name);
             _shellUndo.Add(() =>
@@ -105,7 +105,7 @@ public sealed partial class StrategyDiorama
         }
         var headline = UI.Find(work, UiSelector.Name("ReqMaterialsHeadline"));
         StandPart(headline, text, WorkshopHeadingTop, null, null);
-        Inline(headline, NavigationMenu.ApplyGameFont, e => e.RemoveFromClassList(NavigationMenu.GameFontClass));
+        Inline(headline, VanillaNavigation.ApplyGameFont, e => e.RemoveFromClassList(VanillaNavigation.GameFontClass));
         StandPart(UI.Find(work, UiSelector.Name("ReqMaterialsContainer")), text, WorkshopTakesTop, inner - text, null);
         StandPart(UI.Find(work, UiSelector.Name("AssembleButton")), inner - WorkshopButtonWidth, 0f, WorkshopButtonWidth, WorkshopButtonHeight);
         Inline(UI.Find(work, UiSelector.Name("ReqMaterialsContainer")), e =>

@@ -12,10 +12,10 @@ namespace WOMENACE.Code;
 // they are.
 public sealed partial class StrategyDiorama
 {
-    private static string RoomOf(NavigationMenu.Target target) => target switch
+    private static string RoomOf(VanillaNavigation.Target target) => target switch
     {
-        NavigationMenu.Target.Armory or NavigationMenu.Target.Hiring => RefittingRoomKey,
-        NavigationMenu.Target.Workshop => WeaponRoomKey,
+        VanillaNavigation.Target.Armory or VanillaNavigation.Target.Hiring => RefittingRoomKey,
+        VanillaNavigation.Target.Workshop => WeaponRoomKey,
         _ => OpsRoomKey,
     };
 
@@ -23,20 +23,20 @@ public sealed partial class StrategyDiorama
 
     // Goes to a destination through the vanilla tab bar. Into another room the bars shut first, the
     // cut happens behind them, and the next screen's shell opens them.
-    private void GoTo(NavigationMenu.Target target)
+    private void GoTo(VanillaNavigation.Target target)
     {
         if (_cutting)
             return;
         var from = _policyScreen != null ? LookFor(_policyScreen).RoomKey : null;
-        if (_shell == null || from == RoomOf(target) || !NavigationMenu.Available(target))
+        if (_shell == null || from == RoomOf(target) || !VanillaNavigation.Available(target))
         {
-            NavigationMenu.Go(target);
+            VanillaNavigation.Go(target);
             return;
         }
         Context.Coroutines.Start(CutTo(target, _shell));
     }
 
-    private System.Collections.IEnumerator CutTo(NavigationMenu.Target target, VisualElement shell)
+    private System.Collections.IEnumerator CutTo(VanillaNavigation.Target target, VisualElement shell)
     {
         _cutting = true;
         Sound.Click();
@@ -57,7 +57,7 @@ public sealed partial class StrategyDiorama
         yield return null;
         _cutting = false;
         _arrivedThroughBars = true;
-        NavigationMenu.Go(target);
+        VanillaNavigation.Go(target);
         // A destination that did not open leaves the bars shut with nothing to open them.
         for (var t = 0f; t < CoverMaxSeconds; t += UnityEngine.Time.unscaledDeltaTime)
             yield return null;

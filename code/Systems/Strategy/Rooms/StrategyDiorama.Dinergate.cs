@@ -340,7 +340,7 @@ public sealed partial class StrategyDiorama
         while (dinergate != null && _dinergate == dinergate)
         {
             TrackDinergateHover();
-            if (!_tableVideo && !NavigationMenu.IsOpen && MousePressed(out var position) && !TryClick(position))
+            if (!_tableVideo && MousePressed(out var position) && !TryClick(position))
                 TryClickTable(position);
             yield return null;
         }
@@ -629,7 +629,7 @@ public sealed partial class StrategyDiorama
                     }
                 }
                 ApplyHud(_hudShown, _hudShown.Loop, _hudLoopTime);
-                if (_dinergateNotice && !NavigationMenu.IsOpen)
+                if (_dinergateNotice)
                 {
                     _hintTimer += dt;
                     if (_hintTimer >= HintEvery)

@@ -188,7 +188,7 @@ public sealed partial class StrategyDiorama
         box.style.justifyContent = Justify.Center;
         box.style.backgroundColor = RepLevelBox;
         var figures = new TextElement { text = Roman(level), pickingMode = PickingMode.Ignore };
-        NavigationMenu.ApplyGameFont(figures);
+        VanillaNavigation.ApplyGameFont(figures);
         figures.style.color = RepLevelInk;
         figures.style.fontSize = 9;
         figures.style.unityTextAlign = TextAnchor.MiddleCenter;

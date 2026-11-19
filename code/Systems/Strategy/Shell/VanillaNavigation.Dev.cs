@@ -4,14 +4,14 @@ using Il2CppMenace.UI.Strategy;
 namespace WOMENACE.Code;
 
 // Hooks for the navigation dev verbs (code/Dev/Diorama.Dev.cs). *.Dev.cs files stay out of release builds.
-internal static partial class NavigationMenu
+internal static partial class VanillaNavigation
 {
     // Dev: the destinations and whether each is available right now.
     internal static string Describe()
     {
         var navigation = FindNavigation();
         return navigation == null ? "no tab bar on the active screen"
-            : string.Join(", ", Destinations.Select(d => $"{d.Target}={(IsAvailable(d.Target, navigation) ? "on" : "off")}"));
+            : string.Join(", ", Enum.GetValues<Target>().Select(t => $"{t}={(IsAvailable(t, navigation) ? "on" : "off")}"));
     }
 
     internal static string GoFromDev(string target) =>

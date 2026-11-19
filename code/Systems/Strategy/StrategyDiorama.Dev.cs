@@ -31,7 +31,7 @@ public sealed partial class StrategyDiorama
         var lines = new List<string>();
         void Walk(string document, UnityEngine.UIElements.VisualElement e)
         {
-            if (e.ClassListContains(NavigationMenu.GameFontClass))
+            if (e.ClassListContains(VanillaNavigation.GameFontClass))
             {
                 var label = e.TryCast<UnityEngine.UIElements.TextElement>() ?? FirstText(e);
                 var font = label?.resolvedStyle.unityFontDefinition.fontAsset;

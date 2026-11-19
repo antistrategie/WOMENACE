@@ -199,8 +199,6 @@ public sealed partial class StrategyDiorama
                 if (_hiddenVanilla != null && _hiddenVanilla == vanilla && !_hiddenVanilla.activeSelf)
                     _hiddenVanilla.SetActive(true);
                 _hiddenVanilla = null;
-                if (NavigationMenu.IsOpen)
-                    NavigationMenu.Close();
             }
             // The shell is worn by screens that show no room as well.
             ApplyHome(name, show || (name != null && ShellScreens.Contains(name)));

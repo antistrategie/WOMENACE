@@ -2,13 +2,10 @@
    Source of truth: https://claude.ai/artifact/N3WZXVVsiN1ZGM5CZW61U4 (tokens.json, components/bundle.css).
    USS has no ::before/::after, so brackets, dashes and rules are real child elements. */
 :root {
-    --panel: rgba(0, 0, 0, 0.85);
-    --panel-solid: rgba(0, 0, 0, 0.98);
     --panel-raised: rgba(12, 17, 24, 0.89);
     --panel-icon: rgb(34, 39, 46);
     --line: rgb(50, 60, 74);
     --line-strong: rgb(67, 83, 106);
-    --rule: rgb(255, 255, 255);
     --ink: rgb(255, 255, 255);
     --ink-body: rgb(225, 225, 225);
     --ink-label: rgb(169, 157, 134);
@@ -16,86 +13,14 @@
     --gold: rgb(215, 192, 116);
     --gold-amount: rgb(205, 175, 65);
     --danger: rgb(255, 123, 108);
-    --progress: rgb(83, 201, 156);
     --holo: rgb(79, 220, 234);
-    --holo-fill: rgba(79, 220, 234, 0.12);
-    --holo-fill-on: rgba(79, 220, 234, 0.24);
-    --signal: rgb(242, 108, 28);
-    --signal-yellow: rgb(240, 175, 20);
-    --dim: rgba(2, 8, 12, 0.55);
 }
 
 /* MENACE's face, Jura Bold, shipped with the mod (UI/fonts) so no font of the game's is held.
    Doubled so it outranks a vanilla element's own rule for its font. */
 .wm-game-font.wm-game-font { -unity-font-definition: url("../fonts/Jura-Bold-SDF.asset"); }
 
-/* Holographic panel with corner brackets */
-.wui-holo {
-    background-color: var(--holo-fill);
-    border-width: 0.8px;
-    border-color: var(--holo);
-    padding: 16px;
-}
+/* Corner brackets on a holographic panel */
 .wui-holo__corner { position: absolute; width: 12px; height: 12px; border-color: var(--holo); }
 .wui-holo__corner--tl { left: -5px; top: -5px; border-left-width: 2.4px; border-top-width: 2.4px; }
 .wui-holo__corner--br { right: -5px; bottom: -5px; border-right-width: 2.4px; border-bottom-width: 2.4px; }
-.wui-holo__title {
-    color: var(--holo);
-    font-size: 18px;
-    letter-spacing: 3px;
-    -unity-font-style: bold;
-    -unity-text-align: middle-center;
-}
-.wui-serial { color: rgb(150, 200, 210); font-size: 9px; letter-spacing: 1px; }
-
-/* Holographic room on a ship map */
-.wui-room {
-    position: absolute;
-    background-color: var(--holo-fill);
-    border-width: 2px;
-    border-color: var(--holo);
-    justify-content: center;
-    padding: 8px 12px;
-    transition-duration: 0.12s;
-}
-.wui-room:hover { background-color: var(--holo-fill-on); }
-.wui-room--here { background-color: var(--holo-fill-on); }
-.wui-room--off { opacity: 0.35; }
-.wui-room__name { color: var(--ink); font-size: 20px; -unity-font-style: bold; white-space: normal; }
-.wui-room__sub { color: rgb(190, 232, 238); font-size: 11px; letter-spacing: 1px; margin-top: 3px; }
-
-/* Holographic button row */
-.wui-holo-btn {
-    flex-grow: 1;
-    min-height: 44px;
-    margin: 0 5px;
-    background-color: rgba(32, 120, 136, 0.85);
-    border-width: 1px;
-    border-color: var(--holo);
-    border-radius: 0;
-    color: var(--ink);
-    font-size: 16px;
-    -unity-font-style: bold;
-    -unity-text-align: middle-center;
-    transition-duration: 0.12s;
-}
-.wui-holo-btn:hover { background-color: rgba(48, 150, 168, 0.95); }
-.wui-holo-btn--primary { background-color: rgba(242, 108, 28, 0.92); border-color: rgb(246, 160, 104); }
-.wui-holo-btn--primary:hover { background-color: rgb(242, 108, 28); }
-.wui-holo-btn--off { opacity: 0.35; }
-
-.wui-close {
-    position: absolute;
-    right: 8px;
-    top: 4px;
-    width: 34px;
-    height: 34px;
-    background-color: rgba(0, 0, 0, 0);
-    border-width: 0;
-    color: var(--ink);
-    font-size: 26px;
-    -unity-text-align: middle-center;
-}
-.wui-close:hover { color: var(--holo); }
-
-.wui-dot { width: 8px; height: 8px; border-radius: 4px; background-color: var(--signal); }
