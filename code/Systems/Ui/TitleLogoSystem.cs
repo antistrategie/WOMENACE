@@ -12,7 +12,7 @@ namespace WOMENACE.Code;
 // (LogoBottomLayer, LogoMiddleLayer, LogoTopLayer) paint the artwork through inline background-images
 // that resolve through Resources, and a LogoDropshadow elsewhere on the screen repeats the middle layer
 // faintly. The swap paints our logo on the container and hides those layers, keeping the container's
-// size and position and its Version label.
+// size and position and its Version label. It hides vanilla's decorations at the menu's foot too.
 //
 // Scoped through the injection system rather than a Harmony patch. UiTarget.Screen<TitleUIScreen>()
 // resolves against the live tree on every apply, and the SDK re-applies on screen activation and on
@@ -36,6 +36,9 @@ public sealed class TitleLogoSystem : JiangyuSystem
     private const string LogoElement = "MenaceLogo";
     private static readonly string[] VanillaLayers = ["LogoBottomLayer", "LogoMiddleLayer", "LogoTopLayer"];
     private const string VanillaDropshadow = "LogoDropshadow";
+    // Vanilla's grey shards, blood spatter and red glow at the foot of the menu column, which sit
+    // over the doll in the GFL2 scenes behind the menu.
+    private static readonly string[] VanillaDecorations = ["Debris1", "Debris2", "Glow"];
     private const string LogoTexture = "womenace_logo";
 
     private Texture2D _logo;
@@ -148,6 +151,8 @@ public sealed class TitleLogoSystem : JiangyuSystem
             while (root.parent != null)
                 root = root.parent;
             UI.Find(root, UiSelector.Name(VanillaDropshadow))?.SetVisible(false);
+            foreach (var decoration in VanillaDecorations)
+                UI.Find(root, UiSelector.Name(decoration))?.SetVisible(false);
         }
         catch (Exception ex) { Context.Log.Warn($"title logo: swap failed: {ex.Message}"); }
         return marker;

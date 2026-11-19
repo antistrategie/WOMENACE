@@ -394,9 +394,11 @@ public sealed partial class StrategyDiorama
                         }
                         var pixel = edge ? (built ? roofEdge : lit == 2 ? PrepZoneGrid : lit == 1 ? PrepZoneRefusedGrid : PrepGrid)
                             : hatched && (i + j) % 4 == 0 ? PrepRough : fill;
-                        // The zone is outlined where it ends, its refused part included.
-                        if (!built && zone[x, z] && ((i < 2 && Lit(x - 1, z) == 0) || (i >= p - 2 && Lit(x + 1, z) == 0)
-                            || (j < 2 && Lit(x, z - 1) == 0) || (j >= p - 2 && Lit(x, z + 1) == 0)))
+                        // The zone is outlined where it ends, its refused part included. The outline is
+                        // the line between its tiles and the next, so its edge tiles are as large as
+                        // the rest.
+                        if (!built && zone[x, z] && ((i == 0 && Lit(x - 1, z) == 0) || (i == p - 1 && Lit(x + 1, z) == 0)
+                            || (j == 0 && Lit(x, z - 1) == 0) || (j == p - 1 && Lit(x, z + 1) == 0)))
                             pixel = PrepZoneEdge;
                         // An objective's area is lit a little and outlined where it ends.
                         if (objective[x, z])
