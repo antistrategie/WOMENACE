@@ -88,6 +88,24 @@ public sealed partial class StrategyDiorama
         return string.Join("\n", lines);
     }
 
+    // Dev: mission select lays its cards out on another planet's edge, so each planet's card
+    // layout can be checked from one save. The next mission select builds its planet afresh.
+    private static string _planetAs;
+
+    static partial void PlanetIdOverride(ref string id)
+    {
+        if (_planetAs != null)
+            id = _planetAs;
+    }
+
+    internal static string PlanetAsFromDev(string id)
+    {
+        _planetAs = string.IsNullOrEmpty(id) ? null : id;
+        if (_instance != null)
+            _instance._missions.PlanetOperation = IntPtr.Zero;
+        return _planetAs ?? "own planet";
+    }
+
     // Dev: structures drawn on the deployment map as another kind, by template name.
     private static readonly Dictionary<string, PrepStructure> PrepKindsAs = new();
 

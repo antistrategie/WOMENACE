@@ -112,12 +112,15 @@ public sealed partial class StrategyDiorama
         return _missions.PlanetShape = MakePlanetShape(operation);
     }
 
+    static partial void PlanetIdOverride(ref string id);
+
     private static PlanetShape MakePlanetShape(Operation operation)
     {
         try
         {
             var template = operation.GetPlanetTemplate();
             var id = template?.GetID();
+            PlanetIdOverride(ref id);
             if (id == null || !PlanetEdges.TryGetValue(id, out var edge))
                 return null;
             // Vanilla's video of the planet at the operation's time of day.

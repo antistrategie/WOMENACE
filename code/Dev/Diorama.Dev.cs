@@ -625,6 +625,9 @@ public static class Diorama
 
     public static string PlanetCards() => StrategyDiorama.PlanetCardsFromDev();
 
+    [MutatingVerb]
+    public static string PlanetAs(string id) => StrategyDiorama.PlanetAsFromDev(id);
+
     public static string FactionClaims() => StrategyDiorama.FactionClaimsFromDev();
 
     public static string StagedBounds() => StrategyDiorama.StagedBoundsFromDev();

@@ -28,6 +28,10 @@ public sealed partial class StrategyDiorama
     // How far a box that stands out past the planet is moved in at a time, and how often.
     private const float CardBoxStep = 0.01f;
     private const int CardBoxSteps = 60;
+    // The grid of places a card is tried at about its mission's, as parts of the picture: its
+    // step, and how far it reaches each way.
+    private const float CardSearchStep = 0.02f;
+    private const float CardSearchReach = 0.5f;
     // A card stands on the surface with the ring under its icon on its place: the ring's
     // middle is this far up the marker's box.
     private const float CardRingUp = 8.4f;
@@ -86,9 +90,10 @@ public sealed partial class StrategyDiorama
     // which the ring under its icon marks. No card may cover another or stand under a side panel,
     // so each card's box on the screen as the view starts (the card, and the room at its left for
     // the chibi) is kept between the panels and moved off the boxes it meets, with room between
-    // them, until none meet. The boxes are measured on
-    // the screen and not in the picture: the picture is on a globe, where equal parts of it are
-    // not equal lengths on the screen, and a card is larger the further off it stands.
+    // them, until none meet. Where they cannot all be parted that way, a card that still meets
+    // another takes the nearest place that is clear. The boxes are measured on the screen and
+    // not in the picture: the picture is on a globe, where equal parts of it are not equal
+    // lengths on the screen, and a card is larger the further off it stands.
     private void ShowPlanetMarkers(IReadOnlyList<MissionPoi> pois, GameObject template, VisualElement layer, PlanetShape planet)
     {
         var sectionWide = (planet.OnSphere(1f, 0.5f, out _) - planet.OnSphere(0f, 0.5f, out _)).magnitude * PlanetRadius;
@@ -227,30 +232,97 @@ public sealed partial class StrategyDiorama
             if (!met)
                 break;
         }
-        // Where there is not room for every box, a card keeps over the planet before it keeps
-        // clear of another: the order they are drawn in settles two that meet.
-        var boxes = new List<(int Index, Vector2 Size, float Width, float Left, float Lead, float Foot)>();
-        foreach (var (index, size, slot) in slots)
+        // Where two boxes meet, how much: the part of the screen they share with a gap between
+        // them counted in, or nothing where they keep that far apart.
+        static float Lap(Rect a, Rect b, float gap)
         {
-            var at = Contain(size, slot);
-            boxes.Add((index, size, Measure(size, at).Width, at.x, 0f, at.y));
+            var across = Mathf.Min(a.xMax, b.xMax) - Mathf.Max(a.xMin, b.xMin) + gap;
+            var up = Mathf.Min(a.yMax, b.yMax) - Mathf.Max(a.yMin, b.yMin) + gap;
+            return across > 0f && up > 0f ? across * up : 0f;
         }
+        // The places a card may move to from its mission's, a grid of them taken nearest on the
+        // screen first, so a card moves as little as it can.
+        var moves = new List<(Vector2 By, float Far)>();
+        var reach = Mathf.RoundToInt(CardSearchReach / CardSearchStep);
+        for (var i = -reach; i <= reach; i++)
+            for (var j = -reach; j <= reach; j++)
+            {
+                var (across, up) = (i * CardSearchStep, j * CardSearchStep);
+                moves.Add((new Vector2(across, up), across * acrossSeen * across * acrossSeen + up * upSeen * up * upSeen));
+            }
+        moves.Sort((a, b) => a.Far.CompareTo(b.Far));
+        // A card's place: the nearest where its box is over the planet, between the panels and
+        // clear of every box placed before it with room between them. Where there is none, the
+        // nearest over the planet that only comes closer than that room, then the nearest clear
+        // between the panels with its place on the planet, and where there is not even that, the
+        // one between the panels that meets them least. Two cards never stand on one place.
+        Vector2 Place(Vector2 size, Vector2 wanted, List<Rect> placed)
+        {
+            Vector2? close = null, clear = null;
+            var (least, leastLap) = (wanted, float.PositiveInfinity);
+            foreach (var (by, _) in moves)
+            {
+                var at = wanted + by;
+                if (at.x < 0f || at.x > 1f || at.y < 0f || at.y > 1f)
+                    continue;
+                var box = Measure(size, at).Box;
+                var (lap, touch) = (0f, 0f);
+                foreach (var other in placed)
+                    (lap, touch) = (lap + Lap(box, other, 0f), touch + Lap(box, other, CardBoxGap));
+                var between = box.xMin >= free.Left && box.xMax <= free.Right;
+                if (lap > 0f)
+                {
+                    if (between && lap < leastLap)
+                        (least, leastLap) = (at, lap);
+                    continue;
+                }
+                if (touch > 0f)
+                {
+                    if (close == null && Contained(size, at))
+                        close = at;
+                    continue;
+                }
+                if (Contained(size, at))
+                    return at;
+                if (clear == null && between)
+                {
+                    planet.OnSphere(at.x, at.y, out var onPlanet);
+                    if (onPlanet)
+                        clear = at;
+                }
+            }
+            return close ?? clear ?? least;
+        }
+        // The pushing leaves cards that met where there was not room for every box, and a card
+        // with no place over the planet at the picture's middle with any other such. Each card in
+        // the order vanilla gives them takes the nearest place to the one the pushing left it at
+        // that is clear of the ones before it, which is that place itself wherever it is clear.
+        var places = new Vector2[slots.Count];
+        var placed = new List<Rect>();
+        for (var i = 0; i < slots.Count; i++)
+        {
+            places[i] = Place(slots[i].Size, Contain(slots[i].Size, slots[i].At), placed);
+            placed.Add(Measure(slots[i].Size, places[i]).Box);
+        }
+        var boxes = new List<(int Index, Vector2 Size, float Width, float Across, float Up)>();
+        for (var i = 0; i < slots.Count; i++)
+            boxes.Add((slots[i].Index, slots[i].Size, Measure(slots[i].Size, places[i]).Width, places[i].x, places[i].y));
         foreach (var box in boxes)
         {
-            var spot = planet.OnSphere(box.Left + box.Lead, box.Foot, out _);
+            var spot = planet.OnSphere(box.Across, box.Up, out _);
             var surface = planet.InRoom(spot);
             // The chibi's own place on the surface: at the left of the card's icon as the
             // view starts, clear of it by a part of her height. It is a place on the globe, so
             // she keeps to the ground as the camera goes round and the card turns to face it.
             var height = box.Width * box.Size.y / box.Size.x;
-            var chibiAcross = box.Left + box.Lead - (box.Width * CardIconCentre / box.Size.x + height * ChibiToCard * (0.5f + ChibiBeside)) / sectionWide;
+            var chibiAcross = box.Across - (box.Width * CardIconCentre / box.Size.x + height * ChibiToCard * (0.5f + ChibiBeside)) / sectionWide;
             var marker = new Marker
             {
                 Poi = pois[box.Index],
                 Spot = N(spot),
-                ChibiSpot = N(planet.OnSphere(chibiAcross, box.Foot, out _)),
+                ChibiSpot = N(planet.OnSphere(chibiAcross, box.Up, out _)),
                 Surface = N(surface),
-                Across = box.Left + box.Lead,
+                Across = box.Across,
                 Width = box.Width,
                 Height = box.Width * box.Size.y / box.Size.x,
                 Box = box.Size,
