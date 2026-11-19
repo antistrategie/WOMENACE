@@ -157,6 +157,18 @@ public sealed partial class StrategyDiorama
     // shadow-casting suns (seen going from O.C.I. to the armoury).
     private int _mirrorHeldFrame = -1;
 
+    // The live render is a screen-sized target, kept only while a room shows it. The next room
+    // that does makes it again.
+    private void ReleaseMirrorTexture()
+    {
+        if (_mirrorTexture == null)
+            return;
+        if (_mirrorCamera != null)
+            _mirrorCamera.targetTexture = null;
+        Shader.SetGlobalTexture(PlanarTextureId, Texture2D.blackTexture);
+        ReleaseTexture(ref _mirrorTexture);
+    }
+
     private void UpdateMirror()
     {
         if (UnityEngine.Time.frameCount <= _mirrorHeldFrame)
@@ -167,6 +179,7 @@ public sealed partial class StrategyDiorama
         if (!shown || (resolution <= 0f && set.MirrorCube == null))
         {
             Shader.SetGlobalVector(PlanarParamsId, Vector4.zero);
+            ReleaseMirrorTexture();
             return;
         }
         var look = set.Look;
@@ -180,6 +193,7 @@ public sealed partial class StrategyDiorama
             Shader.SetGlobalFloat(PlanarCubeSizeId, set.MirrorCube.width);
             Shader.SetGlobalMatrix(PlanarBoxId, set.MirrorBox.transform.worldToLocalMatrix);
             Shader.SetGlobalVector(PlanarParamsId, new Vector4(planeY, look.MirrorStrength, look.MirrorBlur + 1f, 1f));
+            ReleaseMirrorTexture();
             return;
         }
         // The blur is a mip of a half-screen render: a larger render takes more mips for the same blur.

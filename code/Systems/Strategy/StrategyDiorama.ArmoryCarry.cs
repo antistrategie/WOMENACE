@@ -152,6 +152,21 @@ public sealed partial class StrategyDiorama
         EnsureGripDriver();
     }
 
+    // Lets go of a mission carrier's hand, before her attachments are made again: what she held
+    // is gone, and what she holds now is held afresh if it too is a tripod weapon.
+    internal static void ReleaseInMission(Transform element)
+    {
+        if (element == null || MissionGrips.Count == 0)
+            return;
+        List<IntPtr> released = null;
+        foreach (var (key, grip) in MissionGrips)
+            if (grip.Carried?.Unit != null && grip.Carried.Unit.IsChildOf(element))
+                (released ??= new()).Add(key);
+        if (released != null)
+            foreach (var key in released)
+                MissionGrips.Remove(key);
+    }
+
     // Where the hand is to be this frame, from where the animation has just put it. False where
     // it stays there.
     private static bool CarriedPlace(Grip grip, out Vec place)

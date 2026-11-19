@@ -537,7 +537,10 @@ public sealed partial class StrategyDiorama
             part.transform.localPosition = PlanetPlace;
             part.transform.localRotation = Quaternion.identity;
             part.transform.localScale = Vector3.one;
-            part.GetComponent<MeshFilter>().sharedMesh = shown;
+            var filter = part.GetComponent<MeshFilter>();
+            // A rebuild for another planet or clip replaces the meshes the last build made.
+            DestroyBuiltMesh(filter.sharedMesh, shown);
+            filter.sharedMesh = shown;
             part.GetComponent<MeshRenderer>().sortingOrder = order;
         }
         var material = _planetMaterial = _planet.GetComponent<MeshRenderer>().material;
@@ -573,9 +576,25 @@ public sealed partial class StrategyDiorama
                 renderer.enabled = !hide;
     }
 
+    // A mesh the planet built, not the holotable quad's own, which the parts start with.
+    private static void DestroyBuiltMesh(Mesh mesh, Mesh keep)
+    {
+        if (mesh != null && mesh != keep && mesh.name.StartsWith("WOMENACE_", StringComparison.Ordinal))
+            UnityEngine.Object.Destroy(mesh);
+    }
+
     private void ClearPlanet()
     {
         HideLandForPlanet(false);
+        // The parts' meshes and their materials' copies outlive the parts.
+        foreach (var part in new[] { _planet, _planetEdge, _planetGlobe })
+            if (part != null)
+            {
+                DestroyBuiltMesh(part.GetComponent<MeshFilter>()?.sharedMesh, null);
+                var material = part.GetComponent<MeshRenderer>()?.sharedMaterial;
+                if (material != null)
+                    UnityEngine.Object.Destroy(material);
+            }
         foreach (var part in new[] { _planet, _planetEdge, _planetGlobe, _planetPlayer != null ? _planetPlayer.gameObject : null })
             if (part != null)
                 UnityEngine.Object.Destroy(part);

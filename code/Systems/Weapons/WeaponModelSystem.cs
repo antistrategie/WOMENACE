@@ -15,6 +15,12 @@ public sealed class WeaponModelSystem : JiangyuSystem
 {
     private static WeaponModelSystem _instance;
     private readonly HashSet<IntPtr> _checked = [];
+    // How many models have been installed, and how many each container had seen when its answers
+    // were last made. A model installed for another container, or by code reading the template,
+    // leaves a container that already holds the weapon answering with the vanilla model until
+    // it is made to answer again.
+    private int _installs;
+    private readonly Dictionary<IntPtr, int> _answeredAt = new();
 
     public override void OnInit()
     {
@@ -27,20 +33,30 @@ public sealed class WeaponModelSystem : JiangyuSystem
     {
         _instance = null;
         _checked.Clear();
+        _answeredAt.Clear();
     }
+
+    public override void OnSceneLoaded(int buildIndex, string sceneName) => _answeredAt.Clear();
 
     private void BeforeVisualAlteration(PatchInfo info)
     {
         if (info.Instance is not ItemContainer items)
             return;
-        var installed = false;
+        var own = false;
         foreach (var slot in WeaponSkinSystem.Slots)
-            installed |= Install(WeaponSkinSystem.WeaponAt(items, slot));
-        if (installed)
         {
-            items.VisualAlterationsDirty = true;
-            items.UpdateVisualAlterations();
+            var weapon = WeaponSkinSystem.WeaponAt(items, slot);
+            if (weapon == null)
+                continue;
+            Install(weapon);
+            own |= WeaponModels.AssetsFor(weapon.GetID()).Model != null;
         }
+        if (!own || (_answeredAt.TryGetValue(items.Pointer, out var seen) && seen == _installs))
+            return;
+        // Marked before the update, which may ask again.
+        _answeredAt[items.Pointer] = _installs;
+        items.VisualAlterationsDirty = true;
+        items.UpdateVisualAlterations();
     }
 
     // A mission's units are given their attachments once, from a container whose answers were
@@ -82,7 +98,10 @@ public sealed class WeaponModelSystem : JiangyuSystem
             weapon.Model = first;
         if (second != null)
             weapon.ModelSecondary = second;
-        return first != null || second != null;
+        if (first == null && second == null)
+            return false;
+        _installs++;
+        return true;
     }
 
     private GameObject Load(string asset)

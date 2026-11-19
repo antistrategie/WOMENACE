@@ -351,7 +351,8 @@ public sealed partial class StrategyDiorama
     }
 
     // Each unit (the element under every Unit_NN slot, or the vehicle) that the room does not
-    // light carries its own rig.
+    // light carries its own rig. A doll whose outfit body arrives after she is staged is not lit
+    // by the room at first, and gives the rig up once she is.
     private void LightSquad()
     {
         foreach (var staged in _stagedRoots)
@@ -364,7 +365,11 @@ public sealed partial class StrategyDiorama
                 for (int j = 0; j < slot.childCount; j++)
                 {
                     var unit = slot.GetChild(j);
-                    if (unit.gameObject.activeInHierarchy && !unit.name.StartsWith("WOMENACE_", StringComparison.Ordinal) && !TakesRoomLight(unit))
+                    if (!unit.gameObject.activeInHierarchy || unit.name.StartsWith("WOMENACE_", StringComparison.Ordinal))
+                        continue;
+                    if (TakesRoomLight(unit))
+                        RemoveRig(unit.gameObject);
+                    else
                         LightDoll(unit.gameObject, _stageShot.LightScale);
                 }
             }

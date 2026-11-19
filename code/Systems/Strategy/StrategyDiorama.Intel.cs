@@ -57,18 +57,24 @@ public sealed partial class StrategyDiorama
 
     // Centres the faction window on the screen, over the board. Its size is vanilla's until it has
     // laid out.
+    // It runs every frame the window is open, and does its work only when the window, its size or
+    // the screen has changed since, or the shell's styles have been undone.
     private void PlaceFactionWindow()
     {
-        var window = FactionWindow(out _);
+        var window = _factionWindow?.panel != null ? _factionWindow : FactionWindow(out _);
         var parent = window?.parent;
         if (parent == null || _shellRoot == null)
             return;
         var (width, height) = (window.layout.width, window.layout.height);
         if (!(width > 1f) || !(height > 1f))
             (width, height) = (FactionWindowWidth, FactionWindowHeight);
-        StyleFactionWindow(window);
         var corner = parent.worldBound;
         var screen = _shellRoot.worldBound;
+        var placed = (window.Pointer, width, height, corner, screen);
+        if (placed == _factionWindowPlaced && _inlined.Contains(window.Pointer))
+            return;
+        _factionWindowPlaced = placed;
+        StyleFactionWindow(window);
         var was = !_inlined.Contains(window.Pointer) ? window.resolvedStyle.position : Position.Absolute;
         Inline(window, e =>
         {
@@ -88,6 +94,7 @@ public sealed partial class StrategyDiorama
     }
 
     private VisualElement _factionWindow;
+    private (IntPtr Window, float Width, float Height, UnityEngine.Rect Corner, UnityEngine.Rect Screen) _factionWindowPlaced;
 
     // The window is centred the moment vanilla opens it, not a frame later.
     private void HookFactionWindow()

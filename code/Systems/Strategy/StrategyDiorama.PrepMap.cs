@@ -1,3 +1,4 @@
+using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using Il2CppMenace.Strategy;
 using Il2CppMenace.Tactical;
 using Il2CppMenace.UI;
@@ -80,6 +81,8 @@ public sealed partial class StrategyDiorama
     private const float PrepBuildFlash = 1.6f;
     private Mesh _prepMapMesh;
     private Vector3[] _prepMapFull;
+    private Il2CppStructArray<Vector3> _prepMapShown;
+    private Il2CppStructArray<Color> _prepMapLit;
     private float[] _prepMapStarts;
     private float _prepMapBornAt;
     private bool _prepMapBuilding;
@@ -122,27 +125,33 @@ public sealed partial class StrategyDiorama
         if (_prepMapMesh == null || _prepMapFull == null)
             return;
         var age = Time.unscaledTime - _prepMapBornAt;
-        var shown = new Vector3[_prepMapFull.Length];
-        var lit = new Color[_prepMapFull.Length];
+        // Native arrays, made once a map: the mesh takes them without a copy into the game's
+        // memory, and filling them is plain arithmetic, every frame of the build.
+        if (_prepMapShown == null || _prepMapShown.Length != _prepMapFull.Length)
+            (_prepMapShown, _prepMapLit) = (new Il2CppStructArray<Vector3>(_prepMapFull.Length), new Il2CppStructArray<Color>(_prepMapFull.Length));
+        var (shown, lit) = (_prepMapShown, _prepMapLit);
+        var white = new Color { r = 1f, g = 1f, b = 1f, a = 1f };
         var drop = PrepBuildDrop * _prepMapTile;
         for (var i = 0; i < shown.Length; i++)
         {
             var since = age - _prepMapStarts[i];
             if (since < 0f)
             {
-                shown[i] = _prepMapFull[i - i % 4];
-                shown[i].y = -drop;
-                lit[i] = Color.white;
+                var start = _prepMapFull[i - i % 4];
+                start.y = -drop;
+                shown[i] = start;
+                lit[i] = white;
                 continue;
             }
             var eased = since >= PrepBuildTile ? 1f : BackAndPast(since / PrepBuildTile);
             var grow = (since - PrepBuildTile * 0.7f) / PrepBuildRise;
             var grown = grow <= 0f ? 0f : grow >= 1f ? 1f : 1f + 2.70158f * (grow - 1f) * (grow - 1f) * (grow - 1f) + 1.70158f * (grow - 1f) * (grow - 1f);
-            shown[i] = _prepMapFull[i];
-            shown[i].y = shown[i].y * grown - drop * (1f - eased);
+            var place = _prepMapFull[i];
+            place.y = place.y * grown - drop * (1f - eased);
+            shown[i] = place;
             // Past its place a square is lighter, by how far past it is.
-            var light = 1f + PrepBuildFlash * Mathf.Clamp01((eased - 1f) / 0.1f);
-            lit[i] = new Color(light, light, light, 1f);
+            var light = 1f + PrepBuildFlash * Math.Clamp((eased - 1f) / 0.1f, 0f, 1f);
+            lit[i] = new Color { r = light, g = light, b = light, a = 1f };
         }
         _prepMapMesh.vertices = shown;
         _prepMapMesh.colors = lit;
@@ -269,7 +278,13 @@ public sealed partial class StrategyDiorama
     private void ClearPrepMap()
     {
         if (_prepMap != null)
+        {
+            // Its material is the map's own copy, which outlives the map.
+            var material = _prepMap.GetComponent<MeshRenderer>()?.sharedMaterial;
+            if (material != null)
+                UnityEngine.Object.Destroy(material);
             UnityEngine.Object.Destroy(_prepMap);
+        }
         if (_prepMapTexture != null)
             UnityEngine.Object.Destroy(_prepMapTexture);
         if (_prepMapMesh != null)
@@ -280,6 +295,7 @@ public sealed partial class StrategyDiorama
             UnityEngine.Object.Destroy(_prepFlatPicture);
         (_prepFlatPicture, _prepFlatPictureOf) = (null, IntPtr.Zero);
         (_prepMap, _prepMapTexture, _prepMapOf, _prepMapAreas, _prepMapMesh, _prepMapFull, _prepMapStarts) = (null, null, IntPtr.Zero, null, null, null, null);
+        (_prepMapShown, _prepMapLit) = (null, null);
     }
 
     // How tall a structure stands, in tiles, from what its template is called.

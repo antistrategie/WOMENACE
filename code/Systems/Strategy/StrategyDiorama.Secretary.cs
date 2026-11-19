@@ -500,6 +500,16 @@ public sealed partial class StrategyDiorama
         return light;
     }
 
+    // Takes the rig off one unit.
+    private void RemoveRig(GameObject doll)
+    {
+        if (!_dollRigs.Remove(doll.Pointer, out var rig))
+            return;
+        foreach (var light in rig)
+            if (light != null)
+                UnityEngine.Object.Destroy(light.gameObject);
+    }
+
     // Takes the rig off every doll under a root (the armoury's squad, given back to vanilla).
     private void RemoveRigs(Transform root)
     {

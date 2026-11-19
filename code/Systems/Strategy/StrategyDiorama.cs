@@ -179,6 +179,12 @@ public sealed partial class StrategyDiorama : JiangyuSystem
             _hiddenVanilla.SetActive(true);
         _hiddenVanilla = null;
         _lastShellScreen = null;
+        // The next scene's first shell is a first arrival: it opens through the bars.
+        _shellRoom = null;
+        _arrivedThroughBars = false;
+        _cutting = false;
+        _arriveOnOperations = false;
+        _arriveAtStation = null;
         _dinergate = null;
         _crew.Clear();
         _crewSpots.Clear();

@@ -22,19 +22,27 @@ public sealed partial class StrategyDiorama
         if (button == null || !button.IsInteractable() || _cutting)
             yield break;
         _cutting = true;
-        Sound.Click();
-        var barsFirst = !ExpectSuppliesQuestion();
-        if (barsFirst)
+        bool barsFirst;
+        // A launch that throws would otherwise leave every later room cut refused.
+        try
         {
-            TableSounds.Play(TableSounds.Launch);
-            ShutBars(shell, BarsLaunchClass);
-            for (var t = 0f; t < BarsLaunchSeconds; t += UnityEngine.Time.unscaledDeltaTime)
-                yield return null;
+            Sound.Click();
+            barsFirst = !ExpectSuppliesQuestion();
+            if (barsFirst)
+            {
+                TableSounds.Play(TableSounds.Launch);
+                ShutBars(shell, BarsLaunchClass);
+                for (var t = 0f; t < BarsLaunchSeconds; t += UnityEngine.Time.unscaledDeltaTime)
+                    yield return null;
+            }
+            button.OnClicked(MouseButton.LeftMouse);
+            yield return null;
+            yield return null;
         }
-        button.OnClicked(MouseButton.LeftMouse);
-        yield return null;
-        yield return null;
-        _cutting = false;
+        finally
+        {
+            _cutting = false;
+        }
         var yes = FindDialogButton(VanillaUi.Elements.YesButton);
         if (shell.panel == null || _shell != shell)
             yield break;

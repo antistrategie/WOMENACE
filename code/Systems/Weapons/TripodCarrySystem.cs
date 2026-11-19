@@ -29,6 +29,9 @@ public sealed class TripodCarrySystem : JiangyuSystem
             var element = (info.Instance as Il2CppObjectBase)?.TryCast<Element>();
             if (element == null || info.Args == null || info.Args.Count < 2 || info.Args[0] is not int index || index != 0)
                 return;
+            // Attachments made again on a live element (a weapon changed in the mission) replace
+            // the weapon her hand was held out with.
+            StrategyDiorama.ReleaseInMission(element.transform);
             var items = (info.Args[1] as Il2CppObjectBase)?.TryCast<ItemContainer>();
             var id = items?.GetItemAtSlot(ItemSlot.InfantrySpecial)?.GetTemplate()?.GetID();
             if (id == null || !id.Contains(StrategyDiorama.CarryTripodId, StringComparison.Ordinal))

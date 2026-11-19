@@ -437,6 +437,9 @@ public sealed partial class StrategyDiorama
             // the tooltip it put up goes with it.
             if (marker.PartShown)
                 UIManager.Get()?.RemoveActiveTooltip();
+            // The card's material is its own copy, which outlives the card.
+            if (marker.Material != null)
+                UnityEngine.Object.Destroy(marker.Material);
             if (marker.Card != null)
                 UnityEngine.Object.Destroy(marker.Card);
             try { marker.Target?.RemoveFromHierarchy(); }
@@ -444,6 +447,8 @@ public sealed partial class StrategyDiorama
         }
         _markers.Clear();
         (_markersPlanet, _selectedMarker) = (null, null);
+        if (_chibiMaterial != null)
+            UnityEngine.Object.Destroy(_chibiMaterial);
         if (_chibi != null)
             UnityEngine.Object.Destroy(_chibi);
         (_chibi, _chibiMaterial, _chibiTransform) = (null, null, null);

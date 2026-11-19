@@ -70,6 +70,8 @@ CBUFFER_START(UnityPerMaterial)
     float _SpecUVYOffset;
 CBUFFER_END
 
+#include "DollKeyLight.hlsl"
+
 #define RAMP_V_MAIN_DIFFUSE 0.125
 #define RAMP_V_SPECULAR 0.375
 #define RAMP_V_ADDITIONAL 0.875
@@ -139,14 +141,7 @@ bool GetKeyLight(out float3 L, out float3 colour)
     // light is its negation.
     L = -light.forward;
     colour = light.color;
-    // A doll the strategy diorama lights from a window takes the key from the way that
-    // light comes (xyz, towards it) in place of the sun's own way.
-    if (_KeyDirection.w > 0.5)
-        L = normalize(_KeyDirection.xyz);
-    // A doll the diorama lights from the room's lamps takes their colour (rgb, illuminance) in
-    // place of the sun's.
-    if (_KeyColour.w > 0.5)
-        colour = _KeyColour.rgb;
+    ApplyDioramaKey(L, colour);
     return true;
 }
 

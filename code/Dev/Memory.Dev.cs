@@ -10,6 +10,11 @@ namespace WOMENACE.Code;
 [DevVerb]
 public static class Memory
 {
+    // How many materials, meshes, render textures and 2D textures are loaded, for a leak.
+    public static string Counts() =>
+        $"materials {Resources.FindObjectsOfTypeAll<Material>().Length}, meshes {Resources.FindObjectsOfTypeAll<Mesh>().Length}, "
+        + $"render textures {Resources.FindObjectsOfTypeAll<RenderTexture>().Length}, textures {Resources.FindObjectsOfTypeAll<Texture2D>().Length}";
+
     // Writes every texture, mesh and audio clip that is loaded to a tab-separated file: its
     // kind, name, size as Unity reports it, and for a texture its dimensions, format and mips.
     public static object Census(string path)

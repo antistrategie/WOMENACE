@@ -1030,6 +1030,81 @@ public static class Diorama
         }
     }
 
+    // Clicks an element of the active screen and reads the screen, UI included, on each of the
+    // frames after: the mean brightness of the middle 16:9 and of the sides a wider screen adds.
+    // A frame whose middle is black while its sides show something is saved as <prefix>N.png, and
+    // every frame's numbers go to <prefix>.txt. For a cut's one-frame flash.
+    [MutatingVerb]
+    public static string ClickBurst(string name, string prefix, int count)
+    {
+        var context = StrategyDiorama.SystemContext;
+        if (context == null)
+            return "no context";
+        context.Coroutines.Start(ClickBurstFrames(name, prefix, count));
+        return $"clicking {name}, reading {count} frames";
+    }
+
+    private static System.Collections.IEnumerator ClickBurstFrames(string name, string prefix, int count)
+    {
+        yield return new WaitForEndOfFrame();
+        var clicked = UiClick(name);
+        var rows = new List<string> { clicked };
+        for (var i = 0; i < count; i++)
+        {
+            yield return new WaitForEndOfFrame();
+            var frame = ScreenCapture.CaptureScreenshotAsTexture();
+            if (frame == null)
+                continue;
+            var (middle, sides) = MiddleAndSides(frame);
+            var flash = sides > 0.03f && middle < 0.015f;
+            rows.Add($"{i + 1} {Time.unscaledDeltaTime * 1000f:F0}ms middle {middle:F3} sides {sides:F3}{(flash ? " FLASH" : "")}");
+            if (flash)
+                System.IO.File.WriteAllBytes($"{prefix}{i + 1}.png", (byte[])ImageConversion.EncodeToPNG(frame));
+            UnityEngine.Object.Destroy(frame);
+        }
+        System.IO.File.WriteAllLines(prefix + ".txt", rows);
+    }
+
+    // Mean brightness of a frame's middle 16:9 and of what lies either side of it, on a sparse grid.
+    private static (float Middle, float Sides) MiddleAndSides(Texture2D frame)
+    {
+        var (w, h) = (frame.width, frame.height);
+        var middleWidth = Mathf.Min(w, h * 16 / 9);
+        var left = (w - middleWidth) / 2;
+        float middle = 0f, sides = 0f;
+        int m = 0, s = 0;
+        for (var y = h / 48; y < h; y += h / 24)
+            for (var x = w / 160; x < w; x += w / 80)
+            {
+                var c = frame.GetPixel(x, y);
+                var v = (c.r + c.g + c.b) / 3f;
+                if (x >= left && x < left + middleWidth) { middle += v; m++; }
+                else { sides += v; s++; }
+            }
+        return (m > 0 ? middle / m : 0f, s > 0 ? sides / s : -1f);
+    }
+
+    // Every object in the loaded scenes whose name contains a part: its path, whether it is
+    // active, and how many particle systems and renderers are under it.
+    public static string SceneFind(string part, int max = 40)
+    {
+        var rows = new List<string>();
+        foreach (var t in Resources.FindObjectsOfTypeAll<Transform>())
+        {
+            if (t == null || !t.gameObject.scene.IsValid() || !t.name.Contains(part, StringComparison.OrdinalIgnoreCase))
+                continue;
+            var path = t.name;
+            for (var up = t.parent; up != null; up = up.parent)
+                path = up.name + "/" + path;
+            var particles = t.GetComponentsInChildren<ParticleSystem>(true).Length;
+            var renderers = t.GetComponentsInChildren<Renderer>(true).Length;
+            rows.Add($"{path} active {t.gameObject.activeInHierarchy} particles {particles} renderers {renderers} local {t.localPosition}");
+            if (rows.Count >= max)
+                break;
+        }
+        return rows.Count == 0 ? "none" : string.Join("\n", rows);
+    }
+
     // Renders the room camera alone (no UI) into a PNG at a Windows path (Z:/ is the Linux root).
     public static string Render(string path, int width, int height)
     {

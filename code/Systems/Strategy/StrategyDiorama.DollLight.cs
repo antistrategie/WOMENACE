@@ -32,10 +32,12 @@ public sealed partial class StrategyDiorama
     }
 
     // The lamps' colour at the sun's key's brightness, so a doll under them is as well lit as one
-    // in the window's light, in their colour.
+    // in the window's light, in their colour. The key is the ops room's own sun as the shadow light
+    // takes it, read from the sun itself: the room's dolls are first lit before the shadow light
+    // is pointed along it.
     private Color LampKeyColour(Color lamps)
     {
-        var sun = _shadowLight != null ? _shadowLight.color.linear * _shadowLight.intensity : Color.black;
+        var sun = _ops.Sun != null && LightsCharacters(_ops.Sun) ? _ops.Sun.color.linear * (_ops.Sun.intensity * Mathf.PI) : Color.black;
         var bright = Luminance(sun);
         var level = Luminance(lamps);
         return level > 1e-6f ? lamps * (bright / level) : sun;

@@ -198,12 +198,13 @@ namespace Womenace.EditorTools
                 ?? throw new InvalidOperationException("Assets/Shaders/BakedScene.shader not found");
 
             // Stale assets from earlier runs are where machine-local stub-shader GUIDs dangle.
-            foreach (var dir in new[] { dst + "/materials", dst + "/probes" })
-            {
-                if (AssetDatabase.IsValidFolder(dir))
-                    AssetDatabase.DeleteAsset(dir);
-                Directory.CreateDirectory(dir);
-            }
+            if (AssetDatabase.IsValidFolder(dst + "/materials"))
+                AssetDatabase.DeleteAsset(dst + "/materials");
+            Directory.CreateDirectory(dst + "/materials");
+            // The probe cubes are kept and written over in place, so their GUIDs survive a rebake:
+            // a prop baked apart from the room (BakeAnimatedProp) reflects one of them.
+            Directory.CreateDirectory(dst + "/probes");
+            ProbesWritten.Clear();
             AssetDatabase.Refresh();
 
             foreach (var m in sidecar.materials)
@@ -320,6 +321,13 @@ namespace Womenace.EditorTools
                 }
 
                 PrefabUtility.SaveAsPrefabAsset(instance, dst + "/main.prefab");
+                // A probe the room no longer has.
+                foreach (var guid in AssetDatabase.FindAssets("t:Cubemap", new[] { dst + "/probes" }))
+                {
+                    var path = AssetDatabase.GUIDToAssetPath(guid);
+                    if (!ProbesWritten.Contains(path))
+                        AssetDatabase.DeleteAsset(path);
+                }
                 AssetDatabase.SaveAssets();
                 Debug.Log($"BakeRoom: wrote {dst}/main.prefab: {built.Count} materials over {replaced} slots, "
                     + $"{lightCount} live lights, {ranOn} pieces run on, probes {string.Join(", ", reflecting.Select(kv => $"{kv.Key} {kv.Value}"))}");
@@ -675,9 +683,23 @@ namespace Womenace.EditorTools
                 }
             }
             cube.Apply(false, true);
-            AssetDatabase.CreateAsset(cube, $"{dst}/probes/{p.name}.asset");
-            return cube;
+            var path = $"{dst}/probes/{p.name}.asset";
+            ProbesWritten.Add(path);
+            var existing = AssetDatabase.LoadAssetAtPath<Cubemap>(path);
+            if (existing == null)
+            {
+                AssetDatabase.CreateAsset(cube, path);
+                return cube;
+            }
+            EditorUtility.CopySerialized(cube, existing);
+            existing.name = p.name;
+            EditorUtility.SetDirty(existing);
+            UnityEngine.Object.DestroyImmediate(cube);
+            return existing;
         }
+
+        // The probe cubes this bake has written, by asset path.
+        private static readonly HashSet<string> ProbesWritten = new();
 
         private static int MipBytes(TextureFormat format, int size)
         {

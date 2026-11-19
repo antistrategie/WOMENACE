@@ -163,8 +163,13 @@ Shader "Womenace/DollEye"
                 float _SpecularParallax;
                 float _ShadowIntensity;
             CBUFFER_END
-            // Set on a doll the diorama lights in a strategy room, which takes the room's fog.
+            // Set on a doll the diorama lights in a strategy room, which takes the room's fog and
+            // her own key (DollKeyLight.hlsl).
             float _RoomLit;
+            float _KeyOcclusion;
+            float4 _KeyDirection;
+            float4 _KeyColour;
+            #include "DollKeyLight.hlsl"
 
             struct Attributes
             {
@@ -215,6 +220,8 @@ Shader "Womenace/DollEye"
                 {
                     lightWS = -_DirectionalLightDatas[0].forward;
                     keyColour = _DirectionalLightDatas[0].color;
+                    ApplyDioramaKey(lightWS, keyColour);
+                    keyColour *= DioramaKeyOcclusion();
                 }
                 float ndotl = saturate(dot(normalWS, lightWS));
 

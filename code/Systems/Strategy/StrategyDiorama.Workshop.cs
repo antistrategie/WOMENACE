@@ -414,10 +414,16 @@ public sealed partial class StrategyDiorama
             try
             {
                 renderer.BakeMesh(baked, false);
-                var toRoom = room.worldToLocalMatrix * renderer.transform.localToWorldMatrix;
+                var m = room.worldToLocalMatrix * renderer.transform.localToWorldMatrix;
+                // Transformed by hand: Matrix4x4's own methods are calls into the game, once a vertex.
                 foreach (var vertex in baked.vertices)
                 {
-                    var at = toRoom.MultiplyPoint3x4(vertex);
+                    var at = new Vector3
+                    {
+                        x = m.m00 * vertex.x + m.m01 * vertex.y + m.m02 * vertex.z + m.m03,
+                        y = m.m10 * vertex.x + m.m11 * vertex.y + m.m12 * vertex.z + m.m13,
+                        z = m.m20 * vertex.x + m.m21 * vertex.y + m.m22 * vertex.z + m.m23,
+                    };
                     if (at.y < lowestAny.y)
                         lowestAny = at;
                     if (at.y >= lowest.y)

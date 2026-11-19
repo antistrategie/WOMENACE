@@ -86,8 +86,13 @@ Shader "Womenace/DollOutline"
         // invisible geometry writing depth.
         float _WomenaceOutlinesOff;
 
-        // Set on a doll the diorama lights in a strategy room, which takes the room's fog.
+        // Set on a doll the diorama lights in a strategy room, which takes the room's fog and
+        // her own key (DollKeyLight.hlsl).
         float _RoomLit;
+        float _KeyOcclusion;
+        float4 _KeyDirection;
+        float4 _KeyColour;
+        #include "DollKeyLight.hlsl"
 
         // A single clipped point: zero-area triangles outside the depth range,
         // so a disabled hull rasterises nothing.
@@ -266,6 +271,8 @@ Shader "Womenace/DollOutline"
                 {
                     lightWS = -_DirectionalLightDatas[0].forward;
                     keyColour = _DirectionalLightDatas[0].color;
+                    ApplyDioramaKey(lightWS, keyColour);
+                    keyColour *= DioramaKeyOcclusion();
                 }
 
                 float d = 0.5;
