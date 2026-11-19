@@ -150,7 +150,7 @@ public sealed partial class StrategyDiorama
         }
         set.LightProbes = ReadLightProbes(set.Root);
         // New lights take the shadow quality on the next frame.
-        _shadowQuality = -1;
+        _life.ShadowQuality = -1;
         set.ReflectionProbes = ReadReflectionProbes(set.Root);
         set.MirrorBox = set.Root.transform.Find("_MirrorBox")?.GetComponent<MeshRenderer>();
         set.MirrorCube = set.MirrorBox?.sharedMaterial?.GetTexture("_Cubemap");
@@ -160,9 +160,6 @@ public sealed partial class StrategyDiorama
         return set.Root;
     }
 
-    // The set's post-processing, over the room camera's own volume: bloom, vignette, grain, colour
-    // adjustments and GFL2's tonemapper with its colour lookup (StrategyDiorama.Grade), in HDRP's
-    // equivalents. Enabled only while the set is active.
     // GFL2's scenery outside the ops room's windows is two long cards, one along each side, made
     // for its cameras, which look down the room. Seen across the room, the windows nearest its
     // head look past the cards' ends into nothing. Each card is continued past that end by a
@@ -194,6 +191,9 @@ public sealed partial class StrategyDiorama
             Context.Log.Info($"strategy diorama: {extended} scenery cards continued past the room's head");
     }
 
+    // The set's post-processing, over the room camera's own volume: bloom, vignette, grain, colour
+    // adjustments and GFL2's tonemapper with its colour lookup (StrategyDiorama.Grade), in HDRP's
+    // equivalents. Enabled only while the set is active.
     private GameObject SpawnSetVolume(RoomSet set)
     {
         if (_camera == null)
@@ -550,6 +550,6 @@ public sealed partial class StrategyDiorama
         Shader.SetGlobalVector("_WmAo", Vector4.zero);
         Shader.SetGlobalVector("_WmReflectionShade", Vector4.zero);
         Shader.SetGlobalFloat("_WmDebugTerm", 0f);
-        Shader.SetGlobalFloat(RoomShadeId, _roomShade = 0f);
+        Shader.SetGlobalFloat(RoomShadeId, _life.RoomShade = 0f);
     }
 }

@@ -60,28 +60,23 @@ public sealed partial class StrategyDiorama
         FrameSettingsField.CustomPostProcess,
     };
 
-    private GameObject _mirror;
-    private Camera _mirrorCamera;
-    private Camera _roomCamera;
-    private RenderTexture _mirrorTexture;
-    private object _mirrorRoutine;
 
     private void SpawnMirror()
     {
-        if (_camera == null || _mirror != null)
+        if (_camera == null || _life.Mirror != null)
             return;
-        _roomCamera = _camera.GetComponent<Camera>();
-        _mirror = new GameObject("WOMENACE_StrategyRoomMirror") { layer = ReflectionVolumeLayer };
-        _mirrorCamera = _mirror.AddComponent<Camera>();
-        _mirrorCamera.depth = _roomCamera.depth - 0.5f;
-        _mirrorCamera.clearFlags = CameraClearFlags.SolidColor;
-        _mirrorCamera.backgroundColor = Color.black;
-        _mirrorCamera.nearClipPlane = _roomCamera.nearClipPlane;
-        _mirrorCamera.farClipPlane = _roomCamera.farClipPlane;
+        _life.RoomCamera = _camera.GetComponent<Camera>();
+        _life.Mirror = new GameObject("WOMENACE_StrategyRoomMirror") { layer = ReflectionVolumeLayer };
+        _life.MirrorCamera = _life.Mirror.AddComponent<Camera>();
+        _life.MirrorCamera.depth = _life.RoomCamera.depth - 0.5f;
+        _life.MirrorCamera.clearFlags = CameraClearFlags.SolidColor;
+        _life.MirrorCamera.backgroundColor = Color.black;
+        _life.MirrorCamera.nearClipPlane = _life.RoomCamera.nearClipPlane;
+        _life.MirrorCamera.farClipPlane = _life.RoomCamera.farClipPlane;
         // Rendered by hand rather than left enabled: some screens (the armoury) switch off every
         // camera but their own each frame, which would freeze the reflection.
-        _mirrorCamera.enabled = false;
-        var hd = _mirror.AddComponent<HDAdditionalCameraData>();
+        _life.MirrorCamera.enabled = false;
+        var hd = _life.Mirror.AddComponent<HDAdditionalCameraData>();
         hd.volumeLayerMask = 1 << ReflectionVolumeLayer;
         hd.antialiasing = HDAdditionalCameraData.AntialiasingMode.None;
         hd.clearColorMode = HDAdditionalCameraData.ClearColorMode.Color;
@@ -90,7 +85,7 @@ public sealed partial class StrategyDiorama
 
         // Its own volume: the room's exposure and no tonemapping or screen effects, so the texture
         // holds exposed linear light the floor can add straight in.
-        var volume = _mirror.AddComponent<UnityEngine.Rendering.Volume>();
+        var volume = _life.Mirror.AddComponent<UnityEngine.Rendering.Volume>();
         volume.isGlobal = true;
         volume.priority = 100f;
         var profile = ScriptableObject.CreateInstance<UnityEngine.Rendering.VolumeProfile>();
@@ -103,7 +98,7 @@ public sealed partial class StrategyDiorama
         SetParameter(AddVolumeComponent<UnityEngine.Rendering.HighDefinition.Fog>(profile).enabled, false);
         volume.sharedProfile = profile;
 
-        _mirrorRoutine = Context.Coroutines.Start(FollowMirror());
+        _life.MirrorRoutine = Context.Coroutines.Start(FollowMirror());
     }
 
     // The interop hands the frame settings out as copies, so their bits are set on the copies' own
@@ -133,17 +128,16 @@ public sealed partial class StrategyDiorama
 
     private System.Collections.IEnumerator FollowMirror()
     {
-        while (_mirror != null)
+        while (_life.Mirror != null)
         {
             try
             {
-                ApplyShadowQuality();
                 UpdateMirror();
             }
             catch (Exception ex)
             {
                 Context.Log.Warn($"strategy diorama: mirror failed: {ex.GetType().Name}: {ex.Message}");
-                _mirrorRoutine = null;
+                _life.MirrorRoutine = null;
                 ClearMirror();
                 yield break;
             }
@@ -151,30 +145,25 @@ public sealed partial class StrategyDiorama
         }
     }
 
-    // The frame the screen last changed. The mirror sits that frame out: vanilla switches its
-    // background scenes after the screen policy has run, so for the rest of the frame the last
-    // screen's sun can still be on beside the room's, and HDRP logs an error for a render with two
-    // shadow-casting suns (seen going from O.C.I. to the armoury).
-    private int _mirrorHeldFrame = -1;
 
     // The live render is a screen-sized target, kept only while a room shows it. The next room
     // that does makes it again.
     private void ReleaseMirrorTexture()
     {
-        if (_mirrorTexture == null)
+        if (_life.MirrorTexture == null)
             return;
-        if (_mirrorCamera != null)
-            _mirrorCamera.targetTexture = null;
+        if (_life.MirrorCamera != null)
+            _life.MirrorCamera.targetTexture = null;
         Shader.SetGlobalTexture(PlanarTextureId, Texture2D.blackTexture);
-        ReleaseTexture(ref _mirrorTexture);
+        ReleaseTexture(ref _life.MirrorTexture);
     }
 
     private void UpdateMirror()
     {
-        if (UnityEngine.Time.frameCount <= _mirrorHeldFrame)
+        if (UnityEngine.Time.frameCount <= _life.MirrorHeldFrame)
             return;
         var set = _active;
-        var shown = set?.Root != null && set.Root.activeInHierarchy && _roomCamera != null && _roomCamera.isActiveAndEnabled;
+        var shown = set?.Root != null && set.Root.activeInHierarchy && _life.RoomCamera != null && _life.RoomCamera.isActiveAndEnabled;
         var resolution = MirrorResolution();
         if (!shown || (resolution <= 0f && set.MirrorCube == null))
         {
@@ -200,49 +189,49 @@ public sealed partial class StrategyDiorama
         var planar = new Vector4(planeY, look.MirrorStrength, Mathf.Max(0f, look.MirrorBlur + Mathf.Log(resolution / 0.5f, 2f)), 0f);
         Shader.SetGlobalColor(PlanarTintId, look.MirrorTint);
 
-        var width = Mathf.Max(64, (int)(_roomCamera.pixelWidth * resolution));
-        var height = Mathf.Max(64, (int)(_roomCamera.pixelHeight * resolution));
-        if (_mirrorTexture == null || _mirrorTexture.width != width || _mirrorTexture.height != height)
+        var width = Mathf.Max(64, (int)(_life.RoomCamera.pixelWidth * resolution));
+        var height = Mathf.Max(64, (int)(_life.RoomCamera.pixelHeight * resolution));
+        if (_life.MirrorTexture == null || _life.MirrorTexture.width != width || _life.MirrorTexture.height != height)
         {
-            _mirrorCamera.targetTexture = null;
-            ReleaseTexture(ref _mirrorTexture);
-            _mirrorTexture = new RenderTexture(width, height, 24, RenderTextureFormat.ARGBHalf)
+            _life.MirrorCamera.targetTexture = null;
+            ReleaseTexture(ref _life.MirrorTexture);
+            _life.MirrorTexture = new RenderTexture(width, height, 24, RenderTextureFormat.ARGBHalf)
             {
                 name = "WOMENACE_FloorReflection",
                 useMipMap = true,
                 autoGenerateMips = true,
             };
-            Shader.SetGlobalTexture(PlanarTextureId, _mirrorTexture);
+            Shader.SetGlobalTexture(PlanarTextureId, _life.MirrorTexture);
         }
-        _mirrorCamera.targetTexture = _mirrorTexture;
-        _mirrorCamera.cullingMask = _roomCamera.cullingMask;
+        _life.MirrorCamera.targetTexture = _life.MirrorTexture;
+        _life.MirrorCamera.cullingMask = _life.RoomCamera.cullingMask;
 
-        var eye = _roomCamera.transform.position;
-        var forward = _roomCamera.transform.forward;
-        var up = _roomCamera.transform.up;
-        _mirror.transform.SetPositionAndRotation(
+        var eye = _life.RoomCamera.transform.position;
+        var forward = _life.RoomCamera.transform.forward;
+        var up = _life.RoomCamera.transform.up;
+        _life.Mirror.transform.SetPositionAndRotation(
             new Vector3(eye.x, 2f * planeY - eye.y, eye.z),
             Quaternion.LookRotation(new Vector3(forward.x, -forward.y, forward.z), new Vector3(-up.x, up.y, -up.z)));
         // The room camera's own projection, not just its field of view: the game's quality pass
         // makes it a physical camera, whose sensor and gate fit change the frustum, and a mirror
         // built from the field of view alone lands its image shrunk and shifted off what it mirrors.
-        _mirrorCamera.ResetProjectionMatrix();
+        _life.MirrorCamera.ResetProjectionMatrix();
         // The mirror's image is upside down, so a lens lifted up the frame is lifted down its own.
-        var projection = _roomCamera.projectionMatrix;
+        var projection = _life.RoomCamera.projectionMatrix;
         projection.m12 = -projection.m12;
-        _mirrorCamera.projectionMatrix = projection;
+        _life.MirrorCamera.projectionMatrix = projection;
         // Oblique near plane on the floor: keep only what stands above it.
-        var toCamera = _mirrorCamera.worldToCameraMatrix;
+        var toCamera = _life.MirrorCamera.worldToCameraMatrix;
         var point = toCamera.MultiplyPoint(new Vector3(0f, planeY, 0f));
         var normal = toCamera.MultiplyVector(Vector3.up).normalized;
-        _mirrorCamera.projectionMatrix = _mirrorCamera.CalculateObliqueMatrix(new Vector4(normal.x, normal.y, normal.z, -Vector3.Dot(point, normal)));
+        _life.MirrorCamera.projectionMatrix = _life.MirrorCamera.CalculateObliqueMatrix(new Vector4(normal.x, normal.y, normal.z, -Vector3.Dot(point, normal)));
         // The floor itself draws in the mirror render and must not read the texture it is being
         // drawn into, or each frame's reflection would carry the last.
         Shader.SetGlobalVector(PlanarParamsId, Vector4.zero);
         ShowNamePlates(false);
         try
         {
-            _mirrorCamera.Render();
+            _life.MirrorCamera.Render();
         }
         finally
         {
@@ -254,18 +243,18 @@ public sealed partial class StrategyDiorama
     private void ClearMirror()
     {
         Shader.SetGlobalVector(PlanarParamsId, Vector4.zero);
-        if (_mirrorRoutine != null)
-            Context.Coroutines.Stop(_mirrorRoutine);
-        _mirrorRoutine = null;
-        if (_mirror != null)
+        if (_life.MirrorRoutine != null)
+            Context.Coroutines.Stop(_life.MirrorRoutine);
+        _life.MirrorRoutine = null;
+        if (_life.Mirror != null)
         {
-            DestroyProfile(_mirror.GetComponent<UnityEngine.Rendering.Volume>()?.sharedProfile);
-            UnityEngine.Object.Destroy(_mirror);
+            DestroyProfile(_life.Mirror.GetComponent<UnityEngine.Rendering.Volume>()?.sharedProfile);
+            UnityEngine.Object.Destroy(_life.Mirror);
         }
-        _mirror = null;
-        _mirrorCamera = null;
-        _roomCamera = null;
-        ReleaseTexture(ref _mirrorTexture);
+        _life.Mirror = null;
+        _life.MirrorCamera = null;
+        _life.RoomCamera = null;
+        ReleaseTexture(ref _life.MirrorTexture);
     }
 
 }

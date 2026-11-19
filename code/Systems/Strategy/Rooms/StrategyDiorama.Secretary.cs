@@ -11,21 +11,6 @@ public sealed partial class StrategyDiorama
     // Doll bodies are baked at GFL2 canon height times the 1.2 world factor that sizes them
     // against MENACE's soldiers. The rooms are GFL2's own, so a doll stands at canon height in them.
     internal const float RoomDollScale = 1f / 1.2f;
-    // The armoury squad's rig. MENACE's character shader takes no ambient, so each staged unit gets
-    // a small rig on top of the room's live lights: a warm window key from camera left, a cool fill
-    // from the camera and a teal rim from beyond it, as (offset from its feet in the camera's frame
-    // with +x camera right and +z away from the camera, colour, lumens). The room's surfaces shade
-    // themselves and ignore it. The ops room's dolls take none: GFL2 lights its characters with the
-    // room's sun, probes and the lights it keeps on characters, and nothing else.
-    private static readonly (Vector3 Offset, Color Colour, float Lumens)[] UnitRig =
-    {
-        (new Vector3(-1.6f, 2.2f, -0.8f), new Color(1f, 0.9f, 0.78f), 14f),
-        (new Vector3(0.6f, 1.4f, -1.8f), new Color(0.75f, 0.88f, 1f), 5f),
-        (new Vector3(0.8f, 2.0f, 1.4f), new Color(0.5f, 0.85f, 0.95f), 10f),
-    };
-    // The rig against the room's exposure.
-    internal const float RigLightScale = 1.41f;
-
     // A place a doll stands in the room: feet position and facing in room space, her pose there,
     // and what the spot asks for. Spots that share a group fill together or not at all (two dolls
     // talking need two dolls). A spot that asks for the doll's own animation takes only a doll
@@ -52,8 +37,6 @@ public sealed partial class StrategyDiorama
         new("stairs-talk-b", new Vector3(-10.05f, -0.97f, -2.98f), 90f, "Idle", 10, false, "stairs-talk"),
     };
 
-    private readonly List<GameObject> _crew = new();
-    private readonly Dictionary<GameObject, DollSpot> _crewSpots = new();
     // Each spot's floor height in the room, measured once: the room does not change.
     private static readonly Dictionary<string, float> SpotFloors = new();
 
@@ -77,13 +60,13 @@ public sealed partial class StrategyDiorama
     {
         try
         {
-            foreach (var doll in _crew)
+            foreach (var doll in _life.Crew)
                 if (doll != null)
                     UnityEngine.Object.Destroy(doll);
-            _crew.Clear();
-            _crewSpots.Clear();
-            _crewSeatShifts.Clear();
-            _crewFidgets.Clear();
+            _life.Crew.Clear();
+            _life.CrewSpots.Clear();
+            _life.CrewSeatShifts.Clear();
+            _life.CrewFidgets.Clear();
             if (_room == null)
                 return;
             // Only dolls the player has hired stand in the room, in roster order, so each keeps
@@ -92,19 +75,19 @@ public sealed partial class StrategyDiorama
             var bodies = HiredDollBodies();
             foreach (var (tag, asset) in bodies)
                 dolls.Add((tag, asset.Split('/')[0]));
-            _crewWears = Wearing(bodies);
-            _crewWornOn = _policyScreen;
+            _life.CrewWears = Wearing(bodies);
+            _life.CrewWornOn = _policyScreen;
             foreach (var (tag, spot) in AssignSpots(dolls))
             {
                 var doll = SpawnDoll(tag, "WOMENACE_RoomDoll_" + spot.Name);
                 if (doll == null)
                     continue;
                 Pose(doll, spot.Pose);
-                _crew.Add(doll);
-                _crewSpots[doll] = spot;
+                _life.Crew.Add(doll);
+                _life.CrewSpots[doll] = spot;
             }
             PlaceRoomDolls(true);
-            Context.Log.Info($"strategy diorama: {_crew.Count} dolls in the room of {dolls.Count} hired");
+            Context.Log.Info($"strategy diorama: {_life.Crew.Count} dolls in the room of {dolls.Count} hired");
         }
         catch (Exception ex)
         {
@@ -161,7 +144,7 @@ public sealed partial class StrategyDiorama
     // dolls are in it when it shows.
     private bool RoomAwaitsDolls()
     {
-        if (_room == null || _active != _ops || _crew.Count > 0)
+        if (_room == null || _active != _ops || _life.Crew.Count > 0)
             return false;
         var hired = StrategyState.Get()?.Roster?.m_HiredLeaders;
         return hired == null || hired.Count == 0 || HiredDollTags().Count > 0;
@@ -171,14 +154,12 @@ public sealed partial class StrategyDiorama
     private static bool PickingLeaders() =>
         Il2CppMenace.UI.UIManager.Get()?.GetCurrentDialog()?.TryCast<Il2CppMenace.UI.PickInitialLeadersDialog>() != null;
 
-    private string _crewWears, _crewWornOn;
-    private float _crewCheckedAt;
 
     // Brings the room's dolls in again when the roster or an outfit is not what they were built
     // from. True when it did.
     private bool RefreshRoomDolls()
     {
-        if (_crewWears == Wearing())
+        if (_life.CrewWears == Wearing())
             return false;
         SpawnRoomDolls();
         return true;
@@ -190,9 +171,9 @@ public sealed partial class StrategyDiorama
     {
         // Each leader chosen for a new campaign is hired on the spot: the room waits for the
         // whole choice and brings them in once.
-        if (_room == null || _active != _ops || Time.unscaledTime - _crewCheckedAt < 1f || PickingLeaders())
+        if (_room == null || _active != _ops || Time.unscaledTime - _life.CrewCheckedAt < 1f || PickingLeaders())
             return;
-        _crewCheckedAt = Time.unscaledTime;
+        _life.CrewCheckedAt = Time.unscaledTime;
         if (!RefreshRoomDolls())
             Fidget();
     }
@@ -202,15 +183,15 @@ public sealed partial class StrategyDiorama
     // would be seen to.
     private void Fidget()
     {
-        foreach (var doll in _crew)
+        foreach (var doll in _life.Crew)
         {
-            if (doll == null || !doll.activeInHierarchy || !_crewFidgets.TryGetValue(doll, out var fidget) || Time.unscaledTime < fidget.At)
+            if (doll == null || !doll.activeInHierarchy || !_life.CrewFidgets.TryGetValue(doll, out var fidget) || Time.unscaledTime < fidget.At)
                 continue;
             var animator = doll.GetComponentInChildren<Animator>();
             if (animator == null || animator.IsInTransition(0) || animator.GetCurrentAnimatorStateInfo(0).shortNameHash != fidget.Idle)
                 continue;
             animator.CrossFadeInFixedTime(fidget.Fidget, 0.4f, 0);
-            _crewFidgets[doll] = (fidget.Idle, fidget.Fidget, Time.unscaledTime + UnityEngine.Random.Range(FidgetWaitMin, FidgetWaitMax));
+            _life.CrewFidgets[doll] = (fidget.Idle, fidget.Fidget, Time.unscaledTime + UnityEngine.Random.Range(FidgetWaitMin, FidgetWaitMax));
         }
     }
 
@@ -231,13 +212,12 @@ public sealed partial class StrategyDiorama
 
     private static string Wearing(List<(string Tag, string Asset)> bodies) => string.Join(";", bodies.Select(b => b.Asset));
 
-    private Animator _poseProbe;
 
     // Whether the poses hold this body's own loop for a pose, asked of a controller of our own
     // that plays nothing: a controller answers for its states only through a live Animator.
     private bool HasPose(string body, string pose)
     {
-        if (_poseProbe == null)
+        if (_life.PoseProbe == null)
         {
             var prefab = PosesPrefab();
             if (prefab == null || _room == null)
@@ -246,9 +226,9 @@ public sealed partial class StrategyDiorama
             probe.name = "WOMENACE_PoseProbe";
             foreach (var renderer in probe.GetComponentsInChildren<Renderer>(true))
                 renderer.enabled = false;
-            _poseProbe = probe.GetComponent<Animator>();
+            _life.PoseProbe = probe.GetComponent<Animator>();
         }
-        return _poseProbe != null && _poseProbe.HasState(0, Animator.StringToHash($"Base Layer.{body}-{pose}"));
+        return _life.PoseProbe != null && _life.PoseProbe.HasState(0, Animator.StringToHash($"Base Layer.{body}-{pose}"));
     }
 
     // A doll's body in the outfit she wears now, under the room, or null when she has no model.
@@ -284,8 +264,6 @@ public sealed partial class StrategyDiorama
     private const float PoseSpeedMax = 1.1f;
     private const float FidgetWaitMin = 12f;
     private const float FidgetWaitMax = 45f;
-    // Each standing doll's idle and fidget loops, and when she next fidgets.
-    private readonly Dictionary<GameObject, (int Idle, int Fidget, float At)> _crewFidgets = new();
 
     // Swaps the doll's soldier controller for the poses and starts her own loop for the pose.
     private void Pose(GameObject doll, string pose)
@@ -320,7 +298,7 @@ public sealed partial class StrategyDiorama
             animator.Play(state, 0, UnityEngine.Random.value);
             var (idle, fidget) = (Animator.StringToHash($"{who}-Idle"), Animator.StringToHash($"{who}-LongIdle"));
             if (what != "Sit" && animator.HasState(0, idle) && animator.HasState(0, fidget))
-                _crewFidgets[doll] = (idle, fidget, Time.unscaledTime + UnityEngine.Random.Range(0f, FidgetWaitMax));
+                _life.CrewFidgets[doll] = (idle, fidget, Time.unscaledTime + UnityEngine.Random.Range(0f, FidgetWaitMax));
             animator.Update(0f);
             return;
         }
@@ -337,16 +315,16 @@ public sealed partial class StrategyDiorama
         // it is now: either changing on another screen brings the room's dolls in again.
         // Vanilla asks for a screen's policy many times over: the dolls are looked at once a
         // screen, when they are first brought in, and whenever the armoury has put them away.
-        var arrived = spawned || _crewWornOn != _policyScreen;
+        var arrived = spawned || _life.CrewWornOn != _policyScreen;
         if (arrived && !spawned)
         {
-            _crewWornOn = _policyScreen;
+            _life.CrewWornOn = _policyScreen;
             if (RefreshRoomDolls())
                 return;
         }
-        foreach (var doll in _crew)
+        foreach (var doll in _life.Crew)
         {
-            if (doll == null || !_crewSpots.TryGetValue(doll, out var spot))
+            if (doll == null || !_life.CrewSpots.TryGetValue(doll, out var spot))
                 continue;
             if (doll.activeSelf && !arrived)
                 continue;
@@ -369,7 +347,6 @@ public sealed partial class StrategyDiorama
 
     // How far behind her root a sitter's hips are in the sit the seats' spots were set for.
     private const float SeatHipsBack = 0.1f;
-    private readonly Dictionary<GameObject, Vector3> _crewSeatShifts = new();
 
     // How far a sitter moves from her spot (in her own axes, room metres) for her hips to be
     // over the seat. Each doll's sitting loop was made for a seat of her own in GFL2 and puts
@@ -378,7 +355,7 @@ public sealed partial class StrategyDiorama
     // Measured off her own pose once, so she keeps her place for as long as she is in the room.
     private Vector3 SeatShift(GameObject doll)
     {
-        if (_crewSeatShifts.TryGetValue(doll, out var known))
+        if (_life.CrewSeatShifts.TryGetValue(doll, out var known))
             return known;
         var shift = Vector3.zero;
         var animator = doll.GetComponentInChildren<Animator>();
@@ -391,7 +368,7 @@ public sealed partial class StrategyDiorama
             var hips = doll.transform.InverseTransformPoint((left.position + right.position) * 0.5f);
             shift = new Vector3(-hips.x, 0f, -(hips.z + SeatHipsBack)) * RoomDollScale;
         }
-        return _crewSeatShifts[doll] = shift;
+        return _life.CrewSeatShifts[doll] = shift;
     }
 
     // The room's floor under a spot: of every upward face of the room over the spot, the one
@@ -451,81 +428,6 @@ public sealed partial class StrategyDiorama
             Context.Log.Warn($"strategy diorama: floor under {spot.Name} not measured: {ex.GetType().Name}: {ex.Message}");
         }
         return SpotFloors[spot.Name] = floor;
-    }
-
-    // Each lit unit's rig, by the unit.
-    private readonly Dictionary<IntPtr, Light[]> _dollRigs = new();
-
-    // Lights a unit with the rig, in the frame of the room camera looking at it.
-    private void LightDoll(GameObject doll, float scale = 1f)
-    {
-        if (!_dollRigs.TryGetValue(doll.Pointer, out var rig) || rig[0] == null)
-            _dollRigs[doll.Pointer] = rig = BuildRig(doll);
-        var away = _camera != null ? doll.transform.position - _camera.transform.position : doll.transform.forward;
-        away.y = 0f;
-        var frame = Quaternion.LookRotation(away.sqrMagnitude > 1e-6f ? away : Vector3.forward, Vector3.up);
-        var chest = doll.transform.position + Vector3.up * 1.3f;
-        for (int i = 0; i < UnitRig.Length; i++)
-        {
-            var (offset, _, lumens) = UnitRig[i];
-            var t = rig[i].transform;
-            t.position = doll.transform.position + frame * offset;
-            t.rotation = Quaternion.LookRotation(chest - t.position);
-            rig[i].intensity = lumens * RigLightScale * scale;
-        }
-    }
-
-    private static Light[] BuildRig(GameObject doll)
-    {
-        var rig = new Light[UnitRig.Length];
-        for (int i = 0; i < rig.Length; i++)
-            rig[i] = RigLight(doll, "WOMENACE_DollLight" + i, UnitRig[i].Colour, 8f);
-        return rig;
-    }
-
-    // One light of a doll's rig: a point light of her own, which shadows nothing.
-    private static Light RigLight(GameObject doll, string name, Color colour, float range)
-    {
-        var go = new GameObject(name);
-        go.transform.SetParent(doll.transform, false);
-        var light = go.AddComponent<Light>();
-        light.type = LightType.Point;
-        light.shadows = LightShadows.None;
-        // Every rendering layer: the armoury's units sit on MENACE's own light layers.
-        light.renderingLayerMask = -1;
-        light.color = colour;
-        light.range = range;
-        light.lightUnit = UnityEngine.Rendering.LightUnit.Lumen;
-        go.AddComponent<UnityEngine.Rendering.HighDefinition.HDAdditionalLightData>().affectsVolumetric = false;
-        return light;
-    }
-
-    // Takes the rig off one unit.
-    private void RemoveRig(GameObject doll)
-    {
-        if (!_dollRigs.Remove(doll.Pointer, out var rig))
-            return;
-        foreach (var light in rig)
-            if (light != null)
-                UnityEngine.Object.Destroy(light.gameObject);
-    }
-
-    // Takes the rig off every doll under a root (the armoury's squad, given back to vanilla).
-    private void RemoveRigs(Transform root)
-    {
-        List<IntPtr> gone = null;
-        foreach (var (doll, rig) in _dollRigs)
-        {
-            if (rig[0] != null && !rig[0].transform.IsChildOf(root))
-                continue;
-            foreach (var light in rig)
-                if (light != null)
-                    UnityEngine.Object.Destroy(light.gameObject);
-            (gone ??= new()).Add(doll);
-        }
-        if (gone != null)
-            foreach (var doll in gone)
-                _dollRigs.Remove(doll);
     }
 
     // The character tags of every hired leader that is one of ours, in roster order, once each

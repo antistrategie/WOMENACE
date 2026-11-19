@@ -53,9 +53,9 @@ public sealed partial class StrategyDiorama
             _weaponRoom.CalibrationDollTag = tag;
             if (_weaponRoom.CalibrationDoll != null)
             {
-                _crewFidgets.Remove(_weaponRoom.CalibrationDoll);
-                _crewSeatShifts.Remove(_weaponRoom.CalibrationDoll);
-                _dollRigs.Remove(_weaponRoom.CalibrationDoll.Pointer);
+                _life.CrewFidgets.Remove(_weaponRoom.CalibrationDoll);
+                _life.CrewSeatShifts.Remove(_weaponRoom.CalibrationDoll);
+                _life.DollRigs.Remove(_weaponRoom.CalibrationDoll.Pointer);
                 UnityEngine.Object.Destroy(_weaponRoom.CalibrationDoll);
             }
             _weaponRoom.CalibrationDoll = null;
@@ -77,7 +77,7 @@ public sealed partial class StrategyDiorama
             var sits = Has(body) || Has(sitter);
             if (!sits && Has(PoseFallback))
             {
-                _crewFidgets.Remove(doll);
+                _life.CrewFidgets.Remove(doll);
                 animator.Play(Animator.StringToHash($"Base Layer.{PoseFallback}-Sit"), 0, UnityEngine.Random.value);
                 sits = true;
             }

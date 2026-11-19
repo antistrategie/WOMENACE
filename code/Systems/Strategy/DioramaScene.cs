@@ -41,6 +41,7 @@ public sealed partial class StrategyDiorama
         public readonly OciState Oci = new();
         public readonly ShopState Shop = new();
         public readonly StagingState Staging = new();
+        public readonly RoomLifeState Life = new();
     }
 
     private DioramaScene _scene = new();

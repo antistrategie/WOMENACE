@@ -67,6 +67,7 @@ public sealed partial class StrategyDiorama : JiangyuSystem
 
     private void DriveRoom()
     {
+        ApplyShadowQuality();
         DriveLand();
         DriveTableGrid();
         DriveRoomShade();
@@ -224,24 +225,15 @@ public sealed partial class StrategyDiorama : JiangyuSystem
         ReleaseTableTarget();
         ClearPrepMap();
         ReleasePrepTokens();
-        _missions.MarkerBoard.Clear();
         SpringBoneSystem.ResetSimulatedLod();
         // A vanilla background hidden for a room screen comes back with the room gone.
         if (_hiddenVanilla != null && !_hiddenVanilla.activeSelf)
             _hiddenVanilla.SetActive(true);
         _hiddenVanilla = null;
         _lastShellScreen = null;
-        _dinergate = null;
-        _crew.Clear();
-        _crewSpots.Clear();
-        _crewSeatShifts.Clear();
-        _crewFidgets.Clear();
-        _poseProbe = null;
         // The next room starts with its own camera.
         DropShot();
         StrategyMusicSystem.Rest();
-        _dollRigs.Clear();
-        _dinergateAnimator = null;
         // The next scene starts from nothing: no room, no camera, no arrival yet.
         _scene = new DioramaScene();
     }

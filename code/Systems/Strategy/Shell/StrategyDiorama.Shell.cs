@@ -640,7 +640,7 @@ public sealed partial class StrategyDiorama
     private System.Collections.IEnumerator DriveShell(VisualElement shell)
     {
         var tag = UI.Find(shell, UiSelector.Name("wm-dg-tag"));
-        var tableTag = _tableTag = UI.Find(shell, UiSelector.Name("wm-table-tag"));
+        var tableTag = _life.TableTag = UI.Find(shell, UiSelector.Name("wm-table-tag"));
         var restyle = 0f;
         var events = 0f;
         var actions = 0f;
@@ -653,18 +653,18 @@ public sealed partial class StrategyDiorama
         {
             var camera = RoomCamera;
             var covered = shell.ClassListContains(BarsClosedClass);
-            var visible = !eventPlaying && _dinergate != null && _dinergate.activeInHierarchy && camera != null && camera.isActiveAndEnabled
+            var visible = !eventPlaying && _life.Dinergate != null && _life.Dinergate.activeInHierarchy && camera != null && camera.isActiveAndEnabled
                 && _policyScreen != null && HomeScreens.Contains(_policyScreen) && _homeView == HomeView.Home && !_intelOpen
                 && !covered;
             tag.EnableInClassList("wui-tag--off", !visible);
-            tag.EnableInClassList("wui-tag--hover", visible && _dinergateHover);
+            tag.EnableInClassList("wui-tag--hover", visible && _life.DinergateHover);
             // The holotable's tag: a click on the table goes to Operations.
             var tableVisible = !eventPlaying && camera != null && camera.isActiveAndEnabled && _room != null
                 && OnHomeView(_policyScreen) && !_intelOpen && !covered;
             if (tableTag != null)
             {
                 tableTag.EnableInClassList("wui-tag--off", !tableVisible);
-                tableTag.EnableInClassList("wui-tag--hover", tableVisible && _tableHover);
+                tableTag.EnableInClassList("wui-tag--hover", tableVisible && _life.TableHover);
                 if (tableVisible && shell.panel != null)
                 {
                     var at = camera.WorldToScreenPoint(_room.transform.TransformPoint(TableTagPoint));
@@ -785,7 +785,7 @@ public sealed partial class StrategyDiorama
             if (visible && shell.panel != null)
             {
                 // Over the Dinergate, centred on its eye.
-                var top = camera.WorldToScreenPoint(_dinergate.transform.position + UnityEngine.Vector3.up * DinergateTagHeight);
+                var top = camera.WorldToScreenPoint(_life.Dinergate.transform.position + UnityEngine.Vector3.up * DinergateTagHeight);
                 var eye = camera.WorldToScreenPoint(DinergateEye);
                 var point = RuntimePanelUtils.ScreenToPanel(shell.panel, new UnityEngine.Vector2(eye.x, UnityEngine.Screen.height - top.y));
                 tag.style.left = point.x - tag.resolvedStyle.width / 2f;

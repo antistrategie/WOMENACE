@@ -91,7 +91,7 @@ public sealed partial class StrategyDiorama
                 UnityEngine.Object.Destroy(material);
         _weaponRoom.WorkedOnHolograms.Clear();
         if (_weaponRoom.CalibrationDoll != null)
-            _dollRigs.Remove(_weaponRoom.CalibrationDoll.Pointer);
+            _life.DollRigs.Remove(_weaponRoom.CalibrationDoll.Pointer);
     }
 
     // What is being worked on, at the station it is worked on at: a weapon's own model, or the

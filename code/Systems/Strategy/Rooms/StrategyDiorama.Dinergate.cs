@@ -28,13 +28,7 @@ public sealed partial class StrategyDiorama
     // How far above its origin the tag's pointer sits.
     private const float DinergateTagHeight = 0.36f;
 
-    private bool _dinergateHover;
-    private bool _dinergateProjecting;
-    private int _dinergateFlight;
-    private float _dinergateYaw;
 
-    private GameObject _dinergate;
-    private Animator _dinergateAnimator;
 
     private void SpawnDinergate()
     {
@@ -46,16 +40,16 @@ public sealed partial class StrategyDiorama
                 Context.Log.Warn($"strategy diorama: '{DinergateAsset}' is not in the bundles");
                 return;
             }
-            _dinergate = UnityEngine.Object.Instantiate(prefab, _room.transform, false);
-            _dinergate.name = "WOMENACE_Dinergate";
-            _dinergateAnimator = _dinergate.GetComponentInChildren<Animator>(true);
+            _life.Dinergate = UnityEngine.Object.Instantiate(prefab, _room.transform, false);
+            _life.Dinergate.name = "WOMENACE_Dinergate";
+            _life.DinergateAnimator = _life.Dinergate.GetComponentInChildren<Animator>(true);
             GlowDinergate();
             AttachDinergateEffects();
             PlaceDinergate();
-            _dinergateProjecting = false;
-            ProbeLight(_dinergate, _ops);
-            Context.Coroutines.Start(WatchClicks(_dinergate));
-            Context.Log.Info($"strategy diorama: dinergate at {DinergatePosition}, animator {(_dinergateAnimator != null ? "found" : "missing")}");
+            _life.DinergateProjecting = false;
+            ProbeLight(_life.Dinergate, _ops);
+            Context.Coroutines.Start(WatchClicks(_life.Dinergate));
+            Context.Log.Info($"strategy diorama: dinergate at {DinergatePosition}, animator {(_life.DinergateAnimator != null ? "found" : "missing")}");
         }
         catch (Exception ex)
         {
@@ -83,10 +77,10 @@ public sealed partial class StrategyDiorama
             var prefab = Context.Assets.Load<GameObject>(DinergateVfxAsset);
             if (prefab == null)
                 return;
-            var effects = UnityEngine.Object.Instantiate(prefab, _dinergate.transform, false);
+            var effects = UnityEngine.Object.Instantiate(prefab, _life.Dinergate.transform, false);
             effects.name = "WOMENACE_DinergateVfx";
-            var bones = _dinergate.GetComponentsInChildren<Transform>(true);
-            var worldScale = _dinergate.transform.lossyScale.x;
+            var bones = _life.Dinergate.GetComponentsInChildren<Transform>(true);
+            var worldScale = _life.Dinergate.transform.lossyScale.x;
             var attached = 0;
             foreach (var (effectName, boneName) in DinergateEffectBones)
             {
@@ -103,7 +97,7 @@ public sealed partial class StrategyDiorama
                 attached++;
             }
             // At rest: no hint call, and no HUD light beams.
-            foreach (var node in _dinergate.GetComponentsInChildren<Transform>(true))
+            foreach (var node in _life.Dinergate.GetComponentsInChildren<Transform>(true))
                 if (node.name == "EFF_Dinergate_Hint" || node.name.StartsWith("guangshu", StringComparison.Ordinal))
                     node.gameObject.SetActive(false);
             StartDinergateHud();
@@ -122,10 +116,10 @@ public sealed partial class StrategyDiorama
 
     private void GlowDinergate()
     {
-        if (_dinergate == null)
+        if (_life.Dinergate == null)
             return;
         var block = new MaterialPropertyBlock();
-        foreach (var renderer in _dinergate.GetComponentsInChildren<Renderer>(true))
+        foreach (var renderer in _life.Dinergate.GetComponentsInChildren<Renderer>(true))
         {
             renderer.GetPropertyBlock(block);
             block.SetColor("_GlowColor", DinergateGlow);
@@ -135,13 +129,13 @@ public sealed partial class StrategyDiorama
 
     private void PlaceDinergate()
     {
-        if (_dinergate == null || _room == null)
+        if (_life.Dinergate == null || _room == null)
             return;
-        var t = _dinergate.transform;
+        var t = _life.Dinergate.transform;
         t.localPosition = DinergatePosition;
         var toCamera = _room.transform.InverseTransformPoint(_anchor.position) - DinergatePosition;
         var yaw = Mathf.Atan2(toCamera.x, toCamera.z) * Mathf.Rad2Deg;
-        _dinergateYaw = yaw;
+        _life.DinergateYaw = yaw;
         t.localRotation = Quaternion.Euler(0f, yaw, 0f);
     }
 
@@ -149,11 +143,11 @@ public sealed partial class StrategyDiorama
     // down to its post.
     private void SetDinergateProjecting(bool on)
     {
-        if (_dinergateProjecting == on || _dinergate == null)
+        if (_life.DinergateProjecting == on || _life.Dinergate == null)
             return;
-        _dinergateProjecting = on;
+        _life.DinergateProjecting = on;
         TableSounds.Play(on ? TableSounds.ProjectorOn : TableSounds.ProjectorOff);
-        Context.Coroutines.Start(FlyDinergate(_dinergate, on, ++_dinergateFlight));
+        Context.Coroutines.Start(FlyDinergate(_life.Dinergate, on, ++_life.DinergateFlight));
     }
 
     private System.Collections.IEnumerator FlyDinergate(GameObject dinergate, bool up, int flight)
@@ -163,10 +157,10 @@ public sealed partial class StrategyDiorama
         // A flight that starts while another is under way goes straight to its place. Drawing
         // back first from wherever the last one had got to carries the body further off with
         // each click.
-        var interrupts = _dinergateFlying;
-        _dinergateFlying = true;
+        var interrupts = _life.DinergateFlying;
+        _life.DinergateFlying = true;
         var toPosition = DinergatePosition;
-        var toRotation = Quaternion.Euler(0f, _dinergateYaw, 0f);
+        var toRotation = Quaternion.Euler(0f, _life.DinergateYaw, 0f);
         var camera = RoomCamera;
         if (up && camera != null && _room != null)
         {
@@ -208,7 +202,7 @@ public sealed partial class StrategyDiorama
             SetProjection(dinergate, false);
         for (var time = 0f; time < DinergateFlightSeconds; time += Time.unscaledDeltaTime)
         {
-            if (dinergate == null || flight != _dinergateFlight)
+            if (dinergate == null || flight != _life.DinergateFlight)
                 yield break;
             // The flight draws back before it goes and overshoots before it settles. The turn does
             // neither, or it would read as a shake of the head.
@@ -217,16 +211,15 @@ public sealed partial class StrategyDiorama
             t.localRotation = Quaternion.Slerp(fromRotation, toRotation, Ease.InOutCubic(u));
             yield return null;
         }
-        if (dinergate == null || flight != _dinergateFlight)
+        if (dinergate == null || flight != _life.DinergateFlight)
             yield break;
         t.localPosition = toPosition;
         t.localRotation = toRotation;
-        _dinergateFlying = false;
+        _life.DinergateFlying = false;
         if (up)
             SetProjection(dinergate, true);
     }
 
-    private bool _dinergateFlying;
 
     // The lens projection's source. GFL2 lays the projection's parts out along this node's back axis.
     private static Transform ProjectionNode(GameObject dinergate)
@@ -248,10 +241,10 @@ public sealed partial class StrategyDiorama
     private bool OverDinergate(Vector2 screenPoint)
     {
         var camera = _camera != null ? _camera.GetComponent<Camera>() : null;
-        if (camera == null || !camera.isActiveAndEnabled || _dinergate == null || PointerOverUi(screenPoint))
+        if (camera == null || !camera.isActiveAndEnabled || _life.Dinergate == null || PointerOverUi(screenPoint))
             return false;
         var ray = camera.ScreenPointToRay(new Vector3(screenPoint.x, screenPoint.y, 0f));
-        return Physics.Raycast(ray, out var hit, 50f) && hit.collider != null && hit.collider.gameObject == _dinergate;
+        return Physics.Raycast(ray, out var hit, 50f) && hit.collider != null && hit.collider.gameObject == _life.Dinergate;
     }
 
     // Whether the pointer is over the Dinergate, which its tag answers.
@@ -262,31 +255,27 @@ public sealed partial class StrategyDiorama
         // It answers the pointer on the Home view only, where the Intel board is. The test costs a
         // pick through every UI document, so it runs when the pointer has moved.
         if (!OnHomeView(_policyScreen) || _shell == null)
-            _dinergateHover = false;
-        else if (position != _dinergatePointer || _dinergateProjecting)
-            _dinergateHover = !_dinergateProjecting && OverDinergate(position);
+            _life.DinergateHover = false;
+        else if (position != _life.DinergatePointer || _life.DinergateProjecting)
+            _life.DinergateHover = !_life.DinergateProjecting && OverDinergate(position);
         // The holotable answers it too, where the Dinergate is not in front of it.
         if (!OnHomeView(_policyScreen) || _shell == null)
-            _tableHover = false;
-        else if (position != _dinergatePointer)
-            _tableHover = !_dinergateHover && OverTable(position);
-        _dinergatePointer = position;
+            _life.TableHover = false;
+        else if (position != _life.DinergatePointer)
+            _life.TableHover = !_life.DinergateHover && OverTable(position);
+        _life.DinergatePointer = position;
     }
 
-    private bool _tableHover;
-    // The holotable's tag in the shell, found when the shell is made.
-    private VisualElement _tableTag;
     // Where the holotable's tag points, in room space: over the middle of the table.
     private static readonly Vector3 TableTagPoint = new(-14.4f, 0.3f, 0f);
-    private Vector2 _dinergatePointer = new(float.MinValue, float.MinValue);
 
     // The centre of the Dinergate's lens, where its HUD sits.
     private Vector3 DinergateEye
     {
         get
         {
-            var hud = _hudShown ?? _hudRest ?? _hudNoticeVariant;
-            return hud?.Root != null ? hud.Root.transform.position : _dinergate.transform.position;
+            var hud = _life.HudShown ?? _life.HudRest ?? _life.HudNoticeVariant;
+            return hud?.Root != null ? hud.Root.transform.position : _life.Dinergate.transform.position;
         }
     }
 
@@ -303,7 +292,7 @@ public sealed partial class StrategyDiorama
         if (camera == null || !camera.isActiveAndEnabled || _room == null || _shell == null || _intelOpen || !OnHomeView(_policyScreen))
             return false;
         // The table's tag is a part of it.
-        var tag = _tableTag;
+        var tag = _life.TableTag;
         if (tag?.panel != null && tag.resolvedStyle.display != DisplayStyle.None && !tag.ClassListContains("wui-tag--off")
             && tag.worldBound.Contains(RuntimePanelUtils.ScreenToPanel(tag.panel, new Vector2(screenPoint.x, Screen.height - screenPoint.y))))
             return true;
@@ -337,7 +326,7 @@ public sealed partial class StrategyDiorama
 
     private System.Collections.IEnumerator WatchClicks(GameObject dinergate)
     {
-        while (dinergate != null && _dinergate == dinergate)
+        while (dinergate != null && _life.Dinergate == dinergate)
         {
             TrackDinergateHover();
             if (!_tableVideo && MousePressed(out var position) && !TryClick(position))
@@ -511,56 +500,47 @@ public sealed partial class StrategyDiorama
 
     private enum HudFade { None, In, Out }
 
-    private HudVariant _hudRest;
-    private HudVariant _hudNoticeVariant;
-    private HudVariant _hudShown;
-    private HudFade _hudFade;
-    private float _hudFadeTime;
-    private float _hudLoopTime;
-    private float _hintTimer;
-    private bool _dinergateNotice;
-    private MaterialPropertyBlock _hudBlock;
 
     // Whether the Dinergate is calling for attention. On: the notice HUD fades in and loops and the
     // body plays Hint, again every few seconds. Off: the notice HUD fades out and the rest HUD
     // returns.
     internal void SetDinergateNotice(bool on)
     {
-        if (_dinergateNotice == on)
+        if (_life.DinergateNotice == on)
             return;
-        _dinergateNotice = on;
-        if (_hudShown == null)
+        _life.DinergateNotice = on;
+        if (_life.HudShown == null)
             return;
         // The fade out ends in the swap to the other variant.
-        _hudFade = HudFade.Out;
-        _hudFadeTime = 0f;
-        _hintTimer = 0f;
+        _life.HudFading = HudFade.Out;
+        _life.HudFadeTime = 0f;
+        _life.HintTimer = 0f;
         if (on)
-            _dinergateAnimator?.Play("Hint", 0, 0f);
+            _life.DinergateAnimator?.Play("Hint", 0, 0f);
     }
 
-    internal bool DinergateNotice => _dinergateNotice;
+    internal bool DinergateNotice => _life.DinergateNotice;
 
     private void StartDinergateHud()
     {
-        _hudRest = FindHudVariant("Icon", "HudIcon", HudIconFadeIn, HudIconFadeOut, HudIconFadeLoop);
-        _hudNoticeVariant = FindHudVariant("RedPoint", "HudRedPoint", HudNoticeFadeIn, HudNoticeFadeOut, HudNoticeFadeLoop);
-        _hudShown = null;
-        _hudFade = HudFade.None;
-        if (_hudRest == null || _hudNoticeVariant == null)
+        _life.HudRest = FindHudVariant("Icon", "HudIcon", HudIconFadeIn, HudIconFadeOut, HudIconFadeLoop);
+        _life.HudNoticeVariant = FindHudVariant("RedPoint", "HudRedPoint", HudNoticeFadeIn, HudNoticeFadeOut, HudNoticeFadeLoop);
+        _life.HudShown = null;
+        _life.HudFading = HudFade.None;
+        if (_life.HudRest == null || _life.HudNoticeVariant == null)
         {
             Context.Log.Warn("strategy diorama: the dinergate's HUD is not as expected, it stays as built");
             return;
         }
-        _hudBlock ??= new MaterialPropertyBlock();
-        ShowHudVariant(_dinergateNotice ? _hudNoticeVariant : _hudRest);
-        Context.Coroutines.Start(DriveDinergateHud(_dinergate));
+        _life.HudBlock ??= new MaterialPropertyBlock();
+        ShowHudVariant(_life.DinergateNotice ? _life.HudNoticeVariant : _life.HudRest);
+        Context.Coroutines.Start(DriveDinergateHud(_life.Dinergate));
     }
 
     private HudVariant FindHudVariant(string animatorNode, string rootNode, HudCurve[] fadeIn, HudCurve[] fadeOut, HudCurve[] loop)
     {
         Transform holder = null;
-        foreach (var node in _dinergate.GetComponentsInChildren<Transform>(true))
+        foreach (var node in _life.Dinergate.GetComponentsInChildren<Transform>(true))
             if (node.name == animatorNode && node.parent != null && node.parent.name == "Dinergate_commendCenter_HUD")
             {
                 holder = node;
@@ -596,46 +576,46 @@ public sealed partial class StrategyDiorama
     // its light beams, the rest variant does not.
     private void ShowHudVariant(HudVariant variant)
     {
-        var other = variant == _hudRest ? _hudNoticeVariant : _hudRest;
+        var other = variant == _life.HudRest ? _life.HudNoticeVariant : _life.HudRest;
         other.Root.SetActive(false);
         foreach (var beam in variant.Beams)
-            beam.SetActive(variant == _hudNoticeVariant);
-        _hudShown = variant;
-        _hudFade = HudFade.In;
-        _hudFadeTime = 0f;
+            beam.SetActive(variant == _life.HudNoticeVariant);
+        _life.HudShown = variant;
+        _life.HudFading = HudFade.In;
+        _life.HudFadeTime = 0f;
         ApplyHud(variant, variant.FadeIn, 0f);
         variant.Root.SetActive(true);
     }
 
     private System.Collections.IEnumerator DriveDinergateHud(GameObject dinergate)
     {
-        while (dinergate != null && _dinergate == dinergate && _hudShown != null)
+        while (dinergate != null && _life.Dinergate == dinergate && _life.HudShown != null)
         {
-            var dt = Time.deltaTime;
+            var dt = Time.unscaledDeltaTime;
             try
             {
-                _hudLoopTime = (_hudLoopTime + dt) % HudLoopLength;
-                if (_hudFade != HudFade.None)
+                _life.HudLoopTime = (_life.HudLoopTime + dt) % HudLoopLength;
+                if (_life.HudFading != HudFade.None)
                 {
-                    _hudFadeTime += dt;
-                    var fadingIn = _hudFade == HudFade.In;
+                    _life.HudFadeTime += dt;
+                    var fadingIn = _life.HudFading == HudFade.In;
                     var length = fadingIn ? HudFadeInLength : HudFadeOutLength;
-                    ApplyHud(_hudShown, fadingIn ? _hudShown.FadeIn : _hudShown.FadeOut, MathF.Min(_hudFadeTime, length));
-                    if (_hudFadeTime >= length)
+                    ApplyHud(_life.HudShown, fadingIn ? _life.HudShown.FadeIn : _life.HudShown.FadeOut, MathF.Min(_life.HudFadeTime, length));
+                    if (_life.HudFadeTime >= length)
                     {
-                        _hudFade = HudFade.None;
+                        _life.HudFading = HudFade.None;
                         if (!fadingIn)
-                            ShowHudVariant(_dinergateNotice ? _hudNoticeVariant : _hudRest);
+                            ShowHudVariant(_life.DinergateNotice ? _life.HudNoticeVariant : _life.HudRest);
                     }
                 }
-                ApplyHud(_hudShown, _hudShown.Loop, _hudLoopTime);
-                if (_dinergateNotice)
+                ApplyHud(_life.HudShown, _life.HudShown.Loop, _life.HudLoopTime);
+                if (_life.DinergateNotice)
                 {
-                    _hintTimer += dt;
-                    if (_hintTimer >= HintEvery)
+                    _life.HintTimer += dt;
+                    if (_life.HintTimer >= HintEvery)
                     {
-                        _hintTimer = 0f;
-                        _dinergateAnimator?.Play("Hint", 0, 0f);
+                        _life.HintTimer = 0f;
+                        _life.DinergateAnimator?.Play("Hint", 0, 0f);
                     }
                 }
             }
@@ -672,9 +652,9 @@ public sealed partial class StrategyDiorama
                         var renderer = variant.Renderers[index];
                         if (renderer == null)
                             break;
-                        renderer.GetPropertyBlock(_hudBlock);
-                        _hudBlock.SetFloat(HudAlphaProperty, value);
-                        renderer.SetPropertyBlock(_hudBlock);
+                        renderer.GetPropertyBlock(_life.HudBlock);
+                        _life.HudBlock.SetFloat(HudAlphaProperty, value);
+                        renderer.SetPropertyBlock(_life.HudBlock);
                         break;
                     }
                 default:

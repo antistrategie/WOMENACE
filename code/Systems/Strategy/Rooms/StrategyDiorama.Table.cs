@@ -8,24 +8,22 @@ public sealed partial class StrategyDiorama
 {
     // The sparks' objects under the table's effects. Its grid and glow are particle systems too.
     private const string TableSparks = "Particle System";
-    private readonly List<Renderer> _tableSparks = new();
-    private bool _tableSparksShown = true;
 
     // The table's rising lines of sparks stand along its far side, and vanilla's planets are not
     // solid, so they would show through a briefing's planet as dotted lines across it.
     private void ShowTableSparks(bool show)
     {
-        if (show == _tableSparksShown || _room == null)
+        if (show == _life.TableSparksShown || _room == null)
             return;
-        _tableSparksShown = show;
-        _tableSparks.RemoveAll(r => r == null);
-        if (_tableSparks.Count == 0)
+        _life.TableSparksShown = show;
+        _life.SparkRenderers.RemoveAll(r => r == null);
+        if (_life.SparkRenderers.Count == 0)
             foreach (var t in _room.GetComponentsInChildren<Transform>(true))
                 if (t.name == TableEffects)
                     foreach (var sparks in t.GetComponentsInChildren<ParticleSystemRenderer>(true))
                         if (sparks.name.StartsWith(TableSparks, StringComparison.Ordinal))
-                            _tableSparks.Add(sparks);
-        foreach (var sparks in _tableSparks)
+                            _life.SparkRenderers.Add(sparks);
+        foreach (var sparks in _life.SparkRenderers)
             sparks.enabled = show;
     }
 
@@ -37,17 +35,15 @@ public sealed partial class StrategyDiorama
     private static readonly (string Node, float UnderMap)[] TableTopParts = { ("line (1)", 0.04f), ("line (2)", 0.04f), ("glow_an", 0.15f), ("Particle System", 0.2f), ("Particle System (1)", 0.2f) };
     private const float TableTopSeconds = 0.4f;
     private static readonly int ShownId = Shader.PropertyToID("_WmShown");
-    private readonly List<(Material Material, float UnderMap)> _tableTop = new();
-    private float _tableTopDimmed;
 
     private void DriveTableGrid()
     {
         if (_room == null)
             return;
-        if (_tableTop.Count == 0 || _tableTop[0].Material == null)
+        if (_life.TableTopMaterials.Count == 0 || _life.TableTopMaterials[0].Material == null)
         {
-            _tableTop.Clear();
-            _tableTopDimmed = 0f;
+            _life.TableTopMaterials.Clear();
+            _life.TableTopDimmed = 0f;
             foreach (var t in _room.GetComponentsInChildren<Transform>(true))
             {
                 if (t.parent == null || t.parent.name != TableEffects || t.GetComponent<Renderer>() is not { } part)
@@ -55,18 +51,18 @@ public sealed partial class StrategyDiorama
                 foreach (var (node, underMap) in TableTopParts)
                     if (t.name == node)
                         // Its own copy: other parts of the table are drawn with the same materials.
-                        _tableTop.Add((part.material, underMap));
+                        _life.TableTopMaterials.Add((part.material, underMap));
             }
-            if (_tableTop.Count == 0)
+            if (_life.TableTopMaterials.Count == 0)
                 return;
         }
         var target = _policyScreen == VanillaUi.Screens.MissionPrep ? 1f : 0f;
-        if (_tableTopDimmed == target)
+        if (_life.TableTopDimmed == target)
             return;
         var step = HitchStep(StageLongestStep) / TableTopSeconds;
-        _tableTopDimmed = Towards(_tableTopDimmed, target, step);
-        foreach (var (material, underMap) in _tableTop)
-            material.SetFloat(ShownId, 1f + (underMap - 1f) * _tableTopDimmed);
+        _life.TableTopDimmed = Towards(_life.TableTopDimmed, target, step);
+        foreach (var (material, underMap) in _life.TableTopMaterials)
+            material.SetFloat(ShownId, 1f + (underMap - 1f) * _life.TableTopDimmed);
     }
 
     // The room is bright where its windows are, and the map's names and markers are thin. While
@@ -75,7 +71,6 @@ public sealed partial class StrategyDiorama
     private const float RoomShadeUnderMap = 0.55f;
     private const float RoomShadeSeconds = 0.5f;
     private static readonly int RoomShadeId = Shader.PropertyToID("_WmRoomShade");
-    private float _roomShade;
 
     private void DriveRoomShade()
     {
@@ -83,22 +78,18 @@ public sealed partial class StrategyDiorama
         var atTable = _policyScreen == VanillaUi.Screens.OperationSelect
             || (_policyScreen == VanillaUi.Screens.SystemMap && _homeView == HomeView.Operations);
         var target = atTable ? RoomShadeUnderMap : 0f;
-        if (_roomShade == target)
+        if (_life.RoomShade == target)
             return;
         var step = RoomShadeUnderMap * Time.unscaledDeltaTime / RoomShadeSeconds;
-        _roomShade = Towards(_roomShade, target, step);
-        Shader.SetGlobalFloat(RoomShadeId, _roomShade);
+        _life.RoomShade = Towards(_life.RoomShade, target, step);
+        Shader.SetGlobalFloat(RoomShadeId, _life.RoomShade);
     }
 
-    // The table's own materials go with the room, and the next room's are found afresh.
+    // The table's own material copies go with the room. The next room's are found afresh.
     private void ClearTable()
     {
-        foreach (var (material, _) in _tableTop)
+        foreach (var (material, _) in _life.TableTopMaterials)
             if (material != null)
                 UnityEngine.Object.Destroy(material);
-        _tableTop.Clear();
-        _tableTopDimmed = 0f;
-        _tableSparks.Clear();
-        _tableSparksShown = true;
     }
 }

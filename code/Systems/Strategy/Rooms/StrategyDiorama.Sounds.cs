@@ -11,23 +11,17 @@ public sealed partial class StrategyDiorama
     // the one that ranks highest here.
     private enum TableCue { None, Travel, Vanish, Appear }
 
-    private TableCue _tableCue;
-    // The ops room's bed, looped for as long as a room is showing.
-    private SoundInstance _roomBed;
-    // When the bed was last asked for. A bed that will not play is asked for again a second on,
-    // never every frame.
-    private float _roomBedAskedAt = float.NegativeInfinity;
 
     private void Cue(TableCue cue)
     {
-        if (cue > _tableCue)
-            _tableCue = cue;
+        if (cue > _life.CurrentTableCue)
+            _life.CurrentTableCue = cue;
     }
 
     private void DriveTableSounds()
     {
-        var cue = _tableCue;
-        _tableCue = TableCue.None;
+        var cue = _life.CurrentTableCue;
+        _life.CurrentTableCue = TableCue.None;
         var listening = _room != null && _roomShown && !_tableVideo;
         try
         {
@@ -35,12 +29,12 @@ public sealed partial class StrategyDiorama
                 TableSounds.Play(cue == TableCue.Appear ? TableSounds.Appear : cue == TableCue.Vanish ? TableSounds.Vanish : TableSounds.Travel);
             if (!listening)
                 StopRoomBed();
-            else if ((_roomBed == null || (!_roomBed.Playing && !_roomBed.Paused)) && UnityEngine.Time.unscaledTime - _roomBedAskedAt > 1f)
+            else if ((_life.RoomBed == null || (!_life.RoomBed.Playing && !_life.RoomBed.Paused)) && UnityEngine.Time.unscaledTime - _life.RoomBedAskedAt > 1f)
             {
-                _roomBedAskedAt = UnityEngine.Time.unscaledTime;
-                _roomBed = TableSounds.Play(TableSounds.Room);
-                if (_roomBed != null)
-                    _roomBed.Looped = true;
+                _life.RoomBedAskedAt = UnityEngine.Time.unscaledTime;
+                _life.RoomBed = TableSounds.Play(TableSounds.Room);
+                if (_life.RoomBed != null)
+                    _life.RoomBed.Looped = true;
             }
         }
         catch (Exception ex)
@@ -52,12 +46,12 @@ public sealed partial class StrategyDiorama
     // The instance goes back to Stem's pool, so it is handed back as it came: not looped.
     private void StopRoomBed()
     {
-        if (_roomBed != null && _roomBed.Playing)
+        if (_life.RoomBed != null && _life.RoomBed.Playing)
         {
-            _roomBed.Looped = false;
-            _roomBed.Stop();
+            _life.RoomBed.Looped = false;
+            _life.RoomBed.Stop();
         }
-        _roomBed = null;
+        _life.RoomBed = null;
     }
 
     // Vanilla starts a screen's own ambient sounds as the screen opens (UIScreen.AmbientSounds,

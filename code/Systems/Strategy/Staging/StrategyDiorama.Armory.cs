@@ -107,7 +107,7 @@ public sealed partial class StrategyDiorama
     // The room's own dolls make way for the squad.
     private void HideRoomDolls()
     {
-        foreach (var doll in _crew)
+        foreach (var doll in _life.Crew)
             if (doll != null)
                 doll.SetActive(false);
     }

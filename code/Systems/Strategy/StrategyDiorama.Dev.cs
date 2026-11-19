@@ -191,7 +191,7 @@ public sealed partial class StrategyDiorama
         }
         if (d._staging.Stage != null)
             Mark(d._staging.Stage.TransformPoint(ArmoryStand), 'S', false);
-        foreach (var doll in d._crew)
+        foreach (var doll in d._life.Crew)
             if (doll != null && doll.activeInHierarchy)
                 Mark(doll.transform.position, 'D', false);
         var text = new System.Text.StringBuilder($"{pieces} pieces of {seen} ({meshless} without a mesh, {far} far, {wide} wide), centre ({cx}, {cz}), x {cx - reach} to {cx + reach} across, z {cz + reach} to {cz - reach} down, {cell} m a character\n");
@@ -292,8 +292,8 @@ public sealed partial class StrategyDiorama
         }
         string Res(Light l) => l.GetComponent<UnityEngine.Rendering.HighDefinition.HDAdditionalLightData>() is { } hd ? $"{l.name}={hd.shadowResolution.@override}" : $"{l.name}=-";
         var lines = new System.Collections.Generic.List<string> { $"quality {before} -> {(quality >= 0 ? quality : before)}" };
-        if (d._shadowLight != null)
-            lines.Add(Res(d._shadowLight));
+        if (d._life.ShadowLight != null)
+            lines.Add(Res(d._life.ShadowLight));
         foreach (var set in d.Sets)
             if (set?.LiveLights != null)
                 foreach (var light in set.LiveLights)
@@ -594,7 +594,7 @@ public sealed partial class StrategyDiorama
         {
             set.Sun == null ? "no sun" : $"sun intensity {set.Sun.intensity:F2} colour {set.Sun.color} lights characters {LightsCharacters(set.Sun)} room {LightsRoom(set.Sun)} towards {set.Root.transform.InverseTransformDirection(-set.Sun.transform.forward)}",
             $"{set.LightProbes.Length} probes, {set.LiveLights.Count} live lights",
-            $"live shadow strength {Shader.GetGlobalFloat("_WmShadowStrength"):F2}, shadow light {(d._shadowLight == null ? "none" : $"intensity {d._shadowLight.intensity:F2} shadows {d._shadowLight.shadows} dimmer {d._shadowLight.GetComponent<UnityEngine.Rendering.HighDefinition.HDAdditionalLightData>()?.shadowDimmer:F2}")}",
+            $"live shadow strength {Shader.GetGlobalFloat("_WmShadowStrength"):F2}, shadow light {(d._life.ShadowLight == null ? "none" : $"intensity {d._life.ShadowLight.intensity:F2} shadows {d._life.ShadowLight.shadows} dimmer {d._life.ShadowLight.GetComponent<UnityEngine.Rendering.HighDefinition.HDAdditionalLightData>()?.shadowDimmer:F2}")}",
         };
         foreach (var light in set.LiveLights)
             if (light != null)
@@ -618,10 +618,10 @@ public sealed partial class StrategyDiorama
         if (d == null || d._room == null)
             return "no room";
         var rows = new List<string>();
-        foreach (var doll in d._crew)
+        foreach (var doll in d._life.Crew)
             if (doll != null)
                 rows.Add($"{doll.name} at {d._room.transform.InverseTransformPoint(doll.transform.position)} yaw {doll.transform.localEulerAngles.y:F0} {(doll.activeInHierarchy ? "shown" : "hidden")}"
-                    + (d._crewSeatShifts.TryGetValue(doll, out var shift) ? $", seated {shift.z:F2} forward and {shift.x:F2} right of her spot" : "")
+                    + (d._life.CrewSeatShifts.TryGetValue(doll, out var shift) ? $", seated {shift.z:F2} forward and {shift.x:F2} right of her spot" : "")
                     + ", plays " + PlayingFromDev(doll));
         return string.Join("\n", rows);
     }
@@ -653,9 +653,9 @@ public sealed partial class StrategyDiorama
     internal static string MoveDinergate(float x, float y, float z)
     {
         var d = _instance;
-        if (d?._dinergate == null)
+        if (d?._life.Dinergate == null)
             return "no dinergate";
-        d._dinergate.transform.localPosition = new Vector3(x, y, z);
+        d._life.Dinergate.transform.localPosition = new Vector3(x, y, z);
         return $"dinergate at ({x}, {y}, {z})";
     }
 
@@ -702,20 +702,20 @@ public sealed partial class StrategyDiorama
             return "no room";
         var camera = RoomCamera;
         var hit = _instance.TryClick(new Vector2(x, y));
-        var screen = camera != null && _instance._dinergate != null
-            ? camera.WorldToScreenPoint(_instance._dinergate.transform.position + Vector3.up * 0.3f) : Vector3.zero;
+        var screen = camera != null && _instance._life.Dinergate != null
+            ? camera.WorldToScreenPoint(_instance._life.Dinergate.transform.position + Vector3.up * 0.3f) : Vector3.zero;
         return $"hit {hit}, dinergate centre on screen at ({screen.x:0}, {screen.y:0}) of {Screen.width}x{Screen.height}";
     }
 
     internal static RenderTexture CardsTexture => _instance?._missions.CardsTexture;
 
-    internal static RenderTexture MirrorTexture => _instance?._mirrorTexture;
+    internal static RenderTexture MirrorTexture => _instance?._life.MirrorTexture;
 
     // Plays a pose on one of the room's dolls, for previewing the lobby loops.
     internal static string PoseDoll(int index, string pose)
     {
         var self = _instance;
-        var doll = self == null ? null : index >= 0 && index < self._crew.Count ? self._crew[index] : null;
+        var doll = self == null ? null : index >= 0 && index < self._life.Crew.Count ? self._life.Crew[index] : null;
         if (doll == null)
             return "no doll " + index;
         self.Pose(doll, pose);
@@ -727,7 +727,7 @@ public sealed partial class StrategyDiorama
     internal static string PlayStateOn(string spot, string state)
     {
         var self = _instance;
-        var doll = self?._crew.Find(d => d != null && d.name.Contains("_" + spot + ":"));
+        var doll = self?._life.Crew.Find(d => d != null && d.name.Contains("_" + spot + ":"));
         var animator = doll != null ? doll.GetComponentInChildren<Animator>() : null;
         if (animator == null)
             return "no doll at " + spot;
@@ -950,7 +950,7 @@ public sealed partial class StrategyDiorama
         if (_instance == null)
             return "no diorama";
         _instance.SpawnRoomDolls();
-        return $"{_instance._crew.Count} dolls in the room";
+        return $"{_instance._life.Crew.Count} dolls in the room";
     }
 
     // Switches every doll's light rig on or off, for judging the room's own light on them.
@@ -960,7 +960,7 @@ public sealed partial class StrategyDiorama
         if (d == null)
             return "no room";
         var lights = 0;
-        foreach (var rig in d._dollRigs.Values)
+        foreach (var rig in d._life.DollRigs.Values)
             foreach (var light in rig)
                 if (light != null)
                 {

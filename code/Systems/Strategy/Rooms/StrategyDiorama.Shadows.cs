@@ -22,21 +22,16 @@ public sealed partial class StrategyDiorama
     // The rendering layer the rooms' geometry is on (Womenace.EditorTools.BakeRoom puts it there),
     // clear of MENACE's own light layers.
     private const uint RoomRenderingLayer = 1u << 8;
-    private Light _shadowLight;
 
-    // The shadow maps follow the player's shadow quality as MENACE's own do: the characters' sun at
-    // 1024, 2048 and, at the top, GFL2's 4096, the room's live spots and points at half that (they
-    // share HDRP's punctual atlas). Rechecked every frame, so a change in the options applies at once.
-    private int _shadowQuality = -1;
 
     private void ApplyShadowQuality()
     {
         var quality = Il2CppMenace.PlayerSettings.PersistentPlayerSettings.DisplaySettings.ShadowQuality;
-        if (quality == _shadowQuality)
+        if (quality == _life.ShadowQuality)
             return;
-        _shadowQuality = quality;
+        _life.ShadowQuality = quality;
         var resolution = quality <= 1 ? 1024 : quality == 2 ? 2048 : 4096;
-        _shadowLight?.GetComponent<HDAdditionalLightData>()?.SetShadowResolution(resolution);
+        _life.ShadowLight?.GetComponent<HDAdditionalLightData>()?.SetShadowResolution(resolution);
         foreach (var set in Sets)
             foreach (var light in set.LiveLights)
                 if (light != null && light.shadows != LightShadows.None)
@@ -49,16 +44,16 @@ public sealed partial class StrategyDiorama
         {
             var go = new GameObject("WOMENACE_RoomShadowLight");
             go.transform.SetParent(_camera.transform.parent, false);
-            _shadowLight = go.AddComponent<Light>();
-            _shadowLight.type = LightType.Directional;
-            _shadowLight.shadows = LightShadows.Soft;
-            _shadowLight.lightUnit = UnityEngine.Rendering.LightUnit.Lux;
-            _shadowLight.intensity = 0.01f;
+            _life.ShadowLight = go.AddComponent<Light>();
+            _life.ShadowLight.type = LightType.Directional;
+            _life.ShadowLight.shadows = LightShadows.Soft;
+            _life.ShadowLight.lightUnit = UnityEngine.Rendering.LightUnit.Lux;
+            _life.ShadowLight.intensity = 0.01f;
             var hd = go.AddComponent<HDAdditionalLightData>();
             hd.affectsVolumetric = false;
             hd.linkShadowLayers = false;
-            _shadowLight.renderingLayerMask = unchecked((int)~RoomRenderingLayer);
-            _shadowQuality = -1;
+            _life.ShadowLight.renderingLayerMask = unchecked((int)~RoomRenderingLayer);
+            _life.ShadowQuality = -1;
 
             var settings = AddVolumeComponent<HDShadowSettings>(profile);
             SetParameter(settings.maxShadowDistance, ShadowDistance);
@@ -77,22 +72,22 @@ public sealed partial class StrategyDiorama
         if (set.Sun == null)
         {
             Shader.SetGlobalVector("_WmSunColor", Vector4.zero);
-            if (_shadowLight != null)
+            if (_life.ShadowLight != null)
             {
                 // A room with no sun is lit from its ceiling: its characters' shadow falls
                 // straight under them, and not along the last room's sun.
-                _shadowLight.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
-                _shadowLight.intensity = 0.01f;
+                _life.ShadowLight.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+                _life.ShadowLight.intensity = 0.01f;
             }
             return;
         }
         var rotation = set.Sun.transform.rotation;
-        if (_shadowLight != null)
+        if (_life.ShadowLight != null)
         {
-            _shadowLight.transform.rotation = rotation;
-            _shadowLight.color = set.Sun.color;
+            _life.ShadowLight.transform.rotation = rotation;
+            _life.ShadowLight.color = set.Sun.color;
             // A sun that lights no character still shadows them, at a hundredth of a lux.
-            _shadowLight.intensity = LightsCharacters(set.Sun) ? set.Sun.intensity * Mathf.PI : 0.01f;
+            _life.ShadowLight.intensity = LightsCharacters(set.Sun) ? set.Sun.intensity * Mathf.PI : 0.01f;
         }
         var towardSun = -(rotation * Vector3.forward);
         Shader.SetGlobalVector("_WmSunDirection", new Vector4(towardSun.x, towardSun.y, towardSun.z, 0f));
@@ -104,8 +99,8 @@ public sealed partial class StrategyDiorama
     {
         Shader.SetGlobalFloat("_WmShadowStrength", 0f);
         Shader.SetGlobalVector("_WmSunColor", Vector4.zero);
-        if (_shadowLight != null)
-            UnityEngine.Object.Destroy(_shadowLight.gameObject);
-        _shadowLight = null;
+        if (_life.ShadowLight != null)
+            UnityEngine.Object.Destroy(_life.ShadowLight.gameObject);
+        _life.ShadowLight = null;
     }
 }

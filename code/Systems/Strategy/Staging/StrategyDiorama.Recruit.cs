@@ -690,7 +690,7 @@ public sealed partial class StrategyDiorama
         _staging.CandidateOwn.Clear();
         if (_staging.Candidate != null)
         {
-            _crewFidgets.Remove(_staging.Candidate);
+            _life.CrewFidgets.Remove(_staging.Candidate);
             UnityEngine.Object.Destroy(_staging.Candidate);
         }
         _staging.Candidate = null;

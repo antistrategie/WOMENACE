@@ -95,6 +95,4 @@ public sealed partial class StrategyDiorama
         }
         return (reach, from.sqrMagnitude > 1e-8f ? from.normalized : Vector3.zero, reach > 0f ? colour / reach : Color.black);
     }
-
-    private float LampsReach(Vector3 chest) => Lamps(chest).Reach;
 }

@@ -107,7 +107,7 @@ public sealed partial class StrategyDiorama
             HideBugReportButton();
             if (name != _policyScreen)
             {
-                _mirrorHeldFrame = UnityEngine.Time.frameCount;
+                _life.MirrorHeldFrame = UnityEngine.Time.frameCount;
                 _earsKeenUntil = Time.unscaledTime + EarsKeenSeconds;
             }
             TrackHomeView(name);
@@ -159,8 +159,8 @@ public sealed partial class StrategyDiorama
                     ActivateSet(set);
                 _camera.SetActive(true);
                 // The sun lights the room's characters, and nothing of a screen that shows no room.
-                if (_shadowLight != null)
-                    _shadowLight.enabled = true;
+                if (_life.ShadowLight != null)
+                    _life.ShadowLight.enabled = true;
                 var camera = _camera.GetComponent<Camera>();
                 if (camera != null)
                     camera.enabled = true;
@@ -193,8 +193,8 @@ public sealed partial class StrategyDiorama
                 if (_active?.Root != null)
                     _active.Root.SetActive(false);
                 _camera.SetActive(false);
-                if (_shadowLight != null)
-                    _shadowLight.enabled = false;
+                if (_life.ShadowLight != null)
+                    _life.ShadowLight.enabled = false;
                 // A vanilla background we hid for a room screen comes back when it is current again.
                 if (_hiddenVanilla != null && _hiddenVanilla == vanilla && !_hiddenVanilla.activeSelf)
                     _hiddenVanilla.SetActive(true);
