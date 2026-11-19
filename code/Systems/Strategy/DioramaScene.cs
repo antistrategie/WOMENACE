@@ -34,6 +34,8 @@ public sealed partial class StrategyDiorama
         // its panels are built, which is some frames after it is the screen.
         public int? ArriveAtStation;
         public float ArriveAtStationUntil;
+
+        public readonly PrepState Prep = new();
     }
 
     private DioramaScene _scene = new();

@@ -36,6 +36,13 @@ internal static class Ease
         return t * t * (3f - 2f * t);
     }
 
+    // Arrival with overshoot: runs past the target a little and settles back onto it.
+    internal static float OutBack(float t, float amount = 1.70158f)
+    {
+        t = Math.Clamp(t, 0f, 1f) - 1f;
+        return 1f + (amount + 1f) * t * t * t + amount * t * t;
+    }
+
     // Arrival: fast in, long settle.
     internal static float OutCubic(float t)
     {

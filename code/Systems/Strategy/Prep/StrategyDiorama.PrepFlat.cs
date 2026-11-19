@@ -24,64 +24,56 @@ public sealed partial class StrategyDiorama
     private static readonly Color32 PrepFlatLine = new(110, 205, 235, 255);
     private const string PrepHintLowClass = "wm-pan-hint--low";
 
-    private bool _prepFlat;
-    // 0 while the hologram shows, 1 while the flat map does.
-    private float _prepFlatAmount;
-    private float? _prepFlatHeld;
-    private bool _prepFlatVisit, _prepFlatPlaced;
-    // How much of their size the map's tokens stand at: none over the flat map.
-    private float _prepTokensUp = 1f;
-    // The lens's scale at mission preparation's field of view (FitPrepView reads it).
-    private float _prepLensScale;
     // Where the camera looks down from in the flat view, and with what field of view.
-    private (Vector3 Eye, float Fov)? _prepFlatShot;
 
     private void DrivePrepFlat()
     {
-        _prepFlatShot = null;
-        var column = _shellRoot != null && _policyScreen == VanillaUi.Screens.MissionPrep && _prepMap != null && _room != null
+        _prep.FlatShot = null;
+        var column = _shellRoot != null && _policyScreen == VanillaUi.Screens.MissionPrep && _prep.Map != null && _room != null
             ? UI.Find(_shellRoot, UiSelector.Name(VanillaUi.Elements.MapColumn)) : null;
         var preview = column != null ? UI.Find(column, UiSelector.Name(VanillaUi.Elements.PrepPreview)) : null;
-        if (preview == null || column.panel == null || preview.layout.width <= 0f || _prepMapTile <= 0f)
+        if (preview == null || column.panel == null || preview.layout.width <= 0f || _prep.MapTile <= 0f)
         {
-            (_prepFlatVisit, _prepFlatPlaced, _prepTokensUp) = (false, false, 1f);
+            (_prep.FlatVisit, _prep.FlatPlaced, _prep.TokensUp) = (false, false, 1f);
             return;
         }
         // A visit starts in the view last chosen, with no move into it.
-        if (!_prepFlatVisit)
+        if (!_prep.FlatVisit)
         {
-            _prepFlat = PlayerSettingsSystem.DeploymentFlatView;
-            (_prepFlatVisit, _prepFlatAmount, _prepFlatUndressed) = (true, _prepFlat ? 1f : 0f, true);
+            _prep.Flat = PlayerSettingsSystem.DeploymentFlatView;
+            (_prep.FlatVisit, _prep.FlatAmount, _prep.FlatUndressed) = (true, _prep.Flat ? 1f : 0f, true);
         }
-        var target = _prepFlat ? 1f : 0f;
-        if (_prepFlatHeld is { } held)
-            _prepFlatAmount = held;
-        else if (_prepFlatAmount != target)
+        var target = _prep.Flat ? 1f : 0f;
+        float? held = null;
+        HoldPrepFlat(ref held);
+        if (held is { } amount)
+            _prep.FlatAmount = amount;
+        else if (_prep.FlatAmount != target)
         {
             var step = HitchStep(StageLongestStep) / PrepFlatSeconds;
-            _prepFlatAmount = Towards(_prepFlatAmount, target, step);
+            _prep.FlatAmount = Towards(_prep.FlatAmount, target, step);
         }
-        var along = Ease.InOutCubic(_prepFlatAmount);
+        var along = Ease.InOutCubic(_prep.FlatAmount);
 
         // The hologram is laid flat as the camera comes over it, and what stands on it goes.
-        _prepMap.transform.localScale = new Vector3(1f, 1f + (PrepFlatHeight - 1f) * Math.Clamp(along, 0f, 1f), 1f);
-        if (_prepMap.GetComponent<MeshRenderer>() is { } hologram)
-            hologram.enabled = _prepFlatAmount < 1f;
-        _prepTokensUp = 1f - Math.Clamp(_prepFlatAmount * 2.5f, 0f, 1f);
+        _prep.Map.transform.localScale = new Vector3(1f, 1f + (PrepFlatHeight - 1f) * Math.Clamp(along, 0f, 1f), 1f);
+        if (_prep.Map.GetComponent<MeshRenderer>() is { } hologram)
+            hologram.enabled = _prep.FlatAmount < 1f;
+        _prep.TokensUp = 1f - Math.Clamp(_prep.FlatAmount * 2.5f, 0f, 1f);
         if (UI.Find(_shellRoot, UiSelector.Name(PrepTokensName)) is { } tokens)
-            tokens.style.opacity = _prepTokensUp;
+            tokens.style.opacity = _prep.TokensUp;
         ShowPrepViewToggle();
 
-        if (_prepFlatAmount <= 0f)
+        if (_prep.FlatAmount <= 0f)
         {
-            if (_prepFlatPlaced)
+            if (_prep.FlatPlaced)
             {
-                _prepFlatPlaced = false;
+                _prep.FlatPlaced = false;
                 column.style.scale = StyleKeyword.Null;
                 column.style.transformOrigin = StyleKeyword.Null;
                 column.style.left = PrepFlatMapParked;
                 column.style.top = 0;
-                column.style.opacity = _prepFlatMapShown ? 0.55f : 0f;
+                column.style.opacity = PrepFlatMapOpacity();
                 foreach (var name in PrepFlatButtons)
                     if (UI.Find(column, UiSelector.Name(name)) is { } button)
                         button.style.translate = StyleKeyword.Null;
@@ -107,10 +99,10 @@ public sealed partial class StrategyDiorama
         column.style.left = frame.x + middle.x - (preview.layout.x + width / 2f) * scale - corner.x;
         column.style.top = frame.y + middle.y - (preview.layout.y + height / 2f) * scale - corner.y;
         // It comes in over the hologram once that lies flat under it.
-        column.style.opacity = Math.Clamp((_prepFlatAmount - 0.55f) / 0.45f, 0f, 1f);
-        if (!_prepFlatPlaced)
+        column.style.opacity = Math.Clamp((_prep.FlatAmount - 0.55f) / 0.45f, 0f, 1f);
+        if (!_prep.FlatPlaced)
         {
-            _prepFlatPlaced = true;
+            _prep.FlatPlaced = true;
             // Vanilla's own two buttons stand in the column, over the map. The shell has them.
             foreach (var name in PrepFlatButtons)
                 if (UI.Find(column, UiSelector.Name(name)) is { } button)
@@ -118,35 +110,35 @@ public sealed partial class StrategyDiorama
         }
         // The hologram's picture is made again when the map's zone changes (a squad with a
         // zone of its own is picked up), and the one the flat map shows is gone with the old.
-        if ((_prepMapTexture != null ? _prepMapTexture.Pointer : IntPtr.Zero) != _prepFlatPictureOf)
-            _prepFlatUndressed = true;
+        if ((_prep.MapTexture != null ? _prep.MapTexture.Pointer : IntPtr.Zero) != _prep.FlatPictureOf)
+            _prep.FlatUndressed = true;
         // Vanilla makes its zone's box again through a drag, and once more as the drag ends.
         if (PrepDrag() != null)
-            _prepFlatZoneFrames = 10;
-        if (_prepFlatZoneFrames > 0)
-            (_prepFlatZoneFrames, _prepFlatZonesUndressed) = (_prepFlatZoneFrames - 1, true);
-        if (_prepFlatUndressed)
+            _prep.FlatZoneFrames = 10;
+        if (_prep.FlatZoneFrames > 0)
+            (_prep.FlatZoneFrames, _prep.FlatZonesUndressed) = (_prep.FlatZoneFrames - 1, true);
+        if (_prep.FlatUndressed)
         {
-            _prepFlatUndressed = !DressPrepFlat(preview);
-            _prepFlatDressings++;
+            _prep.FlatUndressed = !DressPrepFlat(preview);
+            CountPrepFlatDressing();
         }
-        else if (_prepFlatZonesUndressed && UI.Find(preview, UiSelector.Name("DeploymentZones")) is { } zones)
+        else if (_prep.FlatZonesUndressed && UI.Find(preview, UiSelector.Name("DeploymentZones")) is { } zones)
             for (var i = 0; i < zones.childCount; i++)
                 zones.ElementAt(i).style.opacity = 0f;
-        _prepFlatZonesUndressed = false;
+        _prep.FlatZonesUndressed = false;
 
         // The camera looks straight down from where the hologram's map is seen at the flat
         // map's size and place. A map lying square to the camera is seen at so many pixels a
         // metre whatever part of the frame it is in, so the size is the lens's doing and the
         // place is the camera's.
-        if (_prepLensScale > 0f)
+        if (_prep.LensScale > 0f)
         {
-            var perMetre = width * scale / (_prepMapSizeX * _prepMapTile);
+            var perMetre = width * scale / (_prep.MapSizeX * _prep.MapTile);
             var lens = perMetre * PrepFlatEye / 360f;
-            var fov = 2f * MathF.Atan(MathF.Tan(PrepFraming.Fov * Mathf.Deg2Rad / 2f) * _prepLensScale / lens) * Mathf.Rad2Deg;
+            var fov = 2f * MathF.Atan(MathF.Tan(PrepFraming.Fov * Mathf.Deg2Rad / 2f) * _prep.LensScale / lens) * Mathf.Rad2Deg;
             // The frame's down is the room's x and its right the room's z, seen from over the table.
             var eye = PrepMapCentre + new Vector3(-(middle.y - 360f) / perMetre, PrepFlatEye, -(middle.x - 640f) / perMetre);
-            _prepFlatShot = (_room.transform.TransformPoint(eye), fov);
+            _prep.FlatShot = (_room.transform.TransformPoint(eye), fov);
         }
     }
 
@@ -155,28 +147,20 @@ public sealed partial class StrategyDiorama
     // The shot the camera takes: the orbit's, the flat view's, or on the way between them.
     private (Vector3 Position, Quaternion Rotation, float Fov, float Shift) PrepShot((Vector3 Position, Quaternion Rotation, float Fov, float Shift) orbit)
     {
-        if (_prepFlatAmount <= 0f || _prepFlatShot is not { } flat)
+        if (_prep.FlatAmount <= 0f || _prep.FlatShot is not { } flat)
             return orbit;
-        var along = Math.Clamp(Ease.InOutCubic(_prepFlatAmount), 0f, 1f);
+        var along = Math.Clamp(Ease.InOutCubic(_prep.FlatAmount), 0f, 1f);
         var down = Quaternion.LookRotation(_room.transform.TransformDirection(Vector3.down), _room.transform.TransformDirection(Vector3.left));
         return (Vector3.Lerp(orbit.Position, flat.Eye, along), Quaternion.Slerp(orbit.Rotation, down, along), orbit.Fov + (flat.Fov - orbit.Fov) * along, orbit.Shift * (1f - along));
     }
 
-    private Sprite _prepFlatPicture;
-    // Set when vanilla has made its map's parts, which it does in its own colours.
-    private bool _prepFlatUndressed = true;
-    // The same for the deployment zone alone, which may be every frame of a drag.
-    private bool _prepFlatZonesUndressed;
-    private int _prepFlatDressings, _prepFlatZoneFrames;
-    // The hologram's picture the flat map's was made from.
-    private IntPtr _prepFlatPictureOf;
 
     // Vanilla makes its map's parts as it learns the map, and its deployment zone again for
     // each squad that is picked up.
     private void HookPrepFlat()
     {
-        Context.Patches.Postfix(VanillaUi.Targets.PrepUpdatePreview.Type, VanillaUi.Targets.PrepUpdatePreview.Method, _ => _prepFlatUndressed = true);
-        Context.Patches.Postfix(VanillaUi.Targets.PrepUpdateZones.Type, VanillaUi.Targets.PrepUpdateZones.Method, 0, _ => _prepFlatZonesUndressed = true);
+        Context.Patches.Postfix(VanillaUi.Targets.PrepUpdatePreview.Type, VanillaUi.Targets.PrepUpdatePreview.Method, _ => _prep.FlatUndressed = true);
+        Context.Patches.Postfix(VanillaUi.Targets.PrepUpdateZones.Type, VanillaUi.Targets.PrepUpdateZones.Method, 0, _ => _prep.FlatZonesUndressed = true);
     }
 
     // The flat map shows the hologram's own picture of the ground, with its structures, roads,
@@ -202,22 +186,22 @@ public sealed partial class StrategyDiorama
         if (UI.Find(preview, UiSelector.Name("Rects")) is not { } ground)
             return false;
         // Until the hologram's picture is made, vanilla's is not shown in its place.
-        if (_prepMapTexture == null)
+        if (_prep.MapTexture == null)
         {
             ground.style.unityBackgroundImageTintColor = Color.clear;
-            _prepFlatPictureOf = IntPtr.Zero;
+            _prep.FlatPictureOf = IntPtr.Zero;
             return false;
         }
         // The picture's top rows are the shades its walls are drawn with, not ground.
-        if (_prepFlatPicture == null || _prepFlatPictureOf != _prepMapTexture.Pointer)
+        if (_prep.FlatPicture == null || _prep.FlatPictureOf != _prep.MapTexture.Pointer)
         {
-            if (_prepFlatPicture != null)
-                UnityEngine.Object.Destroy(_prepFlatPicture);
-            _prepFlatPictureOf = _prepMapTexture.Pointer;
-            var rows = _prepMapTexture.height * _prepMapSizeZ / (_prepMapSizeZ + 1);
-            _prepFlatPicture = Sprite.Create(_prepMapTexture, new Rect(0f, 0f, _prepMapTexture.width, rows), new Vector2(0.5f, 0.5f), 100f);
+            if (_prep.FlatPicture != null)
+                UnityEngine.Object.Destroy(_prep.FlatPicture);
+            _prep.FlatPictureOf = _prep.MapTexture.Pointer;
+            var rows = _prep.MapTexture.height * _prep.MapSizeZ / (_prep.MapSizeZ + 1);
+            _prep.FlatPicture = Sprite.Create(_prep.MapTexture, new Rect(0f, 0f, _prep.MapTexture.width, rows), new Vector2(0.5f, 0.5f), 100f);
         }
-        ground.style.backgroundImage = new StyleBackground(_prepFlatPicture);
+        ground.style.backgroundImage = new StyleBackground(_prep.FlatPicture);
         ground.style.unityBackgroundImageTintColor = Color.white;
         return true;
     }
@@ -238,30 +222,19 @@ public sealed partial class StrategyDiorama
             toggle.AddToClassList("wm-pan-hint__toggle");
             toggle.RegisterCallback((EventCallback<ClickEvent>)(_ =>
             {
-                _prepFlat = !_prepFlat;
-                PlayerSettingsSystem.DeploymentFlatView = _prepFlat;
+                _prep.Flat = !_prep.Flat;
+                PlayerSettingsSystem.DeploymentFlatView = _prep.Flat;
                 Sound.Click();
             }));
             _panHint.Insert(0, toggle);
         }
-        var text = _prepFlat
+        var text = _prep.Flat
             ? Locale.Text("WOMENACE::ui/shell/view_hologram", "3D VIEW")
             : Locale.Text("WOMENACE::ui/shell/view_flat", "2D VIEW");
         if (toggle.text != text)
             toggle.text = text;
         for (var i = 1; i < _panHint.childCount; i++)
-            _panHint.ElementAt(i).style.display = _prepFlat ? DisplayStyle.None : DisplayStyle.Flex;
+            _panHint.ElementAt(i).style.display = _prep.Flat ? DisplayStyle.None : DisplayStyle.Flex;
         // The flat map reaches the panels' foot, so the button stands under it, beside Back.
-        _panHint.EnableInClassList(PrepHintLowClass, _prepFlat);
-    }
-
-    internal static string PrepFlatFromDev(bool flat, float held)
-    {
-        var d = _instance;
-        if (d == null)
-            return "no diorama";
-        d._prepFlat = flat;
-        d._prepFlatHeld = held < 0f ? null : held;
-        return $"{(flat ? "flat" : "hologram")} view{(held < 0f ? "" : $", held at {held:0.00}")}, now at {d._prepFlatAmount:0.00}, dressed {d._prepFlatDressings} times, shot {(d._prepFlatShot is { } shot ? $"fov {shot.Fov:0.0}" : "none")}";
-    }
-}
+        _panHint.EnableInClassList(PrepHintLowClass, _prep.Flat);
+    }}

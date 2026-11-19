@@ -23,8 +23,6 @@ public sealed partial class StrategyDiorama
     private const float PrepChipHeight = 24f;
     private const float PrepGap = 6.4f;
     private const float PrepInfoWidth = 210f;
-    private string _prepChipsOf;
-    private int _prepTick;
 
     private void LayOutPrep(VisualElement root)
     {
@@ -154,7 +152,7 @@ public sealed partial class StrategyDiorama
             _shellUndo.Add(() =>
             {
                 chips.RemoveFromHierarchy();
-                _prepChipsOf = null;
+                _prep.ChipsOf = null;
             });
         }
         chips.style.left = PrepMiddleLeft;
@@ -279,16 +277,16 @@ public sealed partial class StrategyDiorama
         {
             // The buttons have no place yet. The bar is kept out of sight for a moment, so that
             // it is not seen in the bar's middle and then moved, and shown there if they never get one.
-            if (_prepSuppliesWaitFrom < 0f)
-                _prepSuppliesWaitFrom = UnityEngine.Time.unscaledTime;
-            panel.style.visibility = UnityEngine.Time.unscaledTime - _prepSuppliesWaitFrom < PrepSuppliesWait ? Visibility.Hidden : StyleKeyword.Null;
+            if (_prep.SuppliesWaitFrom < 0f)
+                _prep.SuppliesWaitFrom = UnityEngine.Time.unscaledTime;
+            panel.style.visibility = UnityEngine.Time.unscaledTime - _prep.SuppliesWaitFrom < PrepSuppliesWait ? Visibility.Hidden : StyleKeyword.Null;
             return;
         }
         var middle = (left.xMax + right.xMin) / 2f;
         panel.style.left = panel.parent.WorldToLocal(new UnityEngine.Vector2(middle, left.yMin)).x - PrepSuppliesWidth / 2f;
         panel.style.marginLeft = 0f;
         panel.style.visibility = StyleKeyword.Null;
-        (_prepSuppliesPlaced, _prepSuppliesWaitFrom) = (true, -1f);
+        (_prep.SuppliesPlaced, _prep.SuppliesWaitFrom) = (true, -1f);
 
         UnityEngine.Rect? Placed(string name)
         {
@@ -300,8 +298,6 @@ public sealed partial class StrategyDiorama
         }
     }
 
-    private bool _prepSuppliesPlaced;
-    private float _prepSuppliesWaitFrom = -1f;
     private const float PrepSuppliesWait = 0.5f;
 
     private void LayOutPrepSupplies(VisualElement root)
@@ -321,7 +317,7 @@ public sealed partial class StrategyDiorama
             var s = e.style;
             s.height = StyleKeyword.Null;
             s.visibility = StyleKeyword.Null;
-            (_prepSuppliesPlaced, _prepSuppliesWaitFrom) = (false, -1f);
+            (_prep.SuppliesPlaced, _prep.SuppliesWaitFrom) = (false, -1f);
         });
         foreach (var name in new[] { VanillaUi.Elements.PrepInfoBorder, VanillaUi.Elements.SuppliesIcon, VanillaUi.Elements.SuppliesCaption,
                      VanillaUi.Elements.SuppliesBarBacking, VanillaUi.Elements.SuppliesStripes })
@@ -509,7 +505,7 @@ public sealed partial class StrategyDiorama
             s.position = Position.Absolute;
             s.left = PrepFlatMapParked;
             s.top = 0;
-            s.opacity = _prepFlatMapShown ? 0.55f : 0f;
+            s.opacity = PrepFlatMapOpacity();
             // The column itself takes no pointer: only the map in it does.
             e.pickingMode = PickingMode.Ignore;
         }, e =>
@@ -531,9 +527,9 @@ public sealed partial class StrategyDiorama
         if (_shellRoot == null || _policyScreen != VanillaUi.Screens.MissionPrep || !_shellRoot.ClassListContains(PrepClass))
             return;
         // Every frame until it has its place, so it is first seen there.
-        if (!_prepSuppliesPlaced)
+        if (!_prep.SuppliesPlaced)
             PlacePrepSupplies();
-        if (++_prepTick % 12 != 0)
+        if (++_prep.Tick % 12 != 0)
             return;
         var row = UI.Find(_shellRoot, UiSelector.Name(VanillaUi.Elements.MapColumn))?.parent;
         if (row != null)
@@ -645,9 +641,9 @@ public sealed partial class StrategyDiorama
             var corner = UI.Find(row, UiSelector.Name(VanillaUi.Elements.PrepCoordinates))?.TryCast<Label>()?.text ?? "";
             facts.Add(corner.Split('\n').LastOrDefault(line => line.Contains(':')) ?? "");
             var signature = string.Join("|", facts);
-            if (signature == _prepChipsOf)
+            if (signature == _prep.ChipsOf)
                 return;
-            _prepChipsOf = signature;
+            _prep.ChipsOf = signature;
             chips.Clear();
             foreach (var fact in facts)
             {
@@ -669,5 +665,28 @@ public sealed partial class StrategyDiorama
         {
             Context.Log.Warn($"strategy diorama: mission preparation refresh failed: {ex.GetType().Name}: {ex.Message}");
         }
+    }
+
+    // What the dev verbs change on the map (StrategyDiorama.Prep.Dev.cs). Without them each
+    // leaves its value as it is, and a release build has none.
+    partial void HoldPrepFlat(ref float? held);
+    partial void CountPrepFlatDressing();
+    partial void StandInPrepPointer(ref UnityEngine.Vector2 aim);
+    partial void ShowPrepFlatMap(ref float opacity);
+    partial void ShowPrepChibis(ref bool shown);
+
+    // Vanilla's flat map is unseen, unless a dev verb shows it faintly to line it up by.
+    private float PrepFlatMapOpacity()
+    {
+        var opacity = 0f;
+        ShowPrepFlatMap(ref opacity);
+        return opacity;
+    }
+
+    private bool PrepChibisShown()
+    {
+        var shown = true;
+        ShowPrepChibis(ref shown);
+        return shown;
     }
 }

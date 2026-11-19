@@ -93,31 +93,17 @@ public sealed partial class StrategyDiorama
         public IntPtr Shown;
     }
 
-    private readonly Dictionary<IntPtr, Token> _prepTokens = new();
-    private readonly Dictionary<string, Texture2D> _chibis = new();
-    private readonly HashSet<int> _contactSlots = new();
-    private readonly HashSet<int> _objectiveSlots = new();
-    private GameObject _tokensHost;
-    private PanelSettings _tokensSettings;
-    private RenderTexture _tokensTexture;
-    private VisualElement _tokensPanel;
-    private Texture2D _tokenRing;
-    private int _prepTokenTick;
-    private bool _prepChibisOff;
-    private readonly GameObject[] _dragMarks = new GameObject[2];
 
-    // Whether a squad was being dragged a frame ago, and whether it was over a place it may stand.
-    private bool? _dragHeard;
 
     private void DrivePrepTokens()
     {
         var layer = _shellRoot != null && _policyScreen == VanillaUi.Screens.MissionPrep
             ? UI.Find(_shellRoot, UiSelector.Name(PrepTokensName)) : null;
-        if (layer == null || _prepMap == null || _camera == null || layer.panel == null)
+        if (layer == null || _prep.Map == null || _camera == null || layer.panel == null)
         {
-            if (_prepTokens.Count > 0)
+            if (_prep.Tokens.Count > 0)
                 ClearPrepTokens();
-            _dragHeard = null;
+            _prep.DragHeard = null;
             return;
         }
         try
@@ -125,12 +111,12 @@ public sealed partial class StrategyDiorama
             // A dragged squad's place changes every frame.
             var drag = PrepDrag();
             // A squad lifted, and put down where it may stand or where it may not.
-            if (drag != null && _dragHeard == null)
+            if (drag != null && _prep.DragHeard == null)
                 TableSounds.Play(TableSounds.TokenLift);
-            else if (drag == null && _dragHeard is { } valid)
+            else if (drag == null && _prep.DragHeard is { } valid)
                 TableSounds.Play(valid ? TableSounds.TokenPlace : TableSounds.TokenRefused);
-            _dragHeard = drag?.Valid;
-            if (_prepTokenTick++ % 6 == 0 || drag != null)
+            _prep.DragHeard = drag?.Valid;
+            if (_prep.TokenTick++ % 6 == 0 || drag != null)
                 ReadPrepTokens(layer);
             PlacePrepTokens(layer, drag);
         }
@@ -142,9 +128,9 @@ public sealed partial class StrategyDiorama
 
     private void ClearPrepTokens()
     {
-        foreach (var token in _prepTokens.Values)
+        foreach (var token in _prep.Tokens.Values)
             DropToken(token);
-        _prepTokens.Clear();
+        _prep.Tokens.Clear();
     }
 
     private void DropToken(Token token)
@@ -161,31 +147,31 @@ public sealed partial class StrategyDiorama
         token.Cell?.RemoveFromHierarchy();
         token.Words?.RemoveFromHierarchy();
         if (token.Slot >= 0)
-            (token.Kind == TokenKind.Contact ? _contactSlots : _objectiveSlots).Remove(token.Slot);
+            (token.Kind == TokenKind.Contact ? _prep.ContactSlots : _prep.ObjectiveSlots).Remove(token.Slot);
     }
 
     // The cells' panel and its texture go with the room.
     private void ReleasePrepTokens()
     {
         ClearPrepTokens();
-        if (_tokensHost != null)
-            UnityEngine.Object.Destroy(_tokensHost);
-        if (_tokensSettings != null)
-            UnityEngine.Object.Destroy(_tokensSettings);
-        if (_tokensTexture != null)
+        if (_prep.TokensHost != null)
+            UnityEngine.Object.Destroy(_prep.TokensHost);
+        if (_prep.TokensSettings != null)
+            UnityEngine.Object.Destroy(_prep.TokensSettings);
+        if (_prep.TokensTexture != null)
         {
-            _tokensTexture.Release();
-            UnityEngine.Object.Destroy(_tokensTexture);
+            _prep.TokensTexture.Release();
+            UnityEngine.Object.Destroy(_prep.TokensTexture);
         }
-        if (_tokenRing != null)
-            UnityEngine.Object.Destroy(_tokenRing);
-        for (var i = 0; i < _dragMarks.Length; i++)
+        if (_prep.TokenRing != null)
+            UnityEngine.Object.Destroy(_prep.TokenRing);
+        for (var i = 0; i < _prep.DragMarks.Length; i++)
         {
-            if (_dragMarks[i] != null)
-                UnityEngine.Object.Destroy(_dragMarks[i]);
-            _dragMarks[i] = null;
+            if (_prep.DragMarks[i] != null)
+                UnityEngine.Object.Destroy(_prep.DragMarks[i]);
+            _prep.DragMarks[i] = null;
         }
-        (_tokensHost, _tokensSettings, _tokensTexture, _tokensPanel, _tokenRing) = (null, null, null, null, null);
+        (_prep.TokensHost, _prep.TokensSettings, _prep.TokensTexture, _prep.TokensPanel, _prep.TokenRing) = (null, null, null, null, null);
     }
 
     // The shell's layer over the map, for a contact's words while the pointer is on it. Under the roster, the objectives and the squad panel.
@@ -210,13 +196,13 @@ public sealed partial class StrategyDiorama
     // theme and text settings.
     private VisualElement TokensPanel(VisualElement shell)
     {
-        if (_tokensPanel != null && _tokensPanel.panel != null)
-            return _tokensPanel;
+        if (_prep.TokensPanel != null && _prep.TokensPanel.panel != null)
+            return _prep.TokensPanel;
         var texels = (int)(TokenPanelSize * TokenPanelScale);
         if (!TexturePanel("WOMENACE_PrepTokens", shell, texels, texels, TokenPanelScale,
-            out _tokensHost, out _tokensSettings, out _tokensTexture, out _tokensPanel))
+            out _prep.TokensHost, out _prep.TokensSettings, out _prep.TokensTexture, out _prep.TokensPanel))
             return null;
-        return _tokensPanel;
+        return _prep.TokensPanel;
     }
 
     // Reads vanilla's markers: makes a token for each one shown, drops the tokens of those gone,
@@ -235,18 +221,18 @@ public sealed partial class StrategyDiorama
             var holder = UI.Find(_shellRoot, UiSelector.Name(holderName));
             if (holder == null || holder.layout.width <= 0f)
                 continue;
-            var (tileX, tileZ) = (holder.layout.width / _prepMapSizeX, holder.layout.height / _prepMapSizeZ);
+            var (tileX, tileZ) = (holder.layout.width / _prep.MapSizeX, holder.layout.height / _prep.MapSizeZ);
             for (var i = 0; i < holder.childCount; i++)
             {
                 var source = holder.ElementAt(i);
                 if (source.resolvedStyle.display == DisplayStyle.None || source.resolvedStyle.visibility == Visibility.Hidden)
                     continue;
-                if (!_prepTokens.TryGetValue(source.Pointer, out var token))
+                if (!_prep.Tokens.TryGetValue(source.Pointer, out var token))
                 {
                     token = MakeToken(kind, layer);
                     if (token == null)
                         continue;
-                    _prepTokens[source.Pointer] = token;
+                    _prep.Tokens[source.Pointer] = token;
                 }
                 seen.Add(source.Pointer);
                 // Its place on the map, whose far side is the element's top, is the middle of what
@@ -256,7 +242,7 @@ public sealed partial class StrategyDiorama
                 var at = source.childCount > 0 && source.ElementAt(0).layout.width > 0f
                     ? source.layout.position + source.ElementAt(0).layout.center
                     : source.layout.center;
-                token.Tile = new Vector2(at.x / tileX, _prepMapSizeZ - at.y / tileZ);
+                token.Tile = new Vector2(at.x / tileX, _prep.MapSizeZ - at.y / tileZ);
                 switch (kind)
                 {
                     case TokenKind.Squad:
@@ -264,7 +250,7 @@ public sealed partial class StrategyDiorama
                         var material = token.Card.GetComponent<MeshRenderer>()?.material;
                         // A squad with no chibi of ours stands as its unit's own badge, or failing
                         // that as the small one vanilla's map draws for it.
-                        var chibi = _prepChibisOff ? null : Chibi(Affinity.CharacterTag(leader));
+                        var chibi = PrepChibisShown() ? Chibi(Affinity.CharacterTag(leader)) : null;
                         var badge = chibi != null ? null
                             : leader?.GetTemplate()?.Badge
                                 ?? UI.Find(source, UiSelector.Name(VanillaUi.Elements.PrepDeployedImage))?.resolvedStyle.backgroundImage.sprite;
@@ -310,10 +296,10 @@ public sealed partial class StrategyDiorama
                 }
             }
         }
-        foreach (var gone in _prepTokens.Keys.Where(key => !seen.Contains(key)).ToList())
+        foreach (var gone in _prep.Tokens.Keys.Where(key => !seen.Contains(key)).ToList())
         {
-            DropToken(_prepTokens[gone]);
-            _prepTokens.Remove(gone);
+            DropToken(_prep.Tokens[gone]);
+            _prep.Tokens.Remove(gone);
         }
     }
 
@@ -332,10 +318,10 @@ public sealed partial class StrategyDiorama
     {
         if (string.IsNullOrEmpty(characterTag))
             return null;
-        if (!_chibis.TryGetValue(characterTag, out var texture))
+        if (!_prep.Chibis.TryGetValue(characterTag, out var texture))
         {
             var doll = characterTag.StartsWith(Affinity.Tag + "_", StringComparison.Ordinal) ? characterTag[(Affinity.Tag.Length + 1)..] : characterTag;
-            _chibis[characterTag] = texture = Context.Assets.Load<Texture2D>($"{doll}__chibi_wait");
+            _prep.Chibis[characterTag] = texture = Context.Assets.Load<Texture2D>($"{doll}__chibi_wait");
         }
         return texture;
     }
@@ -343,8 +329,8 @@ public sealed partial class StrategyDiorama
     // A soft ring with a dot at its middle, for the ground under a chibi.
     private Texture2D RingTexture()
     {
-        if (_tokenRing != null)
-            return _tokenRing;
+        if (_prep.TokenRing != null)
+            return _prep.TokenRing;
         const int size = 64;
         var pixels = new Color32[size * size];
         for (var y = 0; y < size; y++)
@@ -360,10 +346,10 @@ public sealed partial class StrategyDiorama
                 pixels[y * size + x] = new Color32(v, v, v, v);
             }
         }
-        _tokenRing = new Texture2D(size, size, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
-        _tokenRing.SetPixels32(pixels);
-        _tokenRing.Apply(false, true);
-        return _tokenRing;
+        _prep.TokenRing = new Texture2D(size, size, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
+        _prep.TokenRing.SetPixels32(pixels);
+        _prep.TokenRing.Apply(false, true);
+        return _prep.TokenRing;
     }
 
     // A hologram's material with nothing of the screen's about it: no scan lines, no faded
@@ -410,7 +396,7 @@ public sealed partial class StrategyDiorama
         }
 
         // A free cell of the texture, or no token: the map has more markers than the texture holds.
-        var slots = kind == TokenKind.Contact ? _contactSlots : _objectiveSlots;
+        var slots = kind == TokenKind.Contact ? _prep.ContactSlots : _prep.ObjectiveSlots;
         var room = kind == TokenKind.Contact ? ContactColumns * ContactRows : 2 * ObjectiveRows;
         var slot = Enumerable.Range(0, room).FirstOrDefault(i => !slots.Contains(i), -1);
         if (slot < 0)
@@ -460,7 +446,7 @@ public sealed partial class StrategyDiorama
             token.Cell.Add(token.Name);
         }
 
-        token.Card = TokenQuad(template, kind == TokenKind.Contact ? "WOMENACE_PrepContact" : "WOMENACE_PrepObjective", _tokensTexture, TokenPlate);
+        token.Card = TokenQuad(template, kind == TokenKind.Contact ? "WOMENACE_PrepContact" : "WOMENACE_PrepObjective", _prep.TokensTexture, TokenPlate);
         token.Card.GetComponent<MeshRenderer>()?.material?.SetVector("_UvRect", new Vector4(cell.width / TokenPanelSize, cell.height / TokenPanelSize,
             cell.x / TokenPanelSize, 1f - cell.yMax / TokenPanelSize));
         token.Size = new Vector2(cell.width, cell.height) * CellUnitTiles;
@@ -495,13 +481,12 @@ public sealed partial class StrategyDiorama
     // heard as one.
     private void HearToken(TokenKind kind)
     {
-        if (!_prepMapBuilding || Time.unscaledTime - _tokenHeardAt[(int)kind] < TokenHeardApart)
+        if (!_prep.MapBuilding || Time.unscaledTime - _prep.TokenHeardAt[(int)kind] < TokenHeardApart)
             return;
-        _tokenHeardAt[(int)kind] = Time.unscaledTime;
+        _prep.TokenHeardAt[(int)kind] = Time.unscaledTime;
         TableSounds.Play(kind == TokenKind.Objective ? TableSounds.MapObjective : kind == TokenKind.Contact ? TableSounds.MapContact : TableSounds.TokenPlace);
     }
 
-    private readonly float[] _tokenHeardAt = { float.NegativeInfinity, float.NegativeInfinity, float.NegativeInfinity };
     private const float TokenHeardApart = 0.12f;
 
     private void PlacePrepTokens(VisualElement layer, (IntPtr Squad, Vector2Int Now, Vector2Int From, bool Valid)? drag)
@@ -522,17 +507,17 @@ public sealed partial class StrategyDiorama
         // The words are placed in the layer, which stands in from the edges of a screen wider or
         // taller than 16:9.
         var origin = layer.worldBound.position;
-        foreach (var token in _prepTokens.Values)
+        foreach (var token in _prep.Tokens.Values)
         {
             var foot = PrepMapPoint(token.Tile.x, token.Tile.y, 0.05f);
             // A token grows out of its tile as the map is built.
-            var up = PrepBuilt(token.Tile.x, token.Tile.y) * _prepTokensUp;
+            var up = PrepBuilt(token.Tile.x, token.Tile.y) * _prep.TokensUp;
             if (!token.Heard && up > 0f)
             {
                 token.Heard = true;
                 HearToken(token.Kind);
             }
-            var (width, height) = (token.Size.x * _prepMapTile * up, token.Size.y * _prepMapTile * up);
+            var (width, height) = (token.Size.x * _prep.MapTile * up, token.Size.y * _prep.MapTile * up);
             var card = token.Card.transform;
             card.rotation = facing;
             card.localScale = new Vector3(width, height, 1f);
@@ -541,7 +526,7 @@ public sealed partial class StrategyDiorama
             {
                 var ring = token.Ring.transform;
                 ring.rotation = Quaternion.Euler(90f, 0f, 0f);
-                ring.localScale = new Vector3(RingTiles * _prepMapTile * up, RingTiles * _prepMapTile * up, 1f);
+                ring.localScale = new Vector3(RingTiles * _prep.MapTile * up, RingTiles * _prep.MapTile * up, 1f);
                 ring.position = foot;
             }
             if (token.Kind == TokenKind.Squad)
@@ -569,7 +554,7 @@ public sealed partial class StrategyDiorama
                 continue;
             var screen = camera.WorldToScreenPoint(card.position);
             var at = RuntimePanelUtils.ScreenToPanel(layer.panel, new Vector2(screen.x, Screen.height - screen.y));
-            var near = screen.z > 0f && Vector2.Distance(at, _prepPointerPanel) < ContactReach;
+            var near = screen.z > 0f && Vector2.Distance(at, _prep.PointerPanel) < ContactReach;
             token.Words.style.display = near ? DisplayStyle.Flex : DisplayStyle.None;
             token.Words.style.left = at.x - origin.x + 12f;
             token.Words.style.top = at.y - origin.y - 12f;
@@ -583,7 +568,7 @@ public sealed partial class StrategyDiorama
     {
         if (drag is not { } d)
         {
-            foreach (var mark in _dragMarks)
+            foreach (var mark in _prep.DragMarks)
                 if (mark != null)
                     mark.SetActive(false);
             return;
@@ -591,24 +576,24 @@ public sealed partial class StrategyDiorama
         var template = MarkerTemplate();
         if (template == null)
             return;
-        for (var i = 0; i < _dragMarks.Length; i++)
+        for (var i = 0; i < _prep.DragMarks.Length; i++)
         {
-            if (_dragMarks[i] == null)
+            if (_prep.DragMarks[i] == null)
             {
-                _dragMarks[i] = TokenQuad(template, "WOMENACE_PrepDragMark", Texture2D.whiteTexture, 0f);
-                _dragMarks[i].GetComponent<MeshRenderer>().material.renderQueue = TokenQueue - 1;
+                _prep.DragMarks[i] = TokenQuad(template, "WOMENACE_PrepDragMark", Texture2D.whiteTexture, 0f);
+                _prep.DragMarks[i].GetComponent<MeshRenderer>().material.renderQueue = TokenQueue - 1;
             }
             var tile = i == 0 ? d.Now : d.From;
-            var mark = _dragMarks[i].transform;
-            _dragMarks[i].SetActive(true);
+            var mark = _prep.DragMarks[i].transform;
+            _prep.DragMarks[i].SetActive(true);
             mark.rotation = Quaternion.Euler(90f, 0f, 0f);
-            mark.localScale = new Vector3(_prepMapTile, _prepMapTile, 1f);
+            mark.localScale = new Vector3(_prep.MapTile, _prep.MapTile, 1f);
             mark.position = PrepMapPoint(tile.x + 0.5f, tile.y + 0.5f, 0.03f);
             var colour = i == 0 ? (d.Valid ? TokenRingOpen : TokenInvalid) : TokenRing * 0.5f;
-            _dragMarks[i].GetComponent<MeshRenderer>().material.SetColor("_Tint", colour);
+            _prep.DragMarks[i].GetComponent<MeshRenderer>().material.SetColor("_Tint", colour);
         }
         // The dragged squad's ring shows the same.
-        foreach (var (source, token) in _prepTokens)
+        foreach (var (source, token) in _prep.Tokens)
             if (source == d.Squad && token.Ring != null)
                 token.Ring.GetComponent<MeshRenderer>()?.material?.SetColor("_Tint", d.Valid ? TokenRingOpen : TokenInvalid);
     }

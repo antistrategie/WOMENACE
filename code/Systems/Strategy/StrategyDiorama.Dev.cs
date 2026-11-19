@@ -106,7 +106,7 @@ public sealed partial class StrategyDiorama
         else
             return "kind is plain or marked";
         if (_instance != null)
-            _instance._prepMapOf = IntPtr.Zero;
+            _instance._prep.MapOf = IntPtr.Zero;
         return $"{template} drawn as {(string.IsNullOrEmpty(kind) ? "itself" : kind)}, the map builds again";
     }
 

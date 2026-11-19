@@ -61,11 +61,6 @@ public sealed partial class StrategyDiorama
     private static PrepStructure PrepKind(Il2CppMenace.Tactical.EntityTemplate template) =>
         template != null && template.OverrideMissionPreviewColor ? PrepStructure.Marked : PrepStructure.Plain;
 
-    private GameObject _prepMap;
-    private Texture2D _prepMapTexture;
-    private IntPtr _prepMapOf;
-    private DeploymentZoneScale _prepMapScale;
-    private string _prepMapAreas;
     // The map's build. The ground is a square to a tile, and the squares come up row by row
     // from the near side to the far, each from below its place: it dips first, rises past its
     // place, where it is at its lightest, and settles. A structure grows out of its square once
@@ -79,111 +74,83 @@ public sealed partial class StrategyDiorama
     // How far below its place a square starts, in tiles, and how much lighter it is at its peak.
     private const float PrepBuildDrop = 1.6f;
     private const float PrepBuildFlash = 1.6f;
-    private Mesh _prepMapMesh;
-    private Vector3[] _prepMapFull;
-    private Il2CppStructArray<Vector3> _prepMapShown;
-    private Il2CppStructArray<Color> _prepMapLit;
-    private float[] _prepMapStarts;
-    private float _prepMapBornAt;
-    private bool _prepMapBuilding;
-    // A new mission's map whose build has not been heard yet.
-    private bool _prepMapUnheard;
 
     // When a tile's square starts up, in seconds from the map's start.
     private float PrepBuildStart(float x, float z)
     {
-        var across = _prepMapSizeX > 1 ? Mathf.Abs(x - _prepMapSizeX / 2f) / (_prepMapSizeX / 2f) : 0f;
+        var across = _prep.MapSizeX > 1 ? Mathf.Abs(x - _prep.MapSizeX / 2f) / (_prep.MapSizeX / 2f) : 0f;
         // The build's front gathers speed up the map and settles at its head (Ease.InOutCubic
         // of the sweep's time), so a row starts when the front reaches it.
-        return Ease.InOutCubicInverse(z / Math.Max(1, _prepMapSizeZ)) * PrepBuildSweep + across * PrepBuildSpread;
-    }
-
-    // Eases 0 to 1, drawing back below 0 first and running past 1 before it settles.
-    private static float BackAndPast(float t)
-    {
-        const float c = 1.70158f * 1.525f;
-        return t < 0.5f
-            ? 4f * t * t * ((c + 1f) * 2f * t - c) / 2f
-            : ((2f * t - 2f) * (2f * t - 2f) * ((c + 1f) * (2f * t - 2f) + c) + 2f) / 2f;
+        return Ease.InOutCubicInverse(z / Math.Max(1, _prep.MapSizeZ)) * PrepBuildSweep + across * PrepBuildSpread;
     }
 
     // How far a thing standing on a tile has grown, 0 to 1 and a little past on the way: it
     // starts once the tile's square is most of the way home.
     private float PrepBuilt(float x, float z)
     {
-        var t = (Time.unscaledTime - _prepMapBornAt - PrepBuildStart(x, z) - PrepBuildTile * 0.7f) / PrepBuildRise;
-        if (t <= 0f)
-            return 0f;
-        if (t >= 1f)
-            return 1f;
-        var back = t - 1f;
-        return 1f + 2.70158f * back * back * back + 1.70158f * back * back;
+        var t = (Time.unscaledTime - _prep.MapBornAt - PrepBuildStart(x, z) - PrepBuildTile * 0.7f) / PrepBuildRise;
+        return t <= 0f ? 0f : Ease.OutBack(t);
     }
 
     private void ShowPrepMapBuild()
     {
-        if (_prepMapMesh == null || _prepMapFull == null)
+        if (_prep.MapMesh == null || _prep.MapFull == null)
             return;
-        var age = Time.unscaledTime - _prepMapBornAt;
+        var age = Time.unscaledTime - _prep.MapBornAt;
         // Native arrays, made once a map: the mesh takes them without a copy into the game's
         // memory, and filling them is plain arithmetic, every frame of the build.
-        if (_prepMapShown == null || _prepMapShown.Length != _prepMapFull.Length)
-            (_prepMapShown, _prepMapLit) = (new Il2CppStructArray<Vector3>(_prepMapFull.Length), new Il2CppStructArray<Color>(_prepMapFull.Length));
-        var (shown, lit) = (_prepMapShown, _prepMapLit);
+        if (_prep.MapShown == null || _prep.MapShown.Length != _prep.MapFull.Length)
+            (_prep.MapShown, _prep.MapLit) = (new Il2CppStructArray<Vector3>(_prep.MapFull.Length), new Il2CppStructArray<Color>(_prep.MapFull.Length));
+        var (shown, lit) = (_prep.MapShown, _prep.MapLit);
         var white = new Color { r = 1f, g = 1f, b = 1f, a = 1f };
-        var drop = PrepBuildDrop * _prepMapTile;
+        var drop = PrepBuildDrop * _prep.MapTile;
         for (var i = 0; i < shown.Length; i++)
         {
-            var since = age - _prepMapStarts[i];
+            var since = age - _prep.MapStarts[i];
             if (since < 0f)
             {
-                var start = _prepMapFull[i - i % 4];
+                var start = _prep.MapFull[i - i % 4];
                 start.y = -drop;
                 shown[i] = start;
                 lit[i] = white;
                 continue;
             }
-            var eased = since >= PrepBuildTile ? 1f : BackAndPast(since / PrepBuildTile);
+            var eased = since >= PrepBuildTile ? 1f : Ease.InOutBack(since / PrepBuildTile);
             var grow = (since - PrepBuildTile * 0.7f) / PrepBuildRise;
-            var grown = grow <= 0f ? 0f : grow >= 1f ? 1f : 1f + 2.70158f * (grow - 1f) * (grow - 1f) * (grow - 1f) + 1.70158f * (grow - 1f) * (grow - 1f);
-            var place = _prepMapFull[i];
+            var grown = grow <= 0f ? 0f : Ease.OutBack(grow);
+            var place = _prep.MapFull[i];
             place.y = place.y * grown - drop * (1f - eased);
             shown[i] = place;
             // Past its place a square is lighter, by how far past it is.
             var light = 1f + PrepBuildFlash * Math.Clamp((eased - 1f) / 0.1f, 0f, 1f);
             lit[i] = new Color { r = light, g = light, b = light, a = 1f };
         }
-        _prepMapMesh.vertices = shown;
-        _prepMapMesh.colors = lit;
+        _prep.MapMesh.vertices = shown;
+        _prep.MapMesh.colors = lit;
         if (age >= PrepBuildSweep + PrepBuildSpread + PrepBuildTile + PrepBuildRise)
-            _prepMapBuilding = false;
+            _prep.MapBuilding = false;
     }
 
-    private int _prepMapSizeX, _prepMapSizeZ;
-    private float _prepMapTile;
 
     // A place on the map in the world: tile coordinates (a tile's middle is half past its number)
     // and a height in tiles.
     // The height is above the tile's own ground, or above the map's foot when onGround is off.
     private Vector3 PrepMapPoint(float x, float z, float up, bool onGround = true) =>
-        _prepMap.transform.TransformPoint(new Vector3(-(z - _prepMapSizeZ / 2f) * _prepMapTile, (up + (onGround ? PrepGroundAt(x, z) : 0f)) * _prepMapTile, (x - _prepMapSizeX / 2f) * _prepMapTile));
+        _prep.Map.transform.TransformPoint(new Vector3(-(z - _prep.MapSizeZ / 2f) * _prep.MapTile, (up + (onGround ? PrepGroundAt(x, z) : 0f)) * _prep.MapTile, (x - _prep.MapSizeX / 2f) * _prep.MapTile));
 
     // The land's relief. The preview's elevation is a small part of 1 over a whole map, so it
     // is drawn many times its size, from the map's lowest tile up, in steps a quarter tile high:
     // a hill stands as terraces, each with a wall down to the one below.
     private const float PrepReliefTiles = 30f;
     private const float PrepReliefStep = 0.25f;
-    private float[,] _prepMapGround;
-    // The heights the ground stands at, highest first.
-    private float[] _prepMapLevels = { 0f };
 
     // How high a tile's ground stands above the map's foot, in tiles.
     private float PrepGroundAt(float x, float z)
     {
-        if (_prepMapGround == null)
+        if (_prep.MapGround == null)
             return 0f;
-        var (tx, tz) = (Math.Clamp((int)MathF.Floor(x), 0, _prepMapSizeX - 1), Math.Clamp((int)MathF.Floor(z), 0, _prepMapSizeZ - 1));
-        return _prepMapGround[tx, tz];
+        var (tx, tz) = (Math.Clamp((int)MathF.Floor(x), 0, _prep.MapSizeX - 1), Math.Clamp((int)MathF.Floor(z), 0, _prep.MapSizeZ - 1));
+        return _prep.MapGround[tx, tz];
     }
 
     // The tile a ray lands on, as tile coordinates. The ground stands at several heights, so
@@ -191,12 +158,12 @@ public sealed partial class StrategyDiorama
     private Vector2 PrepTileUnder(Ray ray)
     {
         var tile = Vector2.zero;
-        foreach (var level in _prepMapLevels)
+        foreach (var level in _prep.MapLevels)
         {
             var plane = PrepMapPoint(0f, 0f, level, false).y;
-            var local = _prepMap.transform.InverseTransformPoint(ray.origin + ray.direction * ((plane - ray.origin.y) / ray.direction.y));
-            tile = new Vector2(local.z / _prepMapTile + _prepMapSizeX / 2f, _prepMapSizeZ / 2f - local.x / _prepMapTile);
-            if (tile.x >= 0f && tile.y >= 0f && tile.x < _prepMapSizeX && tile.y < _prepMapSizeZ && PrepGroundAt(tile.x, tile.y) >= level - 0.01f)
+            var local = _prep.Map.transform.InverseTransformPoint(ray.origin + ray.direction * ((plane - ray.origin.y) / ray.direction.y));
+            tile = new Vector2(local.z / _prep.MapTile + _prep.MapSizeX / 2f, _prep.MapSizeZ / 2f - local.x / _prep.MapTile);
+            if (tile.x >= 0f && tile.y >= 0f && tile.x < _prep.MapSizeX && tile.y < _prep.MapSizeZ && PrepGroundAt(tile.x, tile.y) >= level - 0.01f)
                 break;
         }
         return tile;
@@ -232,13 +199,13 @@ public sealed partial class StrategyDiorama
             ClearPrepMap();
             return;
         }
-        if (_prepMap != null && _prepMapBuilding)
+        if (_prep.Map != null && _prep.MapBuilding)
         {
             // The build is heard as it starts, which is later than the map is made when the
             // planet's sheet is still on its way down to the table.
-            if (_prepMapUnheard && Time.unscaledTime >= _prepMapBornAt)
+            if (_prep.MapUnheard && Time.unscaledTime >= _prep.MapBornAt)
             {
-                _prepMapUnheard = false;
+                _prep.MapUnheard = false;
                 TableSounds.Play(TableSounds.MapBuild);
             }
             ShowPrepMapBuild();
@@ -255,47 +222,38 @@ public sealed partial class StrategyDiorama
             var scale = screen.m_DeploymentScale;
             var areas = PrepObjectiveAreas(preview.SizeX, preview.SizeZ);
             var areasKey = string.Join(";", areas.Select(a => $"{a.x},{a.y},{a.width},{a.height}"));
-            if (preview.Pointer == _prepMapOf && scale.Equals(_prepMapScale) && areasKey == _prepMapAreas)
+            if (preview.Pointer == _prep.MapOf && scale.Equals(_prep.MapScale) && areasKey == _prep.MapAreas)
                 return;
             // A new mission's map is built up before the eye. The same map made again (its zone
             // or its objectives changed) takes up where that had got to.
             // Coming from mission select, the map builds once the planet's sheet lies on the table.
-            var born = preview.Pointer == _prepMapOf ? _prepMapBornAt : PlanetLaidBy();
-            if (preview.Pointer != _prepMapOf)
-                _prepMapUnheard = true;
+            var born = preview.Pointer == _prep.MapOf ? _prep.MapBornAt : PlanetLaidBy();
+            if (preview.Pointer != _prep.MapOf)
+                _prep.MapUnheard = true;
             ClearPrepMap();
             BuildPrepMap(preview, scale, areas);
-            (_prepMapOf, _prepMapScale, _prepMapAreas, _prepMapBornAt, _prepMapBuilding) = (preview.Pointer, scale, areasKey, born, true);
+            (_prep.MapOf, _prep.MapScale, _prep.MapAreas, _prep.MapBornAt, _prep.MapBuilding) = (preview.Pointer, scale, areasKey, born, true);
             ShowPrepMapBuild();
         }
         catch (Exception ex)
         {
             Context.Log.Warn($"strategy diorama: mission map failed: {ex.GetType().Name}: {ex.Message}");
-            _prepMapOf = IntPtr.Zero;
+            _prep.MapOf = IntPtr.Zero;
         }
     }
 
     private void ClearPrepMap()
     {
-        if (_prepMap != null)
-        {
-            // Its material is the map's own copy, which outlives the map.
-            var material = _prepMap.GetComponent<MeshRenderer>()?.sharedMaterial;
-            if (material != null)
-                UnityEngine.Object.Destroy(material);
-            UnityEngine.Object.Destroy(_prepMap);
-        }
-        if (_prepMapTexture != null)
-            UnityEngine.Object.Destroy(_prepMapTexture);
-        if (_prepMapMesh != null)
-            UnityEngine.Object.Destroy(_prepMapMesh);
+        if (_prep.Map != null)
+            UnityEngine.Object.Destroy(_prep.Map);
+        _prep.MapMade.Clear();
         // The flat view's picture is cut from the texture and goes with it. It is known by the
         // texture's address, which the next texture may be given.
-        if (_prepFlatPicture != null)
-            UnityEngine.Object.Destroy(_prepFlatPicture);
-        (_prepFlatPicture, _prepFlatPictureOf) = (null, IntPtr.Zero);
-        (_prepMap, _prepMapTexture, _prepMapOf, _prepMapAreas, _prepMapMesh, _prepMapFull, _prepMapStarts) = (null, null, IntPtr.Zero, null, null, null, null);
-        (_prepMapShown, _prepMapLit) = (null, null);
+        if (_prep.FlatPicture != null)
+            UnityEngine.Object.Destroy(_prep.FlatPicture);
+        (_prep.FlatPicture, _prep.FlatPictureOf) = (null, IntPtr.Zero);
+        (_prep.Map, _prep.MapTexture, _prep.MapOf, _prep.MapAreas, _prep.MapMesh, _prep.MapFull, _prep.MapStarts) = (null, null, IntPtr.Zero, null, null, null, null);
+        (_prep.MapShown, _prep.MapLit) = (null, null);
     }
 
     // How tall a structure stands, in tiles, from what its template is called.
@@ -350,8 +308,8 @@ public sealed partial class StrategyDiorama
         for (var z = 0; z < sizeZ; z++)
             for (var x = 0; x < sizeX; x++)
                 ground[x, z] = MathF.Round((ground[x, z] - lowest) * PrepReliefTiles / PrepReliefStep) * PrepReliefStep;
-        _prepMapGround = ground;
-        _prepMapLevels = ground.Cast<float>().Distinct().OrderByDescending(level => level).ToArray();
+        _prep.MapGround = ground;
+        _prep.MapLevels = ground.Cast<float>().Distinct().OrderByDescending(level => level).ToArray();
         var zone = new bool[sizeX, sizeZ];
         var refused = new bool[sizeX, sizeZ];
         foreach (var drawn in preview.DeploymentZones.ToArray())
@@ -443,14 +401,14 @@ public sealed partial class StrategyDiorama
                 pixels[(sizeZ * p + j) * width + i] = Color32.Lerp(foot, top, j / (p - 1f));
             }
         }
-        _prepMapTexture = new Texture2D(width, height, TextureFormat.RGBA32, false) { filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp };
-        _prepMapTexture.SetPixels32(pixels);
-        _prepMapTexture.Apply(false, true);
+        _prep.MapTexture = _prep.MapMade.Add(new Texture2D(width, height, TextureFormat.RGBA32, false) { filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp });
+        _prep.MapTexture.SetPixels32(pixels);
+        _prep.MapTexture.Apply(false, true);
 
         // The mesh, in the room's space about the map's middle: the map's x runs across the table
         // to the view's right, its z up the table away from the view.
         var tileSize = PrepMapSide / Math.Max(sizeX, sizeZ);
-        (_prepMapSizeX, _prepMapSizeZ, _prepMapTile) = (sizeX, sizeZ, tileSize);
+        (_prep.MapSizeX, _prep.MapSizeZ, _prep.MapTile) = (sizeX, sizeZ, tileSize);
         var vertices = new List<Vector3>();
         var starts = new List<float>();
         var start = 0f;
@@ -499,16 +457,16 @@ public sealed partial class StrategyDiorama
                 if (Top(x, z + 1) < top) Wall(x, z + 1, x + 1, z + 1, Top(x, z + 1), top, Shade(x, z));
             }
         }
-        var mesh = new Mesh { name = "WOMENACE_PrepMap", vertices = vertices.ToArray(), uv = uvs.ToArray(), triangles = triangles.ToArray() };
+        var mesh = _prep.MapMade.Add(new Mesh { name = "WOMENACE_PrepMap", vertices = vertices.ToArray(), uv = uvs.ToArray(), triangles = triangles.ToArray() });
         mesh.RecalculateBounds();
-        (_prepMapMesh, _prepMapFull, _prepMapStarts) = (mesh, vertices.ToArray(), starts.ToArray());
+        (_prep.MapMesh, _prep.MapFull, _prep.MapStarts) = (mesh, vertices.ToArray(), starts.ToArray());
 
-        _prepMap = Quad(template, "WOMENACE_PrepMap", _prepMapTexture);
-        _prepMap.transform.localPosition = PrepMapCentre;
-        _prepMap.transform.localRotation = Quaternion.identity;
-        _prepMap.transform.localScale = Vector3.one;
-        _prepMap.GetComponent<MeshFilter>().sharedMesh = mesh;
-        var material = _prepMap.GetComponent<MeshRenderer>()?.material;
+        _prep.Map = Quad(template, "WOMENACE_PrepMap", _prep.MapTexture);
+        _prep.Map.transform.localPosition = PrepMapCentre;
+        _prep.Map.transform.localRotation = Quaternion.identity;
+        _prep.Map.transform.localScale = Vector3.one;
+        _prep.Map.GetComponent<MeshFilter>().sharedMesh = mesh;
+        var material = _prep.MapMade.Material(_prep.Map.GetComponent<MeshRenderer>());
         if (material != null)
         {
             material.SetFloat("_ScanDepth", 0f);

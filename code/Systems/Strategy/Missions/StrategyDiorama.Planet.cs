@@ -294,7 +294,7 @@ public sealed partial class StrategyDiorama
         }
         // The sheet lies where preparation's map will: the picture's width along the table,
         // as the map's length is, covering the map's own ground once that is known.
-        var (along, across) = _prepMap != null && _prepMapTile > 0f ? (_prepMapSizeZ * _prepMapTile, _prepMapSizeX * _prepMapTile) : (PrepMapSide, PrepMapSide);
+        var (along, across) = _prep.Map != null && _prep.MapTile > 0f ? (_prep.MapSizeZ * _prep.MapTile, _prep.MapSizeX * _prep.MapTile) : (PrepMapSide, PrepMapSide);
         if (_planetLay < 1f || _planetLaidFor != (along, across))
         {
             if (_planetUpright == null)
@@ -327,7 +327,7 @@ public sealed partial class StrategyDiorama
         }
         // The sheet lies there until preparation's map is made (vanilla generates it first).
         // It does not wait for ever.
-        if (_prepMap == null)
+        if (_prep.Map == null)
         {
             if (Time.unscaledTime - _planetLaidAt > PlanetWaitsForMap)
                 EndPlanetLay();
@@ -335,7 +335,7 @@ public sealed partial class StrategyDiorama
         }
         // The map builds from the table's foot to its head, and takes the sheet with it: the
         // sheet's edge is the line the map's tiles rise along.
-        var taken = (Time.unscaledTime - Mathf.Max(_planetLaidAt, _prepMapBornAt)) / PrepBuildSweep;
+        var taken = (Time.unscaledTime - Mathf.Max(_planetLaidAt, _prep.MapBornAt)) / PrepBuildSweep;
         _planetMaterial.SetFloat(RevealId, 1f - Ease.InOutCubic(taken));
         if (taken >= 1f)
             EndPlanetLay();

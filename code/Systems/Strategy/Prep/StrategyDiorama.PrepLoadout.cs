@@ -18,7 +18,6 @@ public sealed partial class StrategyDiorama
     // A badge's side, and how much wider than it a section is before it holds one.
     private const float PrepBadge = 18f;
     private const float PrepBadgeRoom = 2f;
-    private string _prepSectionsOf;
 
     private void LayOutPrepSections(VisualElement panel)
     {
@@ -33,7 +32,7 @@ public sealed partial class StrategyDiorama
             _shellUndo.Add(() =>
             {
                 sections.RemoveFromHierarchy();
-                _prepSectionsOf = null;
+                _prep.SectionsOf = null;
             });
         }
         foreach (var name in new[] { "SelectedDark", "SelectedBright", "ExceedSelectedDark", "ExceedSelectedBright" })
@@ -70,9 +69,9 @@ public sealed partial class StrategyDiorama
         if (open != null && !openDeployed)
             squads.Add((open.Pointer, open.GetDeployCosts().GetAmount(), open.GetTemplate()?.Badge, true));
         var signature = $"{limit}:{open?.Pointer}:{string.Join(",", squads.Select(s => $"{s.Leader}={s.Cost}{(s.Would ? "?" : "")}"))}";
-        if (signature == _prepSectionsOf)
+        if (signature == _prep.SectionsOf)
             return;
-        _prepSectionsOf = signature;
+        _prep.SectionsOf = signature;
         sections.Clear();
         if (limit <= 0)
             return;
@@ -93,13 +92,13 @@ public sealed partial class StrategyDiorama
             {
                 // What deploying her would add: pale up to the limit and red past it.
                 var within = Math.Clamp(PrepSuppliesLimitAt - at, 0f, width);
-                foreach (var (style, from, across) in new[] { ("wm-prep__would", 0f, within), ("wm-prep__would--over", within, width - within) })
+                foreach (var (over, from, across) in new[] { (false, 0f, within), (true, within, width - within) })
                 {
                     if (across <= 0f)
                         continue;
                     var fill = new VisualElement { pickingMode = PickingMode.Ignore };
                     fill.AddToClassList("wm-prep__would");
-                    fill.AddToClassList(style);
+                    fill.EnableInClassList("wm-prep__would--over", over);
                     fill.style.left = from;
                     fill.style.width = across;
                     section.Add(fill);
