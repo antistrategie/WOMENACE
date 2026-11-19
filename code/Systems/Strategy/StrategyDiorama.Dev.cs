@@ -1044,13 +1044,34 @@ public sealed partial class StrategyDiorama
         return part != null ? $"over {part.GetIl2CppType().Name} #{part.name}" : "over no part with a tooltip";
     }
 
-    // Dev: the calibration doll's lowest point in the weapon room's space, against the floor.
+    // Dev: how the calibration doll sits in the lounge chair. Her feet's and her whole body's lowest
+    // points against the floor, her place and lean, and her leg joints in the seat's frame.
     internal static string CalibrationFeetFromDev()
     {
         var d = _instance;
         var doll = d?._calibrationDoll;
         if (doll == null)
             return "no calibration doll";
-        return $"{doll.name}: lowest {d.LowestPoint(doll):F3}, floor {LoungeFloor:F3}";
+        var room = d._weaponSet.Root.transform;
+        var animator = doll.GetComponentInChildren<Animator>();
+        string Joint(HumanBodyBones bone)
+        {
+            var t = animator != null && animator.isHuman ? animator.GetBoneTransform(bone) : null;
+            if (t == null)
+                return $"{bone} none";
+            // Along the seat's facing: x right, y up, z forward from the seat's middle.
+            var at = Quaternion.Inverse(LoungeSeatFacing) * (room.InverseTransformPoint(t.position) - LoungeSeat);
+            return $"{bone} {at.x:F3},{at.y:F3},{at.z:F3}";
+        }
+        var offset = Quaternion.Inverse(LoungeSeatFacing) * (doll.transform.localPosition - LoungeSeat);
+        var joints = new[]
+        {
+            HumanBodyBones.Hips, HumanBodyBones.LeftUpperLeg, HumanBodyBones.RightUpperLeg,
+            HumanBodyBones.LeftLowerLeg, HumanBodyBones.RightLowerLeg, HumanBodyBones.LeftFoot, HumanBodyBones.RightFoot,
+        };
+        var (feet, whole) = d.LowestPoints(doll);
+        return $"{doll.name}: feet lowest {feet.y:F3}, whole lowest {whole.y:F3}, floor {LoungeFloor:F3}\n"
+            + $"offset from seat (seat frame) {offset.x:F3},{offset.y:F3},{offset.z:F3}, rotation {doll.transform.localEulerAngles}\n"
+            + string.Join("\n", joints.Select(Joint));
     }
 }

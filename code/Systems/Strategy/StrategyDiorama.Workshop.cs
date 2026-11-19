@@ -372,14 +372,40 @@ public sealed partial class StrategyDiorama
             LightDoll(_calibrationDoll, SquadLightScale);
     }
 
-    // The lowest point of a doll's body as it is posed now, in the weapon room's space: its full
-    // detail meshes baked in their pose.
-    private float LowestPoint(GameObject doll) => Lowest(doll).y;
+    // The lowest point of a doll's feet as they are posed now, in the weapon room's space: her full
+    // detail meshes baked in their pose, counting only the vertices near her feet. A long skirt
+    // hangs below a seated doll's soles, and the floor is under her shoes, not her hem. A vertex
+    // is near a foot within a part of her shin's length of the line from her ankle to her toes,
+    // which takes in a shoe's sole and heel. Only the humanoid joints are read: a rig can hang
+    // other chains under a foot that reach far from it. A rig without humanoid feet is measured
+    // whole.
+    private Vector3 Lowest(GameObject doll) => LowestPoints(doll).feet;
 
-    private Vector3 Lowest(GameObject doll)
+    // How far from the line through a foot a vertex still counts as the foot's, in shin lengths.
+    private const float FootReach = 0.3f;
+
+    // The lowest point of her feet, and of her whole body for the dev verb.
+    private (Vector3 feet, Vector3 whole) LowestPoints(GameObject doll)
     {
-        var lowest = new Vector3(0f, float.PositiveInfinity, 0f);
         var room = _weaponSet.Root.transform;
+        var feet = new List<(Vector3 ankle, Vector3 toes, float reach)>();
+        var animator = doll.GetComponentInChildren<Animator>();
+        if (animator != null && animator.isHuman)
+            foreach (var (shinBone, footBone, toesBone) in new[]
+            {
+                (HumanBodyBones.LeftLowerLeg, HumanBodyBones.LeftFoot, HumanBodyBones.LeftToes),
+                (HumanBodyBones.RightLowerLeg, HumanBodyBones.RightFoot, HumanBodyBones.RightToes),
+            })
+            {
+                var (knee, foot, toes) = (animator.GetBoneTransform(shinBone), animator.GetBoneTransform(footBone), animator.GetBoneTransform(toesBone));
+                if (knee == null || foot == null)
+                    continue;
+                var ankle = room.InverseTransformPoint(foot.position);
+                var shin = (room.InverseTransformPoint(knee.position) - ankle).magnitude;
+                feet.Add((ankle, toes != null ? room.InverseTransformPoint(toes.position) : ankle, shin * FootReach));
+            }
+        var lowest = new Vector3(0f, float.PositiveInfinity, 0f);
+        var lowestAny = lowest;
         foreach (var renderer in doll.GetComponentsInChildren<SkinnedMeshRenderer>())
         {
             if (renderer.name.Contains("_LOD") && !renderer.name.EndsWith("_LOD0"))
@@ -392,8 +418,16 @@ public sealed partial class StrategyDiorama
                 foreach (var vertex in baked.vertices)
                 {
                     var at = toRoom.MultiplyPoint3x4(vertex);
-                    if (at.y < lowest.y)
-                        lowest = at;
+                    if (at.y < lowestAny.y)
+                        lowestAny = at;
+                    if (at.y >= lowest.y)
+                        continue;
+                    foreach (var (ankle, toes, reach) in feet)
+                        if (NearSegment(at, ankle, toes, reach))
+                        {
+                            lowest = at;
+                            break;
+                        }
                 }
             }
             finally
@@ -401,7 +435,19 @@ public sealed partial class StrategyDiorama
                 UnityEngine.Object.Destroy(baked);
             }
         }
-        return lowest;
+        return (float.IsPositiveInfinity(lowest.y) ? lowestAny : lowest, lowestAny);
+    }
+
+    // Whether a point is within reach of the segment from a to b. Plain arithmetic: it runs for
+    // every vertex of a doll.
+    private static bool NearSegment(Vector3 p, Vector3 a, Vector3 b, float reach)
+    {
+        float abx = b.x - a.x, aby = b.y - a.y, abz = b.z - a.z;
+        float apx = p.x - a.x, apy = p.y - a.y, apz = p.z - a.z;
+        var lengthSq = abx * abx + aby * aby + abz * abz;
+        var t = lengthSq > 0f ? Math.Clamp((apx * abx + apy * aby + apz * abz) / lengthSq, 0f, 1f) : 0f;
+        float dx = apx - abx * t, dy = apy - aby * t, dz = apz - abz * t;
+        return dx * dx + dy * dy + dz * dz <= reach * reach;
     }
 
     // A long-shinned doll seated on the cushion has her soles through the floor (Voymastina's by

@@ -170,6 +170,16 @@ public sealed class WorkshopSystem : JiangyuSystem
         var container = screen.m_ReqMaterialsContainer;
         if (owned == null || container == null)
             return;
+        // Counts come from the blueprint. Vanilla hides the stack label for one and leaves its
+        // old text in place, so the label cannot be read for them.
+        var takesById = new Dictionary<string, int>();
+        var materials = screen.m_SelectedBlueprint?.GetCraftingMaterials();
+        for (var i = 0; materials != null && i < materials.Count; i++)
+        {
+            var id = materials[i].Template?.GetID();
+            if (id != null)
+                takesById[id] = takesById.GetValueOrDefault(id) + materials[i].Count;
+        }
         var slots = 0;
         foreach (var element in UI.FindAll(container, UiSelector.TypeName("BlackMarketItemSlot")))
         {
@@ -177,9 +187,7 @@ public sealed class WorkshopSystem : JiangyuSystem
             if (slot?.m_ItemTemplate == null)
                 continue;
             slots++;
-            // Vanilla writes how many it takes ("6x"), and nothing for one.
-            var digits = new string((slot.m_StackSize?.text ?? "").Where(char.IsDigit).ToArray());
-            var takes = int.TryParse(digits, out var parsed) && parsed > 0 ? parsed : 1;
+            var takes = takesById.TryGetValue(slot.m_ItemTemplate.GetID() ?? "", out var needed) && needed > 0 ? needed : 1;
             var have = owned.GetInstanceCount(slot.m_ItemTemplate);
             if (slot.m_StackSize != null)
                 slot.m_StackSize.style.display = DisplayStyle.None;

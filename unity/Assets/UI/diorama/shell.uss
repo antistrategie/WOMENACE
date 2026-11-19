@@ -338,9 +338,10 @@
    a longer list scrolls. */
 .wm-squads UnitWindow #EquipmentAlternatives { max-height: 539px; }
 /* The cards stand closer together than vanilla's, which is where their height comes from */
-.wm-squads EquipmentSlotsContainer > EquipmentSlot > .unit-equipment-slot-header { margin-top: 2.4px; }
+.wm-squads EquipmentSlotsContainer > EquipmentSlot > .unit-equipment-slot-header,
+.wm-squads EquipmentSlotsContainer > VehicleEquipmentSlot > .unit-equipment-slot-header { margin-top: 1.6px; }
 /* The accessories' row stands as far under the armour card as each card does under the one before */
-.wm-squads EquipmentSlotsContainer > VisualElement { margin-top: 2.4px; }
+.wm-squads EquipmentSlotsContainer > VisualElement { margin-top: 1.6px; }
 
 /* The header's buttons: small, black, hairline, like the panel's other controls */
 .wm-squads UnitWindow #Header TextButton { height: 20.8px; }
