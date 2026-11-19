@@ -165,7 +165,7 @@ Output lands at `assets/audio/weapons/<class>/<name>_NN.wav`. The `weapons/` sub
 
 ### SoundBank clone
 
-`templates/weapon/soundbank.kdl` collects all weapon-class banks side by side:
+`templates/weapons/soundbank.kdl` collects all weapon-class banks side by side:
 
 ```kdl
 clone "SoundBank" from="weapons_soundbank" id="weapons_<class>_addition_bank" {
@@ -202,7 +202,7 @@ clone "SoundBank" from="weapons_soundbank" id="weapons_<class>_addition_bank" {
 
 ### Skill clone(s)
 
-Per fire mode in `templates/weapon/<weapon>.kdl`:
+Per fire mode in the Doll's `templates/dolls/<doll>/weapon.kdl`:
 
 ```kdl
 clone "SkillTemplate" from="<parent_fire_skill>" id="active.fire_<character>_<name>" {
@@ -268,9 +268,9 @@ assets/
 ├── audio/weapons/<class>/            Custom gunshot WAVs (96 kHz, close + distant)
 └── sprites/weapon/<name>/            Icon / IconEquipment / IconSkillBar PNGs
 
-templates/weapon/
-├── <weapon>.kdl                      WeaponTemplate + Skill clones
-└── soundbank.kdl                     All weapon SoundBank clones in one file
+templates/
+├── dolls/<doll>/weapon.kdl           WeaponTemplate + Skill clones
+└── weapons/soundbank.kdl             All weapon SoundBank clones in one file
 ```
 
 ## Common shape mistakes

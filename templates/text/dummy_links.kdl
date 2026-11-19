@@ -2,7 +2,7 @@ patch "AccessoryTemplate" "accessory.ifak_first_aid_kit" {
     // The game's text calls the bodies in a squad squaddies. Here they are a Doll's dummy links,
     // so the game's descriptions that name them say dummies, word for word otherwise. The
     // interface strings no template carries are replaced in DummyLinkTextSystem, and the
-    // keyword tooltips in text_tooltips.kdl. The perks of the game's own leaders keep their
+    // keyword tooltips in tooltips.kdl. The perks of the game's own leaders keep their
     // text, apart from the ones a Doll's perk tree offers.
     set "Description" {
         set "m_DefaultTranslation" """

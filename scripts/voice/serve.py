@@ -33,7 +33,7 @@ def discover_chars():
 
 
 def load_bank(char):
-    """Map each clip to its SoundBank entry from templates/<char>/voice/soundbank.kdl.
+    """Map each clip to its SoundBank entry from templates/dolls/<char>/voice/soundbank.kdl.
 
     Returns (bank_id, {clip_stem: sound_name}). The sound_name is the itemId a
     conversation / squad-leader template references. Empty if the char has no bank.

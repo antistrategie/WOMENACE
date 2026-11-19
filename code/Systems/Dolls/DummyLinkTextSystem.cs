@@ -5,8 +5,8 @@ namespace WOMENACE.Code;
 // The game's interface calls the bodies in a squad squaddies. Here they are a Doll's dummy links,
 // so its strings that name them say dummies, word for word otherwise. These belong to no template
 // a KDL patch could reach, so they are replaced by the game's own keys. The text the game's
-// templates carry is patched in templates/dummy_links.kdl and the keyword tooltips in
-// templates/text_tooltips.kdl.
+// templates carry is patched in templates/text/dummy_links.kdl and the keyword tooltips in
+// templates/text/tooltips.kdl.
 public sealed class DummyLinkTextSystem : JiangyuSystem
 {
     public override void OnInit()
