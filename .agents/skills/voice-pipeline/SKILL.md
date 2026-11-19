@@ -11,8 +11,8 @@ How a character's voice barks get from raw audio rips to triggering in-game. Fiv
 
 1. `scripts/voice/transcribe.py`: OpenAI ASR + MT → `assets/audio/<char>/.trans.csv`
 2. `scripts/voice/normalize_audio.py`: LUFS-normalise raw clips to match vanilla MENACE bark loudness
-3. `templates/<char>/voice/soundbank.kdl`: SoundBank clone that registers the WAVs as a runtime bank
-4. `templates/<char>/voice/{arrivals,clicks,enemy,misc,movement,objectives,responses}.kdl`: ConversationTemplate clones that fire those bank entries on in-game events
+3. `templates/dolls/<char>/voice/soundbank.kdl`: SoundBank clone that registers the WAVs as a runtime bank
+4. `templates/dolls/<char>/voice/{arrivals,clicks,enemy,misc,movement,objectives,responses}.kdl`: ConversationTemplate clones that fire those bank entries on in-game events
 5. `scripts/voice/serve.py`: local web utility to browse + play each character's clips and read their transcripts
 
 ## Pipeline at a glance
@@ -24,10 +24,10 @@ How a character's voice barks get from raw audio rips to triggering in-game. Fiv
                                               │
                                               ├─transcribe.py──▶ <char>/.trans.csv
                                               │
-                                              └─referenced by templates/<char>/voice/soundbank.kdl
+                                              └─referenced by templates/dolls/<char>/voice/soundbank.kdl
                                                           │
                                                           ▼
-                                          templates/<char>/voice/*.kdl
+                                          templates/dolls/<char>/voice/*.kdl
                                           ConversationTemplate clones
                                               │
                                               ▼
@@ -73,7 +73,7 @@ Cost is pennies for 60-65 clips.
 
 ## 4. SoundBank clone
 
-`templates/<char>/voice/soundbank.kdl`:
+`templates/dolls/<char>/voice/soundbank.kdl`:
 
 ```kdl
 clone "SoundBank" from="tactical_barks_carda_va_full_mid" id="wmgfl_tactical_barks_<character>_va" {
@@ -144,6 +144,8 @@ clone "ConversationTemplate" from="<Parent_Namespace>/<event_name>" id="<Charact
 ```
 
 **`Active #true`** is non-negotiable. Most base ConversationTemplates (e.g. `Carda_Early/arrival_carda`, `JeanSy/click_bark`) ship with `Active=False`, as they're prototypes. Clones inherit the field, the bark dispatcher filters out Active=False entries, and the lines silently never fire. Set `Active #true` on every voice-clone block or you'll hear nothing in-game.
+
+**Click bark priority**: a Doll's `click_bark` sets `Priority 6`. Vanilla's own click barks run from 1 to 5, so 6 makes the Doll's line win over them. A story conversation is 19 or 20 (Hayflick's Zero Dagger call, the tutorial), and a bark above that cuts it off the moment the player selects a unit, so a bark stays below 19.
 
 **Parent namespace**: JeanSy templates live at `JeanSy/<event>` (sy's barks), and Carda's at `Carda_Early/<event>` (her early-game progression bank). Pick the parent that matches your character's source archetype. A character cloned from sy uses JeanSy parents, and one cloned from carda uses Carda_Early parents.
 
