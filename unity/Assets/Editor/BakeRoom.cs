@@ -292,7 +292,9 @@ namespace Womenace.EditorTools
                         if (!built.TryGetValue(key, out var mat))
                         {
                             mat = BuildMaterial(shader, entry, src, lightmap, shadowmask, key.Item2);
-                            var file = key.Item2 == null || key.Item2 == roomProbe ? Sanitise(name) : Sanitise(name) + "__" + key.Item2.Entry.name;
+                            // Named from the whole key, so a material's unprobed and probed variants
+                            // never write over each other.
+                            var file = key.Item2 == null ? Sanitise(name) : Sanitise(name) + "__" + Sanitise(key.Item2.Entry.name);
                             AssetDatabase.CreateAsset(mat, $"{dst}/materials/{file}.mat");
                             built[key] = mat;
                         }

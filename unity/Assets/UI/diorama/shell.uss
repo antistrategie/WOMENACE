@@ -225,7 +225,6 @@
 }
 .wui-primary:hover .wui-primary__inner { background-color: rgba(215, 192, 116, 0.14); }
 .wui-primary__label { color: var(--gold); font-size: 16px; letter-spacing: 1.6px; padding: 0; margin: 0; }
-.wui-primary__sub { color: var(--ink-label); font-size: 8px; letter-spacing: 0.7px; padding: 0; margin: 2px 0 0 0; }
 
 /* Vanilla panels under the shell. shell.uss is attached to the screen root, which carries
    wm-shell-on while the shell is shown and one class for the view. */
@@ -238,8 +237,10 @@
     width: auto;
     height: 90px;
     justify-content: center;
+    transition-property: opacity;
+    transition-duration: 0.3s;
+    transition-delay: 0.25s;
 }
-.wm-shell-on .strategy-navigation { transition-property: opacity; transition-duration: 0.3s; transition-delay: 0.25s; }
 .wm-shell-on .strategy-navigation.wm-covered { opacity: 0; transition-duration: 0s; transition-delay: 0s; }
 .wm-shell-on.wm-bars-event .strategy-navigation { opacity: 0; transition-duration: 0.2s; transition-delay: 0s; }
 .wm-shell-on .strategy-navigation #Container { width: auto; background-color: rgba(0, 0, 0, 0); border-width: 0; padding: 0; margin: 0; }
@@ -320,18 +321,25 @@
 /* The roster shows squads only: vanilla's empty places and its heading for the dead are the tabs' job */
 .wm-squads #UnitsScrollView .mission-prep-unit-slot-empty { display: none; }
 .wm-squads #PermanentlyDeadUnitsTitle { display: none; }
-/* A slim scrollbar, shown only once the list is longer than its space */
-.wm-squads #UnitsScrollView .unity-scroller--vertical { width: 3.2px; min-width: 3.2px; border-width: 0; background-color: rgba(0, 0, 0, 0); }
-.wm-squads #UnitsScrollView .unity-scroller--vertical .unity-repeat-button { display: none; }
-.wm-squads #UnitsScrollView .unity-scroller--vertical .unity-slider { margin: 0; min-width: 3.2px; width: 3.2px; }
-.wm-squads #UnitsScrollView .unity-scroller--vertical .unity-base-slider__tracker { border-width: 0; background-color: rgb(21, 29, 34); }
-.wm-squads #UnitsScrollView .unity-scroller--vertical .unity-base-slider__dragger { left: 0; width: 3.2px; border-width: 0; border-radius: 0; background-color: var(--ink-meta); }
-.wm-squads #UnitsScrollView .unity-scroller--vertical .unity-base-slider__dragger-border { display: none; }
+/* A slim scrollbar, shown only once the list is longer than its space: the roster's, and that of
+   a list that scrolls inside a tab (.wui-scroll) */
+.wm-squads #UnitsScrollView .unity-scroller--vertical,
+.wui-scroll .unity-scroller--vertical { width: 3.2px; min-width: 3.2px; border-width: 0; background-color: rgba(0, 0, 0, 0); }
+.wm-squads #UnitsScrollView .unity-scroller--vertical .unity-repeat-button,
+.wui-scroll .unity-scroller--vertical .unity-repeat-button { display: none; }
+.wm-squads #UnitsScrollView .unity-scroller--vertical .unity-slider,
+.wui-scroll .unity-scroller--vertical .unity-slider { margin: 0; min-width: 3.2px; width: 3.2px; }
+.wm-squads #UnitsScrollView .unity-scroller--vertical .unity-base-slider__tracker,
+.wui-scroll .unity-scroller--vertical .unity-base-slider__tracker { border-width: 0; background-color: rgb(21, 29, 34); }
+.wm-squads #UnitsScrollView .unity-scroller--vertical .unity-base-slider__dragger,
+.wui-scroll .unity-scroller--vertical .unity-base-slider__dragger { left: 0; width: 3.2px; border-width: 0; border-radius: 0; background-color: var(--ink-meta); }
+.wm-squads #UnitsScrollView .unity-scroller--vertical .unity-base-slider__dragger-border,
+.wui-scroll .unity-scroller--vertical .unity-base-slider__dragger-border { display: none; }
 
 /* The panel's header: name, then rank and unit on a small line (sizes are set on the labels) */
 .wm-squads UnitWindow #Header #LeaderRank { margin: 0 4px 0 0; letter-spacing: 0.8px; }
 .wm-squads UnitWindow #Header #UnitName { letter-spacing: 0.8px; }
-.wm-squads__divider { padding: 0; margin: 0 4px 0 0; }
+.wm-squads__divider { padding: 0; margin: 0 4px 0 0; -unity-text-align: middle-left; }
 /* The three equipment cards are a little shorter than vanilla's (108.8), so the panel's contents fit its height */
 .wm-squads EquipmentSlotsContainer > EquipmentSlot > #Pickable { height: 103px; }
 /* The equipment picker opens beside the panel from a little under its top, and ends with it:
@@ -355,11 +363,16 @@
 .wm-squads UnitWindow #AdditionalStats TacticalUnitInfoStat > #Pickable { background-image: none; background-color: rgba(0, 0, 0, 0); }
 .wm-squads UnitWindow #AdditionalStats #Icon { background-color: rgba(0, 0, 0, 0.8); border-width: 0.64px; border-color: var(--line-strong); }
 
-/* Perks, Stats and Attributes: underlined text tabs sharing the column's width */
-.wm-squads UnitWindow #TabsHeader { width: 100%; flex-shrink: 0; height: 19.2px; border-bottom-width: 0.64px; border-bottom-color: var(--line-strong); }
-.wm-squads UnitWindow #TabsHeader TabButton { flex-grow: 1; flex-basis: 0; }
+/* Perks, Stats and Attributes: underlined text tabs sharing the column's width, on the squad
+   panel and on recruit's */
+.wm-squads UnitWindow #TabsHeader,
+.wm-recruit #HiringWindow #TabsHeader { width: 100%; flex-shrink: 0; height: 19.2px; border-bottom-width: 0.64px; border-bottom-color: var(--line-strong); }
+.wm-squads UnitWindow #TabsHeader TabButton,
+.wm-recruit #HiringWindow #TabsHeader TabButton { flex-grow: 1; flex-basis: 0; }
 .wm-squads UnitWindow #TabsHeader .tab-button,
-.wm-squads UnitWindow #TabsHeader .tab-button-selected {
+.wm-squads UnitWindow #TabsHeader .tab-button-selected,
+.wm-recruit #HiringWindow #TabsHeader .tab-button,
+.wm-recruit #HiringWindow #TabsHeader .tab-button-selected {
     height: 19.2px;
     margin: 0;
     background-image: none;
@@ -368,11 +381,18 @@
     border-bottom-width: 1.9px;
     border-bottom-color: rgba(0, 0, 0, 0);
 }
-.wm-squads UnitWindow #TabsHeader .tab-button-selected { border-bottom-color: var(--gold); }
+.wm-squads UnitWindow #TabsHeader .tab-button-selected,
+.wm-recruit #HiringWindow #TabsHeader .tab-button-selected { border-bottom-color: var(--gold); }
 .wm-squads UnitWindow #TabsHeader .tab-button-label,
-.wm-squads UnitWindow #TabsHeader .tab-button-selected-label { font-size: 8px; letter-spacing: 0.8px; -unity-text-align: middle-center; color: var(--ink-meta); flex-grow: 1; margin: 0; padding: 0; }
-.wm-squads UnitWindow #TabsHeader .tab-button-selected-label { color: var(--gold); }
-.wm-squads UnitWindow #TabsHeader .tab-button:hover .tab-button-label { color: var(--gold); }
+.wm-squads UnitWindow #TabsHeader .tab-button-selected-label,
+.wm-recruit #HiringWindow #TabsHeader .tab-button-label,
+.wm-recruit #HiringWindow #TabsHeader .tab-button-selected-label { font-size: 8px; letter-spacing: 0.8px; -unity-text-align: middle-center; color: var(--ink-meta); }
+.wm-squads UnitWindow #TabsHeader .tab-button-label,
+.wm-squads UnitWindow #TabsHeader .tab-button-selected-label { flex-grow: 1; margin: 0; padding: 0; }
+.wm-squads UnitWindow #TabsHeader .tab-button-selected-label,
+.wm-recruit #HiringWindow #TabsHeader .tab-button-selected-label { color: var(--gold); }
+.wm-squads UnitWindow #TabsHeader .tab-button:hover .tab-button-label,
+.wm-recruit #HiringWindow #TabsHeader .tab-button:hover .tab-button-label { color: var(--gold); }
 
 /* A small button in a panel's header */
 .wui-mini { height: 24px; padding: 0 8px; margin-right: 4.8px; flex-shrink: 0; align-items: center; justify-content: center; background-color: rgb(0, 0, 0); border-width: 0.64px; border-color: var(--line-strong); }
@@ -411,14 +431,16 @@
 .wm-squads__type-row .text-button:hover { border-color: var(--gold); }
 .wm-squads UnitWindow #UnitTypeHeadline { font-size: 7.2px; letter-spacing: 0.72px; }
 .wm-squads UnitWindow #UnitTypeName { font-size: 10.4px; letter-spacing: 0.6px; }
-.wm-squads__divider { -unity-text-align: middle-left; }
 
 /* ---- Squads, second styling pass ---- */
 /* The box behind the portrait */
 .wm-squads__portrait-box { position: absolute; left: 3.2px; right: 3.2px; top: 3.2px; height: 247px; background-color: rgb(12, 17, 24); border-width: 0.64px; border-color: var(--line); }
-/* Roster tiles: a hairline each, gold on the chosen one */
+/* Roster tiles: a hairline each, gold on the chosen one, as on mission preparation's and
+   recruit's tiles */
 .wm-squads ArmoryUnitSelectSlot > #Pickable { border-width: 0.64px; border-color: var(--line); }
-.wm-squads ArmoryUnitSelectSlot #Selected { background-image: none; border-width: 1.9px; border-color: var(--gold); }
+.wm-squads ArmoryUnitSelectSlot #Selected,
+.wm-prep MissionPrepUnitSelectSlot #Selected,
+.wm-recruit #HirableScrollView HiringUnitSlot #Selected { background-image: none; border-width: 1.9px; border-color: var(--gold); }
 /* The badge on a tile is a square sprite in a taller box, so it is fitted rather than stretched */
 .wm-squads ArmoryUnitSelectSlot #BadgeImage,
 .wm-prep #UnitsContainer #BadgeImage { -unity-background-scale-mode: scale-to-fit; }
@@ -437,14 +459,9 @@
 .wm-stat-icon--detection { background-image: url("../Icons/squads/stat_detection.png"); }
 .wm-stat-icon--concealment { background-image: url("../Icons/squads/stat_concealment.png"); }
 .wm-stat-icon--vision { background-image: url("../Icons/squads/stat_vision.png"); }
-/* A list that scrolls inside a tab, with the roster's slim scrollbar */
+/* A list that scrolls inside a tab, with the roster's slim scrollbar (above) */
 .wui-scroll { flex-grow: 1; flex-shrink: 1; flex-basis: 0; }
-.wui-scroll .unity-scroller--vertical { width: 3.2px; min-width: 3.2px; margin-left: 4px; border-width: 0; background-color: rgba(0, 0, 0, 0); }
-.wui-scroll .unity-scroller--vertical .unity-repeat-button { display: none; }
-.wui-scroll .unity-scroller--vertical .unity-slider { margin: 0; min-width: 3.2px; width: 3.2px; }
-.wui-scroll .unity-scroller--vertical .unity-base-slider__tracker { border-width: 0; background-color: rgb(21, 29, 34); }
-.wui-scroll .unity-scroller--vertical .unity-base-slider__dragger { left: 0; width: 3.2px; border-width: 0; border-radius: 0; background-color: var(--ink-meta); }
-.wui-scroll .unity-scroller--vertical .unity-base-slider__dragger-border { display: none; }
+.wui-scroll .unity-scroller--vertical { margin-left: 4px; }
 .wui-scroll .unity-scroller--horizontal { display: none; }
 
 /* ---- Squads, the pickers and flyouts that open from the panel ---- */
@@ -488,7 +505,6 @@
 .wm-prep__chip-value { color: var(--ink); font-size: 8.8px; letter-spacing: 0.88px; padding: 0; margin: 0; }
 .wm-prep #UnitsContainer .mission-prep-unit-slot-empty { display: none; }
 .wm-prep MissionPrepUnitSelectSlot > #Pickable { border-width: 0.64px; border-color: var(--line); }
-.wm-prep MissionPrepUnitSelectSlot #Selected { background-image: none; border-width: 1.9px; border-color: var(--gold); }
 
 /* Mission preparation's tokens are cards in the room. Here: the layer over the map, and an
    enemy contact's words, shown while the pointer is on it. */
@@ -552,7 +568,6 @@
 /* The candidates' column: the list alone */
 .wm-recruit #HirableColumn > #HirableHeadline { display: none; }
 .wm-recruit #HirableColumn > #Center { display: none; }
-.wm-recruit #HirableScrollView HiringUnitSlot #Selected { background-image: none; border-width: 1.9px; border-color: var(--gold); }
 
 /* The header: the unit's badge, her name over her rank and unit, and Hire */
 .wm-recruit #HiringWindow #Header { border-bottom-width: 0; }
@@ -563,25 +578,6 @@
 .wm-recruit #HiringWindow #HireButton { height: 28px; flex-shrink: 0; }
 .wm-recruit #HiringWindow #HireButton .text-button { height: 28px; padding: 0 14px; }
 .wm-recruit #HiringWindow #HireButton .text-button-label { font-size: 9px; letter-spacing: 0.8px; }
-
-/* Stats and Attributes: underlined text tabs, as the squad panel's */
-.wm-recruit #HiringWindow #TabsHeader { width: 100%; flex-shrink: 0; height: 19.2px; border-bottom-width: 0.64px; border-bottom-color: var(--line-strong); }
-.wm-recruit #HiringWindow #TabsHeader TabButton { flex-grow: 1; flex-basis: 0; }
-.wm-recruit #HiringWindow #TabsHeader .tab-button,
-.wm-recruit #HiringWindow #TabsHeader .tab-button-selected {
-    height: 19.2px;
-    margin: 0;
-    background-image: none;
-    background-color: rgba(0, 0, 0, 0);
-    border-width: 0;
-    border-bottom-width: 1.9px;
-    border-bottom-color: rgba(0, 0, 0, 0);
-}
-.wm-recruit #HiringWindow #TabsHeader .tab-button-selected { border-bottom-color: var(--gold); }
-.wm-recruit #HiringWindow #TabsHeader .tab-button-label,
-.wm-recruit #HiringWindow #TabsHeader .tab-button-selected-label { font-size: 8px; letter-spacing: 0.8px; -unity-text-align: middle-center; color: var(--ink-meta); }
-.wm-recruit #HiringWindow #TabsHeader .tab-button-selected-label { color: var(--gold); }
-.wm-recruit #HiringWindow #TabsHeader .tab-button:hover .tab-button-label { color: var(--gold); }
 
 /* The candidates: three tiles a row, as the roster's, each vanilla's own tile at the roster's size */
 .wm-recruit #HirableScrollView #SlotsContainer { flex-direction: row; flex-wrap: wrap; }

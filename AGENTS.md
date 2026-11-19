@@ -16,6 +16,7 @@ Use the pipeline skill that matches the work:
 - [`.agents/skills/voice-pipeline/SKILL.md`](.agents/skills/voice-pipeline/SKILL.md) for voice audio, subtitles, SoundBanks, and conversations.
 - [`.agents/skills/weapon-pipeline/SKILL.md`](.agents/skills/weapon-pipeline/SKILL.md) for weapon models, audio, templates, and skills.
 - [`.agents/skills/enemy-authoring/SKILL.md`](.agents/skills/enemy-authoring/SKILL.md) for enemy units: GFL2 rig to prefab, entity and skill KDL, AoE shapes, AI weighting, sound, and army lists.
+- [`.agents/skills/diorama-pipeline/SKILL.md`](.agents/skills/diorama-pipeline/SKILL.md) for the strategy diorama's rooms, effects, props, doll poses and holograms, from the GFL2 scene export to the baked prefabs.
 
 [`docs/ONBOARDING.md`](docs/ONBOARDING.md) is the longer human-oriented introduction.
 

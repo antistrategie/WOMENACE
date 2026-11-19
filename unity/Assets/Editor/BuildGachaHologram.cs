@@ -69,7 +69,8 @@ namespace Womenace.EditorTools
             body.transform.SetParent(root.transform, false);
             foreach (var stray in body.GetComponentsInChildren<Animation>(true))
                 Object.DestroyImmediate(stray);
-            var animator = body.GetComponent<Animator>() ?? body.AddComponent<Animator>();
+            if (!body.TryGetComponent<Animator>(out var animator))
+                animator = body.AddComponent<Animator>();
             animator.runtimeAnimatorController = controller;
             animator.applyRootMotion = false;
             animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;

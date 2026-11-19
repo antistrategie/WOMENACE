@@ -68,7 +68,7 @@ namespace Womenace.EditorTools
             {
                 var sep = attachSpec.LastIndexOf(':');
                 var attachPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(attachSpec.Substring(0, sep));
-                socket = FindChildDeep(instance.transform, attachSpec.Substring(sep + 1));
+                socket = TransformSearch.FindDeep(instance.transform, attachSpec.Substring(sep + 1));
                 if (attachPrefab == null || socket == null)
                 {
                     Debug.LogError($"RenderClipFrames: bad -attach '{attachSpec}' (prefab={attachPrefab}, socket={socket}).");
@@ -283,19 +283,6 @@ namespace Womenace.EditorTools
                 graph.Destroy();
 
             EditorApplication.Exit(0);
-        }
-
-        private static Transform FindChildDeep(Transform node, string name)
-        {
-            if (node.name == name)
-                return node;
-            for (int i = 0; i < node.childCount; i++)
-            {
-                var hit = FindChildDeep(node.GetChild(i), name);
-                if (hit != null)
-                    return hit;
-            }
-            return null;
         }
     }
 }

@@ -99,7 +99,7 @@ namespace Womenace.EditorTools
             var doll = Object.Instantiate(dollPrefab);
             try
             {
-                var socket = Find(doll.transform, Socket);
+                var socket = TransformSearch.FindDeep(doll.transform, Socket);
                 var animator = doll.GetComponentInChildren<Animator>();
                 if (socket == null || animator == null)
                     throw new System.Exception("no socket or animator");
@@ -117,10 +117,11 @@ namespace Womenace.EditorTools
 
                 animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
                 var recorded = parameters.EndsWith(".txt");
+                var ownRecording = false;
                 if (recorded)
                 {
                     animator.enabled = false;
-                    Stand(doll, parameters);
+                    ownRecording = Stand(doll, parameters);
                 }
                 foreach (var pair in recorded ? new string[0] : parameters.Split(',', System.StringSplitOptions.RemoveEmptyEntries))
                 {
@@ -151,7 +152,7 @@ namespace Womenace.EditorTools
                 var upper = animator.GetBoneTransform(HumanBodyBones.LeftUpperArm);
                 var lower = animator.GetBoneTransform(HumanBodyBones.LeftLowerArm);
                 var hand = animator.GetBoneTransform(HumanBodyBones.LeftHand);
-                var grip = Find(weapon.transform, LeftGrip);
+                var grip = TransformSearch.FindDeep(weapon.transform, LeftGrip);
                 var before = hand != null ? hand.position : Vector3.zero;
                 var gameGap = grip != null && hand != null ? Vector3.Distance(hand.position, grip.position) : -1f;
                 var gameTurn = grip != null && hand != null ? Quaternion.Angle(hand.rotation, grip.rotation * GripTurn) : -1f;
@@ -165,7 +166,7 @@ namespace Womenace.EditorTools
                     // A stance the game leaves the left hand out of (a blade held in one hand)
                     // has that hand well off the empty in the doll's own recording, and there
                     // it stays.
-                    follows = !(recorded && gameGap > 0.02f && Find(doll.transform, Socket) != null && OwnRecording(doll, parameters));
+                    follows = !(ownRecording && gameGap > 0.02f);
                     if (follows)
                         Solve(upper, lower, hand, grip);
                 }
@@ -187,7 +188,7 @@ namespace Womenace.EditorTools
                 Node("socket", socket);
                 Node("weapon", weapon.transform);
                 Node("grip", grip);
-                Node("muzzle", Find(weapon.transform, Muzzle));
+                Node("muzzle", TransformSearch.FindDeep(weapon.transform, Muzzle));
                 json.Append(string.Join(",\n", nodes)).Append("\n  }\n}\n");
                 File.WriteAllText(Path.Combine(outDir, name + ".json"), json.ToString());
 
@@ -205,20 +206,11 @@ namespace Womenace.EditorTools
             }
         }
 
-        // Whether a recording is of this doll: it names the unit's body by its first level of
-        // detail, which the doll then has too.
-        private static bool OwnRecording(GameObject doll, string recording)
-        {
-            var body = File.ReadLines(recording).Select(l => l.Split('\t')).Where(r => r[0] == "T")
-                .Select(r => r[1]).FirstOrDefault(path => path.EndsWith("_LOD0") && !path.Contains("/"));
-            return body != null && doll.transform.Find(body) != null;
-        }
-
         // Puts the doll's transforms where a recording has them, by their paths under the root.
         // The recording names the unit's body by its first level of detail: where the doll has
         // the same, the recording is her own and every bone is placed. Another doll's bones are
-        // only turned, and her hips set at the recorded height.
-        private static void Stand(GameObject doll, string recording)
+        // only turned, and her hips set at the recorded height. Returns whether the recording is her own.
+        private static bool Stand(GameObject doll, string recording)
         {
             var inv = CultureInfo.InvariantCulture;
             var rows = File.ReadAllLines(recording).Select(l => l.Split('\t')).Where(r => r[0] == "T").ToArray();
@@ -243,7 +235,7 @@ namespace Womenace.EditorTools
             {
                 var hand = rows.FirstOrDefault(r => r[1].EndsWith("/Hand_R"));
                 var socket = rows.FirstOrDefault(r => r[1].EndsWith("/Hand_R/" + Socket));
-                var mine = Find(doll.transform, Socket);
+                var mine = TransformSearch.FindDeep(doll.transform, Socket);
                 if (hand != null && socket != null && mine != null)
                 {
                     Vector3 P(string[] r) { var v = r[2].Split(' ').Select(x => float.Parse(x, inv)).ToArray(); return new Vector3(v[0], v[1], v[2]); }
@@ -253,6 +245,7 @@ namespace Womenace.EditorTools
                 }
             }
             Debug.Log($"WeaponHoldCheck: {doll.name} stands as {Path.GetFileName(recording)} ({(own ? "her own recording" : "another doll's, by rotation")})");
+            return own;
         }
 
         // The first level of detail's meshes as they stand in the world, as vertices and triangles.
@@ -262,7 +255,7 @@ namespace Womenace.EditorTools
         {
             var vertices = new List<Vector3>();
             var triangles = new List<int>();
-            var group = root.GetComponent<LODGroup>() ?? root.GetComponentInChildren<LODGroup>();
+            var group = root.GetComponentInChildren<LODGroup>();
             var renderers = group != null && group.GetLODs().Length > 0 && (!all || group.transform == root.transform || group.transform.IsChildOf(root.transform))
                 ? group.GetLODs()[0].renderers
                 : root.GetComponentsInChildren<Renderer>();
@@ -355,18 +348,5 @@ namespace Womenace.EditorTools
 
         // Written in the OBJ's handedness, as the vertices are.
         private static string V(Vector3 v) => $"[{F(-v.x)}, {F(v.y)}, {F(v.z)}]";
-
-        private static Transform Find(Transform node, string name)
-        {
-            if (node.name == name)
-                return node;
-            for (int i = 0; i < node.childCount; i++)
-            {
-                var hit = Find(node.GetChild(i), name);
-                if (hit != null)
-                    return hit;
-            }
-            return null;
-        }
     }
 }

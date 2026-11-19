@@ -271,7 +271,7 @@ Shader "Womenace/BakedScene"
             float4 _WmSunColor;
             // How far a live caster's shadow darkens the baked light (GFL2's indoor player shadow).
             float _WmShadowStrength;
-            // GFL2's live lights, up to four: position (xyz) and 1 / range^2 (w), spot direction
+            // GFL2's live lights, up to eight (StrategyDiorama.Rooms.cs's MaxLiveLights): position (xyz) and 1 / range^2 (w), spot direction
             // toward the light (xyz), linear colour times intensity (rgb, zero for no light), and the
             // spot cone's scale and offset (a point light is 0, 1) and whether the shadowmask holds
             // the room's shadows for it (a Mixed light, z). Set one by one (the game's

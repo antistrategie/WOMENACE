@@ -29,14 +29,12 @@ namespace Womenace.EditorTools
             "LowCoverIdle_L", "LowCoverIdle_R",
         };
 
-
-
         // Rebuild the instance's pose from the skin bindposes: the inverse bind
         // matrices are the bones' world transforms at skinning time, i.e. the
         // modeller's true binding pose (a clean symmetric A-pose for GFL2 rigs),
         // with the authored bone rolls. The prefab's node defaults are whatever
-        // pose the rig was exported in (a battle stance for this donor) and
-        // calibrating muscles against that biases every channel.
+        // pose the rig was exported in, often a battle stance, and calibrating
+        // muscles against that biases every channel.
         private static int ApplyBindPose(GameObject pose)
         {
             // Every skinned mesh gives its bones' bind transforms, the mesh with the most
@@ -77,19 +75,6 @@ namespace Womenace.EditorTools
             }
             Walk(pose.transform);
             return applied;
-        }
-
-        private static Transform FindDeep(Transform root, string name)
-        {
-            if (root.name == name)
-                return root;
-            foreach (Transform child in root)
-            {
-                var hit = FindDeep(child, name);
-                if (hit != null)
-                    return hit;
-            }
-            return null;
         }
 
         public static void Run()
@@ -147,7 +132,7 @@ namespace Womenace.EditorTools
                         idle.SampleAnimation(animator != null ? animator.gameObject : instance, 0.1f);
                         foreach (var name in new[] { "Hand_L", "Hand_R", "Head", "Hips" })
                         {
-                            var t = FindDeep(instance.transform, name);
+                            var t = TransformSearch.FindDeep(instance.transform, name);
                             if (t != null)
                                 Debug.Log($"ExtractHumanoidClips: VALIDATE {name} world=({t.position.x:+0.000;-0.000},{t.position.y:+0.000;-0.000},{t.position.z:+0.000;-0.000})");
                         }
@@ -213,16 +198,13 @@ namespace Womenace.EditorTools
                 try
                 {
                     pose.name = modelRoot.name;
-                    // true calibration pose: the skin bind (a symmetric A-pose
-                    // with authored rolls), then the standard synthetic lift of
-                    // the upper arms to horizontal. A swing-only lift preserves
-                    // the bind's roll relationships.
+                    // A swing-only lift keeps the bind's roll relationships.
                     var appliedBind = ApplyBindPose(pose);
                     Debug.Log($"ExtractHumanoidClips: bind pose applied to {appliedBind} bone(s).");
                     foreach (var sd in new[] { "L", "R" })
                     {
-                        var upper = FindDeep(pose.transform, "Shoulder_" + sd);
-                        var wrist = FindDeep(pose.transform, "Wrist_" + sd);
+                        var upper = TransformSearch.FindDeep(pose.transform, "Shoulder_" + sd);
+                        var wrist = TransformSearch.FindDeep(pose.transform, "Wrist_" + sd);
                         if (upper == null || wrist == null)
                             continue;
                         var dir = wrist.position - upper.position;
@@ -233,7 +215,7 @@ namespace Womenace.EditorTools
                         upper.rotation = lift * upper.rotation;
                         Debug.Log($"ExtractHumanoidClips: lifted arm {sd} by {Quaternion.Angle(Quaternion.identity, lift):0.0} degrees.");
                     }
-                                        var bones = new List<SkeletonBone>();
+                    var bones = new List<SkeletonBone>();
                     void Walk(Transform t)
                     {
                         bones.Add(new SkeletonBone

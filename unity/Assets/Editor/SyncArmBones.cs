@@ -27,15 +27,15 @@ namespace Womenace.EditorTools
                 var prefabPath = $"Assets/Prefabs/{outfit}/main.prefab";
                 var source = AssetDatabase.LoadAssetAtPath<GameObject>(model.Replace('\\', '/'));
                 if (source == null || !File.Exists(prefabPath)) continue;
-                if (Find(source.transform, "UpperArm_L") == null) continue;
+                if (TransformSearch.FindDeep(source.transform, "UpperArm_L") == null) continue;
 
                 var root = PrefabUtility.LoadPrefabContents(prefabPath);
                 int moved = 0, missing = 0;
                 var furthest = 0f;
                 foreach (var side in new[] { "_L", "_R" })
                 {
-                    var from = Find(source.transform, Chain[0] + side);
-                    var to = Find(root.transform, Chain[0] + side);
+                    var from = TransformSearch.FindDeep(source.transform, Chain[0] + side);
+                    var to = TransformSearch.FindDeep(root.transform, Chain[0] + side);
                     if (from == null || to == null) continue;
                     var targets = to.GetComponentsInChildren<Transform>(true).GroupBy(t => t.name).ToDictionary(g => g.Key, g => g.First());
                     foreach (var bone in from.GetComponentsInChildren<Transform>(true))
@@ -57,8 +57,5 @@ namespace Womenace.EditorTools
             }
             AssetDatabase.SaveAssets();
         }
-
-        private static Transform Find(Transform root, string name) =>
-            root.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == name);
     }
 }

@@ -39,29 +39,16 @@ namespace Womenace.EditorTools
         // arm, elbow bent and forearm rising, not by a wrist bent back as far as it goes.
         private static readonly float[] Stiffness = { 6f, 6f, 8f, 4f, 10f, 30f, 30f };
 
-        private static Transform Find(Transform root, string name)
-        {
-            if (root.name == name)
-                return root;
-            foreach (Transform c in root)
-            {
-                var hit = Find(c, name);
-                if (hit != null)
-                    return hit;
-            }
-            return null;
-        }
-
         public static void Run()
         {
             var doll = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(Doll));
             var animator = doll.GetComponentInChildren<Animator>();
-            var socket = Find(doll.transform, "Hand_R_Socket");
+            var socket = TransformSearch.FindDeep(doll.transform, "Hand_R_Socket");
             var umb = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(Umbrella), socket);
             umb.transform.localPosition = GripPosition;
             umb.transform.localRotation = GripRotation;
-            var shaftBase = Find(umb.transform, "Weapon_02");
-            var runner = Find(umb.transform, "weapon_16");
+            var shaftBase = TransformSearch.FindDeep(umb.transform, "Weapon_02");
+            var runner = TransformSearch.FindDeep(umb.transform, "weapon_16");
 
             var hold = AssetDatabase.LoadAssetAtPath<AnimationClip>($"{Clips}/Hold.anim");
             var raise = AssetDatabase.LoadAssetAtPath<AnimationClip>($"{Clips}/Raise.anim");

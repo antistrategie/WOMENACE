@@ -107,7 +107,9 @@ namespace Womenace.EditorTools
                 instance.name = Path.GetFileName(outputName);
                 foreach (var stray in instance.GetComponentsInChildren<Animation>(true))
                     UnityEngine.Object.DestroyImmediate(stray);
-                var animator = instance.GetComponentInChildren<Animator>(true) ?? instance.AddComponent<Animator>();
+                var animator = instance.GetComponentInChildren<Animator>(true);
+                if (animator == null)
+                    animator = instance.AddComponent<Animator>();
                 animator.runtimeAnimatorController = controller;
                 animator.applyRootMotion = false;
                 animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;

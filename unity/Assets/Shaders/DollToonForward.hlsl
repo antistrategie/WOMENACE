@@ -1,8 +1,11 @@
-// The ForwardOnly stage shared by Womenace/DollToon and Womenace/DollToonTrans:
-// the pass-scoped shadow and GI includes, the indirect diffuse chain, the
-// shadow attenuation, and the vertex and fragment programs. The transparent
-// variant defines DOLL_FORWARD_TRANSPARENT, which carries the albedo alpha
-// through to the blend instead of writing opaque. The multi_compile keywords
+// The ForwardOnly stage shared by Womenace/DollToon, Womenace/DollToonFace and
+// Womenace/DollToonTrans (Womenace/DollToonHair takes DollToon's pass): the
+// pass-scoped shadow and GI includes, the indirect diffuse chain, the shadow
+// attenuation, and the vertex and fragment programs. The transparent variant
+// defines DOLL_FORWARD_TRANSPARENT, which carries the albedo alpha through to
+// the blend instead of writing opaque. DollToonFace's FaceBand pass defines
+// DOLL_FACE_BAND, which shuts the key off where the hair's shadow pass marked
+// the stencil. The multi_compile keywords
 // these includes need are declared by each shader pass, because a #pragma
 // inside an include is invisible to Unity.
 #ifndef DOLL_TOON_FORWARD_INCLUDED
@@ -197,12 +200,12 @@ float4 frag(Varyings input, bool isFrontFace : SV_IsFrontFace) : SV_TARGET
     // non-zero _MatCapIntensity is what marks a material as taking
     // the hair path.
     //
-    // Hair reaches the right answer today by a different route, and
+    // Hair reaches the right answer by a different route, and
     // it is worth naming because it crosses a repo boundary: the bake
     // binds a 1x1 placeholder into _MaskMap for any material whose
     // source ships no mask, and that placeholder is packed for HDRP's
     // convention rather than GFL2's. Read as RMO it is roughness 0,
-    // metallic 1, occlusion 0 — a chrome mirror — and the only thing
+    // metallic 1, occlusion 0, which is a chrome mirror, and the only thing
     // standing between that and the screen is the zero in B tripping
     // the sentinel above. So the sentinel is load-bearing, not a
     // convenience, and a placeholder with a non-zero B would turn

@@ -68,11 +68,6 @@ Shader "Womenace/DollToonHair"
         _BlendSmoothness ("FaceSDF Penumbra", Range(0.001, 1)) = 0.1
         _FaceSpecIntensity ("Face Glint Intensity", Float) = 1
         _SpecUVYOffset ("Face Glint V Offset", Float) = 0
-
-
-
-
-
     }
 
     SubShader

@@ -38,19 +38,6 @@ namespace Womenace.EditorTools
             "Assets/Prefabs/robella/default/main.prefab",
         };
 
-        private static Transform Find(Transform root, string name)
-        {
-            if (root.name == name)
-                return root;
-            foreach (Transform c in root)
-            {
-                var hit = Find(c, name);
-                if (hit != null)
-                    return hit;
-            }
-            return null;
-        }
-
         // Right, up, forward from the shoulders and hips.
         private static Quaternion BodyFrame(Vector3 lShoulder, Vector3 rShoulder, Vector3 lHip, Vector3 rHip)
         {
@@ -78,11 +65,11 @@ namespace Womenace.EditorTools
             var gfl = Object.Instantiate(gflAsset);
             take.SampleAnimation(gfl, HoldTakeFrame / take.frameRate);
             var t = gfl.transform;
-            var gWrist = Find(t, "Wrist_R");
-            var gUmb = Find(t, "Weapon_02");
-            var gBody = BodyFrame(Find(t, "Shoulder_L").position, Find(t, "Shoulder_R").position,
-                Find(t, "Hip_L").position, Find(t, "Hip_R").position);
-            var gHeight = Vector3.Distance(Find(t, "Root_M").position, Find(t, "Head_M").position);
+            var gWrist = TransformSearch.FindDeep(t, "Wrist_R");
+            var gUmb = TransformSearch.FindDeep(t, "Weapon_02");
+            var gBody = BodyFrame(TransformSearch.FindDeep(t, "Shoulder_L").position, TransformSearch.FindDeep(t, "Shoulder_R").position,
+                TransformSearch.FindDeep(t, "Hip_L").position, TransformSearch.FindDeep(t, "Hip_R").position);
+            var gHeight = Vector3.Distance(TransformSearch.FindDeep(t, "Root_M").position, TransformSearch.FindDeep(t, "Head_M").position);
             var umbInBody = Quaternion.Inverse(gBody) * gUmb.rotation;
             var umbOffsetInBody = Quaternion.Inverse(gBody) * (gUmb.position - gWrist.position) / gHeight;
             Debug.Log($"MeasureUmbrellaGrip: GFL2 take '{take.name}' at frame {HoldTakeFrame}, hips-head {gHeight:0.000}");
@@ -105,7 +92,7 @@ namespace Womenace.EditorTools
                 var dBody = BodyFrame(B(HumanBodyBones.LeftUpperArm), B(HumanBodyBones.RightUpperArm),
                     B(HumanBodyBones.LeftUpperLeg), B(HumanBodyBones.RightUpperLeg));
                 var dHeight = Vector3.Distance(B(HumanBodyBones.Hips), B(HumanBodyBones.Head));
-                var socket = Find(doll.transform, "Hand_R_Socket");
+                var socket = TransformSearch.FindDeep(doll.transform, "Hand_R_Socket");
 
                 if (dollPath.Contains("/welrod/"))
                 {
@@ -116,7 +103,7 @@ namespace Womenace.EditorTools
                     var umb = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(Umbrella), socket);
                     umb.transform.localPosition = Vector3.zero;
                     umb.transform.localRotation = Quaternion.identity;
-                    var w02 = Find(umb.transform, "Weapon_02");
+                    var w02 = TransformSearch.FindDeep(umb.transform, "Weapon_02");
                     var rootToW02 = umb.transform.worldToLocalMatrix * w02.localToWorldMatrix;
                     var want = Matrix4x4.TRS(wantPos, wantRot, Vector3.one);
                     var rootWorld = want * rootToW02.inverse;

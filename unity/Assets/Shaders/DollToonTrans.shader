@@ -74,7 +74,6 @@ Shader "Womenace/DollToonTrans"
         HLSLINCLUDE
         #pragma target 4.5
         #include "DollToonLighting.hlsl"
-        float _ShadowClip;
         ENDHLSL
 
         // Shadow caster, alpha-clipped. Without the clip the whole decal sheet

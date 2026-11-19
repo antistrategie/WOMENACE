@@ -1,8 +1,13 @@
-// The GFL2 shading model shared by Womenace/DollToon and its transparent
-// variant Womenace/DollToonTrans: the material inputs, the ramp, GGX, the
-// FaceSDF sweep, the hair path, the extra-lights loop and the key light
-// fetch. Pass-specific stages stay in the shaders; #pragma directives are
-// invisible inside an include, so those stay in the shaders too.
+// The GFL2 shading model shared by Womenace/DollToon, Womenace/DollToonFace,
+// Womenace/DollToonHair and the transparent Womenace/DollToonTrans: the
+// material inputs, the ramp, GGX, the FaceSDF sweep, the hair path, the
+// extra-lights loop and the key light fetch. Pass-specific stages stay in the
+// shaders, and so do #pragma directives, which are invisible inside an include.
+//
+// The material block below carries the material values of all four shaders,
+// the ones only some of them read included, because the SRP Batcher takes a
+// shader only when every one of its passes has its material values in
+// UnityPerMaterial.
 #ifndef DOLL_TOON_LIGHTING_INCLUDED
 #define DOLL_TOON_LIGHTING_INCLUDED
 // ShaderVariables brings HDRP's globals, the camera-relative space
@@ -68,6 +73,8 @@ CBUFFER_START(UnityPerMaterial)
     float _UseRoomReflection;
     float _FaceSpecIntensity;
     float _SpecUVYOffset;
+    // Womenace/DollToonTrans's shadow caster cutoff.
+    float _ShadowClip;
 CBUFFER_END
 
 #include "DollKeyLight.hlsl"

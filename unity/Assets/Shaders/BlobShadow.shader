@@ -1,7 +1,8 @@
-// A soft contact shadow on the floor under a doll standing in a baked room. The room's lighting is
-// baked and ignores live lights, so a doll casts nothing; GFL2 bakes a shadow patch under each of
-// its staged dolls instead. This draws an elliptical falloff on a floor quad that darkens what is
-// already there (multiply), densest under the feet.
+// A soft contact shadow on the floor under a doll standing in a baked room. Her cast shadow comes
+// from the diorama's live shadow map (StrategyDiorama.Shadows.cs), which is too coarse to darken
+// the floor right under her feet, where GFL2 bakes a shadow patch under each of its staged dolls.
+// This draws an elliptical falloff on a floor quad that darkens what is already there (multiply),
+// densest under the feet.
 Shader "Womenace/BlobShadow"
 {
     Properties

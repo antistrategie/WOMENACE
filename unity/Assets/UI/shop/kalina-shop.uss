@@ -11,7 +11,7 @@
 }
 #wm-shop-root .wm-shop-currency { flex-direction: row; align-items: center; justify-content: center; flex-shrink: 0; }
 #wm-shop-root .wm-shop-currency-icon { width: 24px; height: 24px; flex-shrink: 0; margin-right: 6px; -unity-background-scale-mode: scale-to-fit; }
-#wm-shop-root .wm-shop-currency-value { margin: 0; padding: 0; font-size: 14px; color: var(--gold-amount); white-space: nowrap; -unity-text-align: middle-center; }
+#wm-shop-root .wm-shop-currency-value { margin: 0; padding: 0; font-size: 14px; letter-spacing: 0.2px; color: var(--gold-amount); white-space: nowrap; -unity-text-align: middle-center; }
 #wm-shop-root .wm-shop-symbol-button { margin: 0; padding: 0; align-items: center; justify-content: center; flex-shrink: 0; border-width: 1px; border-radius: 0; border-color: var(--line); background-color: rgb(0, 0, 0); }
 #wm-shop-root .wm-shop-symbol-button:hover { background-color: rgba(215, 192, 116, 0.14); border-color: var(--gold); }
 #wm-shop-root .wm-shop-symbol-button:focus { border-color: var(--gold); }
@@ -21,7 +21,8 @@
 #wm-shop-root .wm-shop-symbol-horizontal { position: absolute; left: 0; right: 0; top: 5px; height: 2px; background-color: var(--ink-body); }
 #wm-shop-root .wm-shop-symbol-vertical { position: absolute; top: 0; bottom: 0; left: 5px; width: 2px; background-color: var(--ink-body); }
 #wm-shop-root .wm-shop-tabs { position: absolute; left: 16px; top: 12px; flex-direction: row; }
-#wm-shop-root .wm-shop-tab { width: 90px; height: 27px; margin-right: 5px; border-color: var(--line); }
+#wm-shop-root .wm-shop-tab { width: 90px; height: 27px; margin-right: 5px; padding: 0; align-items: center; justify-content: center; background-image: none; background-color: rgb(0, 0, 0); border-width: 1px; border-color: var(--line); }
+#wm-shop-root .wm-shop-tab .text-button-label { color: var(--ink-meta); margin: 0; padding: 0; font-size: 10px; letter-spacing: 0.8px; -unity-text-align: middle-center; }
 #wm-shop-root .wm-shop-tab:hover { border-color: var(--gold); }
 #wm-shop-root .wm-shop-tab:hover .text-button-label { color: var(--gold); }
 #wm-shop-root .wm-shop-tab-active { border-color: var(--gold); }
@@ -46,7 +47,7 @@
 #wm-shop-root .wm-shop-price .wm-shop-currency-value { font-size: 9px; }
 #wm-shop-root .wm-shop-owned { position: absolute; left: 1px; top: 0; margin: 0; padding: 0 2px; font-size: 9px; color: var(--gold); background-color: rgba(0, 0, 0, 0.6); }
 #wm-shop-root .wm-shop-checkout, #wm-shop-root .wm-proc-footer { position: absolute; left: 16px; right: 16px; bottom: 14px; height: 42px; margin: 0; padding: 0; flex-direction: row; align-items: center; justify-content: flex-end; }
-#wm-shop-root .wm-shop-total-label { height: 42px; margin: 0 14px 0 0; padding: 0; font-size: 9px; color: var(--ink-label); -unity-text-align: middle-right; }
+#wm-shop-root .wm-shop-total-label { height: 42px; margin: 0 14px 0 0; padding: 0; font-size: 9px; letter-spacing: 1px; color: var(--ink-label); -unity-text-align: middle-right; }
 #wm-shop-root .wm-shop-total { min-width: 76px; height: 42px; align-items: flex-end; justify-content: center; margin-right: 20px; }
 /* The variant also outranks the Procurement button rules in the later stylesheet. */
 #wm-shop-root .wm-shop-primary, #wm-shop-root .wm-proc-button.wm-shop-primary { background-color: var(--gold); border-color: var(--gold); color: rgb(0, 0, 0); }
@@ -57,7 +58,7 @@
 /* A primary button that cannot be pressed is an outline: its gold is only painted while it can. */
 #wm-shop-root .wm-shop-primary:disabled, #wm-shop-root .wm-proc-button.wm-shop-primary:disabled { opacity: 0.35; background-color: rgb(0, 0, 0); border-color: var(--line-strong); }
 #wm-shop-root .wm-shop-primary:disabled .wm-proc-text, #wm-shop-root .wm-shop-primary:disabled .wm-shop-currency-value, #wm-shop-root .wm-shop-primary:disabled .text-button-label, #wm-shop-root .wm-shop-primary:disabled .wm-proc-button-caption { color: var(--ink-meta); }
-#wm-shop-root #wm-shop-checkout-button .text-button-label { margin: 0; padding: 0; font-size: 10px; -unity-font-style: bold; -unity-text-align: middle-center; }
+#wm-shop-root #wm-shop-checkout-button .text-button-label { margin: 0; padding: 0; font-size: 10px; letter-spacing: 1.2px; -unity-font-style: bold; -unity-text-align: middle-center; }
 #wm-shop-root .wm-shop-feedback { flex-grow: 1; flex-shrink: 1; min-width: 0; margin: 0 16px 0 0; padding: 0; font-size: 10px; color: var(--gold); white-space: normal; }
 #wm-shop-root .wm-kalina-portrait { position: absolute; right: 40px; bottom: 80px; width: 300px; height: 432px; overflow: hidden; }
 #wm-shop-root .wm-kalina-art { -unity-background-scale-mode: stretch-to-fill; }
@@ -90,11 +91,6 @@
 #wm-shop-root .wm-kalina-outfit:hover { border-color: var(--gold); }
 #wm-shop-root .wm-kalina-outfit-name { position: absolute; left: 8px; top: 6px; margin: 0; padding: 0; font-size: 10px; -unity-text-align: upper-left; color: var(--ink); }
 #wm-shop-root .wm-kalina-outfit-status { position: absolute; left: 8px; top: 21px; margin: 0; padding: 0; font-size: 9px; -unity-text-align: upper-left; color: var(--ink-label); }
-#wm-shop-root .wm-shop-tab .text-button-label { color: var(--ink-meta); margin: 0; padding: 0; font-size: 10px; letter-spacing: 0.8px; -unity-text-align: middle-center; }
-#wm-shop-root .wm-shop-tab { background-image: none; background-color: rgb(0, 0, 0); border-width: 1px; padding: 0; align-items: center; justify-content: center; }
-#wm-shop-root .wm-shop-total-label { letter-spacing: 1px; }
-#wm-shop-root .wm-shop-currency-value { letter-spacing: 0.2px; }
-#wm-shop-root #wm-shop-checkout-button .text-button-label { letter-spacing: 1.2px; }
 
 /* Kalina's card: what the player has to spend, how she feels about them, and her wardrobe. */
 #wm-shop-root .wm-kalina-card { position: absolute; right: 40px; top: 80px; width: 300px; padding: 10px 12px; background-color: rgba(0, 0, 0, 0.92); border-width: 0.64px; border-color: var(--line); }

@@ -37,6 +37,11 @@ namespace Womenace.EditorTools
         {
             var src = $"Assets/Authored/environment/{name}";
             var dst = $"Assets/Prefabs/environment/{name}";
+            // Every mesh and material is written afresh, so what an earlier dump had and this one
+            // does not goes with the folders.
+            foreach (var folder in new[] { $"{dst}/meshes", $"{dst}/materials" })
+                if (AssetDatabase.IsValidFolder(folder))
+                    AssetDatabase.DeleteAsset(folder);
             Directory.CreateDirectory(dst);
             Directory.CreateDirectory($"{dst}/meshes");
             Directory.CreateDirectory($"{dst}/materials");

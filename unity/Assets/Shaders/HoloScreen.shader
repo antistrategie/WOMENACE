@@ -3,7 +3,7 @@
 // strategy diorama's holotable, where the system map camera renders into the texture at full
 // screen size: its projection stays the vanilla one, so the map's planet labels and clicks line
 // up with the hologram without any remapping. Backdrop darkens the room behind lit content (alpha
-// from the content's brightness), so faint orbits and labels stay readable over a bright room; at 0
+// from the content's brightness), so faint orbits and labels stay readable over a bright room. At 0
 // the blend is purely additive. The holotable's planet projection uses the same shader on a quad
 // standing over the table, depth tested so dolls in front of it hide it. Texture Rect picks a part
 // of the texture for a quad, for several quads that share one texture (the mission cards), and
@@ -106,7 +106,10 @@ Shader "Womenace/HoloScreen"
                     // or behind the scan and flickering, with a glow of its own colour trailing it
                     // over what has just been shown and a thin bright line at the very front.
                     float band = floor(input.uv.y * _RevealBands);
-                    float lot = frac(sin(band * 12.9898 + floor(_Time.y * 24.0) * 4.1414) * 43758.5453);
+                    // The frame count is wrapped so the sine's argument stays small enough for
+                    // the hash to keep its float precision however long the game has run.
+                    float frame = fmod(floor(_Time.y * 24.0), 1024.0);
+                    float lot = frac(sin(band * 12.9898 + frame * 4.1414) * 43758.5453);
                     float there = step(0.001, _Reveal);
                     float front = _Reveal + (lot - 0.5) * 0.07 * _RevealRagged * there;
                     float shown = step(input.uv.x, front);

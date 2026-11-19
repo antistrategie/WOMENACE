@@ -119,13 +119,13 @@
 
 /* The outfit list shown in place (the Squads screen's Appearance tab): one card to a row */
 .wm-outfit-list--rows { flex-direction: column; flex-wrap: nowrap; }
-/* The modal's card is 298 by 106 and its art is drawn for that shape, so a row keeps the shape at the column's width */
-.wm-outfit-list--rows .wm-outfit-card { width: 100%; height: 109px; margin-right: 0; }
+/* The modal's card is 298 by 106 and its art is drawn for that shape, so a row keeps the shape at
+   the column's width. A row is in the Squads panel's style: dark fill, hairline edge. */
+.wm-outfit-list--rows .wm-outfit-card { width: 100%; height: 109px; margin-right: 0; margin-bottom: 6.4px; background-image: none; background-color: rgb(12, 17, 24); border-width: 0.64px; border-color: rgb(67, 83, 106); border-radius: 0; }
 .wm-outfit-tag { position: absolute; left: 9px; bottom: 8px; padding: 1px 5px; font-size: 7.2px; letter-spacing: 0.7px; color: rgb(120, 143, 176); background-color: rgba(0, 0, 0, 0.8); border-width: 0.64px; border-color: rgb(120, 143, 176); }
 
-/* A hosted row in the Squads panel's style: dark fill, hairline edge, gold edge on the outfit
-   being dressed, white name with who wears it as chips beside it */
-.wm-outfit-list--rows .wm-outfit-card { background-image: none; background-color: rgb(12, 17, 24); border-width: 0.64px; border-color: rgb(67, 83, 106); border-radius: 0; margin-bottom: 6.4px; }
+/* A hosted row: gold edge on the outfit being dressed, white name with who wears it as chips
+   beside it */
 .wm-outfit-list--rows .wm-outfit-card:hover { border-color: rgb(215, 192, 116); }
 .wm-outfit-list--rows .wm-outfit-card--on { border-width: 1.9px; border-color: rgb(215, 192, 116); }
 .wm-outfit-list--rows .wm-outfit-card #Border { visibility: hidden; }

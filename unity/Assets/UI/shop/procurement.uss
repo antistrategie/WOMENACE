@@ -85,14 +85,16 @@
 #wm-shop-root .wm-proc-page-number { min-width: 45px; margin-left: 14px; margin-right: 14px; -unity-text-align: middle-center; white-space: nowrap; color: var(--ink-body); }
 #wm-shop-root .wm-proc-filters { margin-top: 12px; height: 25px; flex-shrink: 0; }
 #wm-shop-root .wm-proc-filter { height: 25px; padding: 3px 10px; margin-right: 5px; background-color: rgba(0, 0, 0, 0); border-color: var(--line); }
-#wm-shop-root .wm-proc-quantity #unity-text-input { background-color: rgb(0, 0, 0); color: var(--ink-body); border-width: 1px; border-color: var(--line); -unity-text-align: middle-center; }
+#wm-shop-root .wm-proc-quantity #unity-text-input { margin: 0; padding: 4px 8px; background-color: rgb(0, 0, 0); color: var(--ink-body); border-width: 1px; border-radius: 0; border-color: var(--line); -unity-text-align: middle-center; }
+#wm-shop-root .wm-proc-quantity #unity-text-input:focus { border-color: var(--gold); }
+#wm-shop-root .wm-proc-quantity .unity-text-element { color: var(--ink-body); -unity-text-align: middle-center; }
 #wm-shop-root .wm-proc-empty { width: 100%; margin-top: 40px; color: var(--ink-meta); -unity-text-align: middle-center; }
 #wm-shop-root .wm-proc-modal { position: absolute; left: 0; right: 0; top: 0; bottom: 0; align-items: center; justify-content: center; background-color: rgba(0, 0, 0, 0.8); }
 #wm-shop-root .wm-proc-exchange-dialog { width: 365px; padding: 22px; background-color: rgb(0, 0, 0); border-width: 1px; border-color: var(--line-strong); }
 #wm-shop-root .wm-proc-exchange-dialog .wm-proc-title { font-size: 20px; }
 #wm-shop-root .wm-proc-exchange-art { width: 90px; height: 90px; margin-top: 16px; margin-bottom: 8px; align-self: center; -unity-background-scale-mode: scale-to-fit; }
 #wm-shop-root .wm-proc-exchange-price { align-self: center; margin-bottom: 18px; }
-#wm-shop-root .wm-proc-quantity { height: 35px; font-size: 19px; }
+#wm-shop-root .wm-proc-quantity { height: 35px; margin: 0; padding: 0; font-size: 19px; --unity-selection-color: rgba(180, 159, 98, 0.4); --unity-cursor-color: rgb(234, 214, 164); }
 #wm-shop-root .wm-proc-presets { justify-content: center; margin-top: 10px; margin-bottom: 20px; }
 #wm-shop-root .wm-proc-buy-pieces { height: 42px; margin-top: 18px; }
 #wm-shop-root .wm-proc-transfer, #wm-shop-root .wm-proc-reveal { position: absolute; left: 0; right: 0; top: 90.4px; bottom: 89.6px; background-color: rgb(4, 7, 10); overflow: hidden; }
@@ -163,13 +165,7 @@
 
 #wm-shop-root .wm-proc-roman, #wm-shop-root .wm-proc-reveal-roman { -unity-font-definition: url("fonts/LiberationSerif-Regular.ttf"); -unity-font: url("fonts/LiberationSerif-Regular.ttf"); }
 
-#wm-shop-root .wm-proc-quantity { margin: 0; padding: 0; }
-#wm-shop-root .wm-proc-quantity #unity-text-input { margin: 0; padding: 4px 8px; border-radius: 0; }
-#wm-shop-root .wm-proc-quantity #unity-text-input:focus { border-color: var(--gold); }
-#wm-shop-root .wm-proc-quantity .unity-text-element { color: var(--ink-body); -unity-text-align: middle-center; }
-
 #wm-shop-root .wm-proc-orbit { position: absolute; left: 70%; margin-left: -226px; top: -60px; width: 452px; height: 452px; }
-#wm-shop-root .wm-proc-quantity { --unity-selection-color: rgba(180, 159, 98, 0.4); --unity-cursor-color: rgb(234, 214, 164); }
 #wm-shop-root .wm-proc-buy-pieces .wm-proc-button-caption { color: rgb(0, 0, 0); -unity-font-style: bold; }
 /* A special equipment card: its picture across the whole card, its name and its claims over the top left. */
 #wm-shop-root .wm-proc-special-card .wm-proc-item-icon { position: absolute; left: 8px; right: 8px; top: 20px; bottom: 5px; width: auto; height: auto; margin: 0; }

@@ -7,8 +7,9 @@ using UnityEngine.TextCore.Text;
 
 namespace Womenace.EditorTools
 {
-    // Bakes the mod's UI fonts (Assets/UI/fonts/<name>.ttf) into signed distance field font
-    // assets beside them (<name>-SDF.asset), which the stylesheets name. The mod draws its own UI in
+    // Bakes the mod's UI faces (Assets/UI/fonts/Jura-<weight>.ttf) into signed distance field font
+    // assets beside them (Jura-<weight>-SDF.asset), which the stylesheets name. Other fonts in the
+    // folder are left as they are. The mod draws its own UI in
     // MENACE's face, Jura Bold, and ships it rather than borrow the game's copy, whose life is the
     // game's to end.
     //

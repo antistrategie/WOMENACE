@@ -2,7 +2,9 @@
 // inside (front faces culled) that shows a cube captured from the room, looked up by the
 // normalised object-space position with y negated. It is the ops room's floor mirror, a frozen image
 // of the room, which Womenace/BakedScene works out on the floor itself from the same box and cube
-// (StrategyDiorama.Reflection.cs), so this shader is only the box's material.
+// (StrategyDiorama.Reflection.cs), so this shader is only the box's material. BakeRoom leaves the
+// box's renderer disabled and the game never draws it: the pass below draws the box only in an
+// Editor preview, and the material is how the room's bundle carries the cube to the floor.
 Shader "Womenace/PrebakedCube"
 {
     Properties
