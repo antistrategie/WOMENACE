@@ -13,6 +13,10 @@ Shader "Womenace/VisionGhost"
         _NoiseScale ("Noise scale", Float) = 1.6
         _RiseSpeed ("Rise speed", Float) = 0.35
         _Height ("Body height", Float) = 2
+        // A unit drawn in several parts gives every part its own feet and height, so it frays
+        // from its own top and not from each part's pivot. Unset, a part's pivot is its feet.
+        _UseBase ("Use the unit's base", Float) = 0
+        _BaseY ("Unit's base (absolute world height)", Float) = 0
         _FrayStart ("Fray start (fraction of height)", Range(0, 1)) = 0.55
         _Inflate ("Shell offset (metres along the normal)", Float) = 0.035
         _Alpha ("Opacity", Range(0, 1)) = 1
@@ -45,7 +49,7 @@ Shader "Womenace/VisionGhost"
             SAMPLER(sampler_NoiseTex);
             CBUFFER_START(UnityPerMaterial)
                 float4 _NoiseTex_ST, _RimColor, _CoreColor;
-                float _RimPower, _CoreAlpha, _NoiseScale, _RiseSpeed, _Height, _FrayStart, _Inflate, _Alpha, _ExposureWeight;
+                float _RimPower, _CoreAlpha, _NoiseScale, _RiseSpeed, _Height, _FrayStart, _Inflate, _Alpha, _ExposureWeight, _UseBase, _BaseY;
             CBUFFER_END
 
             struct Attributes
@@ -88,7 +92,7 @@ Shader "Womenace/VisionGhost"
 
                 // Camera-relative rendering: noise and height read absolute world space.
                 float3 p = GetAbsolutePositionWS(input.positionRWS);
-                float originY = GetAbsolutePositionWS(TransformObjectToWorld(float3(0, 0, 0))).y;
+                float originY = _UseBase > 0.5 ? _BaseY : GetAbsolutePositionWS(TransformObjectToWorld(float3(0, 0, 0))).y;
                 float height = saturate((p.y - originY) / max(0.01, _Height));
                 float smoke = Smoke(p, n, _Time.y);
 

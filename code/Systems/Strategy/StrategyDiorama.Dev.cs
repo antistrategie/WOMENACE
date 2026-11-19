@@ -39,7 +39,7 @@ public sealed partial class StrategyDiorama
         foreach (var faction in factions.Values)
             if (faction != null)
                 lines.Add($"{faction.GetTemplate()?.name}: level {faction.GetTrustLevel()}, taken {faction.GetUnlockedUpgradeCount()}, more {faction.HasLockedUpgrades()}, status {faction.GetStatus()}");
-        lines.Add($"claim waits {FactionUnlockWaiting()}, notice {_instance?.DinergateNotice}");
+        lines.Add($"claims waiting {FactionUnlocksWaiting()}, notice {_instance?.DinergateNotice}");
         return string.Join("\n", lines);
     }
 

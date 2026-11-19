@@ -263,6 +263,11 @@ public sealed partial class StrategyDiorama
         _intelListed = count;
         _intelMessages = unread;
         var number = unread > 0 ? unread.ToString(System.Globalization.CultureInfo.InvariantCulture) : "";
+        // The Dinergate's tag counts what calls for attention: the messages waiting and, where
+        // the board lists the factions, each faction with an upgrade waiting to be claimed.
+        var unlocks = factions != null ? FactionUnlocksWaiting() : 0;
+        var calling = unread + unlocks;
+        var tagNumber = calling > 0 ? calling.ToString(System.Globalization.CultureInfo.InvariantCulture) : "";
 
         // The board grows out once the Dinergate is nearly in place, and shrinks the moment it shuts.
         UI.Find(_shell, UiSelector.Name("wm-board"))?.EnableInClassList("wui-board--open", _intelOpen && _intelBoardShown == _intelSeq);
@@ -270,7 +275,7 @@ public sealed partial class StrategyDiorama
         // Story factions are on the system map only, as in vanilla.
         Show("wm-board-factions", factions != null);
         ShowCount("wm-board-count", number);
-        ShowCount("wm-dg-tag-count", number);
+        ShowCount("wm-dg-tag-count", tagNumber);
         SetText("wm-board-empty", count == 0 ? Locale.Text("WOMENACE::ui/intel/no_messages", "NO MESSAGES") : "");
 
         // The board is as tall as its longer list, within limits.
@@ -299,23 +304,24 @@ public sealed partial class StrategyDiorama
         }
         // The Dinergate calls for attention while messages wait, or a faction's upgrade waits to be
         // claimed where the board lists the factions, and the board is shut.
-        SetDinergateNotice(!_intelOpen && (unread > 0 || (factions != null && FactionUnlockWaiting())));
+        SetDinergateNotice(!_intelOpen && calling > 0);
     }
 
-    // Whether a faction the player knows has an O.C.I. upgrade waiting to be claimed in its window.
+    // How many factions the player knows have an O.C.I. upgrade waiting to be claimed in their window.
     // The window offers one for each trust level the faction has reached past the upgrades already
     // taken, while it has upgrades left to give (StoryFactionWindow.OnTrustChanged). A faction not
     // yet met, or destroyed, is not listed to claim from.
-    private static bool FactionUnlockWaiting()
+    private static int FactionUnlocksWaiting()
     {
         var factions = Il2CppMenace.States.StrategyState.Get()?.StoryFactions?.m_Factions;
         if (factions == null)
-            return false;
+            return 0;
+        var waiting = 0;
         foreach (var faction in factions.Values)
             if (faction != null && faction.GetStatus() == Il2CppMenace.Strategy.StoryFactionStatus.Known
                 && faction.GetTrustLevel() > faction.GetUnlockedUpgradeCount() && faction.HasLockedUpgrades())
-                return true;
-        return false;
+                waiting++;
+        return waiting;
     }
 
     // The vanilla lists the board shows, as last placed.

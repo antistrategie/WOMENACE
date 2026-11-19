@@ -1004,8 +1004,9 @@ public sealed partial class StrategyDiorama
 
     // Escape opens vanilla's menu from a home screen and steps back to the home screen from the
     // others. Where the view has a way back of its own (the Operations view, an operation's
-    // briefing, mission preparation) Escape takes that, and the menu is left for the Home view,
-    // where there is nowhere further back to go.
+    // briefing) Escape takes that, and the menu is left for the Home view, where there is nowhere
+    // further back to go. Mission preparation opens the menu too: its way back leaves the squads
+    // the player has just placed.
     private void HookEscape()
     {
         var target = VanillaUi.Targets.OpenScreen;
@@ -1041,7 +1042,7 @@ public sealed partial class StrategyDiorama
             if (_homeView == HomeView.Operations)
                 back = () => SetHomeView(HomeView.Home);
         }
-        else if (ActionsFor(_policyScreen, false) is { SecondaryDanger: false } actions)
+        else if (_policyScreen != VanillaUi.Screens.MissionPrep && ActionsFor(_policyScreen, false) is { SecondaryDanger: false } actions)
             back = () => ClickVanilla(actions.Secondary);
         if (back == null)
             return false;

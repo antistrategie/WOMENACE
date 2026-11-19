@@ -113,6 +113,19 @@ DRAGGED_PORTRAIT = (88, 80, 1, 4)
 DRAGGED_CROP = (1.4, 10)
 
 
+# GFL2's character art carries pixels at an alpha of 1 to 4 out of 255 where it should be clear,
+# in thin vertical runs above and beside the figure. Unseen in the PNG, they come out as faint
+# lines once the texture is block compressed, so they are cleared. A figure's own soft edge has
+# next to nothing that faint.
+STRAY_ALPHA = 4
+
+
+def clear_stray_alpha(im):
+    im = im.copy()
+    im[..., 3][im[..., 3] <= STRAY_ALPHA] = 0
+    return im
+
+
 def load_rgba(path):
     im = cv2.imread(str(path), cv2.IMREAD_UNCHANGED)
     if im is None:
@@ -448,7 +461,7 @@ def head_box(args, whole):
 
 def outfit_icons(args):
     """The outfit's three item icons, cropped from its art around the head like the roster's."""
-    whole = load_rgba(args.whole)
+    whole = clear_stray_alpha(load_rgba(args.whole))
     box = head_box(args, whole)
     rng = rng_for(args.seed or args.doll, args.outfit)
     folder = ASSETS / "sprites" / args.doll / "armor" / args.outfit
@@ -463,7 +476,7 @@ def outfit_icons(args):
 def portraits(args):
     if args.span is None:
         raise SystemExit("--span is needed with --whole")
-    whole = load_rgba(args.whole)
+    whole = clear_stray_alpha(load_rgba(args.whole))
     box = head_box(args, whole)
 
     rng = rng_for(args.seed or args.doll)

@@ -10,7 +10,9 @@ namespace WOMENACE.Code;
 // planet's name is laid out as a card of vanilla's faction list is: the faction's picture at the
 // left, the name over it, and under the name the trust level and how far along that level is,
 // with a row for every faction offering an operation there. The parts are children of vanilla's
-// own name, so they follow it wherever the map puts it.
+// own name, so they follow it wherever the map puts it. Under the name stands the Menace's
+// presence on the planet, the row of squares vanilla's planet tooltip shows, so it is seen
+// without pointing at each planet.
 public sealed partial class StrategyDiorama
 {
     private const string PlanetRepName = "wm-planet-rep";
@@ -18,7 +20,8 @@ public sealed partial class StrategyDiorama
     // The parts are laid out some frames after they are made, so the plates are fitted for this
     // many frames after the names are read and then left alone.
     private const int PlanetPlateFrames = 30;
-    private const float PlatePadX = 4f, PlatePadY = 2f;
+    // The plate's padding, the same on every side.
+    private const float PlatePad = 4f;
     private const float RepRowHeight = 11f, RepRowGap = 2f, RepPictureGap = 4f;
     private static readonly Color RepPlate = new(0.015f, 0.03f, 0.05f, 0.82f);
     private static readonly Color RepTrack = new(0.13f, 0.15f, 0.18f, 0.9f);
@@ -27,6 +30,11 @@ public sealed partial class StrategyDiorama
     // near-black square.
     private static readonly Color RepLevelInk = new(221f / 255f, 190f / 255f, 98f / 255f);
     private static readonly Color RepLevelBox = new(28f / 255f, 28f / 255f, 28f / 255f);
+    // The Menace's presence as the tooltip draws it: a square for each step the planet can take,
+    // filled red up to its presence and outlined after it.
+    private const float MenaceSquare = 5f, MenaceSquareGap = 1.5f;
+    private static readonly Color MenaceFilled = new(0.82f, 0.1f, 0.1f);
+    private static readonly Color MenaceEmpty = new(0.62f, 0.64f, 0.66f);
 
     // Lays the reputation plate and trust rows under a planet's name. Styled inline, since
     // shell.uss is not known to reach vanilla's map names.
@@ -55,12 +63,21 @@ public sealed partial class StrategyDiorama
             var operations = state?.Operations?.m_AvailableOperations;
             // Where vanilla's layout stands the name's words, which the parts are placed round.
             var words = name.WorldToLocal(title.worldBound);
-            if (planet == null || operations == null || state.StoryFactions == null || float.IsNaN(words.width) || words.width <= 0f)
+            if (float.IsNaN(words.width) || words.width <= 0f)
+                return;
+            // The trust rows start under the presence where there is one.
+            var under = words.yMax + RepRowGap;
+            if (hud.m_Planet is { } menaced && MenacePresence(menaced, words.xMin, under) is { } presence)
+            {
+                name.Add(presence);
+                under += MenaceSquare + RepRowGap;
+            }
+            if (planet == null || operations == null || state.StoryFactions == null)
                 return;
             var rows = new VisualElement { name = PlanetRepName, pickingMode = PickingMode.Ignore };
             rows.style.position = Position.Absolute;
             rows.style.left = words.xMin;
-            rows.style.top = words.yMax + RepRowGap;
+            rows.style.top = under;
             Sprite picture = null;
             var shown = new HashSet<IntPtr>();
             for (var i = 0; i < operations.Count; i++)
@@ -76,11 +93,14 @@ public sealed partial class StrategyDiorama
             }
             if (rows.childCount == 0)
                 return;
+            // The gap is between rows: under the last, the plate's own padding is all there is,
+            // as above the name.
+            rows.ElementAt(rows.childCount - 1).style.marginBottom = 0;
             name.Add(rows);
             if (picture == null)
                 return;
-            // As tall as the name and its first row together.
-            var side = words.height + RepRowGap + RepRowHeight;
+            // As tall as the name and the rows under it down to the first trust row.
+            var side = under + RepRowHeight - words.yMin;
             var beside = new VisualElement { name = PlanetRepName, pickingMode = PickingMode.Ignore };
             beside.style.position = Position.Absolute;
             beside.style.left = words.xMin - RepPictureGap - side;
@@ -111,10 +131,10 @@ public sealed partial class StrategyDiorama
         for (var i = 0; i < name.childCount; i++)
             if (name.ElementAt(i).name == PlanetRepName)
                 TakeIn(name, name.ElementAt(i), ref box);
-        plate.style.left = box.xMin - PlatePadX;
-        plate.style.top = box.yMin - PlatePadY;
-        plate.style.width = box.width + 2f * PlatePadX;
-        plate.style.height = box.height + 2f * PlatePadY;
+        plate.style.left = box.xMin - PlatePad;
+        plate.style.top = box.yMin - PlatePad;
+        plate.style.width = box.width + 2f * PlatePad;
+        plate.style.height = box.height + 2f * PlatePad;
     }
 
     private static void TakeIn(VisualElement name, VisualElement part, ref Rect box)
@@ -133,6 +153,38 @@ public sealed partial class StrategyDiorama
         _missions.PlanetPlateFrames--;
         foreach (var (hud, _, _, _, _) in _missions.StarMapNames)
             FitPlanetPlate(hud);
+    }
+
+    // The squares under the name, from where its words start. None where the planet has no steps.
+    private static VisualElement MenacePresence(Planet planet, float left, float top)
+    {
+        var steps = planet.GetMaxMenace();
+        if (steps <= 0)
+            return null;
+        var filled = Math.Clamp(planet.GetMenacePresence(), 0, steps);
+        var row = new VisualElement { name = PlanetRepName, pickingMode = PickingMode.Ignore };
+        row.style.position = Position.Absolute;
+        row.style.flexDirection = FlexDirection.Row;
+        row.style.left = left;
+        row.style.top = top;
+        for (var i = 0; i < steps; i++)
+        {
+            var square = new VisualElement { pickingMode = PickingMode.Ignore };
+            square.style.width = MenaceSquare;
+            square.style.height = MenaceSquare;
+            square.style.flexShrink = 0;
+            if (i > 0)
+                square.style.marginLeft = MenaceSquareGap;
+            if (i < filled)
+                square.style.backgroundColor = MenaceFilled;
+            else
+            {
+                square.style.borderLeftWidth = square.style.borderRightWidth = square.style.borderTopWidth = square.style.borderBottomWidth = 1f;
+                square.style.borderLeftColor = square.style.borderRightColor = square.style.borderTopColor = square.style.borderBottomColor = MenaceEmpty;
+            }
+            row.Add(square);
+        }
+        return row;
     }
 
     // As vanilla's faction list has it: the level in Roman figures, then the trust earned within

@@ -585,17 +585,14 @@ public sealed class StartrailInsightSystem : JiangyuSystem
     private static List<GameObject> Shell(Actor actor, Vector3 offset, GameObject prefab, Material material)
     {
         var shells = new List<GameObject>();
+        var (baseY, height) = Span(actor);
         foreach (var element in actor.m_Elements)
         {
             if (element == null)
                 continue;
-            // The full-detail parts only: lower LODs are enabled components drawn only at range,
-            // and a hidden crew rides with rendering forced off. Not isVisible, which is false
-            // for anything off camera.
             foreach (var renderer in element.GetComponentsInChildren<Renderer>(false))
             {
-                if (renderer == null || !renderer.enabled || renderer.forceRenderingOff
-                    || LowerLod.IsMatch(renderer.gameObject.name))
+                if (!Projected(renderer))
                     continue;
                 Mesh mesh = null;
                 if (renderer.TryCast<SkinnedMeshRenderer>() is { } smr)
@@ -619,6 +616,7 @@ public sealed class StartrailInsightSystem : JiangyuSystem
                 // hair, body, outfit), and only the first would draw otherwise.
                 var shellRenderer = shell.GetComponent<MeshRenderer>();
                 shellRenderer.sharedMaterials = Fill(material ?? shellRenderer.sharedMaterial, mesh.subMeshCount);
+                FrayAsOne(shellRenderer, baseY + offset.y, height);
                 shells.Add(shell);
             }
         }
@@ -633,14 +631,14 @@ public sealed class StartrailInsightSystem : JiangyuSystem
         var overlays = new List<GameObject>();
         if (material == null)
             return overlays;
+        var (baseY, height) = Span(actor);
         foreach (var element in actor.m_Elements)
         {
             if (element == null)
                 continue;
             foreach (var renderer in element.GetComponentsInChildren<Renderer>(false))
             {
-                if (renderer == null || !renderer.enabled || renderer.forceRenderingOff
-                    || LowerLod.IsMatch(renderer.gameObject.name))
+                if (!Projected(renderer))
                     continue;
                 var go = new GameObject("vision_overlay");
                 if (renderer.TryCast<SkinnedMeshRenderer>() is { } smr && smr.sharedMesh != null)
@@ -658,6 +656,7 @@ public sealed class StartrailInsightSystem : JiangyuSystem
                     copy.sharedMaterials = Fill(material, smr.sharedMesh.subMeshCount);
                     copy.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                     copy.receiveShadows = false;
+                    FrayAsOne(copy, baseY, height);
                 }
                 else if (renderer.TryCast<MeshRenderer>() != null && renderer.GetComponent<MeshFilter>()?.sharedMesh is { } mesh)
                 {
@@ -667,6 +666,7 @@ public sealed class StartrailInsightSystem : JiangyuSystem
                     copy.sharedMaterials = Fill(material, mesh.subMeshCount);
                     copy.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                     copy.receiveShadows = false;
+                    FrayAsOne(copy, baseY, height);
                 }
                 else
                 {
@@ -677,6 +677,58 @@ public sealed class StartrailInsightSystem : JiangyuSystem
             }
         }
         return overlays;
+    }
+
+    // A part of the unit's body, drawn at full detail. Not the lower LODs, which are enabled
+    // components drawn only at range, nor a hidden crew riding with rendering forced off (not
+    // isVisible, which is false for anything off camera). Not what is drawn see-through either:
+    // a headlight's cone, a glow, a scanner beam. A part whose every material draws after the
+    // opaque queue is light or effect and no part of the body.
+    private static bool Projected(Renderer renderer)
+    {
+        if (renderer == null || !renderer.enabled || renderer.forceRenderingOff || LowerLod.IsMatch(renderer.gameObject.name))
+            return false;
+        foreach (var material in renderer.sharedMaterials)
+            if (material != null && material.renderQueue <= (int)UnityEngine.Rendering.RenderQueue.GeometryLast)
+                return true;
+        return false;
+    }
+
+    // The ghost frays from a body's feet toward its top. A unit built of several parts (a
+    // construct, a vehicle, a mech) has a pivot for each part, often far below or above the
+    // part itself, so each part of it is given the whole unit's feet and height: where the parts
+    // took their own, a turret or arm hung from the root read as the top of a body and frayed away.
+    private static (float BaseY, float Height) Span(Actor actor)
+    {
+        var (low, high) = (float.PositiveInfinity, float.NegativeInfinity);
+        foreach (var element in actor.m_Elements)
+        {
+            if (element == null)
+                continue;
+            foreach (var renderer in element.GetComponentsInChildren<Renderer>(false))
+            {
+                if (!Projected(renderer) || (renderer.TryCast<SkinnedMeshRenderer>() == null && renderer.TryCast<MeshRenderer>() == null))
+                    continue;
+                var bounds = renderer.bounds;
+                (low, high) = (Math.Min(low, bounds.min.y), Math.Max(high, bounds.max.y));
+            }
+        }
+        return low <= high ? (low, Math.Max(high - low, 0.01f)) : (actor.GetPos().y, GhostHeight);
+    }
+
+    // The ghost material's own body height, for a unit with nothing to measure.
+    private const float GhostHeight = 2f;
+    private static readonly int UseBaseId = Shader.PropertyToID("_UseBase");
+    private static readonly int BaseYId = Shader.PropertyToID("_BaseY");
+    private static readonly int HeightId = Shader.PropertyToID("_Height");
+
+    private static void FrayAsOne(Renderer renderer, float baseY, float height)
+    {
+        var block = new MaterialPropertyBlock();
+        block.SetFloat(UseBaseId, 1f);
+        block.SetFloat(BaseYId, baseY);
+        block.SetFloat(HeightId, height);
+        renderer.SetPropertyBlock(block);
     }
 
     private static Material[] Fill(Material material, int count)
