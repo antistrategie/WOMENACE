@@ -72,8 +72,8 @@ public sealed class WeaponProficiencySystem : JiangyuSystem
         Context.Patches.Postfix("Il2CppMenace.UI.Tactical.SelectedUnitPanel", "UpdateStats", OnTacticalStats);
 
         // Track the current unit-window leader for the tooltip's whose-proficiency gate.
-        Context.Patches.Postfix("Il2CppMenace.UI.Strategy.UnitWindow", "SetLeader", OnWindowChanged);
-        Context.Patches.Postfix("Il2CppMenace.UI.Strategy.UnitWindow", "Refresh", OnWindowChanged);
+        Context.Patches.Postfix(VanillaUi.Targets.UnitWindowSetLeader.Type, VanillaUi.Targets.UnitWindowSetLeader.Method, OnWindowChanged);
+        Context.Patches.Postfix(VanillaUi.Targets.UnitWindowRefresh.Type, VanillaUi.Targets.UnitWindowRefresh.Method, OnWindowChanged);
     }
 
     private int _bonusFrame = -1;

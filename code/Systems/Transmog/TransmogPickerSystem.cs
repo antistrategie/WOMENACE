@@ -17,7 +17,7 @@ namespace WOMENACE.Code;
 // right click, and each click changes only its own side. Each card carries a badge for
 // whichever of the two wears it. Dummy links render the leader's outfit until either side is
 // first changed, and solo dolls have none, so right click does nothing for them.
-public sealed class TransmogPickerSystem : JiangyuSystem
+public sealed partial class TransmogPickerSystem : JiangyuSystem
 {
     private const string ModalName = "AppearanceAlternatives";
     private readonly Dictionary<string, ArmorTemplate> _armorCache = new(StringComparer.Ordinal);
@@ -52,8 +52,8 @@ public sealed class TransmogPickerSystem : JiangyuSystem
         Instance = this;
         RegisterScreen<ArmoryUIScreen>();
         RegisterScreen<MissionPrepUIScreen>();
-        Context.Patches.Postfix("Il2CppMenace.UI.Strategy.UnitWindow", "SetLeader", OnWindowChanged);
-        Context.Patches.Postfix("Il2CppMenace.UI.Strategy.UnitWindow", "Refresh", OnWindowChanged);
+        Context.Patches.Postfix(VanillaUi.Targets.UnitWindowSetLeader.Type, VanillaUi.Targets.UnitWindowSetLeader.Method, OnWindowChanged);
+        Context.Patches.Postfix(VanillaUi.Targets.UnitWindowRefresh.Type, VanillaUi.Targets.UnitWindowRefresh.Method, OnWindowChanged);
         _onAffinityChanged = window => EnsureUi(window, close: false);
         Affinity.Changed += _onAffinityChanged;
     }
@@ -492,27 +492,6 @@ public sealed class TransmogPickerSystem : JiangyuSystem
                 items.VisualAlterationsDirty = true;
         }
         catch (Exception ex) { Context.Log.Warn($"appearance picker: preview refresh failed: {ex.Message}"); }
-    }
-
-    internal bool DevSelect(string characterTag, string armorId) => DevSelect(characterTag, ItemSlot.InfantryArmor, armorId);
-
-    internal void RefreshVisible()
-    {
-        var root = Il2CppMenace.UI.UIManager.Get()?.GetActiveScreen()?.GetRootElement();
-        if (root != null)
-            foreach (var window in UI.FindAll(root, UiSelector.TypeName("UnitWindow")))
-                EnsureUi(window);
-    }
-
-    internal bool DevSelect(string characterTag, ItemSlot slot, string id)
-    {
-        var root = Il2CppMenace.UI.UIManager.Get()?.GetActiveScreen()?.GetRootElement();
-        if (root == null)
-            return false;
-        foreach (var window in UI.FindAll(root, UiSelector.TypeName("UnitWindow")))
-            if (Affinity.CharacterTag(Affinity.LeaderOf(window)) == characterTag)
-                return Select(window, slot, id);
-        return false;
     }
 
     private ArmorTemplate OutfitTemplate(string id)

@@ -81,7 +81,7 @@ public static class Workshop
     public static object DisassemblyView()
     {
         Weapons.OpenWorkshop();
-        WorkshopSystem.Instance?.SetMode(true);
+        WorkshopSystem.Instance?.SetDisassembling(true);
         return new { ok = true };
     }
 

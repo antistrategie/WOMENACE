@@ -25,8 +25,8 @@ public sealed partial class ShopSystem : JiangyuSystem
     // Whether the workshop screen is showing Kalina's shop right now.
     internal static bool IsShopOpen => Instance?._host?.IsOpen ?? false;
 
-    // What is in the basket on the tab that is showing, in the order it went in: each item
-    // and how many of it. The holotable shows it.
+    // What is in the basket on the tab that is showing: each item and how many of it. The
+    // holotable shows it.
     internal static void Basket(List<(BaseItemTemplate Template, int Count)> into)
     {
         var shop = Instance;

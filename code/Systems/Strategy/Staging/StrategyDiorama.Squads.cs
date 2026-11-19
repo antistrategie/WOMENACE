@@ -976,8 +976,8 @@ public sealed partial class StrategyDiorama
                 RefreshSquadPanel(window);
         };
         Affinity.Changed += _staging.SquadAffinityChanged;
-        foreach (var method in new[] { "SetLeader", "Refresh" })
-            Context.Patches.Postfix(VanillaUi.Targets.UnitWindowType, method, info =>
+        foreach (var target in new[] { VanillaUi.Targets.UnitWindowSetLeader, VanillaUi.Targets.UnitWindowRefresh })
+            Context.Patches.Postfix(target.Type, target.Method, info =>
             {
                 if (info.Instance is VisualElement window && _shellRoot != null && _shellRoot.ClassListContains(SquadsClass))
                     RefreshSquadPanel(window);

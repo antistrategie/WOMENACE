@@ -37,8 +37,6 @@ public sealed class BayEquipUISystem : JiangyuSystem
     private const string GridName = "wmgfl-bay-grid";
     private const float TileGap = 4f;
 
-    internal static BayEquipUISystem Instance { get; private set; }
-
     private string _vanillaHeader;
     private int _pickSlot = -1;
     // The window whose list is open for a tile, and a count that ends the watch of a list
@@ -48,15 +46,9 @@ public sealed class BayEquipUISystem : JiangyuSystem
 
     public override void OnInit()
     {
-        Instance = this;
         Context.Patches.Prefix(VanillaUi.Targets.EquipmentAlternativePicked.Type, VanillaUi.Targets.EquipmentAlternativePicked.Method, OnAlternativePicked);
-        Context.Patches.Postfix("Il2CppMenace.UI.Strategy.UnitWindow", "SetLeader", OnWindowChanged);
-        Context.Patches.Postfix("Il2CppMenace.UI.Strategy.UnitWindow", "Refresh", OnWindowChanged);
-    }
-
-    public override void OnUnload()
-    {
-        Instance = null;
+        Context.Patches.Postfix(VanillaUi.Targets.UnitWindowSetLeader.Type, VanillaUi.Targets.UnitWindowSetLeader.Method, OnWindowChanged);
+        Context.Patches.Postfix(VanillaUi.Targets.UnitWindowRefresh.Type, VanillaUi.Targets.UnitWindowRefresh.Method, OnWindowChanged);
     }
 
     public override void OnSceneLoaded(int buildIndex, string sceneName) => ForgetPick();
@@ -126,18 +118,10 @@ public sealed class BayEquipUISystem : JiangyuSystem
             var slot = element.TryCast<EquipmentSlot>();
             if (slot == null || slot.GetItemSlotType() != ItemSlot.InfantrySpecial)
                 continue;
-            if (!InsideAlternatives(element, window))
+            if (!AppearanceSlotUi.InsideAlternatives(element, window))
                 return element;
         }
         return null;
-    }
-
-    private static bool InsideAlternatives(VisualElement element, VisualElement window)
-    {
-        for (var parent = element.parent; parent != null && parent != window; parent = parent.parent)
-            if (parent.name == "EquipmentAlternatives")
-                return true;
-        return false;
     }
 
     // Clean display strings for a possibly rank-cloned weapon: calibration
@@ -177,16 +161,6 @@ public sealed class BayEquipUISystem : JiangyuSystem
 
     // -- the tile grid ------------------------------------------------------
 
-    // Absolute fill, matching how the vanilla slots layer their overlays.
-    private static void Fill(VisualElement element)
-    {
-        element.style.position = new StyleEnum<Position>(Position.Absolute);
-        element.style.left = new StyleLength(0f);
-        element.style.top = new StyleLength(0f);
-        element.style.right = new StyleLength(0f);
-        element.style.bottom = new StyleLength(0f);
-    }
-
     private static readonly Color NameColour = new(228f / 255f, 225f / 255f, 180f / 255f);
     private static readonly Color MutedColour = new(184f / 255f, 151f / 255f, 134f / 255f);
     private static readonly Color DimColour = new(140f / 255f, 133f / 255f, 116f / 255f);
@@ -215,17 +189,17 @@ public sealed class BayEquipUISystem : JiangyuSystem
             tile.style.overflow = new StyleEnum<Overflow>(Overflow.Hidden);
 
             var art = new VisualElement { name = "Art", pickingMode = PickingMode.Ignore };
-            Fill(art);
+            UiLayout.Fill(art);
             tile.Add(art);
 
             var border = new VisualElement { name = "Border", pickingMode = PickingMode.Ignore };
             border.AddToClassList("unit-equipment-slot-border");
-            Fill(border);
+            UiLayout.Fill(border);
             tile.Add(border);
 
             var selected = new VisualElement { name = "Selected", pickingMode = PickingMode.Ignore };
             selected.AddToClassList("slot-selected-border");
-            Fill(selected);
+            UiLayout.Fill(selected);
             selected.SetVisible(false);
             tile.Add(selected);
 
@@ -255,7 +229,7 @@ public sealed class BayEquipUISystem : JiangyuSystem
             tile.Add(shortName);
 
             var plus = new Label("+") { name = "Plus", pickingMode = PickingMode.Ignore };
-            Fill(plus);
+            UiLayout.Fill(plus);
             plus.style.fontSize = new StyleLength(20f);
             plus.style.color = new StyleColor(DimColour);
             plus.style.unityTextAlign = new StyleEnum<TextAnchor>(TextAnchor.MiddleCenter);
@@ -762,8 +736,7 @@ public sealed class BayEquipUISystem : JiangyuSystem
         finally
         {
             ClosePicker(window);
-            if (equippedSlot >= 0)
-                Context.Coroutines.Start(LingerReveal(equippedSlot));
+            Context.Coroutines.Start(LingerReveal(equippedSlot));
         }
     }
 

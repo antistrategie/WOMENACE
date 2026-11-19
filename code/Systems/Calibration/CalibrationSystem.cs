@@ -25,8 +25,8 @@ public sealed class CalibrationSystem : JiangyuSystem
         // Component grants reconcile on the same triggers AffinitySystem uses for its unlock pass:
         // a doll's window binding or refreshing (covers loading a save already past component
         // levels) and a live affinity change from a gift.
-        Context.Patches.Postfix("Il2CppMenace.UI.Strategy.UnitWindow", "SetLeader", OnWindowChanged);
-        Context.Patches.Postfix("Il2CppMenace.UI.Strategy.UnitWindow", "Refresh", OnWindowChanged);
+        Context.Patches.Postfix(VanillaUi.Targets.UnitWindowSetLeader.Type, VanillaUi.Targets.UnitWindowSetLeader.Method, OnWindowChanged);
+        Context.Patches.Postfix(VanillaUi.Targets.UnitWindowRefresh.Type, VanillaUi.Targets.UnitWindowRefresh.Method, OnWindowChanged);
         // The weapon-select flyout builds each row fresh with rich text off, so a ranked weapon's
         // marker shows as raw tags there until we turn it on per created slot. The builder lives on
         // UnitWindowEquipment (not UnitWindow), which owns the equipment slots and their alternatives.

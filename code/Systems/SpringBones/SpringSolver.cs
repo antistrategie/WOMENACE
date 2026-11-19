@@ -938,7 +938,7 @@ internal static class SpringSolver
             chain.Targets[i] = cursor;
         }
 
-        // A chain hung from the hips is drooped below, once the hips have placed it.
+        // A chain the hips do not place (hair, a tail, an accessory) droops from its rest shape.
         if (spec.Sag > 0f && !spec.HangDown && !(pose.Valid && spec.LegDrive > 0f))
         {
             SagTargets(chain, origin, scale);

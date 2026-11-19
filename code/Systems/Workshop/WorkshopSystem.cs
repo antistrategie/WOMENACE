@@ -287,7 +287,6 @@ public sealed class WorkshopSystem : JiangyuSystem
         }
     }
 
-    public void SetMode(bool disassemble) => _disassembly.SetMode(disassemble);
     public List<Item> Disassemblable() => WeaponDisassembly.Available();
     public (bool ok, string error) Disassemble(Item item) => _disassembly.Disassemble(item);
 

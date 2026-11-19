@@ -212,8 +212,8 @@ public sealed class SsrImprintSystem : JiangyuSystem
         Context.Patches.Postfix("Il2CppMenace.Items.ItemTemplate", "AppendTooltipData", OnItemTooltipPost);
 
         // Track the current unit-window leader for the tooltip's highlight-vs-grey gate.
-        Context.Patches.Postfix("Il2CppMenace.UI.Strategy.UnitWindow", "SetLeader", OnWindowChanged);
-        Context.Patches.Postfix("Il2CppMenace.UI.Strategy.UnitWindow", "Refresh", OnWindowChanged);
+        Context.Patches.Postfix(VanillaUi.Targets.UnitWindowSetLeader.Type, VanillaUi.Targets.UnitWindowSetLeader.Method, OnWindowChanged);
+        Context.Patches.Postfix(VanillaUi.Targets.UnitWindowRefresh.Type, VanillaUi.Targets.UnitWindowRefresh.Method, OnWindowChanged);
     }
 
     private void OnSkillUsePre(PatchInfo info)

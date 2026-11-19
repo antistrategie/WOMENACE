@@ -104,6 +104,8 @@ public sealed class AffinitySystem : JiangyuSystem
     }
 
     // Opens the gift flyout for a window, or shuts it when it is that window's that is open.
+    // Whatever is open closes first, so a second window's button switches the flyout to that
+    // window rather than only dismissing the first.
     internal void ToggleGifts(VisualElement window)
     {
         try
@@ -131,8 +133,8 @@ public sealed class AffinitySystem : JiangyuSystem
         RegisterScreen<ArmoryUIScreen>();
         RegisterScreen<MissionPrepUIScreen>();
 
-        Context.Patches.Postfix("Il2CppMenace.UI.Strategy.UnitWindow", "SetLeader", OnWindowChanged);
-        Context.Patches.Postfix("Il2CppMenace.UI.Strategy.UnitWindow", "Refresh", OnWindowChanged);
+        Context.Patches.Postfix(VanillaUi.Targets.UnitWindowSetLeader.Type, VanillaUi.Targets.UnitWindowSetLeader.Method, OnWindowChanged);
+        Context.Patches.Postfix(VanillaUi.Targets.UnitWindowRefresh.Type, VanillaUi.Targets.UnitWindowRefresh.Method, OnWindowChanged);
 
         // The built-in popover reward providers. Other systems (CalibrationSystem) register their own.
         AffinityTooltip.Register("proficiency", ProficiencyRewards);
@@ -161,6 +163,8 @@ public sealed class AffinitySystem : JiangyuSystem
         // Drop the warn sink so the shared static does not keep this (torn-down) system's Context
         // alive, mirroring how FormSwapSystem unsubscribes Affinity.Changed.
         Affinity.Warn = null;
+        if (ReferenceEquals(Instance, this))
+            Instance = null;
     }
 
     // Inject the affinity badge, gift button, and gift flyout onto every UnitWindow of the given screen.
@@ -578,23 +582,7 @@ public sealed class AffinitySystem : JiangyuSystem
         else
             Context.Log.Warn("gift button: 'gift_icon' texture not found in mod bundles");
 
-        button.OnClick(() =>
-        {
-            try
-            {
-                // Toggle this window's flyout. Close whatever is open first, then open this one unless
-                // it was already the open flyout, so clicking a second window's button switches to it
-                // rather than only dismissing the first.
-                bool reopenSameWindow = _modalOpen && ReferenceEquals(_activeWindow, window);
-                CloseModal();
-                if (!reopenSameWindow)
-                    OpenModal(window);
-            }
-            catch (Exception ex)
-            {
-                Context.Log.Warn($"[gift] click failed: {ex.GetType().Name}: {ex.Message}");
-            }
-        });
+        button.OnClick(() => ToggleGifts(window));
         return button.Root;
     }
 

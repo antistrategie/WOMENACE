@@ -160,8 +160,8 @@ public sealed class FormSwapSystem : JiangyuSystem
             BuildSwapButton,
             (_, window) => UpdateSwapButton(window));
 
-        Context.Patches.Postfix("Il2CppMenace.UI.Strategy.UnitWindow", "SetLeader", OnWindowChanged);
-        Context.Patches.Postfix("Il2CppMenace.UI.Strategy.UnitWindow", "Refresh", OnWindowChanged);
+        Context.Patches.Postfix(VanillaUi.Targets.UnitWindowSetLeader.Type, VanillaUi.Targets.UnitWindowSetLeader.Method, OnWindowChanged);
+        Context.Patches.Postfix(VanillaUi.Targets.UnitWindowRefresh.Type, VanillaUi.Targets.UnitWindowRefresh.Method, OnWindowChanged);
 
         // Stats preview on hiring info panels (the initial-leaders pick dialog and the hiring screen
         // share HiringUnitInfo): a SQUAD LEADER / PILOT tab row above the native STATS / ATTRIBUTES

@@ -29,8 +29,9 @@ public sealed class DummyLinkNameSystem : JiangyuSystem
 {
     private DummyLinkNameState State => Context.State.Get<DummyLinkNameState>();
 
-    // The elements of the picker's button this system stopped taking the pointer.
-    private readonly HashSet<IntPtr> _deafened = new();
+    // Marks the elements of the picker's button this system stopped taking the pointer. A class
+    // goes with its element when the window is rebuilt, where a remembered pointer would not.
+    private const string DeafenedClass = "wmgfl-deafened";
 
     public override void OnInit()
     {
@@ -59,10 +60,13 @@ public sealed class DummyLinkNameSystem : JiangyuSystem
         if (deaf && element.pickingMode == PickingMode.Position)
         {
             element.pickingMode = PickingMode.Ignore;
-            _deafened.Add(element.Pointer);
+            element.AddToClassList(DeafenedClass);
         }
-        else if (!deaf && _deafened.Remove(element.Pointer))
+        else if (!deaf && element.ClassListContains(DeafenedClass))
+        {
+            element.RemoveFromClassList(DeafenedClass);
             element.pickingMode = PickingMode.Position;
+        }
         for (var i = 0; i < element.childCount; i++)
             Deafen(element.ElementAt(i), deaf);
     }
