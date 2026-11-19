@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Mat = System.Numerics.Matrix4x4;
 using Vec = System.Numerics.Vector3;
+using Jiangyu.Sdk;
 using UnityEngine;
 
 namespace WOMENACE.Code;
@@ -10,8 +11,9 @@ namespace WOMENACE.Code;
 // vanilla's soldier holds it beside his head. A Doll's head is larger than his, and the model
 // passes through it. Her right hand is moved, with the weapon in it, until none of the weapon
 // is in her head. It goes level and square to the weapon's length, to the side of her head the
-// weapon's middle is already on, which is the shortest way a long thing leaves a ball: her head as a ball at its bone, the model as the triangles
-// of its meshes, a rigged one's as its bones have posed them. The hand is held there by the
+// weapon's middle is already on, which is the shortest way a long thing leaves a ball. Her head
+// is taken as a ball at its bone, and the model as the triangles of its meshes, a rigged one's as
+// its bones have posed them. The hand is held there by the
 // solve that brings a squaddie's support hand to her rifle, so the weapon stays in it. Any
 // other weapon is carried as the animation has it.
 //
@@ -61,7 +63,7 @@ public sealed partial class StrategyDiorama
     {
         try
         {
-            var leader = _squadWindow != null ? Affinity.LeaderOf(_squadWindow) : null;
+            var leader = _staging.SquadWindow != null ? Affinity.LeaderOf(_staging.SquadWindow) : null;
             if (leader == null)
                 return;
             var tag = Affinity.CharacterTag(leader);
@@ -70,9 +72,9 @@ public sealed partial class StrategyDiorama
             var shown = weapon?.TryCast<Il2CppMenace.Items.WeaponTemplate>()?.Model;
             if (tag == null || id == null || shown == null || !id.Contains(CarryTripodId, StringComparison.Ordinal))
                 return;
-            var key = $"{tag}|{Transmog.SelectionFor(Context, tag)}|{id}";
+            var key = CarryKey(Context, tag, id);
             var held = false;
-            foreach (var staged in _stagedRoots)
+            foreach (var staged in _staging.StagedRoots)
             {
                 if (staged.Root == null || !staged.Root.gameObject.activeInHierarchy)
                     continue;
@@ -102,6 +104,10 @@ public sealed partial class StrategyDiorama
         }
         catch (Exception ex) { Context.Log.Warn($"strategy diorama: carried weapons not held: {ex.GetType().Name}: {ex.Message}"); }
     }
+
+    // What a measure of how far the hand goes is kept by: the Doll, her outfit and the weapon.
+    internal static string CarryKey(ModContext context, string tag, string weaponId) =>
+        $"{tag}|{Transmog.SelectionFor(context, tag)}|{weaponId}";
 
     // A hand to hold out with what it carries: from the frame it is seen where it was found to go
     // before, or measured as it settles where it has not been.

@@ -210,7 +210,7 @@ public sealed partial class StrategyDiorama
     private void ReadPrepTokens(VisualElement layer)
     {
         var seen = new HashSet<IntPtr>();
-        var open = _squadWindow != null ? Affinity.LeaderOf(_squadWindow) : null;
+        var open = _staging.SquadWindow != null ? Affinity.LeaderOf(_staging.SquadWindow) : null;
         foreach (var (kind, holderName) in new[]
         {
             (TokenKind.Contact, VanillaUi.Elements.PrepUnitPois),

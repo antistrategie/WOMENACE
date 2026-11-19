@@ -43,7 +43,7 @@ public sealed partial class StrategyDiorama
         LayOutPrepAbilities(root, row);
         LayOutPrepSupplies(root);
 
-        _squadPanelInPrep = true;
+        _staging.SquadPanelInPrep = true;
         var column = UI.Find(row, UiSelector.Name(VanillaUi.Elements.PrepSelectedColumn));
         Inline(column, e =>
         {
@@ -612,7 +612,7 @@ public sealed partial class StrategyDiorama
             if (UI.Find(_shellRoot, UiSelector.Name(PrepSuppliesUsesName))?.TryCast<Label>() is { } usesLine
                 && UI.Find(_shellRoot, UiSelector.Name(VanillaUi.Elements.SuppliesSelected))?.TryCast<Label>() is { } figure)
             {
-                var who = _squadWindow != null ? UI.Find(_squadWindow, UiSelector.Name(VanillaUi.Elements.LeaderName))?.TryCast<Label>()?.text?.Trim() : null;
+                var who = _staging.SquadWindow != null ? UI.Find(_staging.SquadWindow, UiSelector.Name(VanillaUi.Elements.LeaderName))?.TryCast<Label>()?.text?.Trim() : null;
                 var line = string.IsNullOrEmpty(figure.text) || string.IsNullOrEmpty(who) ? ""
                     : Locale.Format("WOMENACE::ui/prep/uses", "{0} USES <color=#EBC95D>{1}</color>", who.ToUpperInvariant(), figure.text);
                 if (usesLine.text != line)

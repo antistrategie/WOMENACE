@@ -72,7 +72,7 @@ public sealed partial class StrategyDiorama
         var screen = UIManager.Get()?.GetActiveScreen()?.TryCast<MissionPrepUIScreen>();
         var selector = screen?.m_UnitSelector;
         var d = _instance;
-        if (selector == null || d?._shellRoot == null || d._squadWindow == null)
+        if (selector == null || d?._shellRoot == null || d._staging.SquadWindow == null)
             return "mission preparation is not open";
         var added = 0;
         foreach (var element in UI.FindAll(d._shellRoot, UiSelector.TypeName(VanillaUi.Elements.PrepUnitSlot)).ToList())
@@ -85,7 +85,7 @@ public sealed partial class StrategyDiorama
             if (inMission == (wanted == null || wanted.Contains(Affinity.CharacterTag(leader))))
                 continue;
             slot.OnClicked(MouseButton.LeftMouse);
-            var button = UI.Find(d._squadWindow, UiSelector.Name(VanillaUi.Elements.UnitWindowButton))?.TryCast<InteractiveElement>();
+            var button = UI.Find(d._staging.SquadWindow, UiSelector.Name(VanillaUi.Elements.UnitWindowButton))?.TryCast<InteractiveElement>();
             if (button == null || !button.IsInteractable())
                 continue;
             button.OnClicked(MouseButton.LeftMouse);

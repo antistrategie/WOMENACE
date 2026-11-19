@@ -29,7 +29,7 @@ public sealed partial class StrategyDiorama : JiangyuSystem
 
     public override void OnUnload()
     {
-        Affinity.Changed -= _squadAffinityChanged;
+        Affinity.Changed -= _staging.SquadAffinityChanged;
         Remove();
         _instance = null;
     }

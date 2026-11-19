@@ -16,10 +16,10 @@ public sealed partial class StrategyDiorama
 {
     private const string SquadsClass = "wm-squads";
 
-    // The frame between the bars, in the panel's units: both columns start and end the same
-    // distance from the bars.
     // The class of a list that scrolls on the shell's slim bar.
     private const string SlimScrollClass = "wui-scroll";
+    // The frame between the bars, in the panel's units: both columns start and end the same
+    // distance from the bars.
     private const float SquadsTop = 80f;
     private const float SquadsBottom = 640f;
     // The panels stand on the bars' own side edges: 32 in from the screen's, where the Home
@@ -35,7 +35,6 @@ public sealed partial class StrategyDiorama
     private static readonly UnityEngine.Color SquadPanelFill = new(0f, 0f, 0f, 0.92f);
     private static readonly UnityEngine.Color SquadPanelLine = new(67f / 255f, 83f / 255f, 106f / 255f);
 
-    private bool _rosterDeceased;
 
     private void LayOutSquads(VisualElement root)
     {
@@ -44,7 +43,7 @@ public sealed partial class StrategyDiorama
             root.AddToClassList(SquadsClass);
             _shellUndo.Add(() => root.RemoveFromClassList(SquadsClass));
         }
-        _squadPanelInPrep = false;
+        _staging.SquadPanelInPrep = false;
         LayOutRoster(root, UI.Find(root, UiSelector.Name(VanillaUi.Elements.UnitsScrollView)));
         LayOutSquadPanel(UI.Find(root, UiSelector.TypeName(VanillaUi.Elements.UnitWindow)));
     }
@@ -162,7 +161,7 @@ public sealed partial class StrategyDiorama
         tab.Add(label);
         tab.RegisterCallback((EventCallback<ClickEvent>)(_ =>
         {
-            _rosterDeceased = deceased;
+            _staging.RosterDeceased = deceased;
             LayOutRoster(root, UI.Find(root, UiSelector.Name(VanillaUi.Elements.UnitsScrollView)));
         }));
         return tab;
@@ -170,10 +169,10 @@ public sealed partial class StrategyDiorama
 
     private void ShowRoster(VisualElement tabs, VisualElement living, VisualElement dead)
     {
-        living.style.display = _rosterDeceased ? DisplayStyle.None : DisplayStyle.Flex;
-        dead.style.display = _rosterDeceased ? DisplayStyle.Flex : DisplayStyle.None;
+        living.style.display = _staging.RosterDeceased ? DisplayStyle.None : DisplayStyle.Flex;
+        dead.style.display = _staging.RosterDeceased ? DisplayStyle.Flex : DisplayStyle.None;
         for (var i = 0; i < tabs.childCount && i < 2; i++)
-            tabs.ElementAt(i).EnableInClassList("wui-seg--on", (i == 1) == _rosterDeceased);
+            tabs.ElementAt(i).EnableInClassList("wui-seg--on", (i == 1) == _staging.RosterDeceased);
     }
 
     // Vanilla's unit window, at its own size (it is no longer scaled to fit), as one flat panel
@@ -182,13 +181,13 @@ public sealed partial class StrategyDiorama
     {
         if (window == null)
             return;
-        _squadWindow = window;
-        if (_squadRestores != window.Pointer)
+        _staging.SquadWindow = window;
+        if (_staging.SquadRestores != window.Pointer)
         {
-            _squadRestores = window.Pointer;
+            _staging.SquadRestores = window.Pointer;
             _shellUndo.Add(() =>
             {
-                _squadRestores = IntPtr.Zero;
+                _staging.SquadRestores = IntPtr.Zero;
                 RestoreSquadPanel(window);
             });
         }
@@ -208,17 +207,14 @@ public sealed partial class StrategyDiorama
                 e.style.backgroundColor = StyleKeyword.Null;
             });
         }
-        var typeIconShown = UI.Find(window, UiSelector.Name(VanillaUi.Elements.UnitTypeIcon));
-        if (typeIconShown != null && _inlined.Add(typeIconShown.Pointer))
-            _shellUndo.Add(() => typeIconShown.style.display = StyleKeyword.Null);
         Inline(window, e =>
         {
             var s = e.style;
             s.marginTop = 0;
             // In mission preparation the window sits in a column, which is given the panel's place.
-            s.left = _squadPanelInPrep ? 0 : SquadPanelLeft;
-            s.top = _squadPanelInPrep ? 0 : SquadsTop;
-            if (_squadPanelInPrep)
+            s.left = _staging.SquadPanelInPrep ? 0 : SquadPanelLeft;
+            s.top = _staging.SquadPanelInPrep ? 0 : SquadsTop;
+            if (_staging.SquadPanelInPrep)
             {
                 s.marginLeft = 0;
                 s.marginRight = 0;
@@ -311,7 +307,7 @@ public sealed partial class StrategyDiorama
         var statistics = header != null ? UI.Find(header, UiSelector.Name(VanillaUi.Elements.StatisticsButton)) : null;
         if (header == null || statistics == null)
             return;
-        if (!_squadPanelInPrep && UI.Find(header, UiSelector.Name(DismissName)) == null)
+        if (!_staging.SquadPanelInPrep && UI.Find(header, UiSelector.Name(DismissName)) == null)
         {
             var dismiss = MiniButton(DismissName, Locale.Text("WOMENACE::ui/squads/dismiss", "DISMISS"), () => AskDismiss(window));
             dismiss.AddToClassList("wui-mini--danger");
@@ -321,8 +317,8 @@ public sealed partial class StrategyDiorama
         // Who goes on a mission is chosen in mission preparation, so the button shows only there.
         Inline(UI.Find(header, UiSelector.Name(VanillaUi.Elements.UnitWindowButton)), e =>
         {
-            e.style.display = _squadPanelInPrep ? StyleKeyword.Null : DisplayStyle.None;
-            e.style.height = _squadPanelInPrep ? HeaderButtonHeight : StyleKeyword.Null;
+            e.style.display = _staging.SquadPanelInPrep ? StyleKeyword.Null : DisplayStyle.None;
+            e.style.height = _staging.SquadPanelInPrep ? HeaderButtonHeight : StyleKeyword.Null;
         }, e =>
         {
             e.style.display = StyleKeyword.Null;
@@ -410,8 +406,6 @@ public sealed partial class StrategyDiorama
         return button;
     }
 
-    private int _squadTab;
-    private bool _dressLinks;
     private const string PanelTabsName = "wm-panel-tabs";
     private const string PanelTabName = "wm-panel-tab-";
     private const string AppearanceTabName = "wm-tab-appearance";
@@ -440,7 +434,7 @@ public sealed partial class StrategyDiorama
             tab.RegisterCallback((EventCallback<ClickEvent>)(_ =>
             {
                 Sound.Click();
-                _squadTab = index;
+                _staging.SquadTab = index;
                 RefreshSquadPanel(window);
             }));
             tabs.Add(tab);
@@ -569,7 +563,7 @@ public sealed partial class StrategyDiorama
         tab.RegisterCallback((EventCallback<ClickEvent>)(_ =>
         {
             Sound.Click();
-            _dressLinks = links;
+            _staging.DressLinks = links;
             RefreshSquadPanel(window);
         }));
         return tab;
@@ -591,8 +585,8 @@ public sealed partial class StrategyDiorama
             var ours = Affinity.KeyFor(leader) != 0;
             // Mission preparation has the loadout alone, with no tabs over it: outfits and affinity
             // are the Squads screen's.
-            var tab = ours && !_squadPanelInPrep ? _squadTab : 0;
-            tabs.style.display = _squadPanelInPrep ? DisplayStyle.None : StyleKeyword.Null;
+            var tab = ours && !_staging.SquadPanelInPrep ? _staging.SquadTab : 0;
+            tabs.style.display = _staging.SquadPanelInPrep ? DisplayStyle.None : StyleKeyword.Null;
             for (var i = 0; i < tabs.childCount; i++)
             {
                 tabs.ElementAt(i).EnableInClassList("wui-utab--on", i == tab);
@@ -614,8 +608,8 @@ public sealed partial class StrategyDiorama
             if (tab == 1 && UI.Find(column, UiSelector.Name(AppearanceTabName)) is { } appearance)
             {
                 // A solo doll has no links to dress, whatever the switch was last set to.
-                var hasLinks = TransmogPickerSystem.Instance?.FillHosted(window, appearance, _dressLinks) == true;
-                var links = _dressLinks && hasLinks;
+                var hasLinks = TransmogPickerSystem.Instance?.FillHosted(window, appearance, _staging.DressLinks) == true;
+                var links = _staging.DressLinks && hasLinks;
                 if (UI.Find(appearance, UiSelector.Name(DressRowName)) is { } dress)
                 {
                     dress.style.display = hasLinks ? DisplayStyle.Flex : DisplayStyle.None;
@@ -646,10 +640,10 @@ public sealed partial class StrategyDiorama
                 gift.style.display = DisplayStyle.None;
             // The small unit type icon before the unit's name is the squad type row's, larger. Out of
             // the line's layout, so the rank starts under the name.
-            if (UI.Find(window, UiSelector.Name(VanillaUi.Elements.UnitTypeIcon)) is { } typeIcon)
-                typeIcon.style.display = DisplayStyle.None;
+            Inline(UI.Find(window, UiSelector.Name(VanillaUi.Elements.UnitTypeIcon)),
+                e => e.style.display = DisplayStyle.None, e => e.style.display = StyleKeyword.Null);
             // Vanilla shows its deployment button again each time it sets the window up.
-            if (!_squadPanelInPrep && UI.Find(window, UiSelector.Name(VanillaUi.Elements.UnitWindowButton)) is { } deploy)
+            if (!_staging.SquadPanelInPrep && UI.Find(window, UiSelector.Name(VanillaUi.Elements.UnitWindowButton)) is { } deploy)
                 deploy.style.display = DisplayStyle.None;
         }
         catch (Exception ex)
@@ -747,7 +741,6 @@ public sealed partial class StrategyDiorama
         s.borderBottomColor = SquadPanelLine;
     }
 
-    private IntPtr _squadRestores;
 
     // Takes off what RefreshSquadPanel, Recolour, DrawStatIcons and DriveSquads set on vanilla's
     // window. They run on every refresh, so they are undone together, once, when the shell comes off.
@@ -814,17 +807,17 @@ public sealed partial class StrategyDiorama
     // portrait is in, at the place they had, once that place has been laid out.
     private void RaiseStats()
     {
-        if (_squadWindow?.panel == null)
+        if (_staging.SquadWindow?.panel == null)
             return;
         // Asked every frame: the two are looked for once a window, and again only if they
         // have left it.
-        if (_statsWindow != _squadWindow || _statsRaised?.panel == null || _statsColumn?.panel == null)
+        if (_staging.StatsWindow != _staging.SquadWindow || _staging.StatsRaised?.panel == null || _staging.CurrentStatsColumn?.panel == null)
         {
-            _statsWindow = _squadWindow;
-            _statsRaised = UI.Find(_squadWindow, UiSelector.Name(VanillaUi.Elements.AdditionalStats));
-            _statsColumn = UI.Find(_squadWindow, UiSelector.Name(VanillaUi.Elements.StatsColumn));
+            _staging.StatsWindow = _staging.SquadWindow;
+            _staging.StatsRaised = UI.Find(_staging.SquadWindow, UiSelector.Name(VanillaUi.Elements.AdditionalStats));
+            _staging.CurrentStatsColumn = UI.Find(_staging.SquadWindow, UiSelector.Name(VanillaUi.Elements.StatsColumn));
         }
-        var (stats, column) = (_statsRaised, _statsColumn);
+        var (stats, column) = (_staging.StatsRaised, _staging.CurrentStatsColumn);
         var row = column?.parent;
         if (stats == null || row == null || stats.parent != column)
             return;
@@ -851,10 +844,8 @@ public sealed partial class StrategyDiorama
         });
     }
 
-    private VisualElement _statsWindow, _statsRaised, _statsColumn;
 
     private const string PickerScrollWatchedClass = "wm-picker-scroll-watched";
-    private bool _pickerScrollPress;
 
     // Vanilla shuts the equipment picker when a press ends off it. A drag of its scroll bar
     // drifts off the picker's edge, which is beside the bar, and let go there would shut it. A
@@ -866,7 +857,7 @@ public sealed partial class StrategyDiorama
         picker.AddToClassList(PickerScrollWatchedClass);
         picker.RegisterCallback((EventCallback<PointerDownEvent>)(evt =>
         {
-            _pickerScrollPress = false;
+            _staging.PickerScrollPress = false;
             // Mission preparation has this panel too, and its screen's press end is not
             // caught: a press noted there would wait for the armoury's next one and stop that.
             if (_policyScreen != ArmoryScreen)
@@ -874,7 +865,7 @@ public sealed partial class StrategyDiorama
             for (var at = evt.target?.TryCast<VisualElement>(); at != null && at != picker; at = at.parent)
                 if (at.TryCast<Scroller>() != null)
                 {
-                    _pickerScrollPress = true;
+                    _staging.PickerScrollPress = true;
                     break;
                 }
         }), TrickleDown.TrickleDown);
@@ -885,34 +876,29 @@ public sealed partial class StrategyDiorama
         var target = VanillaUi.Targets.ArmoryPressEnd;
         Context.Patches.Prefix(target.Type, target.Method, info =>
         {
-            if (!_pickerScrollPress)
+            if (!_staging.PickerScrollPress)
                 return;
-            _pickerScrollPress = false;
+            _staging.PickerScrollPress = false;
             info.Skip = true;
         });
     }
 
-    private VisualElement _squadWindow;
-    private bool _squadPanelInPrep;
-    private int _squadPickerTick;
-    // Whether the equipment picker is open over the room, as last looked.
-    private bool _squadPickerOpen;
 
     // Vanilla fills its equipment picker when a slot is clicked, which refreshes nothing. While a
     // picker is open its cards' names are given the panel's colours every few frames.
     private void DriveSquads()
     {
         RaiseStats();
-        if (_squadWindow == null || _squadWindow.panel == null || _shellRoot == null || !_shellRoot.ClassListContains(SquadsClass))
+        if (_staging.SquadWindow == null || _staging.SquadWindow.panel == null || _shellRoot == null || !_shellRoot.ClassListContains(SquadsClass))
         {
-            _squadPickerOpen = false;
+            _staging.SquadPickerOpen = false;
             return;
         }
-        if (++_squadPickerTick % 6 != 0)
+        if (++_staging.SquadPickerTick % 6 != 0)
             return;
-        var picker = UI.Find(_squadWindow, UiSelector.Name(VanillaUi.Elements.EquipmentPicker));
-        _squadPickerOpen = picker != null && picker.resolvedStyle.display != DisplayStyle.None && picker.resolvedStyle.visibility != Visibility.Hidden;
-        if (!_squadPickerOpen)
+        var picker = UI.Find(_staging.SquadWindow, UiSelector.Name(VanillaUi.Elements.EquipmentPicker));
+        _staging.SquadPickerOpen = picker != null && picker.resolvedStyle.display != DisplayStyle.None && picker.resolvedStyle.visibility != Visibility.Hidden;
+        if (!_staging.SquadPickerOpen)
             return;
         Tint(picker, VanillaUi.Elements.ItemName, SquadInk);
         Tint(picker, VanillaUi.Elements.ShortItemName, SquadBlue);
@@ -984,12 +970,12 @@ public sealed partial class StrategyDiorama
     private void HookSquadPanel()
     {
         // A gift changes the level without vanilla refreshing the window.
-        _squadAffinityChanged = window =>
+        _staging.SquadAffinityChanged = window =>
         {
             if (_shellRoot != null && _shellRoot.ClassListContains(SquadsClass))
                 RefreshSquadPanel(window);
         };
-        Affinity.Changed += _squadAffinityChanged;
+        Affinity.Changed += _staging.SquadAffinityChanged;
         foreach (var method in new[] { "SetLeader", "Refresh" })
             Context.Patches.Postfix(VanillaUi.Targets.UnitWindowType, method, info =>
             {
@@ -998,7 +984,6 @@ public sealed partial class StrategyDiorama
             });
     }
 
-    private Action<VisualElement> _squadAffinityChanged;
 
     private const string PortraitBoxName = "wm-portrait-box";
     private const float VanillaPortraitHeight = 325.6f;

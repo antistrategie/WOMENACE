@@ -71,18 +71,6 @@ public sealed partial class StrategyDiorama
     // Parts of a doll that are tricks of her own shading and no part of her shape.
     private static readonly string[] HologramSkips = { "Outline", "EyeShadow", "EyeHighlight" };
 
-    private GameObject _recruitStand;
-    private Transform _recruitSlot;
-    private GameObject _candidate;
-    private IntPtr _candidateTemplate;
-    private UnitLeaderTemplate _candidateLeader;
-    private bool _candidateReal;
-    private float _candidateDrawn;
-    private bool _recruitRefreshing;
-    private bool _hiring;
-    private Material _hologram;
-    private readonly List<(Renderer Renderer, Material[] Own)> _candidateOwn = new();
-    private readonly List<Material> _candidateHolograms = new();
 
     private static readonly string[] TileKindMarks = { VanillaUi.Elements.InfantryIcon, VanillaUi.Elements.VehicleIcon };
     private static readonly string[] TileCovers = { VanillaUi.Elements.SlotSelected, VanillaUi.Elements.TooExpensiveOverlay };
@@ -456,9 +444,9 @@ public sealed partial class StrategyDiorama
     // vanilla fills its window or a slot is clicked.
     private void RefreshRecruit()
     {
-        if (_recruitRefreshing || _shellRoot == null || !_shellRoot.ClassListContains(RecruitClass))
+        if (_staging.RecruitRefreshing || _shellRoot == null || !_shellRoot.ClassListContains(RecruitClass))
             return;
-        _recruitRefreshing = true;
+        _staging.RecruitRefreshing = true;
         try
         {
             var screen = UIManager.Get()?.GetActiveScreen()?.TryCast<HiringUIScreen>();
@@ -468,16 +456,16 @@ public sealed partial class StrategyDiorama
                 return;
             // The one on show has just been hired: she stays, as herself, behind the bars, whoever
             // vanilla selects while it fills its lists again.
-            if (_candidate != null && !_candidateReal && !_hiring && StatusOf(roster, _candidateLeader) == UnitLeaderStatus.Hired)
+            if (_staging.Candidate != null && !_staging.CandidateReal && !_staging.CurrentHiring && StatusOf(roster, _staging.CandidateLeader) == UnitLeaderStatus.Hired)
                 Context.Coroutines.Start(Hire(_shell));
             // While the bars shut the panel is put away: vanilla fills it with someone else.
-            if (_hiring)
+            if (_staging.CurrentHiring)
             {
                 window.AddToClassList(RecruitEmptyClass);
                 return;
             }
             var (template, status) = Selected(screen, roster);
-            var kept = template != null && template.Pointer == _candidateTemplate && _candidateReal;
+            var kept = template != null && template.Pointer == _staging.CandidateTemplate && _staging.CandidateReal;
             // Vanilla opens on the first leader already hired. Here that is nobody to show, so
             // the first candidate is picked for it.
             if (status != UnitLeaderStatus.Hirable && !kept && FirstCandidate() is { } first)
@@ -508,7 +496,7 @@ public sealed partial class StrategyDiorama
         }
         finally
         {
-            _recruitRefreshing = false;
+            _staging.RecruitRefreshing = false;
         }
     }
 
@@ -647,7 +635,7 @@ public sealed partial class StrategyDiorama
     {
         if (_room == null || _camera == null)
             return;
-        if (_recruitStand != null)
+        if (_staging.RecruitStand != null)
             return;
         var from = StagePose();
         UnstageArmory();
@@ -660,22 +648,22 @@ public sealed partial class StrategyDiorama
                 ActivateSet(_refitSet);
                 MapHall(refit.transform);
             }
-            _stage = (refit ?? _room).transform;
-            _recruitStand = new GameObject("WOMENACE_Candidate");
-            _recruitStand.transform.SetParent(_stage, false);
-            _recruitStand.transform.localPosition = ArmoryStand;
+            _staging.Stage = (refit ?? _room).transform;
+            _staging.RecruitStand = new GameObject("WOMENACE_Candidate");
+            _staging.RecruitStand.transform.SetParent(_staging.Stage, false);
+            _staging.RecruitStand.transform.localPosition = ArmoryStand;
             // Facing the camera's starting place.
-            _recruitStand.transform.localRotation = Quaternion.Euler(0f, ArmoryYaw + 180f, 0f);
+            _staging.RecruitStand.transform.localRotation = Quaternion.Euler(0f, ArmoryYaw + 180f, 0f);
             var slot = new GameObject("Slot");
-            slot.transform.SetParent(_recruitStand.transform, false);
-            _recruitSlot = slot.transform;
-            var root = _recruitStand.transform;
-            _stagedRoots.Add(new StagedRoot { Root = root, Position = root.position, Rotation = root.rotation, Scale = root.localScale });
-            _stageShot = CandidateShot;
-            _orbitYaw = _orbitYawTarget = ArmoryYaw;
-            _orbitPitch = _orbitPitchTarget = RecruitPitch;
-            _orbitDistance = _orbitDistanceTarget = RecruitDistance;
-            _orbitRoutine = Context.Coroutines.Start(Orbit());
+            slot.transform.SetParent(_staging.RecruitStand.transform, false);
+            _staging.RecruitSlot = slot.transform;
+            var root = _staging.RecruitStand.transform;
+            _staging.StagedRoots.Add(new StagedRoot { Root = root, Position = root.position, Rotation = root.rotation, Scale = root.localScale });
+            _staging.CurrentStageShot = CandidateShot;
+            _staging.OrbitYaw = _staging.OrbitYawTarget = ArmoryYaw;
+            _staging.OrbitPitch = _staging.OrbitPitchTarget = RecruitPitch;
+            _staging.OrbitDistance = _staging.OrbitDistanceTarget = RecruitDistance;
+            _staging.OrbitRoutine = Context.Coroutines.Start(Orbit());
             Context.Log.Info("strategy diorama: recruit staged");
             RefreshRecruit();
         }
@@ -689,34 +677,34 @@ public sealed partial class StrategyDiorama
     private void ClearRecruitStand()
     {
         ClearCandidate();
-        if (_recruitStand != null)
-            UnityEngine.Object.Destroy(_recruitStand);
-        _recruitStand = null;
-        _recruitSlot = null;
-        _hiring = false;
+        if (_staging.RecruitStand != null)
+            UnityEngine.Object.Destroy(_staging.RecruitStand);
+        _staging.RecruitStand = null;
+        _staging.RecruitSlot = null;
+        _staging.CurrentHiring = false;
     }
 
     private void ClearCandidate()
     {
         DropHolograms();
-        _candidateOwn.Clear();
-        if (_candidate != null)
+        _staging.CandidateOwn.Clear();
+        if (_staging.Candidate != null)
         {
-            _crewFidgets.Remove(_candidate);
-            UnityEngine.Object.Destroy(_candidate);
+            _crewFidgets.Remove(_staging.Candidate);
+            UnityEngine.Object.Destroy(_staging.Candidate);
         }
-        _candidate = null;
-        _candidateTemplate = IntPtr.Zero;
-        _candidateLeader = null;
-        _candidateReal = false;
+        _staging.Candidate = null;
+        _staging.CandidateTemplate = IntPtr.Zero;
+        _staging.CandidateLeader = null;
+        _staging.CandidateReal = false;
     }
 
     private void DropHolograms()
     {
-        foreach (var material in _candidateHolograms)
+        foreach (var material in _staging.CandidateHolograms)
             if (material != null)
                 UnityEngine.Object.Destroy(material);
-        _candidateHolograms.Clear();
+        _staging.CandidateHolograms.Clear();
     }
 
     // Stands the leader's own model on the stand as a hologram. A leader with no model of ours
@@ -724,11 +712,11 @@ public sealed partial class StrategyDiorama
     private void ShowCandidate(UnitLeaderTemplate template, Roster roster)
     {
         var pointer = template != null ? template.Pointer : IntPtr.Zero;
-        if (pointer == _candidateTemplate || _recruitSlot == null)
+        if (pointer == _staging.CandidateTemplate || _staging.RecruitSlot == null)
             return;
         ClearCandidate();
-        _candidateTemplate = pointer;
-        _candidateLeader = template;
+        _staging.CandidateTemplate = pointer;
+        _staging.CandidateLeader = template;
         if (template == null)
             return;
         var leader = roster.GetLeaderByTemplate(template, out _) ?? roster.GetTempLeader(template);
@@ -736,13 +724,13 @@ public sealed partial class StrategyDiorama
         var doll = tag != null ? SpawnDoll(tag, "candidate") : null;
         if (doll == null)
             return;
-        doll.transform.SetParent(_recruitSlot, false);
+        doll.transform.SetParent(_staging.RecruitSlot, false);
         doll.transform.localPosition = Vector3.zero;
         doll.transform.localRotation = Quaternion.identity;
         Pose(doll, "Idle");
-        _candidate = doll;
+        _staging.Candidate = doll;
         WearHologram(doll);
-        _candidateDrawn = 0f;
+        _staging.CandidateDrawn = 0f;
     }
 
     // Every renderer of the doll wears the hologram, with its own texture's light and dark.
@@ -761,15 +749,15 @@ public sealed partial class StrategyDiorama
                 continue;
             }
             top = Mathf.Max(top, renderer.bounds.max.y);
-            _candidateOwn.Add((renderer, renderer.sharedMaterials));
-            WearHolograms(renderer, _candidateHolograms, (worn, source) =>
+            _staging.CandidateOwn.Add((renderer, renderer.sharedMaterials));
+            WearHolograms(renderer, _staging.CandidateHolograms, (worn, source) =>
             {
                 var shader = source != null && source.shader != null ? source.shader.name : "";
                 if (HologramSkips.Any(skip => shader.Contains(skip, StringComparison.Ordinal)))
                     worn.SetFloat(HologramOpacityId, 0f);
             });
         }
-        foreach (var material in _candidateHolograms)
+        foreach (var material in _staging.CandidateHolograms)
         {
             material.SetFloat(HologramFloorId, floor);
             material.SetFloat(HologramHeightId, top - floor);
@@ -780,30 +768,30 @@ public sealed partial class StrategyDiorama
     // The hologram comes off and the doll stands in the room as herself.
     private void WearOwn()
     {
-        foreach (var (renderer, own) in _candidateOwn)
+        foreach (var (renderer, own) in _staging.CandidateOwn)
             if (renderer != null)
                 renderer.sharedMaterials = own;
-        _candidateOwn.Clear();
+        _staging.CandidateOwn.Clear();
         DropHolograms();
-        if (_candidate != null)
-            foreach (var renderer in _candidate.GetComponentsInChildren<Renderer>(true))
+        if (_staging.Candidate != null)
+            foreach (var renderer in _staging.Candidate.GetComponentsInChildren<Renderer>(true))
                 if (renderer.name == ContactShadowName)
                     renderer.enabled = true;
-        _candidateReal = true;
+        _staging.CandidateReal = true;
     }
 
     // The bars shut on a hire, and open on the doll herself where her hologram stood.
     private System.Collections.IEnumerator Hire(VisualElement shell)
     {
-        _hiring = true;
-        var hired = _candidate;
+        _staging.CurrentHiring = true;
+        var hired = _staging.Candidate;
         if (shell != null)
             ShutBars(shell, BarsCutClass);
         for (var t = 0f; t < BarsCutSeconds + BarsHeldSeconds; t += Time.unscaledDeltaTime)
             yield return null;
         // The screen may have been left, or left and come back to, while the bars were shut.
         // The candidate standing there now is another, and still a hologram.
-        if (!_hiring || hired == null || _candidate != hired)
+        if (!_staging.CurrentHiring || hired == null || _staging.Candidate != hired)
             yield break;
         WearOwn();
         // Vanilla moves its selection off her as it hires her. It is put back on her place among
@@ -811,9 +799,9 @@ public sealed partial class StrategyDiorama
         try
         {
             var screen = UIManager.Get()?.GetActiveScreen()?.TryCast<HiringUIScreen>();
-            if (screen != null && SlotOf(VanillaUi.Elements.HiredScrollView, _candidateTemplate) is { } hers)
+            if (screen != null && SlotOf(VanillaUi.Elements.HiredScrollView, _staging.CandidateTemplate) is { } hers)
             {
-                _recruitRefreshing = true;
+                _staging.RecruitRefreshing = true;
                 screen.OnUnitSlotClicked(hers);
             }
         }
@@ -823,9 +811,9 @@ public sealed partial class StrategyDiorama
         }
         finally
         {
-            _recruitRefreshing = false;
+            _staging.RecruitRefreshing = false;
         }
-        _hiring = false;
+        _staging.CurrentHiring = false;
         RefreshRecruit();
         if (shell != null && _shell == shell && shell.panel != null)
             OpenShutBars(shell, BarsCutClass);
@@ -834,12 +822,12 @@ public sealed partial class StrategyDiorama
     // A candidate is drawn in from the floor up.
     private void DriveRecruit()
     {
-        if (_candidate == null || _candidateReal || _candidateDrawn >= 1f)
+        if (_staging.Candidate == null || _staging.CandidateReal || _staging.CandidateDrawn >= 1f)
             return;
-        _candidateDrawn = Mathf.Min(1f, _candidateDrawn + HitchStep(CandidateLongestStep) / CandidateDrawSeconds);
+        _staging.CandidateDrawn = Mathf.Min(1f, _staging.CandidateDrawn + HitchStep(CandidateLongestStep) / CandidateDrawSeconds);
         // Past the top of her, so the bright line leaves her head.
-        var reveal = Ease.OutCubic(_candidateDrawn) * 1.1f;
-        foreach (var material in _candidateHolograms)
+        var reveal = Ease.OutCubic(_staging.CandidateDrawn) * 1.1f;
+        foreach (var material in _staging.CandidateHolograms)
             if (material != null)
                 material.SetFloat(HologramRevealId, reveal);
     }

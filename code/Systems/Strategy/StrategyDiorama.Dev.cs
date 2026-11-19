@@ -119,7 +119,7 @@ public sealed partial class StrategyDiorama
         var d = _instance;
         if (d?._room == null)
             return "no room";
-        var stage = d._stage != null ? d._stage : d._room.transform;
+        var stage = d._staging.Stage != null ? d._staging.Stage : d._room.transform;
         var side = (int)(reach * 2f / cell);
         var grid = new char[side, side];
         for (var z = 0; z < side; z++)
@@ -136,7 +136,7 @@ public sealed partial class StrategyDiorama
                 grid[x, z] = mark;
         }
         var squad = new HashSet<int>();
-        foreach (var staged in d._stagedRoots)
+        foreach (var staged in d._staging.StagedRoots)
             foreach (var r in staged.Root.GetComponentsInChildren<Renderer>())
             {
                 squad.Add(r.GetInstanceID());
@@ -189,8 +189,8 @@ public sealed partial class StrategyDiorama
                             Mathf.Lerp(box.min.y, box.max.y, j / 12f),
                             Mathf.Lerp(box.min.z, box.max.z, k / 12f))), '#', true);
         }
-        if (d._stage != null)
-            Mark(d._stage.TransformPoint(ArmoryStand), 'S', false);
+        if (d._staging.Stage != null)
+            Mark(d._staging.Stage.TransformPoint(ArmoryStand), 'S', false);
         foreach (var doll in d._crew)
             if (doll != null && doll.activeInHierarchy)
                 Mark(doll.transform.position, 'D', false);
@@ -259,21 +259,21 @@ public sealed partial class StrategyDiorama
         var d = _instance;
         if (d == null)
             return "no diorama";
-        foreach (var material in d._candidateHolograms)
+        foreach (var material in d._staging.CandidateHolograms)
             material.SetFloat(name, value);
-        return $"{d._candidateHolograms.Count} materials";
+        return $"{d._staging.CandidateHolograms.Count} materials";
     }
 
     // Dev: drive the orbit as a drag and a wheel would.
     internal static string NudgeOrbit(float yaw, float pitch, float zoomNotches)
     {
         var d = _instance;
-        if (d?._armoryVanilla == null)
+        if (d?._staging.ArmoryVanilla == null)
             return "armoury not staged";
-        d._orbitYawTarget = Mathf.Clamp(d._orbitYawTarget + yaw, d.YawMin(), d.YawMax());
-        d._orbitPitchTarget = Mathf.Clamp(d._orbitPitchTarget + pitch, d._stageShot.PitchMin, OrbitPitchMax);
-        d._orbitDistanceTarget = Mathf.Clamp(d._orbitDistanceTarget * Mathf.Exp(-zoomNotches * OrbitZoomPerNotch * 2f), OrbitDistanceMin, d._orbitDistanceMax);
-        return $"orbit yaw {d._orbitYawTarget:F0} pitch {d._orbitPitchTarget:F0} distance {d._orbitDistanceTarget:F1}";
+        d._staging.OrbitYawTarget = Mathf.Clamp(d._staging.OrbitYawTarget + yaw, d.YawMin(), d.YawMax());
+        d._staging.OrbitPitchTarget = Mathf.Clamp(d._staging.OrbitPitchTarget + pitch, d._staging.CurrentStageShot.PitchMin, OrbitPitchMax);
+        d._staging.OrbitDistanceTarget = Mathf.Clamp(d._staging.OrbitDistanceTarget * Mathf.Exp(-zoomNotches * OrbitZoomPerNotch * 2f), OrbitDistanceMin, d._staging.OrbitDistanceLimit);
+        return $"orbit yaw {d._staging.OrbitYawTarget:F0} pitch {d._staging.OrbitPitchTarget:F0} distance {d._staging.OrbitDistanceTarget:F1}";
     }
 
     // Dev: sets the player's shadow quality without saving it and reports each shadowed light's
@@ -511,11 +511,11 @@ public sealed partial class StrategyDiorama
     internal static string StagedBoundsFromDev()
     {
         var d = _instance;
-        if (d?._stage == null || d._stagedRoots.Count == 0)
+        if (d?._staging.Stage == null || d._staging.StagedRoots.Count == 0)
             return "nothing staged";
-        var stand = d._stage.TransformPoint(ArmoryStand);
+        var stand = d._staging.Stage.TransformPoint(ArmoryStand);
         var lines = new List<string>();
-        foreach (var staged in d._stagedRoots)
+        foreach (var staged in d._staging.StagedRoots)
         {
             if (staged.Root == null || !staged.Root.gameObject.activeInHierarchy)
                 continue;
@@ -539,11 +539,11 @@ public sealed partial class StrategyDiorama
     internal static string SquadLightFromDev(float sun, bool lamps, bool rigs)
     {
         var d = _instance;
-        if (d?._active?.Root == null || d._stagedRoots.Count == 0)
+        if (d?._active?.Root == null || d._staging.StagedRoots.Count == 0)
             return "nothing staged";
         var block = new MaterialPropertyBlock();
         var renderers = 0;
-        foreach (var staged in d._stagedRoots)
+        foreach (var staged in d._staging.StagedRoots)
             if (staged.Root != null)
                 foreach (var renderer in staged.Root.GetComponentsInChildren<Renderer>(true))
                 {
@@ -914,16 +914,16 @@ public sealed partial class StrategyDiorama
     internal static string HallLineFromDev()
     {
         var d = _instance;
-        if (d?._stage == null || d._hallSolid == null || d._camera == null)
+        if (d?._staging.Stage == null || d._staging.HallSolid == null || d._camera == null)
             return "no hall map";
-        var rotation = d._stage.rotation * Quaternion.Euler(d._orbitPitch, d._orbitYaw, 0f);
+        var rotation = d._staging.Stage.rotation * Quaternion.Euler(d._staging.OrbitPitch, d._staging.OrbitYaw, 0f);
         var centre = d.SquadFocus(out _);
-        var at = d._stage.InverseTransformPoint(centre);
-        var back = d._stage.InverseTransformDirection(rotation * Vector3.back + rotation * Vector3.right * d.StagePan());
-        var right = d._stage.InverseTransformDirection(rotation * Vector3.right) * HallAbreast;
-        var up = d._stage.InverseTransformDirection(rotation * Vector3.up) * HallAbreast;
-        var eye = d._stage.InverseTransformPoint(d._camera.transform.position);
-        var lines = new List<string> { $"focus {at}, camera {eye} ({(eye - at).magnitude:F1} m out), wanted {d._orbitDistance:F1}, radius {d._framedRadius:F1}, pitch {d._orbitPitch:F0}, yaw {d._orbitYaw:F0}" };
+        var at = d._staging.Stage.InverseTransformPoint(centre);
+        var back = d._staging.Stage.InverseTransformDirection(rotation * Vector3.back + rotation * Vector3.right * d.StagePan());
+        var right = d._staging.Stage.InverseTransformDirection(rotation * Vector3.right) * HallAbreast;
+        var up = d._staging.Stage.InverseTransformDirection(rotation * Vector3.up) * HallAbreast;
+        var eye = d._staging.Stage.InverseTransformPoint(d._camera.transform.position);
+        var lines = new List<string> { $"focus {at}, camera {eye} ({(eye - at).magnitude:F1} m out), wanted {d._staging.OrbitDistance:F1}, radius {d._staging.FramedRadius:F1}, pitch {d._staging.OrbitPitch:F0}, yaw {d._staging.OrbitYaw:F0}" };
         for (var dist = 2f; dist <= 24f; dist += 0.4f)
         {
             var on = at + back * dist;
@@ -940,7 +940,7 @@ public sealed partial class StrategyDiorama
     internal static string HallFloorFromDev(float x, float z)
     {
         var d = _instance;
-        if (d?._hallFloor == null)
+        if (d?._staging.HallFloor == null)
             return "no floor plan";
         return d.OnHallFloor(new Vector3(x, 0f, z)) ? "on the floor" : "off the floor";
     }

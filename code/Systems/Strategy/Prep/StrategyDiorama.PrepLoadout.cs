@@ -52,7 +52,7 @@ public sealed partial class StrategyDiorama
         // against: the mission's own figure does not count what the operation adds to it.
         var printed = System.Text.RegularExpressions.Regex.Matches(Untagged(screen.m_SuppliesValue?.text), "[0-9]+");
         var limit = printed.Count >= 2 ? int.Parse(printed[1].Value) : 0;
-        var open = _squadWindow != null ? Affinity.LeaderOf(_squadWindow) : null;
+        var open = _staging.SquadWindow != null ? Affinity.LeaderOf(_staging.SquadWindow) : null;
         var selector = screen.m_UnitSelector;
         // In the roster's order, which does not change: vanilla reorders the squads on the map as
         // one is picked. The open squad, if it is not deployed, comes last as what it would add.

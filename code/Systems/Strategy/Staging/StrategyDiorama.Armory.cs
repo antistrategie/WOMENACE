@@ -42,17 +42,6 @@ public sealed partial class StrategyDiorama
     private const float OrbitYawRange = 65f;
     private const float OrbitPitchMin = 8f, OrbitPitchMax = 62f;
     private const float OrbitDistanceMin = 2.2f, OrbitDistanceMax = 11f;
-    private const float OrbitDegreesPerPixel = 0.25f;
-    private const float OrbitZoomPerNotch = 0.1f;
-    // How fast a turned camera closes on where it was asked to be: the part of the way left
-    // that it covers in a second, as an exponent.
-    private const float OrbitSettle = 12f;
-
-    // The distance's factor for a roll of the wheel, and a frame's part of the way to where
-    // the camera was asked to be. Every camera the player turns shares these.
-    private static float OrbitZoom(float notches) => MathF.Exp(-notches * OrbitZoomPerNotch * 2f);
-
-    private static float OrbitSmoothing() => 1f - MathF.Exp(-OrbitSettle * Time.unscaledDeltaTime);
     // Neighbouring units' rigs add up, so each unit's rig is dimmer than a lone doll's.
     internal const float SquadLightScale = 0.3f;
     // How what stands on the floor is lit and shot: the rig's strength, the nearest the framing
@@ -64,31 +53,27 @@ public sealed partial class StrategyDiorama
     private readonly record struct StageShot(float LightScale, float Distance, float Pan, float Pitch, float PitchMin, float? AimHeight, float? ScreenX = null);
 
     private static readonly StageShot SquadShot = new(SquadLightScale, ArmoryDistance, ArmoryPan, ArmoryPitch, OrbitPitchMin, null);
-    private StageShot _stageShot = SquadShot;
 
     // The pan that stands the shot's subject at its place across the screen, whatever the
     // screen's shape and however the UI is fitted to it: the place is measured on the screen's
     // own panel, from the shell's left edge.
     private float StagePan()
     {
-        if (_stagePanFrame == Time.frameCount)
-            return _stagePan;
-        _stagePanFrame = Time.frameCount;
-        return _stagePan = MeasureStagePan();
+        if (_staging.StagePanFrame == Time.frameCount)
+            return _staging.CurrentStagePan;
+        _staging.StagePanFrame = Time.frameCount;
+        return _staging.CurrentStagePan = MeasureStagePan();
     }
 
-    // Asked for several times a frame while the camera orbits, and measured once.
-    private int _stagePanFrame = -1;
-    private float _stagePan;
 
     private float MeasureStagePan()
     {
-        if (_stageShot.ScreenX is not { } x)
-            return _stageShot.Pan;
+        if (_staging.CurrentStageShot.ScreenX is not { } x)
+            return _staging.CurrentStageShot.Pan;
         var camera = _camera != null ? _camera.GetComponent<Camera>() : null;
         var width = _shellRoot?.panel?.visualTree?.worldBound.width ?? 0f;
         if (camera == null || !(width > 1f))
-            return _stageShot.Pan;
+            return _staging.CurrentStageShot.Pan;
         var across = (_shellRoot.worldBound.x + x) / width;
         return (0.5f - across) * 2f * Mathf.Tan(ArmoryFov * 0.5f * Mathf.Deg2Rad) * camera.aspect;
     }
@@ -98,18 +83,16 @@ public sealed partial class StrategyDiorama
     // is seen.
     private const float StageTravelSeconds = 0.8f;
     private const float StageLongestStep = 1f / 20f;
-    private (Vector3 Position, Quaternion Rotation) _stageFrom;
-    private float _stageTravel = 1f;
 
     // Where the camera stands while something is staged, or nothing when the hall is not showing.
     private (Vector3 Position, Quaternion Rotation)? StagePose() =>
-        _stage != null && _camera != null ? (_camera.transform.position, _camera.transform.rotation) : null;
+        _staging.Stage != null && _camera != null ? (_camera.transform.position, _camera.transform.rotation) : null;
 
     private void TravelFrom((Vector3 Position, Quaternion Rotation)? from)
     {
-        _stageTravel = from != null ? 0f : 1f;
+        _staging.StageTravel = from != null ? 0f : 1f;
         if (from is { } pose)
-            _stageFrom = pose;
+            _staging.StageFrom = pose;
     }
 
     private sealed class StagedRoot
@@ -120,21 +103,6 @@ public sealed partial class StrategyDiorama
         public Vector3 Scale;
     }
 
-    private readonly List<StagedRoot> _stagedRoots = new();
-    // The units under the staged roots, by pointer and active state, so a respawned squad is lit
-    // and gripped on the frame it appears.
-    private long _squadSignature;
-    // Each unit renderer the room's probes light, with its own property block (null when it had
-    // none), given back with the units.
-    private readonly Dictionary<IntPtr, (Renderer Renderer, MaterialPropertyBlock Block)> _probeLitUnits = new();
-    private readonly List<Renderer> _armoryHidden = new();
-    private Camera _armoryCamera;
-    private GameObject _armoryLabels;
-    private GameObject _armoryVanilla;
-    private Transform _stage;
-    private float _orbitYaw, _orbitPitch, _orbitDistance;
-    private float _orbitYawTarget, _orbitPitchTarget, _orbitDistanceTarget;
-    private object _orbitRoutine;
 
     // The room's own dolls make way for the squad.
     private void HideRoomDolls()
@@ -148,47 +116,47 @@ public sealed partial class StrategyDiorama
     {
         if (vanilla == null || _room == null || _camera == null)
             return;
-        if (_armoryVanilla == vanilla)
+        if (_staging.ArmoryVanilla == vanilla)
         {
             // The UI manager turns its background camera back on whenever it updates the screen.
-            if (_armoryCamera != null)
-                _armoryCamera.enabled = false;
+            if (_staging.ArmoryCamera != null)
+                _staging.ArmoryCamera.enabled = false;
             return;
         }
         var from = StagePose();
         UnstageArmory();
         TravelFrom(from);
-        _armoryVanilla = vanilla;
-        _stageShot = SquadShot;
+        _staging.ArmoryVanilla = vanilla;
+        _staging.CurrentStageShot = SquadShot;
         try
         {
             var refit = SpawnSet(_refitSet);
             if (refit != null)
                 ActivateSet(_refitSet);
-            _stage = (refit ?? _room).transform;
+            _staging.Stage = (refit ?? _room).transform;
             if (refit != null)
             {
                 MapHall(refit.transform);
             }
-            var stand = _stage.TransformPoint(ArmoryStand);
-            _armoryCamera = vanilla.GetComponentInChildren<Camera>(true);
-            var vanillaEye = _armoryCamera != null ? _armoryCamera.transform.position : Vector3.zero;
-            if (_armoryCamera != null)
-                _armoryCamera.enabled = false;
-            _armoryLabels = vanilla.transform.Find("Squad_Canvas")?.gameObject;
-            if (_armoryLabels != null)
-                _armoryLabels.SetActive(false);
+            var stand = _staging.Stage.TransformPoint(ArmoryStand);
+            _staging.ArmoryCamera = vanilla.GetComponentInChildren<Camera>(true);
+            var vanillaEye = _staging.ArmoryCamera != null ? _staging.ArmoryCamera.transform.position : Vector3.zero;
+            if (_staging.ArmoryCamera != null)
+                _staging.ArmoryCamera.enabled = false;
+            _staging.ArmoryLabels = vanilla.transform.Find("Squad_Canvas")?.gameObject;
+            if (_staging.ArmoryLabels != null)
+                _staging.ArmoryLabels.SetActive(false);
 
             // Toward the starting room camera, flattened: the squad turns so the side the vanilla
             // camera saw faces it.
-            var towardCamera = _stage.rotation * (Quaternion.Euler(0f, ArmoryYaw, 0f) * Vector3.back);
-            _squadFacing = towardCamera;
+            var towardCamera = _staging.Stage.rotation * (Quaternion.Euler(0f, ArmoryYaw, 0f) * Vector3.back);
+            _staging.SquadFacing = towardCamera;
             foreach (var name in SquadRoots)
             {
                 var root = vanilla.transform.Find(name);
                 if (root == null)
                     continue;
-                _stagedRoots.Add(new StagedRoot { Root = root, Position = root.position, Rotation = root.rotation, Scale = root.localScale });
+                _staging.StagedRoots.Add(new StagedRoot { Root = root, Position = root.position, Rotation = root.rotation, Scale = root.localScale });
                 var seen = vanillaEye - root.position;
                 seen.y = 0f;
                 var turn = seen.sqrMagnitude > 1e-4f
@@ -203,14 +171,14 @@ public sealed partial class StrategyDiorama
                 if (!renderer.enabled || UnderSquad(renderer.transform))
                     continue;
                 renderer.enabled = false;
-                _armoryHidden.Add(renderer);
+                _staging.ArmoryHidden.Add(renderer);
             }
 
-            _orbitYaw = _orbitYawTarget = ArmoryYaw;
-            _orbitPitch = _orbitPitchTarget = ArmoryPitch;
-            _orbitDistance = _orbitDistanceTarget = ArmoryDistance;
-            _orbitRoutine = Context.Coroutines.Start(Orbit());
-            Context.Log.Info($"strategy diorama: armoury staged with {_stagedRoots.Count} squad roots, {_armoryHidden.Count} vanilla renderers hidden");
+            _staging.OrbitYaw = _staging.OrbitYawTarget = ArmoryYaw;
+            _staging.OrbitPitch = _staging.OrbitPitchTarget = ArmoryPitch;
+            _staging.OrbitDistance = _staging.OrbitDistanceTarget = ArmoryDistance;
+            _staging.OrbitRoutine = Context.Coroutines.Start(Orbit());
+            Context.Log.Info($"strategy diorama: armoury staged with {_staging.StagedRoots.Count} squad roots, {_staging.ArmoryHidden.Count} vanilla renderers hidden");
         }
         catch (Exception ex)
         {
@@ -221,7 +189,7 @@ public sealed partial class StrategyDiorama
 
     private bool UnderSquad(Transform t)
     {
-        foreach (var staged in _stagedRoots)
+        foreach (var staged in _staging.StagedRoots)
             if (staged.Root != null && t.IsChildOf(staged.Root))
                 return true;
         return false;
@@ -229,12 +197,12 @@ public sealed partial class StrategyDiorama
 
     private void UnstageArmory()
     {
-        if (_orbitRoutine != null)
+        if (_staging.OrbitRoutine != null)
         {
-            Context.Coroutines.Stop(_orbitRoutine);
-            _orbitRoutine = null;
+            Context.Coroutines.Stop(_staging.OrbitRoutine);
+            _staging.OrbitRoutine = null;
         }
-        foreach (var staged in _stagedRoots)
+        foreach (var staged in _staging.StagedRoots)
         {
             if (staged.Root == null)
                 continue;
@@ -244,32 +212,32 @@ public sealed partial class StrategyDiorama
             staged.Root.SetPositionAndRotation(staged.Position, staged.Rotation);
             staged.Root.localScale = staged.Scale;
         }
-        _stagedRoots.Clear();
+        _staging.StagedRoots.Clear();
         ClearNamePlates();
-        _roomLitUnits.Clear();
-        _squadSignature = 0;
-        foreach (var (renderer, block) in _probeLitUnits.Values)
+        _staging.RoomLitUnits.Clear();
+        _staging.SquadSignature = 0;
+        foreach (var (renderer, block) in _staging.ProbeLitUnits.Values)
         {
             if (renderer == null)
                 continue;
             renderer.SetPropertyBlock(block);
             renderer.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.BlendProbes;
         }
-        _probeLitUnits.Clear();
+        _staging.ProbeLitUnits.Clear();
         ClearGrips();
-        foreach (var renderer in _armoryHidden)
+        foreach (var renderer in _staging.ArmoryHidden)
             if (renderer != null)
                 renderer.enabled = true;
-        _armoryHidden.Clear();
-        if (_armoryCamera != null)
-            _armoryCamera.enabled = true;
-        _armoryCamera = null;
-        if (_armoryLabels != null)
-            _armoryLabels.SetActive(true);
-        _armoryLabels = null;
-        _armoryVanilla = null;
+        _staging.ArmoryHidden.Clear();
+        if (_staging.ArmoryCamera != null)
+            _staging.ArmoryCamera.enabled = true;
+        _staging.ArmoryCamera = null;
+        if (_staging.ArmoryLabels != null)
+            _staging.ArmoryLabels.SetActive(true);
+        _staging.ArmoryLabels = null;
+        _staging.ArmoryVanilla = null;
         ClearRecruitStand();
-        _stage = null;
+        _staging.Stage = null;
         if (_active == _refitSet)
             ActivateSet(_ops);
     }
@@ -278,7 +246,7 @@ public sealed partial class StrategyDiorama
     private bool SquadChanged()
     {
         long signature = 17;
-        foreach (var staged in _stagedRoots)
+        foreach (var staged in _staging.StagedRoots)
         {
             if (staged.Root == null || !staged.Root.gameObject.activeInHierarchy)
                 continue;
@@ -292,16 +260,16 @@ public sealed partial class StrategyDiorama
                 }
             }
         }
-        if (signature == _squadSignature)
+        if (signature == _staging.SquadSignature)
             return false;
-        _squadSignature = signature;
+        _staging.SquadSignature = signature;
         return true;
     }
 
     private void ProbeLightSquad()
     {
         var set = _active;
-        foreach (var staged in _stagedRoots)
+        foreach (var staged in _staging.StagedRoots)
             if (staged.Root != null && staged.Root.gameObject.activeInHierarchy)
                 for (int i = 0; i < staged.Root.childCount; i++)
                 {
@@ -311,30 +279,24 @@ public sealed partial class StrategyDiorama
                         {
                             var unit = slot.GetChild(j).gameObject;
                             foreach (var renderer in unit.GetComponentsInChildren<Renderer>(true))
-                                if (!_probeLitUnits.ContainsKey(renderer.Pointer))
+                                if (!_staging.ProbeLitUnits.ContainsKey(renderer.Pointer))
                                 {
                                     MaterialPropertyBlock own = null;
                                     if (renderer.HasPropertyBlock())
                                         renderer.GetPropertyBlock(own = new MaterialPropertyBlock());
-                                    _probeLitUnits[renderer.Pointer] = (renderer, own);
+                                    _staging.ProbeLitUnits[renderer.Pointer] = (renderer, own);
                                 }
                             ProbeLight(unit, set);
                         }
                 }
     }
 
-    // Whether a staged unit is shaded by the room itself: a doll's shaders take the room's light
-    // probes and its sun, and the rig on top of them read as a spotlight on her. MENACE's own
-    // soldiers and vehicles take neither, and keep the rig.
-    // The answer is kept for a short while only: a doll's outfit body loads after she is staged,
-    // and vanilla makes its units anew on each selection.
-    private readonly Dictionary<IntPtr, (bool Lit, int Frame)> _roomLitUnits = new();
     private const int RoomLitRecheckFrames = 30;
 
     private bool TakesRoomLight(Transform unit)
     {
         var frame = Time.frameCount;
-        if (_roomLitUnits.TryGetValue(unit.Pointer, out var known) && frame - known.Frame < RoomLitRecheckFrames)
+        if (_staging.RoomLitUnits.TryGetValue(unit.Pointer, out var known) && frame - known.Frame < RoomLitRecheckFrames)
             return known.Lit;
         var lit = false;
         foreach (var renderer in unit.GetComponentsInChildren<Renderer>(true))
@@ -346,7 +308,7 @@ public sealed partial class StrategyDiorama
                 break;
             }
         }
-        _roomLitUnits[unit.Pointer] = (lit, frame);
+        _staging.RoomLitUnits[unit.Pointer] = (lit, frame);
         return lit;
     }
 
@@ -355,7 +317,7 @@ public sealed partial class StrategyDiorama
     // by the room at first, and gives the rig up once she is.
     private void LightSquad()
     {
-        foreach (var staged in _stagedRoots)
+        foreach (var staged in _staging.StagedRoots)
         {
             if (staged.Root == null || !staged.Root.gameObject.activeInHierarchy)
                 continue;
@@ -370,7 +332,7 @@ public sealed partial class StrategyDiorama
                     if (TakesRoomLight(unit))
                         RemoveRig(unit.gameObject);
                     else
-                        LightDoll(unit.gameObject, _stageShot.LightScale);
+                        LightDoll(unit.gameObject, _staging.CurrentStageShot.LightScale);
                 }
             }
         }
@@ -381,7 +343,7 @@ public sealed partial class StrategyDiorama
     // The controller respawns the units on every selection, so this runs on each refocus.
     private void CentreSquad()
     {
-        foreach (var staged in _stagedRoots)
+        foreach (var staged in _staging.StagedRoots)
         {
             if (staged.Root == null || !staged.Root.gameObject.activeInHierarchy)
                 continue;
@@ -390,7 +352,7 @@ public sealed partial class StrategyDiorama
             AddSquadBounds(staged.Root, ref bounds, ref has);
             if (!has)
                 continue;
-            var offset = _stage.TransformPoint(ArmoryStand) - bounds.center;
+            var offset = _staging.Stage.TransformPoint(ArmoryStand) - bounds.center;
             offset.y = 0f;
             if (offset.sqrMagnitude > 0.01f)
                 staged.Root.position += offset;
@@ -426,19 +388,19 @@ public sealed partial class StrategyDiorama
         radius = 0f;
         var has = false;
         var bounds = new Bounds();
-        foreach (var staged in _stagedRoots)
+        foreach (var staged in _staging.StagedRoots)
         {
             if (staged.Root == null || !staged.Root.gameObject.activeInHierarchy)
                 continue;
             AddSquadBounds(staged.Root, ref bounds, ref has);
         }
-        var stand = _stage.TransformPoint(ArmoryStand);
+        var stand = _staging.Stage.TransformPoint(ArmoryStand);
         if (!has)
-            return stand + Vector3.up * (_stageShot.AimHeight ?? 0.8f);
+            return stand + Vector3.up * (_staging.CurrentStageShot.AimHeight ?? 0.8f);
         // What stands over the aim counts for more than its height: the shot looks down, so
         // the top of a tall thing is nearer the camera than its foot.
         radius = Mathf.Max(new Vector2(bounds.extents.x, bounds.extents.z).magnitude, bounds.extents.y * TallFraming);
-        if (_stageShot.AimHeight is { } height)
+        if (_staging.CurrentStageShot.AimHeight is { } height)
             return new Vector3(bounds.center.x, stand.y + height, bounds.center.z);
         // Aim a little below the middle: the units' feet matter more than the air above them.
         return new Vector3(bounds.center.x, stand.y + Mathf.Min(bounds.extents.y, 2.4f) * 0.75f, bounds.center.z);
@@ -453,7 +415,7 @@ public sealed partial class StrategyDiorama
         var dragging = false;
         var goodYaw = ArmoryYaw;
         var shown = 0f;
-        while (_camera != null && _stage != null)
+        while (_camera != null && _staging.Stage != null)
         {
             // The controller respawns the units on every selection, so their grips and their light
             // are found again on the frame the new squad appears. Its name plates are placed by
@@ -487,25 +449,25 @@ public sealed partial class StrategyDiorama
             ReadOrbitInput(ref dragging);
             var smoothing = OrbitSmoothing();
             focus = Vector3.Lerp(focus, aim, smoothing);
-            _orbitYaw = Mathf.Lerp(_orbitYaw, _orbitYawTarget, smoothing);
-            _orbitPitch = Mathf.Lerp(_orbitPitch, _orbitPitchTarget, smoothing);
-            _orbitDistance = Mathf.Lerp(_orbitDistance, _orbitDistanceTarget, smoothing);
+            _staging.OrbitYaw = Mathf.Lerp(_staging.OrbitYaw, _staging.OrbitYawTarget, smoothing);
+            _staging.OrbitPitch = Mathf.Lerp(_staging.OrbitPitch, _staging.OrbitPitchTarget, smoothing);
+            _staging.OrbitDistance = Mathf.Lerp(_staging.OrbitDistance, _staging.OrbitDistanceTarget, smoothing);
 
-            var rotation = _stage.rotation * Quaternion.Euler(_orbitPitch, _orbitYaw, 0f);
+            var rotation = _staging.Stage.rotation * Quaternion.Euler(_staging.OrbitPitch, _staging.OrbitYaw, 0f);
             // The hangar's roof beams sit 6 m up: a far shot (a vehicle) stays under them.
-            var headroom = _stage.TransformPoint(ArmoryStand).y + ArmoryCeiling - focus.y;
-            var distance = Mathf.Min(_orbitDistance, headroom / Mathf.Max(0.1f, Mathf.Sin(_orbitPitch * Mathf.Deg2Rad)));
+            var headroom = _staging.Stage.TransformPoint(ArmoryStand).y + ArmoryCeiling - focus.y;
+            var distance = Mathf.Min(_staging.OrbitDistance, headroom / Mathf.Max(0.1f, Mathf.Sin(_staging.OrbitPitch * Mathf.Deg2Rad)));
             // Where even the closest framing would stand the camera outside the hall, the orbit
             // stops at the last bearing that kept it inside.
             if (!InsideHall(focus, rotation, ref distance))
             {
-                _orbitYaw = _orbitYawTarget = goodYaw;
-                rotation = _stage.rotation * Quaternion.Euler(_orbitPitch, _orbitYaw, 0f);
-                distance = Mathf.Min(_orbitDistance, headroom / Mathf.Max(0.1f, Mathf.Sin(_orbitPitch * Mathf.Deg2Rad)));
+                _staging.OrbitYaw = _staging.OrbitYawTarget = goodYaw;
+                rotation = _staging.Stage.rotation * Quaternion.Euler(_staging.OrbitPitch, _staging.OrbitYaw, 0f);
+                distance = Mathf.Min(_staging.OrbitDistance, headroom / Mathf.Max(0.1f, Mathf.Sin(_staging.OrbitPitch * Mathf.Deg2Rad)));
                 InsideHall(focus, rotation, ref distance);
             }
             else
-                goodYaw = _orbitYaw;
+                goodYaw = _staging.OrbitYaw;
             // And no further out than the hall's fittings leave room for: the camera comes in
             // along its own line until it stands clear of them.
             distance = ClearOfHall(focus, rotation, distance);
@@ -516,12 +478,12 @@ public sealed partial class StrategyDiorama
             var pan = rotation * Vector3.right * (distance * StagePan());
             var (eye, facing) = (focus + rotation * (Vector3.back * distance) + pan, rotation);
             // Between Squads and Recruit the camera travels from the shot it had to its new one.
-            if (_stageTravel < 1f)
+            if (_staging.StageTravel < 1f)
             {
-                _stageTravel = Mathf.Min(1f, _stageTravel + HitchStep(StageLongestStep) / StageTravelSeconds);
-                var along = Ease.InOutCubic(_stageTravel);
-                eye = Vector3.Lerp(_stageFrom.Position, eye, along);
-                facing = Quaternion.Slerp(_stageFrom.Rotation, facing, along);
+                _staging.StageTravel = Mathf.Min(1f, _staging.StageTravel + HitchStep(StageLongestStep) / StageTravelSeconds);
+                var along = Ease.InOutCubic(_staging.StageTravel);
+                eye = Vector3.Lerp(_staging.StageFrom.Position, eye, along);
+                facing = Quaternion.Slerp(_staging.StageFrom.Rotation, facing, along);
             }
             _camera.transform.SetPositionAndRotation(eye, facing);
             var camera = _camera.GetComponent<Camera>();
@@ -529,232 +491,21 @@ public sealed partial class StrategyDiorama
                 SetLens(camera, ArmoryFov, 0f, 0f);
             LightSquad();
             // The controller shows the name labels again whenever it respawns the squad.
-            if (_armoryLabels != null && _armoryLabels.activeSelf)
-                _armoryLabels.SetActive(false);
+            if (_staging.ArmoryLabels != null && _staging.ArmoryLabels.activeSelf)
+                _staging.ArmoryLabels.SetActive(false);
             yield return null;
         }
     }
 
-    // How far back the shot stands for a footprint of this radius: the default distance, or enough
-    // for the footprint to fill the frame's height with a margin. The zoom-out limit follows it.
-    private float _orbitDistanceMax = OrbitDistanceMax;
-
-    // The refitting room's open floor, which the camera closes in on the squad rather than
-    // leave, so a wide orbit never looks in through a wall: every cell of ground the squad's
-    // spot connects to without crossing the room's walls and pillars, less a camera's margin
-    // from them (MapHall). A room whose meshes cannot be read has no floor plan and no bound.
-    private bool OnHallFloor(Vector3 local)
-    {
-        if (_hallFloor == null)
-            return true;
-        var (cx, cz) = ((int)((local.x + HallReach) / HallCell), (int)((local.z + HallReach) / HallCell));
-        return cx >= 0 && cz >= 0 && cx < HallSide && cz < HallSide && _hallFloor[cx, cz];
-    }
 
     // How long a newly shown squad is followed while it takes up its pose.
     private const float SquadSettleSeconds = 1.2f;
     private const float SquadPoseSeconds = 0.4f;
 
-    // Where the room has surfaces, in the set's own space: a grid of cells marked from the
-    // faces of the room's own meshes. Its floor plan (OnHallFloor) keeps the camera inside the
-    // walls, and this keeps the room's props, pillars, door frames and roof beams from coming
-    // between the camera and the squad. A piece's box will not do: a door frame's box is the
-    // whole doorway.
-    private const float HallCell = 0.4f;
-    private const float HallReach = 30f;
-    private const float HallHeight = 8f;
-    private const int HallSide = (int)(HallReach * 2f / HallCell);
-    private const int HallTall = (int)(HallHeight / HallCell);
-    private bool[,,] _hallSolid;
-    // The room's floor plan, by the same cells across and deep.
-    private bool[,] _hallFloor;
-    // Ground is a level face this near the squad's own height.
-    private const float HallGroundBand = 0.3f;
-    // A wall or a pillar stands through most of the height a camera moves in (the cells from
-    // 0.4 m to 5.2 m up), where a crate or a workbench does not.
-    private const int HallWallFrom = 1;
-    private const int HallWallTo = 13;
-    private const int HallWallCells = 9;
-    // How many cells the floor plan keeps back from a wall.
-    private const int HallFloorMargin = 2;
-    private IntPtr _hallMapped;
-
-    private void MapHall(Transform set)
-    {
-        if (_hallSolid != null && _hallMapped == set.Pointer)
-            return;
-        var (side, tall) = (HallSide, HallTall);
-        var solid = new bool[side, tall, side];
-        var ground = new bool[side, side];
-        var (pieces, faces) = WalkSolidFaces(set, HallCell, 80, (p, level) =>
-        {
-            var (cx, cy, cz) = ((int)((p.X + HallReach) / HallCell), (int)(p.Y / HallCell), (int)((p.Z + HallReach) / HallCell));
-            if (cx < 0 || cz < 0 || cx >= side || cz >= side)
-                return;
-            // The floor's own cells are left open: the squad stands there.
-            if (cy >= 1 && cy < tall)
-                solid[cx, cy, cz] = true;
-            if (level && MathF.Abs(p.Y) < HallGroundBand)
-                ground[cx, cz] = true;
-        });
-        (_hallSolid, _hallFloor, _hallMapped) = (solid, FloorPlan(solid, ground), set.Pointer);
-        var cells = 0;
-        if (_hallFloor != null)
-            foreach (var cell in _hallFloor)
-                if (cell)
-                    cells++;
-        Context.Log.Info($"strategy diorama: the refitting room is mapped from {faces} faces of {pieces} pieces, its floor {cells * HallCell * HallCell:F0} square metres");
-    }
-
-    // The floor the squad's spot connects to: ground cells with no wall over them and none
-    // within the margin, spread out from the spot until walls close it in. Null when the spot
-    // itself is not on such a cell, which leaves the camera unbounded by it.
-    private static bool[,] FloorPlan(bool[,,] solid, bool[,] ground)
-    {
-        var side = HallSide;
-        var open = new bool[side, side];
-        for (var x = 0; x < side; x++)
-            for (var z = 0; z < side; z++)
-            {
-                var wall = 0;
-                for (var y = HallWallFrom; y < HallWallTo; y++)
-                    if (solid[x, y, z])
-                        wall++;
-                open[x, z] = ground[x, z] && wall < HallWallCells;
-            }
-        bool Clear(int x, int z)
-        {
-            for (var dx = -HallFloorMargin; dx <= HallFloorMargin; dx++)
-                for (var dz = -HallFloorMargin; dz <= HallFloorMargin; dz++)
-                {
-                    if (dx * dx + dz * dz > HallFloorMargin * HallFloorMargin)
-                        continue;
-                    var (a, b) = (x + dx, z + dz);
-                    if (a < 0 || b < 0 || a >= side || b >= side || !open[a, b])
-                        return false;
-                }
-            return true;
-        }
-        var start = ((int)((ArmoryStand.x + HallReach) / HallCell), (int)((ArmoryStand.z + HallReach) / HallCell));
-        if (!Clear(start.Item1, start.Item2))
-            return null;
-        var floor = new bool[side, side];
-        var reached = new Queue<(int X, int Z)>();
-        floor[start.Item1, start.Item2] = true;
-        reached.Enqueue(start);
-        while (reached.Count > 0)
-        {
-            var (x, z) = reached.Dequeue();
-            foreach (var (a, b) in new[] { (x + 1, z), (x - 1, z), (x, z + 1), (x, z - 1) })
-            {
-                if (a < 0 || b < 0 || a >= side || b >= side || floor[a, b] || !Clear(a, b))
-                    continue;
-                floor[a, b] = true;
-                reached.Enqueue((a, b));
-            }
-        }
-        return floor;
-    }
-
-    private bool HallSolidAt(Vector3 local) => HallSolidAt(new System.Numerics.Vector3(local.x, local.y, local.z));
-
-    private bool HallSolidAt(System.Numerics.Vector3 local)
-    {
-        var (cx, cy, cz) = ((int)((local.X + HallReach) / HallCell), (int)(local.Y / HallCell), (int)((local.Z + HallReach) / HallCell));
-        return cx >= 0 && cy >= 0 && cz >= 0 && cx < HallSide && cy < HallTall && cz < HallSide && _hallSolid[cx, cy, cz];
-    }
-
-    // How far back the camera stands clear of whatever first comes between it and the squad,
-    // and how far apart the lines it looks along are.
-    private const float HallClearance = 0.8f;
-    private const float HallEasing = 14f;
-    private const float HallAbreast = 0.6f;
-
-    private static System.Numerics.Vector3 Managed(Vector3 v) => new(v.x, v.y, v.z);
-
-    // The furthest the camera can stand along its line, up to a distance, with nothing of the
-    // hall walling it off from the squad. The line is walked out from the squad's own framing,
-    // five abreast (the line and four beside it, above, below and to each side), and the camera
-    // stops short of the first place where most of them meet a surface together: a wall, a door
-    // header, a stack of crates. A cable, a rail or a hanging lamp crosses one of them and is
-    // looked past, as the eye looks past it. The walk is in the set's space and in managed
-    // maths: it runs every frame the armoury shows.
-    private float ClearOfHall(Vector3 focus, Quaternion rotation, float distance)
-    {
-        if (_hallSolid == null || _stage == null)
-            return distance;
-        var closest = Mathf.Max(OrbitDistanceMin, _framedRadius * 1.6f);
-        var at = Managed(_stage.InverseTransformPoint(focus));
-        var back = Managed(_stage.InverseTransformDirection(rotation * Vector3.back + rotation * Vector3.right * StagePan()));
-        var right = Managed(_stage.InverseTransformDirection(rotation * Vector3.right)) * HallAbreast;
-        var up = Managed(_stage.InverseTransformDirection(rotation * Vector3.up)) * HallAbreast;
-        var step = HallCell * 0.5f;
-        for (var d = closest; d <= distance; d += step)
-        {
-            var on = at + back * d;
-            var ahead = on + back * step;
-            var met = 0;
-            if (HallSolidAt(on) || HallSolidAt(ahead)) met++;
-            if (HallSolidAt(on + right) || HallSolidAt(ahead + right)) met++;
-            if (HallSolidAt(on - right) || HallSolidAt(ahead - right)) met++;
-            if (HallSolidAt(on + up) || HallSolidAt(ahead + up)) met++;
-            if (HallSolidAt(on - up) || HallSolidAt(ahead - up)) met++;
-            if (met >= 4)
-                return Mathf.Max(closest, d - HallClearance);
-        }
-        return distance;
-    }
-
-    private bool InsideHall(Vector3 focus, Quaternion rotation, ref float distance)
-    {
-        if (_stage == null)
-            return true;
-        // Never closer than the footprint allows: a vehicle would swallow the camera.
-        var closest = Mathf.Max(OrbitDistanceMin, _framedRadius * 1.6f);
-        // The camera stands back along its line and across by the shot's pan, and that is the
-        // place asked of the floor. The line's end alone can be clear at a distance where the
-        // camera, beside it, stands off the floor (in the room kept round the pillar), and
-        // then the bearing is refused where coming closer would do. Its place is a straight
-        // line of the distance, taken into the hall's space once: each distance asked of it
-        // is plain arithmetic, where Unity's maths is an interop call per operation.
-        var start = _stage.InverseTransformPoint(focus);
-        var along = _stage.InverseTransformVector(rotation * (Vector3.back + Vector3.right * StagePan()));
-        bool Stands(float at)
-        {
-            var local = start;
-            (local.x, local.z) = (start.x + along.x * at, start.z + along.z * at);
-            return OnHallFloor(local);
-        }
-        for (int i = 0; i < 24; i++)
-        {
-            if (Stands(distance))
-            {
-                // The furthest it can stand, found between this step and the one before it:
-                // taken a whole step at a time, the camera hops in and out as it turns.
-                var (near, far) = (distance, i == 0 ? distance : distance / 0.92f);
-                for (var cut = 0; cut < 7 && far > near; cut++)
-                {
-                    var middle = (near + far) / 2f;
-                    if (Stands(middle))
-                        near = middle;
-                    else
-                        far = middle;
-                }
-                distance = near;
-                return true;
-            }
-            if (distance * 0.92f <= closest)
-                return false;
-            distance *= 0.92f;
-        }
-        return false;
-    }
-
-    private float _framedRadius;
 
     // How far the orbit swings either side of the default bearing: the full range round a squad,
     // narrower round a vehicle, whose far shot would otherwise swing out through the hall's walls.
-    private float YawRange() => Mathf.Lerp(OrbitYawRange, 25f, Mathf.InverseLerp(3.5f, 5.5f, _framedRadius));
+    private float YawRange() => Mathf.Lerp(OrbitYawRange, 25f, Mathf.InverseLerp(3.5f, 5.5f, _staging.FramedRadius));
 
     // To the right the swing stops short of the hall's pillar: past it the camera has the pillar
     // between it and the squad and closes right in on them to see round it.
@@ -764,23 +515,19 @@ public sealed partial class StrategyDiorama
 
     private void FrameSquad(float radius)
     {
-        _framedRadius = radius;
+        _staging.FramedRadius = radius;
         var fit = radius * ArmoryFrameMargin / Mathf.Sin(ArmoryFov * 0.5f * Mathf.Deg2Rad);
-        var distance = Mathf.Max(_stageShot.Distance, fit);
+        var distance = Mathf.Max(_staging.CurrentStageShot.Distance, fit);
         // Further out than the framing shot by a part of it. Where that would back the camera
         // into the hall's fittings, it stops short of them (ClearOfHall).
-        _orbitDistanceMax = Mathf.Max(OrbitDistanceMax, distance * 1.3f);
-        _orbitDistanceTarget = distance;
+        _staging.OrbitDistanceLimit = Mathf.Max(OrbitDistanceMax, distance * 1.3f);
+        _staging.OrbitDistanceTarget = distance;
         // Standing that far back at the default pitch would put the camera through the roof, so a
         // wide footprint is shot flatter (the focus sits about a metre up).
         var flattest = Mathf.Asin(Mathf.Clamp01((ArmoryCeiling - 1f) / distance)) * Mathf.Rad2Deg;
-        _orbitPitchTarget = Mathf.Clamp(Mathf.Min(_stageShot.Pitch, flattest), _stageShot.PitchMin, OrbitPitchMax);
-        Context.Log.Info($"strategy diorama: armoury frames a {radius:F1} m footprint from {distance:F1} m at {_orbitPitchTarget:F0} degrees");
+        _staging.OrbitPitchTarget = Mathf.Clamp(Mathf.Min(_staging.CurrentStageShot.Pitch, flattest), _staging.CurrentStageShot.PitchMin, OrbitPitchMax);
+        Context.Log.Info($"strategy diorama: armoury frames a {radius:F1} m footprint from {distance:F1} m at {_staging.OrbitPitchTarget:F0} degrees");
     }
-
-    // A wheel's turn in notches. The input system reports a notch as 120 on Windows and as 1
-    // elsewhere (and through some layers between), so a small figure is already in notches.
-    internal static float WheelNotches(float raw) => Mathf.Abs(raw) >= 20f ? raw / 120f : raw;
 
     private void ReadOrbitInput(ref bool dragging)
     {
@@ -811,33 +558,11 @@ public sealed partial class StrategyDiorama
             dragging = !PointerOverUi(position);
         if (dragging)
         {
-            _orbitYawTarget = Mathf.Clamp(_orbitYawTarget + delta.x * OrbitDegreesPerPixel, YawMin(), YawMax());
-            _orbitPitchTarget = Mathf.Clamp(_orbitPitchTarget - delta.y * OrbitDegreesPerPixel, _stageShot.PitchMin, OrbitPitchMax);
+            _staging.OrbitYawTarget = Mathf.Clamp(_staging.OrbitYawTarget + delta.x * OrbitDegreesPerPixel, YawMin(), YawMax());
+            _staging.OrbitPitchTarget = Mathf.Clamp(_staging.OrbitPitchTarget - delta.y * OrbitDegreesPerPixel, _staging.CurrentStageShot.PitchMin, OrbitPitchMax);
         }
         if (Mathf.Abs(scroll) > 0.01f && !PointerOverUi(position))
-            _orbitDistanceTarget = Mathf.Clamp(_orbitDistanceTarget * OrbitZoom(scroll), Mathf.Max(OrbitDistanceMin, _framedRadius * 1.6f), _orbitDistanceMax);
-    }
-
-    // Whether a screen point lies over a drawn UI panel (anything with a background, or a scroll
-    // view) rather than over the empty, see-through part of the screen.
-    private static bool PointerOverUi(Vector2 screen)
-    {
-        foreach (var document in UnityEngine.Object.FindObjectsOfType<UnityEngine.UIElements.UIDocument>())
-        {
-            var root = document.rootVisualElement;
-            var panel = root?.panel;
-            if (panel == null || root.resolvedStyle.display == UnityEngine.UIElements.DisplayStyle.None)
-                continue;
-            var point = UnityEngine.UIElements.RuntimePanelUtils.ScreenToPanel(panel, new Vector2(screen.x, Screen.height - screen.y));
-            for (var element = panel.Pick(point); element != null && element != root; element = element.parent)
-            {
-                var style = element.resolvedStyle;
-                if (style.backgroundColor.a > 0.05f || style.backgroundImage.texture != null
-                    || style.backgroundImage.sprite != null || element.TryCast<UnityEngine.UIElements.ScrollView>() != null)
-                    return true;
-            }
-        }
-        return false;
+            _staging.OrbitDistanceTarget = Mathf.Clamp(_staging.OrbitDistanceTarget * OrbitZoom(scroll), Mathf.Max(OrbitDistanceMin, _staging.FramedRadius * 1.6f), _staging.OrbitDistanceLimit);
     }
 
 }

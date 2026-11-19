@@ -27,26 +27,17 @@ public sealed partial class StrategyDiorama
     private const float NamePlateLift = 0.01f;
     private const float NamePlateIntensity = 1.4f;
 
-    // The way the squad faces, towards the room camera's starting shot, flat on the floor.
-    private Vector3 _squadFacing = Vector3.back;
-    private GameObject _namePlateHost;
-    private PanelSettings _namePlateSettings;
-    private RenderTexture _namePlateTexture;
-    private readonly Label[] _namePlateLabels = new Label[NamePlateRows];
-    private readonly GameObject[] _namePlates = new GameObject[NamePlateRows];
-    // Each plate's renderer, which the mirror turns off and on around every render it makes.
-    private readonly MeshRenderer[] _namePlateRenderers = new MeshRenderer[NamePlateRows];
 
     // The texture, its labels and the plates, made once while the squad is staged.
     private bool NamePlatePicture()
     {
-        if (_namePlates[0] != null)
+        if (_staging.NamePlates[0] != null)
             return true;
         var template = MarkerTemplate();
-        if (template == null || _stage == null)
+        if (template == null || _staging.Stage == null)
             return false;
         if (!TexturePanel("WOMENACE_SquadNames", _shellRoot, NamePlateTextureWidth, NamePlateRowHeight * NamePlateRows, 1f,
-            out _namePlateHost, out _namePlateSettings, out _namePlateTexture, out var root))
+            out _staging.NamePlateHost, out _staging.NamePlateSettings, out _staging.NamePlateTexture, out var root))
             return false;
         var heading = _shell != null ? UI.Find(_shell, UiSelector.Name("wm-shell-title")) : null;
         for (var row = 0; row < NamePlateRows; row++)
@@ -66,16 +57,16 @@ public sealed partial class StrategyDiorama
             if (heading != null)
                 style.unityFontDefinition = heading.resolvedStyle.unityFontDefinition;
             root.Add(label);
-            _namePlateLabels[row] = label;
+            _staging.NamePlateLabels[row] = label;
 
-            var plate = Quad(template, $"WOMENACE_SquadName_{row}", _namePlateTexture);
-            plate.transform.SetParent(_stage, false);
+            var plate = Quad(template, $"WOMENACE_SquadName_{row}", _staging.NamePlateTexture);
+            plate.transform.SetParent(_staging.Stage, false);
             plate.transform.localScale = new Vector3(NamePlateWidth, NamePlateWidth * NamePlateRowHeight / NamePlateTextureWidth, 1f);
             PlainHologram(plate, NamePlateIntensity);
             var renderer = plate.GetComponent<MeshRenderer>();
             renderer.material.SetVector(UvRectId, SheetCell(row, 1, NamePlateRows));
             plate.SetActive(false);
-            (_namePlates[row], _namePlateRenderers[row]) = (plate, renderer);
+            (_staging.NamePlates[row], _staging.NamePlateRenderers[row]) = (plate, renderer);
         }
         return true;
     }
@@ -86,29 +77,29 @@ public sealed partial class StrategyDiorama
         var squad = SquadFull();
         if (squad == null || !NamePlatePicture())
         {
-            foreach (var plate in _namePlates)
+            foreach (var plate in _staging.NamePlates)
                 plate?.SetActive(false);
             return;
         }
-        var leader = Affinity.LeaderOf(_squadWindow);
-        var leaderName = UI.Find(_squadWindow, UiSelector.Name(VanillaUi.Elements.LeaderName)) is Label shown ? shown.text : null;
+        var leader = Affinity.LeaderOf(_staging.SquadWindow);
+        var leaderName = UI.Find(_staging.SquadWindow, UiSelector.Name(VanillaUi.Elements.LeaderName)) is Label shown ? shown.text : null;
         // Its top is away from the camera, so it reads from where the squad is shot.
-        var lying = Quaternion.LookRotation(Vector3.down, -_squadFacing);
-        var floor = _stage.TransformPoint(ArmoryStand).y + NamePlateLift;
+        var lying = Quaternion.LookRotation(Vector3.down, -_staging.SquadFacing);
+        var floor = _staging.Stage.TransformPoint(ArmoryStand).y + NamePlateLift;
         for (var row = 0; row < NamePlateRows; row++)
         {
             var unit = row < squad.childCount ? StandingUnit(squad.GetChild(row)) : null;
             var name = unit == null ? null : row == 0 ? leaderName : leader?.GetSquaddie(row - 1)?.Name;
-            var plate = _namePlates[row];
+            var plate = _staging.NamePlates[row];
             if (string.IsNullOrEmpty(name))
             {
                 plate.SetActive(false);
                 continue;
             }
             var text = name.ToUpperInvariant();
-            if (_namePlateLabels[row].text != text)
-                _namePlateLabels[row].text = text;
-            var at = unit.position + _squadFacing * NamePlateAhead;
+            if (_staging.NamePlateLabels[row].text != text)
+                _staging.NamePlateLabels[row].text = text;
+            var at = unit.position + _staging.SquadFacing * NamePlateAhead;
             at.y = floor;
             plate.transform.SetPositionAndRotation(at, lying);
             plate.SetActive(true);
@@ -119,14 +110,14 @@ public sealed partial class StrategyDiorama
     // under itself reads as a smudge.
     private void ShowNamePlates(bool shown)
     {
-        foreach (var renderer in _namePlateRenderers)
+        foreach (var renderer in _staging.NamePlateRenderers)
             if (renderer != null)
                 renderer.enabled = shown;
     }
 
     private Transform SquadFull()
     {
-        foreach (var staged in _stagedRoots)
+        foreach (var staged in _staging.StagedRoots)
             if (staged.Root != null && staged.Root.name == SquadFullRoot && staged.Root.gameObject.activeInHierarchy)
                 return staged.Root;
         return null;
@@ -145,17 +136,17 @@ public sealed partial class StrategyDiorama
     {
         for (var row = 0; row < NamePlateRows; row++)
         {
-            if (_namePlates[row] != null)
+            if (_staging.NamePlates[row] != null)
             {
-                UnityEngine.Object.Destroy(_namePlateRenderers[row]?.sharedMaterial);
-                UnityEngine.Object.Destroy(_namePlates[row]);
+                UnityEngine.Object.Destroy(_staging.NamePlateRenderers[row]?.sharedMaterial);
+                UnityEngine.Object.Destroy(_staging.NamePlates[row]);
             }
-            (_namePlates[row], _namePlateRenderers[row], _namePlateLabels[row]) = (null, null, null);
+            (_staging.NamePlates[row], _staging.NamePlateRenderers[row], _staging.NamePlateLabels[row]) = (null, null, null);
         }
-        foreach (var made in new UnityEngine.Object[] { _namePlateHost, _namePlateSettings })
+        foreach (var made in new UnityEngine.Object[] { _staging.NamePlateHost, _staging.NamePlateSettings })
             if (made != null)
                 UnityEngine.Object.Destroy(made);
-        ReleaseTexture(ref _namePlateTexture);
-        (_namePlateHost, _namePlateSettings) = (null, null);
+        ReleaseTexture(ref _staging.NamePlateTexture);
+        (_staging.NamePlateHost, _staging.NamePlateSettings) = (null, null);
     }
 }

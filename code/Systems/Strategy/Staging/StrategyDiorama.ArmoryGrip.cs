@@ -35,7 +35,7 @@ public sealed partial class StrategyDiorama
     // Finds the grip for every staged unit that has a humanoid rig and a weapon_hand_l empty.
     private void TrackGrips()
     {
-        foreach (var staged in _stagedRoots)
+        foreach (var staged in _staging.StagedRoots)
         {
             if (staged.Root == null || !staged.Root.gameObject.activeInHierarchy)
                 continue;

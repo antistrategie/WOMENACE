@@ -98,7 +98,7 @@ public sealed class TripodCarrySystem : JiangyuSystem
                         break;
                     }
                 var actor = (entity as Il2CppObjectBase)?.TryCast<Actor>();
-                StrategyDiorama.HoldInMission(body, weapon, $"{tag}|{Transmog.SelectionFor(Context, tag)}|{id}", () => IsCarried(actor));
+                StrategyDiorama.HoldInMission(body, weapon, StrategyDiorama.CarryKey(Context, tag, id), () => IsCarried(actor));
                 Context.Log.Debug($"tripod carry: holding {tag}'s {id} clear of her head (body {(body != null ? "found" : "missing")})");
             }
             catch (Exception ex)

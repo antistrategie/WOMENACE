@@ -114,19 +114,19 @@ public sealed partial class StrategyDiorama
     // The hologram's material, which whatever is shown as one wears a copy of.
     private Material HologramMaterial()
     {
-        if (_hologram != null)
-            return _hologram;
-        _hologram = Context.Assets.Load<GameObject>(HologramAsset)?.GetComponent<MeshRenderer>()?.sharedMaterial;
-        if (_hologram == null)
+        if (_staging.Hologram != null)
+            return _staging.Hologram;
+        _staging.Hologram = Context.Assets.Load<GameObject>(HologramAsset)?.GetComponent<MeshRenderer>()?.sharedMaterial;
+        if (_staging.Hologram == null)
             return null;
         // Set on the loaded material, over whatever it was saved with, and so on every copy
         // of it: finer lines with narrower gaps, a quieter glow along an outline and some of
         // the thing's own colours, so that a face and what is worn can be read.
-        _hologram.SetFloat("_ScanRows", HologramRows);
-        _hologram.SetFloat("_ScanGap", HologramLineGap);
-        _hologram.SetFloat("_RimBoost", HologramRim);
-        _hologram.SetFloat("_OwnColour", HologramOwnColour);
-        return _hologram;
+        _staging.Hologram.SetFloat("_ScanRows", HologramRows);
+        _staging.Hologram.SetFloat("_ScanGap", HologramLineGap);
+        _staging.Hologram.SetFloat("_RimBoost", HologramRim);
+        _staging.Hologram.SetFloat("_OwnColour", HologramOwnColour);
+        return _staging.Hologram;
     }
 
     // Where a material may keep its picture, whichever shader it is drawn with.
