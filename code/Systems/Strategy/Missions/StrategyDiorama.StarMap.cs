@@ -18,32 +18,30 @@ public sealed partial class StrategyDiorama
     // for the lowest planet to clear its top.
     private static readonly Vector3 StarMapOrigin = new(-14.4f, 1.45f, 0f);
 
-    private GameObject _starMap;
-    private GameObject _starMapSource;
 
     // Shows the copy of a vanilla system map scene over the table, or puts it away.
     private void SetStarMap(GameObject vanilla)
     {
         if (vanilla == null || _room == null)
         {
-            if (_starMap != null && _starMap.activeSelf)
+            if (_missions.StarMap != null && _missions.StarMap.activeSelf)
             {
-                _starMap.SetActive(false);
+                _missions.StarMap.SetActive(false);
                 Cue(TableCue.Vanish);
-                _starHiddenAt = Time.unscaledTime;
+                _missions.StarHiddenAt = Time.unscaledTime;
             }
             ShowTableSparks(true);
             RestoreStarMapCamera();
             return;
         }
         AimStarMap(vanilla);
-        if (_starMap == null || _starMapSource != vanilla)
+        if (_missions.StarMap == null || _missions.StarMapSource != vanilla)
             BuildStarMap(vanilla);
-        if (_starMap != null)
+        if (_missions.StarMap != null)
         {
-            if (!_starMap.activeSelf)
+            if (!_missions.StarMap.activeSelf)
                 Cue(TableCue.Appear);
-            _starMap.SetActive(true);
+            _missions.StarMap.SetActive(true);
             DriveStarMap();
         }
     }
@@ -51,11 +49,11 @@ public sealed partial class StrategyDiorama
     private void BuildStarMap(GameObject vanilla)
     {
         ClearStarMap();
-        _starMapSource = vanilla;
-        _starMap = new GameObject("WOMENACE_StarMap");
-        _starMap.transform.SetParent(_room.transform, false);
-        _starMap.transform.localPosition = _starPosition;
-        _starMap.transform.localScale = Vector3.one * _starScale;
+        _missions.StarMapSource = vanilla;
+        _missions.StarMap = new GameObject("WOMENACE_StarMap");
+        _missions.StarMap.transform.SetParent(_room.transform, false);
+        _missions.StarMap.transform.localPosition = _missions.StarPosition;
+        _missions.StarMap.transform.localScale = Vector3.one * _missions.StarScale;
         var source = vanilla.transform;
         foreach (var renderer in vanilla.GetComponentsInChildren<MeshRenderer>(true))
         {
@@ -67,7 +65,7 @@ public sealed partial class StrategyDiorama
             var copy = new GameObject(renderer.name);
             copy.layer = _room.layer;
             var t = copy.transform;
-            t.SetParent(_starMap.transform, false);
+            t.SetParent(_missions.StarMap.transform, false);
             // Where it stands in vanilla's scene, kept as it is: vanilla's camera looks the way the
             // Operations camera does across the table.
             t.localPosition = source.InverseTransformPoint(renderer.transform.position);
@@ -79,11 +77,11 @@ public sealed partial class StrategyDiorama
             drawn.sharedMaterials = renderer.sharedMaterials;
             drawn.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             drawn.receiveShadows = false;
-            _starMapParts.Add((renderer, copy, IsOperationMarker(renderer.transform, source)));
+            _missions.StarMapParts.Add((renderer, copy, IsOperationMarker(renderer.transform, source)));
         }
         LiftStarMapQueues();
         SyncStarMap();
-        Context.Log.Info($"strategy diorama: system map over the table, {_starMapParts.Count} of vanilla's meshes");
+        Context.Log.Info($"strategy diorama: system map over the table, {_missions.StarMapParts.Count} of vanilla's meshes");
     }
 
     // The map's see-through parts (planets 2986, markers 3000, lines 3010) are drawn after the
@@ -92,31 +90,30 @@ public sealed partial class StrategyDiorama
     // The materials are vanilla's own, whose map is not drawn while this one is, and are given back
     // their queues with the copy.
     private const int StarMapAfterDolls = 3001;
-    private readonly List<(Material Material, int Queue)> _starMapQueues = new();
 
     private void LiftStarMapQueues()
     {
         var lowest = int.MaxValue;
         var seen = new HashSet<IntPtr>();
-        foreach (var (_, copy, _) in _starMapParts)
+        foreach (var (_, copy, _) in _missions.StarMapParts)
             foreach (var material in copy.GetComponent<MeshRenderer>().sharedMaterials)
                 if (material != null && material.renderQueue >= TransparentQueueStart && seen.Add(material.Pointer))
                 {
-                    _starMapQueues.Add((material, material.renderQueue));
+                    _missions.StarMapQueues.Add((material, material.renderQueue));
                     lowest = Math.Min(lowest, material.renderQueue);
                 }
         if (lowest >= StarMapAfterDolls)
             return;
-        foreach (var (material, queue) in _starMapQueues)
+        foreach (var (material, queue) in _missions.StarMapQueues)
             material.renderQueue = queue + StarMapAfterDolls - lowest;
     }
 
     private void RestoreStarMapQueues()
     {
-        foreach (var (material, queue) in _starMapQueues)
+        foreach (var (material, queue) in _missions.StarMapQueues)
             if (material != null)
                 material.renderQueue = queue;
-        _starMapQueues.Clear();
+        _missions.StarMapQueues.Clear();
     }
 
     // Where Unity's see-through queues begin (AlphaTest ends at 2450).
@@ -132,7 +129,6 @@ public sealed partial class StrategyDiorama
     }
 
     private const string StarMapRays = "ray_";
-    private readonly List<(MeshRenderer Source, GameObject Copy, bool Marker)> _starMapParts = new();
 
     // A copy shows while vanilla's own shows, at vanilla's size: vanilla switches parts on and off
     // (the ship's icon at the place it is) and swells an operation's marker under the pointer.
@@ -141,14 +137,14 @@ public sealed partial class StrategyDiorama
         // A briefing shows the planet alone, as vanilla's does, without the operations' markers.
         var briefing = _policyScreen == VanillaUi.Screens.OperationSelect;
         ShowTableSparks(!briefing);
-        if (_starOffTable.Count != _starMapParts.Count)
+        if (_missions.StarOffTable.Count != _missions.StarMapParts.Count)
             FindOffTable();
-        for (var i = 0; i < _starMapParts.Count; i++)
+        for (var i = 0; i < _missions.StarMapParts.Count; i++)
         {
-            var (source, copy, marker) = _starMapParts[i];
+            var (source, copy, marker) = _missions.StarMapParts[i];
             if (source == null || copy == null)
                 continue;
-            copy.SetActive(source.enabled && source.gameObject.activeInHierarchy && !(briefing && (marker || _starOffTable[i])));
+            copy.SetActive(source.enabled && source.gameObject.activeInHierarchy && !(briefing && (marker || _missions.StarOffTable[i])));
             copy.transform.localScale = source.transform.lossyScale;
         }
     }
@@ -157,126 +153,36 @@ public sealed partial class StrategyDiorama
     // star system that would hang in the air past them.
     private const float TableHead = -17.45f;
     private const float TableFoot = -11.3f;
-    private readonly List<bool> _starOffTable = new();
-    private Renderer _starBriefingPlanet;
 
     // Which parts reach past the table's ends where the star system is going to stand. Judged
     // at that place, not where it is on the way, so nothing drops out part way through the zoom.
     // The briefing's own planet always shows.
     private void FindOffTable()
     {
-        _starOffTable.Clear();
-        foreach (var (source, copy, _) in _starMapParts)
+        _missions.StarOffTable.Clear();
+        foreach (var (source, copy, _) in _missions.StarMapParts)
         {
             var off = false;
-            if (source != null && copy != null && source != _starBriefingPlanet)
+            if (source != null && copy != null && source != _missions.StarBriefingPlanet)
             {
                 var filter = copy.GetComponent<MeshFilter>();
                 var reach = filter != null && filter.sharedMesh != null
-                    ? filter.sharedMesh.bounds.extents.x * Mathf.Abs(source.transform.lossyScale.x) * _starToScale
+                    ? filter.sharedMesh.bounds.extents.x * Mathf.Abs(source.transform.lossyScale.x) * _missions.StarToScale
                     : 0f;
-                var centre = _starToPosition.x + copy.transform.localPosition.x * _starToScale;
+                var centre = _missions.StarToPosition.x + copy.transform.localPosition.x * _missions.StarToScale;
                 off = centre - reach < TableHead || centre + reach > TableFoot;
             }
-            _starOffTable.Add(off);
+            _missions.StarOffTable.Add(off);
         }
     }
 
-    // The sparks' objects under the table's effects. Its grid and glow are particle systems too.
-    private const string TableSparks = "Particle System";
-    private readonly List<Renderer> _tableSparks = new();
-    private bool _tableSparksShown = true;
-
-    // The table's rising lines of sparks stand along its far side, and vanilla's planets are not
-    // solid, so they would show through a briefing's planet as dotted lines across it.
-    private void ShowTableSparks(bool show)
-    {
-        if (show == _tableSparksShown || _room == null)
-            return;
-        _tableSparksShown = show;
-        _tableSparks.RemoveAll(r => r == null);
-        if (_tableSparks.Count == 0)
-            foreach (var t in _room.GetComponentsInChildren<Transform>(true))
-                if (t.name == TableEffects)
-                    foreach (var sparks in t.GetComponentsInChildren<ParticleSystemRenderer>(true))
-                        if (sparks.name.StartsWith(TableSparks, StringComparison.Ordinal))
-                            _tableSparks.Add(sparks);
-        foreach (var sparks in _tableSparks)
-            sparks.enabled = show;
-    }
-
-    // The table's top is lit by GFL2 with a grid of lines over a sheet of glow, and curtains of
-    // dots travel across it. Mission preparation's map stands on the table, and its ground,
-    // roads and zones are hard to tell from a bright grid and a glow of the map's own colour
-    // under them, so there both show faintly. The lines are added to the picture at some thirty times what the screen can
-    // show, so they look no different until they are down to a few hundredths.
-    private static readonly (string Node, float UnderMap)[] TableTopParts = { ("line (1)", 0.04f), ("line (2)", 0.04f), ("glow_an", 0.15f), ("Particle System", 0.2f), ("Particle System (1)", 0.2f) };
-    private const float TableTopSeconds = 0.4f;
-    private static readonly int ShownId = Shader.PropertyToID("_WmShown");
-    private readonly List<(Material Material, float UnderMap)> _tableTop = new();
-    private float _tableTopDimmed;
-
-    private void DriveTableGrid()
-    {
-        if (_room == null)
-            return;
-        if (_tableTop.Count == 0 || _tableTop[0].Material == null)
-        {
-            _tableTop.Clear();
-            _tableTopDimmed = 0f;
-            foreach (var t in _room.GetComponentsInChildren<Transform>(true))
-            {
-                if (t.parent == null || t.parent.name != TableEffects || t.GetComponent<Renderer>() is not { } part)
-                    continue;
-                foreach (var (node, underMap) in TableTopParts)
-                    if (t.name == node)
-                        // Its own copy: other parts of the table are drawn with the same materials.
-                        _tableTop.Add((part.material, underMap));
-            }
-            if (_tableTop.Count == 0)
-                return;
-        }
-        var target = _policyScreen == VanillaUi.Screens.MissionPrep ? 1f : 0f;
-        if (_tableTopDimmed == target)
-            return;
-        var step = HitchStep(StageLongestStep) / TableTopSeconds;
-        _tableTopDimmed = Towards(_tableTopDimmed, target, step);
-        foreach (var (material, underMap) in _tableTop)
-            material.SetFloat(ShownId, 1f + (underMap - 1f) * _tableTopDimmed);
-    }
-
-    // The room is bright where its windows are, and the map's names and markers are thin. While
-    // the map or a briefing shows, everything Womenace/BakedScene draws is darkened by this share:
-    // the room and the view through its windows, and not the holograms or the dolls.
-    private const float RoomShadeUnderMap = 0.55f;
-    private const float RoomShadeSeconds = 0.5f;
-    private static readonly int RoomShadeId = Shader.PropertyToID("_WmRoomShade");
-    private float _roomShade;
-
-    private void DriveRoomShade()
-    {
-        // The map's screen is also the home view's, where the camera is not at the table.
-        var atTable = _policyScreen == VanillaUi.Screens.OperationSelect
-            || (_policyScreen == VanillaUi.Screens.SystemMap && _homeView == HomeView.Operations);
-        var target = atTable ? RoomShadeUnderMap : 0f;
-        if (_roomShade == target)
-            return;
-        var step = RoomShadeUnderMap * Time.unscaledDeltaTime / RoomShadeSeconds;
-        _roomShade = Towards(_roomShade, target, step);
-        Shader.SetGlobalFloat(RoomShadeId, _roomShade);
-    }
-
-    private Camera _starMapCamera;
-    private Vector3 _starMapCameraPosition;
-    private Quaternion _starMapCameraRotation;
-    private float _starMapCameraFov;
 
     // Each frame the map shows: vanilla's map camera is stood where the room camera stands
     // relative to the copy. Vanilla finds the operation under the pointer and places its planet
     // names through that camera, so both follow the room's view of the copy.
     private void DriveStarMap()
     {
-        if (_starMap == null || !_starMap.activeSelf || _starMapSource == null || _camera == null)
+        if (_missions.StarMap == null || !_missions.StarMap.activeSelf || _missions.StarMapSource == null || _camera == null)
         {
             RestoreStarMapCamera();
             return;
@@ -290,21 +196,21 @@ public sealed partial class StrategyDiorama
             RestoreStarMapCamera();
             return;
         }
-        var mapCamera = _starMapSource.GetComponentInChildren<Camera>(true);
+        var mapCamera = _missions.StarMapSource.GetComponentInChildren<Camera>(true);
         var roomCamera = _camera.GetComponent<Camera>();
         if (mapCamera == null || roomCamera == null)
             return;
-        if (_starMapCamera != mapCamera)
+        if (_missions.StarMapCamera != mapCamera)
         {
             RestoreStarMapCamera();
-            _starMapCamera = mapCamera;
-            _starMapCameraPosition = mapCamera.transform.localPosition;
-            _starMapCameraRotation = mapCamera.transform.localRotation;
-            _starMapCameraFov = mapCamera.fieldOfView;
+            _missions.StarMapCamera = mapCamera;
+            _missions.StarMapCameraPosition = mapCamera.transform.localPosition;
+            _missions.StarMapCameraRotation = mapCamera.transform.localRotation;
+            _missions.StarMapCameraFov = mapCamera.fieldOfView;
         }
-        var copy = _starMap.transform;
-        var source = _starMapSource.transform;
-        if (_starMapNames.Count == 0)
+        var copy = _missions.StarMap.transform;
+        var source = _missions.StarMapSource.transform;
+        if (_missions.StarMapNames.Count == 0)
             ReadStarMapNames(mapCamera);
         FitPlanetPlates();
         mapCamera.transform.SetPositionAndRotation(
@@ -313,7 +219,7 @@ public sealed partial class StrategyDiorama
         mapCamera.fieldOfView = roomCamera.fieldOfView;
         // Vanilla places a planet's name once, when the map opens. Each is kept on its place in
         // the map as the room camera sees it.
-        foreach (var (hud, _, _, point, scale) in _starMapNames)
+        foreach (var (hud, _, _, point, scale) in _missions.StarMapNames)
         {
             var seen = roomCamera.WorldToScreenPoint(copy.TransformPoint(point));
             hud.style.left = seen.x / scale;
@@ -321,7 +227,6 @@ public sealed partial class StrategyDiorama
         }
     }
 
-    private readonly List<(VisualElement Hud, float Left, float Top, Vector3 Point, float Scale)> _starMapNames = new();
 
     // Where each planet's name stands in the map: the place vanilla gave it on screen, cast from
     // vanilla's own camera view onto the map's plane. Read once the names are laid out.
@@ -331,11 +236,11 @@ public sealed partial class StrategyDiorama
         if (hud == null || float.IsNaN(hud.resolvedStyle.height) || hud.resolvedStyle.height <= 0f)
             return;
         var scale = Screen.height / hud.resolvedStyle.height;
-        var source = _starMapSource.transform;
+        var source = _missions.StarMapSource.transform;
         var plane = new Plane(source.forward, source.position);
-        mapCamera.transform.localPosition = _starMapCameraPosition;
-        mapCamera.transform.localRotation = _starMapCameraRotation;
-        mapCamera.fieldOfView = _starMapCameraFov;
+        mapCamera.transform.localPosition = _missions.StarMapCameraPosition;
+        mapCamera.transform.localRotation = _missions.StarMapCameraRotation;
+        mapCamera.fieldOfView = _missions.StarMapCameraFov;
         for (var i = 0; i < hud.childCount; i++)
         {
             var name = hud.ElementAt(i);
@@ -347,7 +252,7 @@ public sealed partial class StrategyDiorama
                 continue;
             var ray = mapCamera.ScreenPointToRay(new Vector3(left * scale, Screen.height - top * scale, 0f));
             if (plane.Raycast(ray, out var distance))
-                _starMapNames.Add((name, left, top, source.InverseTransformPoint(ray.GetPoint(distance)), scale));
+                _missions.StarMapNames.Add((name, left, top, source.InverseTransformPoint(ray.GetPoint(distance)), scale));
         }
     }
 
@@ -358,10 +263,6 @@ public sealed partial class StrategyDiorama
     // Hidden for longer than this, the map comes back at its place with no travel.
     private const float StarZoomForgetSeconds = 0.5f;
 
-    private Vector3 _starFromPosition = StarMapOrigin, _starToPosition = StarMapOrigin, _starPosition = StarMapOrigin;
-    private float _starFromScale = StarMapScale, _starToScale = StarMapScale, _starScale = StarMapScale;
-    private float _starZoomTime = StarZoomSeconds;
-    private float _starHiddenAt = float.NegativeInfinity;
 
     // Where the star system stands for the screen: whole over the table, or, for a briefing,
     // grown in its own plane so the room camera sees what vanilla's briefing camera sees, the
@@ -369,7 +270,7 @@ public sealed partial class StrategyDiorama
     private void AimStarMap(GameObject vanilla)
     {
         var (position, scale) = (StarMapOrigin, StarMapScale);
-        _starBriefingPlanet = null;
+        _missions.StarBriefingPlanet = null;
         var mapCamera = _policyScreen == VanillaUi.Screens.OperationSelect ? vanilla.GetComponentInChildren<Camera>(true) : null;
         if (mapCamera != null)
         {
@@ -381,7 +282,7 @@ public sealed partial class StrategyDiorama
                 // is smaller than vanilla's close view if the planet would not fit, and stands
                 // higher if the planet would sink into the table.
                 var planet = BriefingPlanet(vanilla, stood);
-                _starBriefingPlanet = planet;
+                _missions.StarBriefingPlanet = planet;
                 var (low, high) = (0f, 0f);
                 if (planet != null)
                 {
@@ -397,17 +298,17 @@ public sealed partial class StrategyDiorama
                 }
             }
         }
-        if (Time.unscaledTime - _starHiddenAt > StarZoomForgetSeconds && (_starMap == null || !_starMap.activeSelf))
+        if (Time.unscaledTime - _missions.StarHiddenAt > StarZoomForgetSeconds && (_missions.StarMap == null || !_missions.StarMap.activeSelf))
         {
-            (_starPosition, _starScale) = (position, scale);
-            _starZoomTime = StarZoomSeconds;
+            (_missions.StarPosition, _missions.StarScale) = (position, scale);
+            _missions.StarZoomTime = StarZoomSeconds;
         }
-        if (position != _starToPosition || scale != _starToScale)
+        if (position != _missions.StarToPosition || scale != _missions.StarToScale)
         {
-            (_starFromPosition, _starFromScale) = (_starPosition, _starScale);
-            (_starToPosition, _starToScale) = (position, scale);
-            _starOffTable.Clear();
-            _starZoomTime = (_starPosition == position && _starScale == scale) ? StarZoomSeconds : 0f;
+            (_missions.StarFromPosition, _missions.StarFromScale) = (_missions.StarPosition, _missions.StarScale);
+            (_missions.StarToPosition, _missions.StarToScale) = (position, scale);
+            _missions.StarOffTable.Clear();
+            _missions.StarZoomTime = (_missions.StarPosition == position && _missions.StarScale == scale) ? StarZoomSeconds : 0f;
         }
     }
 
@@ -440,42 +341,42 @@ public sealed partial class StrategyDiorama
 
     private void ZoomStarMap()
     {
-        if (_starZoomTime < StarZoomSeconds)
+        if (_missions.StarZoomTime < StarZoomSeconds)
         {
-            _starZoomTime += Time.unscaledDeltaTime;
-            var k = Ease.InOutCubic(Mathf.Clamp01(_starZoomTime / StarZoomSeconds));
-            _starPosition = Vector3.Lerp(_starFromPosition, _starToPosition, k);
-            _starScale = Mathf.Lerp(_starFromScale, _starToScale, k);
+            _missions.StarZoomTime += Time.unscaledDeltaTime;
+            var k = Ease.InOutCubic(Mathf.Clamp01(_missions.StarZoomTime / StarZoomSeconds));
+            _missions.StarPosition = Vector3.Lerp(_missions.StarFromPosition, _missions.StarToPosition, k);
+            _missions.StarScale = Mathf.Lerp(_missions.StarFromScale, _missions.StarToScale, k);
         }
-        _starMap.transform.localPosition = _starPosition;
-        _starMap.transform.localScale = Vector3.one * _starScale;
+        _missions.StarMap.transform.localPosition = _missions.StarPosition;
+        _missions.StarMap.transform.localScale = Vector3.one * _missions.StarScale;
     }
 
     private void RestoreStarMapCamera()
     {
-        foreach (var (hud, left, top, _, _) in _starMapNames)
+        foreach (var (hud, left, top, _, _) in _missions.StarMapNames)
         {
             hud.style.left = left;
             hud.style.top = top;
         }
-        _starMapNames.Clear();
-        if (_starMapCamera != null)
+        _missions.StarMapNames.Clear();
+        if (_missions.StarMapCamera != null)
         {
-            _starMapCamera.transform.localPosition = _starMapCameraPosition;
-            _starMapCamera.transform.localRotation = _starMapCameraRotation;
-            _starMapCamera.fieldOfView = _starMapCameraFov;
+            _missions.StarMapCamera.transform.localPosition = _missions.StarMapCameraPosition;
+            _missions.StarMapCamera.transform.localRotation = _missions.StarMapCameraRotation;
+            _missions.StarMapCamera.fieldOfView = _missions.StarMapCameraFov;
         }
-        _starMapCamera = null;
+        _missions.StarMapCamera = null;
     }
 
     private void ClearStarMap()
     {
         RestoreStarMapCamera();
         RestoreStarMapQueues();
-        if (_starMap != null)
-            UnityEngine.Object.Destroy(_starMap);
-        (_starMap, _starMapSource) = (null, null);
-        _starMapParts.Clear();
-        _starOffTable.Clear();
+        if (_missions.StarMap != null)
+            UnityEngine.Object.Destroy(_missions.StarMap);
+        (_missions.StarMap, _missions.StarMapSource) = (null, null);
+        _missions.StarMapParts.Clear();
+        _missions.StarOffTable.Clear();
     }
 }

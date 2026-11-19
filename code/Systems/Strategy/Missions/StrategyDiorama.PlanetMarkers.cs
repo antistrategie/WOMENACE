@@ -165,7 +165,7 @@ public sealed partial class StrategyDiorama
         var asked = new List<(int Index, Vector2 Size, Vector2 At)>();
         for (var i = 0; i < pois.Count; i++)
         {
-            if (!_markerBoard.TryGetValue(pois[i].Pointer, out var board))
+            if (!_missions.MarkerBoard.TryGetValue(pois[i].Pointer, out var board))
                 continue;
             var size = new Vector2(pois[i].layout.width, pois[i].layout.height);
             if (!(size.x > 1f) || !(size.y > 1f))
@@ -262,11 +262,11 @@ public sealed partial class StrategyDiorama
             marker.Renderer = renderer;
             marker.Material = renderer.material;
             marker.Target = ClickTarget(layer, marker);
-            marker.Target.name = "wm-marker-" + _markers.Count;
-            _markers.Add(marker);
+            marker.Target.name = "wm-marker-" + _missions.Markers.Count;
+            _missions.Markers.Add(marker);
         }
-        _markersPlanet = planet;
-        _markersPlacedFor = (new NVector3(float.NaN), -1f);
+        _missions.MarkersPlanet = planet;
+        _missions.MarkersPlacedFor = (new NVector3(float.NaN), -1f);
         PlacePlanetMarkers();
     }
 
@@ -276,11 +276,6 @@ public sealed partial class StrategyDiorama
     private const int PlanetSelectedOrder = PlanetOrder + 3;
     private const int PlanetChibiOrder = PlanetOrder + 4;
 
-    // The planet the cards stand on, or null while they stand on the land.
-    private PlanetShape _markersPlanet;
-    // Where the camera was and how far the planet had arrived when the cards were last placed.
-    // They are placed again only when one has changed.
-    private (NVector3 Eye, float Moment) _markersPlacedFor;
 
     // The camera's place in room space.
     private NVector3 PlanetEye() => _camera != null ? N(_room.transform.InverseTransformPoint(_camera.transform.position)) : N(PlanetFraming.Eye);
@@ -300,10 +295,10 @@ public sealed partial class StrategyDiorama
     private void PlacePlanetMarkers()
     {
         var eye = PlanetEye();
-        if (_markersPlacedFor == (eye, _planetMoment))
+        if (_missions.MarkersPlacedFor == (eye, _missions.PlanetMoment))
             return;
-        _markersPlacedFor = (eye, _planetMoment);
-        foreach (var marker in _markers)
+        _missions.MarkersPlacedFor = (eye, _missions.PlanetMoment);
+        foreach (var marker in _missions.Markers)
         {
             if (marker.Card == null)
                 continue;
@@ -311,7 +306,7 @@ public sealed partial class StrategyDiorama
             // Arriving, the card opens sideways from its icon as the picture's scan line passes
             // its place.
             var passed = PlanetScanFrom + (PlanetScanTo - PlanetScanFrom) * marker.Across;
-            marker.Open = Ease.SmoothStep(passed, passed + CardOpen, _planetMoment);
+            marker.Open = Ease.SmoothStep(passed, passed + CardOpen, _missions.PlanetMoment);
             if (marker.Open > 0f != marker.CardShown)
                 marker.Card.SetActive(marker.CardShown = marker.Open > 0f);
             // From its place: its icon's middle over it, the ring under the icon on it.
@@ -328,34 +323,34 @@ public sealed partial class StrategyDiorama
     private void MovePlanetChibi(PlanetShape planet, Marker selected)
     {
         // She comes with her card.
-        if (!_chibiPlaced || selected.Open < 1f)
-            (_chibiSpot, _chibiTall, _chibiPlaced) = (selected.ChibiSpot, selected.ChibiTall, true);
+        if (!_missions.ChibiPlaced || selected.Open < 1f)
+            (_missions.ChibiSpot, _missions.ChibiTall, _missions.ChibiPlaced) = (selected.ChibiSpot, selected.ChibiTall, true);
         if (selected.Open < 1f)
         {
-            _chibi.SetActive(false);
+            _missions.Chibi.SetActive(false);
             return;
         }
         // Her way left, as the straight line between the two places: an angle between two
         // directions this close is not measured finely enough to tell when she has arrived.
-        var left = NVector3.Distance(_chibiSpot, selected.ChibiSpot) * PlanetRadius;
+        var left = NVector3.Distance(_missions.ChibiSpot, selected.ChibiSpot) * PlanetRadius;
         var walking = left > 0.01f;
-        var before = planet.InRoom(_chibiSpot);
-        _chibiSpot = walking ? RoundGlobe(_chibiSpot, selected.ChibiSpot, MathF.Min(1f, ChibiSpeed * PlanetStep / left)) : selected.ChibiSpot;
-        var grows = Time.unscaledDeltaTime * ChibiGrowth;
-        _chibiTall += Math.Clamp(selected.ChibiTall - _chibiTall, -grows, grows);
-        var surface = planet.InRoom(_chibiSpot);
-        var (turn, cos, sin) = FacingFrom(_markersPlacedFor.Eye, surface);
+        var before = planet.InRoom(_missions.ChibiSpot);
+        _missions.ChibiSpot = walking ? RoundGlobe(_missions.ChibiSpot, selected.ChibiSpot, MathF.Min(1f, ChibiSpeed * PlanetStep / left)) : selected.ChibiSpot;
+        var grows = PlanetStep * ChibiGrowth;
+        _missions.ChibiTall += Math.Clamp(selected.ChibiTall - _missions.ChibiTall, -grows, grows);
+        var surface = planet.InRoom(_missions.ChibiSpot);
+        var (turn, cos, sin) = FacingFrom(_missions.MarkersPlacedFor.Eye, surface);
         if (walking)
         {
             // How far she has gone to the view's right this frame.
             var across = (surface.X - before.X) * cos - (surface.Z - before.Z) * sin;
             if (MathF.Abs(across) > 0.0005f)
-                _chibiFacesLeft = across < 0f;
+                _missions.ChibiFacesLeft = across < 0f;
         }
         // On her place, a touch nearer the camera than the surface.
-        _chibiTransform.localRotation = turn;
-        _chibiTransform.localScale = new Vector3(_chibiTall, _chibiTall, 1f);
-        _chibiTransform.localPosition = new Vector3(surface.X - ChibiNearer * sin, surface.Y + _chibiTall / 2f, surface.Z - ChibiNearer * cos);
+        _missions.ChibiTransform.localRotation = turn;
+        _missions.ChibiTransform.localScale = new Vector3(_missions.ChibiTall, _missions.ChibiTall, 1f);
+        _missions.ChibiTransform.localPosition = new Vector3(surface.X - ChibiNearer * sin, surface.Y + _missions.ChibiTall / 2f, surface.Z - ChibiNearer * cos);
         ShowChibiFrame(walking, plate: 1f);
     }
 

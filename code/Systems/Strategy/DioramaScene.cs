@@ -36,6 +36,7 @@ public sealed partial class StrategyDiorama
         public float ArriveAtStationUntil;
 
         public readonly PrepState Prep = new();
+        public readonly MissionsState Missions = new();
     }
 
     private DioramaScene _scene = new();

@@ -215,7 +215,7 @@ public sealed partial class StrategyDiorama
     private void DrivePanHint(VisualElement shell, bool covered)
     {
         var on = !covered && !_squadPickerOpen && ((_policyScreen == VanillaUi.Screens.MissionPrep && _prep.OrbitOn) || ((_policyScreen == ArmoryScreen || _policyScreen == VanillaUi.Screens.Hiring) && _stage != null)
-            || _planetOrbitOn || _ociOn);
+            || _missions.PlanetOrbitOn || _ociOn);
         // Asked every frame: the hint is found once a shell, and its style touched on a change.
         if (_panHint?.parent != shell)
             (_panHint, _panHintOn) = (null, false);

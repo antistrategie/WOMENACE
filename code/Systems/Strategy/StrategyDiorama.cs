@@ -89,7 +89,7 @@ public sealed partial class StrategyDiorama : JiangyuSystem
         DrivePrepInput();
         DrivePrepTokens();
         // The table's markers follow the camera and the selection.
-        if (_markers.Count > 0)
+        if (_missions.Markers.Count > 0)
             RefreshMarkers(false);
     }
 
@@ -220,10 +220,11 @@ public sealed partial class StrategyDiorama : JiangyuSystem
         ClearPlanet();
         ReleaseCards();
         ClearStarMap();
+        ClearTable();
         ReleaseTableTarget();
         ClearPrepMap();
         ReleasePrepTokens();
-        _markerBoard.Clear();
+        _missions.MarkerBoard.Clear();
         SpringBoneSystem.ResetSimulatedLod();
         // A vanilla background hidden for a room screen comes back with the room gone.
         if (_hiddenVanilla != null && !_hiddenVanilla.activeSelf)

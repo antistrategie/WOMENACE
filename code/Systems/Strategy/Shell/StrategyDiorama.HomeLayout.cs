@@ -134,7 +134,7 @@ public sealed partial class StrategyDiorama
             return;
         // Its markers are only just placed on a first showing: their places are read once laid out.
         var unplaced = UI.FindAll(board, UiSelector.TypeName(VanillaUi.Elements.MissionPoi)).Any(p =>
-            p.resolvedStyle.display != DisplayStyle.None && !_markerBoard.ContainsKey(p.Pointer)
+            p.resolvedStyle.display != DisplayStyle.None && !_missions.MarkerBoard.ContainsKey(p.Pointer)
             && !(p.resolvedStyle.left > 0f || p.resolvedStyle.top > 0f));
         if (unplaced)
         {

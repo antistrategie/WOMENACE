@@ -18,7 +18,6 @@ public sealed partial class StrategyDiorama
     // The parts are laid out some frames after they are made, so the plates are fitted for this
     // many frames after the names are read and then left alone.
     private const int PlanetPlateFrames = 30;
-    private int _planetPlateFrames;
     private const float PlatePadX = 4f, PlatePadY = 2f;
     private const float RepRowHeight = 11f, RepRowGap = 2f, RepPictureGap = 4f;
     private static readonly Color RepPlate = new(0.015f, 0.03f, 0.05f, 0.82f);
@@ -29,7 +28,8 @@ public sealed partial class StrategyDiorama
     private static readonly Color RepLevelInk = new(221f / 255f, 190f / 255f, 98f / 255f);
     private static readonly Color RepLevelBox = new(28f / 255f, 28f / 255f, 28f / 255f);
 
-    // Set where the styles a stylesheet would carry are not known to reach vanilla's map names.
+    // Lays the reputation plate and trust rows under a planet's name. Styled inline, since
+    // shell.uss is not known to reach vanilla's map names.
     private void ShowPlanetRep(VisualElement name)
     {
         try
@@ -49,7 +49,7 @@ public sealed partial class StrategyDiorama
             plate.style.position = Position.Absolute;
             plate.style.backgroundColor = RepPlate;
             name.Insert(0, plate);
-            _planetPlateFrames = PlanetPlateFrames;
+            _missions.PlanetPlateFrames = PlanetPlateFrames;
             var planet = hud.m_Planet?.GetTemplate();
             var state = StrategyState.Get();
             var operations = state?.Operations?.m_AvailableOperations;
@@ -128,10 +128,10 @@ public sealed partial class StrategyDiorama
 
     private void FitPlanetPlates()
     {
-        if (_planetPlateFrames <= 0)
+        if (_missions.PlanetPlateFrames <= 0)
             return;
-        _planetPlateFrames--;
-        foreach (var (hud, _, _, _, _) in _starMapNames)
+        _missions.PlanetPlateFrames--;
+        foreach (var (hud, _, _, _, _) in _missions.StarMapNames)
             FitPlanetPlate(hud);
     }
 

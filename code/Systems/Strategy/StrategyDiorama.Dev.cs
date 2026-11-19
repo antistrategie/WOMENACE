@@ -83,7 +83,7 @@ public sealed partial class StrategyDiorama
         float Shell(float seen) => ((perSeen * seen - lens.m02 + 1f) / 2f - 0.5f) / block * 1280f + 640f;
         var free = d.PlanetFreeAcross();
         var lines = new List<string> { $"free {Shell(free.Left):0} to {Shell(free.Right):0}" };
-        foreach (var marker in d._markers)
+        foreach (var marker in d._missions.Markers)
             lines.Add($"{marker.Poi?.name}: place at {Shell(SeenAtStart(new Vector3(marker.Surface.X, marker.Surface.Y, marker.Surface.Z)).X):0}");
         return string.Join("\n", lines);
     }
@@ -707,7 +707,7 @@ public sealed partial class StrategyDiorama
         return $"hit {hit}, dinergate centre on screen at ({screen.x:0}, {screen.y:0}) of {Screen.width}x{Screen.height}";
     }
 
-    internal static RenderTexture CardsTexture => _instance?._cardsTexture;
+    internal static RenderTexture CardsTexture => _instance?._missions.CardsTexture;
 
     internal static RenderTexture MirrorTexture => _instance?._mirrorTexture;
 
@@ -822,14 +822,14 @@ public sealed partial class StrategyDiorama
         if (d?._room == null)
             return "no room";
         var start = PlanetOrbitStart();
-        d._planetYawTarget = Mathf.Clamp(start.Yaw + turn, start.Yaw - PlanetOrbitTurnBack, start.Yaw + PlanetOrbitTurnOn);
-        d._planetTiltTarget = Mathf.Clamp(tilt, PlanetOrbitTiltMin, PlanetOrbitTiltMax);
-        d._planetDistanceTarget = Mathf.Clamp(distance, PlanetOrbitNearest, start.Distance);
-        (d._planetYaw, d._planetTilt, d._planetDistance) = (d._planetYawTarget, d._planetTiltTarget, d._planetDistanceTarget);
-        var allowed = d.ClearDistance(d._planetYaw, d._planetTilt, d._planetDistance);
-        var eye = PlanetOrbitEye(d._planetYaw, d._planetTilt, allowed);
-        d._planetShotFor = (float.NaN, float.NaN, float.NaN);
-        return $"turn {d._planetYaw - start.Yaw:0} tilt {d._planetTilt:0} asked {d._planetDistance:0.00} allowed {allowed:0.00}, eye {eye}, clearance {d.RoomClearance(eye, 2f):0.00} m";
+        d._missions.PlanetYawTarget = Mathf.Clamp(start.Yaw + turn, start.Yaw - PlanetOrbitTurnBack, start.Yaw + PlanetOrbitTurnOn);
+        d._missions.PlanetTiltTarget = Mathf.Clamp(tilt, PlanetOrbitTiltMin, PlanetOrbitTiltMax);
+        d._missions.PlanetDistanceTarget = Mathf.Clamp(distance, PlanetOrbitNearest, start.Distance);
+        (d._missions.PlanetYaw, d._missions.PlanetTilt, d._missions.PlanetDistance) = (d._missions.PlanetYawTarget, d._missions.PlanetTiltTarget, d._missions.PlanetDistanceTarget);
+        var allowed = d.ClearDistance(d._missions.PlanetYaw, d._missions.PlanetTilt, d._missions.PlanetDistance);
+        var eye = PlanetOrbitEye(d._missions.PlanetYaw, d._missions.PlanetTilt, allowed);
+        d._missions.PlanetShotFor = (float.NaN, float.NaN, float.NaN);
+        return $"turn {d._missions.PlanetYaw - start.Yaw:0} tilt {d._missions.PlanetTilt:0} asked {d._missions.PlanetDistance:0.00} allowed {allowed:0.00}, eye {eye}, clearance {d.RoomClearance(eye, 2f):0.00} m";
     }
 
     internal static string UiPickFromDev(float x, float y)
@@ -852,7 +852,7 @@ public sealed partial class StrategyDiorama
         if (d?._shellRoot?.panel == null)
             return "no shell";
         var lines = new List<string>();
-        foreach (var marker in d._markers)
+        foreach (var marker in d._missions.Markers)
         {
             var box = marker.Target?.worldBound ?? default;
             var found = new List<string>();
@@ -885,8 +885,8 @@ public sealed partial class StrategyDiorama
         var d = _instance;
         if (d == null)
             return "no diorama";
-        var lines = new List<string> { $"planet {d._planetShape?.Id} built for {d._planetBuilt.Id} moment {d._planetMoment:F2} lay {d._planetLay:F2} video {(d._planetPlayer != null ? $"playing {d._planetPlayer.isPlaying} prepared {d._planetPlayer.isPrepared} frame {d._planetPlayer.frame}" : "none")} chibi {(d._chibi != null ? $"active {d._chibi.activeSelf} at {d._chibi.transform.localPosition} spot {d._chibiSpot} tall {d._chibiTall:F2} from her card {(d._selectedMarker is { } hers ? (System.Numerics.Vector3.Distance(d._chibiSpot, hers.ChibiSpot) * PlanetRadius).ToString("F4") : "none selected")} m, frame {d._chibi.GetComponent<MeshRenderer>()?.material?.mainTexture?.name}" : "none")}", $"{d._markers.Count} markers, fade {d._markerFade}, arrived {Time.unscaledTime - d._markersArrive:F1}s ago, cards texture {(d._cardsTexture != null ? $"{d._cardsTexture.width}x{d._cardsTexture.height} created {d._cardsTexture.IsCreated()}" : "none")}, slot {(d._cardsSlot != null ? $"panel {d._cardsSlot.panel != null} children {d._cardsSlot.childCount}" : "none")}, travel {d._shotTravel}" };
-        foreach (var marker in d._markers)
+        var lines = new List<string> { $"planet {d._missions.PlanetShape?.Id} built for {d._missions.PlanetBuilt.Id} moment {d._missions.PlanetMoment:F2} lay {d._missions.PlanetLay:F2} video {(d._missions.PlanetPlayer != null ? $"playing {d._missions.PlanetPlayer.isPlaying} prepared {d._missions.PlanetPlayer.isPrepared} frame {d._missions.PlanetPlayer.frame}" : "none")} chibi {(d._missions.Chibi != null ? $"active {d._missions.Chibi.activeSelf} at {d._missions.Chibi.transform.localPosition} spot {d._missions.ChibiSpot} tall {d._missions.ChibiTall:F2} from her card {(d._missions.SelectedMarker is { } hers ? (System.Numerics.Vector3.Distance(d._missions.ChibiSpot, hers.ChibiSpot) * PlanetRadius).ToString("F4") : "none selected")} m, frame {d._missions.Chibi.GetComponent<MeshRenderer>()?.material?.mainTexture?.name}" : "none")}", $"{d._missions.Markers.Count} markers, fade {d._missions.MarkerFade}, arrived {Time.unscaledTime - d._missions.MarkersArrive:F1}s ago, cards texture {(d._missions.CardsTexture != null ? $"{d._missions.CardsTexture.width}x{d._missions.CardsTexture.height} created {d._missions.CardsTexture.IsCreated()}" : "none")}, slot {(d._missions.CardsSlot != null ? $"panel {d._missions.CardsSlot.panel != null} children {d._missions.CardsSlot.childCount}" : "none")}, travel {d._shotTravel}" };
+        foreach (var marker in d._missions.Markers)
         {
             var card = marker.Card;
             var renderer = card != null ? card.GetComponent<MeshRenderer>() : null;
@@ -1037,10 +1037,10 @@ public sealed partial class StrategyDiorama
     internal static string CardHoverFromDev(int index, float x, float y)
     {
         var d = _instance;
-        if (d == null || index < 0 || index >= d._markers.Count)
-            return $"no card {index} of {d?._markers.Count ?? 0}";
-        HoverPart(d._markers[index], x < 0f ? null : new Vector2(x, y));
-        var part = d._markers[index].Part;
+        if (d == null || index < 0 || index >= d._missions.Markers.Count)
+            return $"no card {index} of {d?._missions.Markers.Count ?? 0}";
+        HoverPart(d._missions.Markers[index], x < 0f ? null : new Vector2(x, y));
+        var part = d._missions.Markers[index].Part;
         return part != null ? $"over {part.GetIl2CppType().Name} #{part.name}" : "over no part with a tooltip";
     }
 

@@ -62,11 +62,6 @@ public sealed partial class StrategyDiorama
     private static readonly int UvRectId = Shader.PropertyToID("_UvRect");
     private static readonly int CutByAlphaId = Shader.PropertyToID("_CutByAlpha");
 
-    private readonly List<Marker> _markers = new();
-    private readonly Dictionary<IntPtr, Vector2> _markerBoard = new();
-    private float _markerFade = 1f;
-    // When the cards last began to arrive, and how each scans in: one after another down the table.
-    private float _markersArrive = float.MinValue;
     private const float CardScanSeconds = 0.32f;
     private const float CardScanStagger = 0.07f;
 
@@ -85,8 +80,8 @@ public sealed partial class StrategyDiorama
     // Where vanilla placed a mission marker on its board, read before the board leaves the screen.
     private void RememberBoardPlace(VisualElement poi)
     {
-        if (!_markerBoard.ContainsKey(poi.Pointer))
-            _markerBoard[poi.Pointer] = new Vector2(poi.resolvedStyle.left, poi.resolvedStyle.top);
+        if (!_missions.MarkerBoard.ContainsKey(poi.Pointer))
+            _missions.MarkerBoard[poi.Pointer] = new Vector2(poi.resolvedStyle.left, poi.resolvedStyle.top);
     }
 
     // Stands a card on the table for each mission shown. A mission's card shows the row of the
@@ -96,7 +91,7 @@ public sealed partial class StrategyDiorama
         ClearMarkers();
         var template = MarkerTemplate();
         var layer = _shell != null ? UI.Find(_shell, UiSelector.Name("wm-markers")) : null;
-        if (template == null || layer == null || _room == null || _cardsTexture == null)
+        if (template == null || layer == null || _room == null || _missions.CardsTexture == null)
             return;
         // Where the operation's planet is known the cards stand on it, in place of the land.
         if (CurrentPlanet() is { } planet)
@@ -104,17 +99,17 @@ public sealed partial class StrategyDiorama
             ShowPlanetMarkers(pois, template, layer, planet);
             ShowChibi(template, PlanetChibiOrder);
             RefreshMarkers(true);
-            SetMarkersFade(_markerFade);
+            SetMarkersFade(_missions.MarkerFade);
             return;
         }
         // Down the table the cards keep vanilla's order from far to near but stand evenly spaced:
         // a card is wider than the land, so two at one depth would run into each other.
-        var depth = pois.Select((poi, i) => (i, Y: _markerBoard.TryGetValue(poi.Pointer, out var place) ? place.y : 0f))
+        var depth = pois.Select((poi, i) => (i, Y: _missions.MarkerBoard.TryGetValue(poi.Pointer, out var place) ? place.y : 0f))
             .OrderBy(p => p.Y).Select((p, rank) => (p.i, rank)).ToDictionary(p => p.i, p => p.rank);
         for (var i = 0; i < pois.Count; i++)
         {
             var poi = pois[i];
-            if (!_markerBoard.TryGetValue(poi.Pointer, out var board))
+            if (!_missions.MarkerBoard.TryGetValue(poi.Pointer, out var board))
                 continue;
             var u = Mathf.Clamp01(Mathf.InverseLerp(BoardMin.x, BoardMax.x, board.x));
             var v = pois.Count > 1 ? depth[i] / (pois.Count - 1f) : 0.5f;
@@ -124,11 +119,11 @@ public sealed partial class StrategyDiorama
             var marker = new Marker { Poi = poi, Card = Card(template, i, foot, 1f - v, new Vector2(poi.layout.width, poi.layout.height)) };
             marker.Material = marker.Card.GetComponent<MeshRenderer>()?.material;
             marker.Target = ClickTarget(layer, marker);
-            _markers.Add(marker);
+            _missions.Markers.Add(marker);
         }
         ShowChibi(template);
         RefreshMarkers(true);
-        SetMarkersFade(_markerFade);
+        SetMarkersFade(_missions.MarkerFade);
     }
 
     // The chibi of the mission board, in the room: an upright hologram of her own frames, standing
@@ -139,94 +134,82 @@ public sealed partial class StrategyDiorama
     private const float ChibiGap = -0.2f;
     private const float ChibiSpeed = 1.5f;
     private const float ChibiIntensity = 1.5f;
-    private GameObject _chibi;
-    private Material _chibiMaterial;
-    private Vector3 _chibiAt;
-    private bool _chibiPlaced;
-    private bool _chibiFacesLeft;
-    private float _chibiClock;
-    // On a planet: her place on the unit globe and her height.
-    private NVector3 _chibiSpot;
-    private float _chibiTall;
-    private Transform _chibiTransform;
-    // Which of the two she was last placed by, the land or a planet: the other places her afresh.
-    private bool _chibiOnPlanet;
 
     private void ShowChibi(GameObject template, int order = 0)
     {
         if (CampaignMapSystem.WaitFrames == null || CampaignMapSystem.MoveFrames == null)
             return;
-        _chibi = Quad(template, "WOMENACE_MissionChibi", CampaignMapSystem.WaitFrames[0]);
-        _chibiTransform = _chibi.transform;
-        _chibiTransform.localRotation = MarkerFacing;
-        var renderer = _chibi.GetComponent<MeshRenderer>();
+        _missions.Chibi = Quad(template, "WOMENACE_MissionChibi", CampaignMapSystem.WaitFrames[0]);
+        _missions.ChibiTransform = _missions.Chibi.transform;
+        _missions.ChibiTransform.localRotation = MarkerFacing;
+        var renderer = _missions.Chibi.GetComponent<MeshRenderer>();
         renderer.sortingOrder = order;
-        _chibiMaterial = renderer.material;
-        _chibiMaterial.SetFloat("_ScanDepth", 0.1f);
-        _chibiMaterial.SetFloat("_ScanLines", 60f);
-        _chibiMaterial.SetColor("_Tint", Color.white);
-        _chibi.SetActive(false);
+        _missions.ChibiMaterial = renderer.material;
+        _missions.ChibiMaterial.SetFloat("_ScanDepth", 0.1f);
+        _missions.ChibiMaterial.SetFloat("_ScanLines", 60f);
+        _missions.ChibiMaterial.SetColor("_Tint", Color.white);
+        _missions.Chibi.SetActive(false);
     }
 
     // Walks the chibi towards her place beside the selected card and plays her frames.
     private void MoveChibi()
     {
-        if (_chibi == null)
+        if (_missions.Chibi == null)
             return;
-        var selected = _selectedMarker;
+        var selected = _missions.SelectedMarker;
         if (selected == null)
         {
-            _chibi.SetActive(false);
+            _missions.Chibi.SetActive(false);
             return;
         }
-        var onPlanet = _markersPlanet != null;
-        if (onPlanet != _chibiOnPlanet)
-            (_chibiOnPlanet, _chibiPlaced) = (onPlanet, false);
+        var onPlanet = _missions.MarkersPlanet != null;
+        if (onPlanet != _missions.ChibiOnPlanet)
+            (_missions.ChibiOnPlanet, _missions.ChibiPlaced) = (onPlanet, false);
         if (onPlanet)
         {
-            MovePlanetChibi(_markersPlanet, selected);
+            MovePlanetChibi(_missions.MarkersPlanet, selected);
             return;
         }
         // To the left of the card as the view sees it, a gap between them, her top level with its.
         var card = selected.Card.transform;
         var (cardWidth, cardHeight) = (card.localScale.x, card.localScale.y);
         var size = cardHeight * ChibiToCard;
-        _chibi.transform.localScale = new Vector3(size, size, 1f);
+        _missions.Chibi.transform.localScale = new Vector3(size, size, 1f);
         var stand = card.localPosition + new Vector3(0f, cardHeight / 2f - size / 2f, -cardWidth / 2f - ChibiGap * size - size / 2f);
-        if (!_chibiPlaced)
+        if (!_missions.ChibiPlaced)
         {
-            (_chibiAt, _chibiPlaced) = (stand, true);
+            (_missions.ChibiAt, _missions.ChibiPlaced) = (stand, true);
         }
-        var to = stand - _chibiAt;
+        var to = stand - _missions.ChibiAt;
         var walking = to.magnitude > 0.01f;
         if (walking)
         {
-            _chibiAt = Vector3.MoveTowards(_chibiAt, stand, ChibiSpeed * Time.unscaledDeltaTime);
+            _missions.ChibiAt = Vector3.MoveTowards(_missions.ChibiAt, stand, ChibiSpeed * Time.unscaledDeltaTime);
             if (Mathf.Abs(to.z) > 0.02f)
-                _chibiFacesLeft = to.z < 0f;
+                _missions.ChibiFacesLeft = to.z < 0f;
         }
-        _chibi.transform.localPosition = _chibiAt;
+        _missions.Chibi.transform.localPosition = _missions.ChibiAt;
         ShowChibiFrame(walking);
     }
 
     // Plays the chibi's frames, waiting or walking. A plate makes her solid over what is behind.
     private void ShowChibiFrame(bool walking, float? plate = null)
     {
-        _chibiClock += Time.unscaledDeltaTime;
+        _missions.ChibiClock += Time.unscaledDeltaTime;
         var frames = walking ? CampaignMapSystem.MoveFrames : CampaignMapSystem.WaitFrames;
         var rate = walking ? CampaignMapSystem.MoveFramesPerSecond : CampaignMapSystem.WaitFramesPerSecond;
-        var frame = frames[(int)(_chibiClock * rate) % frames.Length];
-        _chibi.SetActive(true);
-        var material = _chibiMaterial;
+        var frame = frames[(int)(_missions.ChibiClock * rate) % frames.Length];
+        _missions.Chibi.SetActive(true);
+        var material = _missions.ChibiMaterial;
         if (material == null || frame == null)
             return;
         material.SetTexture(MainTexId, frame);
         // Her frames face right. Walking left, the texture is mirrored.
-        material.SetVector(UvRectId, _chibiFacesLeft ? new Vector4(-1f, 1f, 1f, 0f) : new Vector4(1f, 1f, 0f, 0f));
-        material.SetFloat(IntensityId, ChibiIntensity * _markerFade);
+        material.SetVector(UvRectId, _missions.ChibiFacesLeft ? new Vector4(-1f, 1f, 1f, 0f) : new Vector4(1f, 1f, 0f, 0f));
+        material.SetFloat(IntensityId, ChibiIntensity * _missions.MarkerFade);
         if (plate is { } backing)
         {
-            material.SetFloat(PlateId, backing * _markerFade);
+            material.SetFloat(PlateId, backing * _missions.MarkerFade);
             material.SetFloat(CutByAlphaId, 1f);
         }
     }
@@ -238,12 +221,12 @@ public sealed partial class StrategyDiorama
         return found != null ? found.gameObject : null;
     }
 
-    // A hologram quad in the room: the holotable's own quad and shader, showing a texture.
     // The part of a sheet one of its cells is, as _UvRect takes it: cells are counted from the
     // top left, across and then down.
     private static Vector4 SheetCell(int index, int columns, int rows) =>
         new(1f / columns, 1f / rows, index % columns / (float)columns, 1f - (index / columns + 1f) / rows);
 
+    // A hologram quad in the room: the holotable's own quad and shader, showing a texture.
     private GameObject Quad(GameObject template, string name, Texture texture)
     {
         var quad = UnityEngine.Object.Instantiate(template, _room.transform, false);
@@ -352,18 +335,18 @@ public sealed partial class StrategyDiorama
     // targets follow the cards on screen.
     private void RefreshMarkers(bool force)
     {
-        if (_markers.Count == 0)
+        if (_missions.Markers.Count == 0)
             return;
         var camera = RoomCamera;
         var selected = CampaignMapSystem.SelectedPoi;
         // A mission picked after another. The one a visit opens on is not a pick.
-        if (selected != _selectHeard && _selectHeard != IntPtr.Zero && selected != IntPtr.Zero)
+        if (selected != _missions.SelectHeard && _missions.SelectHeard != IntPtr.Zero && selected != IntPtr.Zero)
             TableSounds.Play(TableSounds.Select);
-        _selectHeard = selected;
-        if (_markersPlanet != null)
+        _missions.SelectHeard = selected;
+        if (_missions.MarkersPlanet != null)
             PlacePlanetMarkers();
         Marker chosen = null;
-        foreach (var marker in _markers)
+        foreach (var marker in _missions.Markers)
         {
             var material = marker.Card != null ? marker.Material : null;
             var on = marker.Poi != null && marker.Poi.Pointer == selected;
@@ -378,10 +361,10 @@ public sealed partial class StrategyDiorama
             }
             ShowPartTooltip(marker);
             // The dark backing arrives with the picture, never ahead of it as a black card.
-            material?.SetFloat(IntensityId, (marker.Hover ? CardHoverIntensity : CardIntensity) * _markerFade);
-            material?.SetFloat(PlateId, CardPlate * _markerFade);
+            material?.SetFloat(IntensityId, (marker.Hover ? CardHoverIntensity : CardIntensity) * _missions.MarkerFade);
+            material?.SetFloat(PlateId, CardPlate * _missions.MarkerFade);
             // On a planet a card opens from its icon as the planet arrives. On the land it scans in.
-            var scan = _markersPlanet != null ? 1f : (Time.unscaledTime - _markersArrive - _markers.IndexOf(marker) * CardScanStagger) / CardScanSeconds;
+            var scan = _missions.MarkersPlanet != null ? 1f : (Time.unscaledTime - _missions.MarkersArrive - _missions.Markers.IndexOf(marker) * CardScanStagger) / CardScanSeconds;
             material?.SetFloat(RevealId, Math.Clamp(scan, 0f, 1f));
             if (camera == null || marker.Target?.panel == null || marker.Card == null)
                 continue;
@@ -401,37 +384,33 @@ public sealed partial class StrategyDiorama
             marker.Target.style.height = max.y - min.y;
             marker.Target.style.display = ahead && marker.Open >= 1f ? DisplayStyle.Flex : DisplayStyle.None;
         }
-        _selectedMarker = chosen;
+        _missions.SelectedMarker = chosen;
         MoveChibi();
     }
 
-    // The selected mission's marker, as the cards were last looked over.
-    private Marker _selectedMarker;
-    // The selection the pick sound was last decided for.
-    private IntPtr _selectHeard;
 
     // How far the cards have arrived with the Operations view, 0 to 1.
     private void SetMarkersFade(float k)
     {
         // Arriving: the cards scan in as the view's fade begins.
-        if (k > 0f && _markerFade <= 0f)
+        if (k > 0f && _missions.MarkerFade <= 0f)
         {
-            _markersArrive = Time.unscaledTime;
-            if (_markers.Count > 0)
+            _missions.MarkersArrive = Time.unscaledTime;
+            if (_missions.Markers.Count > 0)
                 TableSounds.Play(TableSounds.Cards);
         }
-        _markerFade = k;
-        foreach (var marker in _markers)
+        _missions.MarkerFade = k;
+        foreach (var marker in _missions.Markers)
         {
             marker.Material?.SetFloat("_Intensity", CardIntensity * k);
             marker.Material?.SetFloat("_Plate", CardPlate * k);
         }
-        _chibiMaterial?.SetFloat("_Intensity", ChibiIntensity * k);
+        _missions.ChibiMaterial?.SetFloat("_Intensity", ChibiIntensity * k);
     }
 
     private void ClearMarkers()
     {
-        foreach (var marker in _markers)
+        foreach (var marker in _missions.Markers)
         {
             // A card taken away under the pointer is never told the pointer has left it, so
             // the tooltip it put up goes with it.
@@ -445,12 +424,12 @@ public sealed partial class StrategyDiorama
             try { marker.Target?.RemoveFromHierarchy(); }
             catch { }
         }
-        _markers.Clear();
-        (_markersPlanet, _selectedMarker) = (null, null);
-        if (_chibiMaterial != null)
-            UnityEngine.Object.Destroy(_chibiMaterial);
-        if (_chibi != null)
-            UnityEngine.Object.Destroy(_chibi);
-        (_chibi, _chibiMaterial, _chibiTransform) = (null, null, null);
+        _missions.Markers.Clear();
+        (_missions.MarkersPlanet, _missions.SelectedMarker) = (null, null);
+        if (_missions.ChibiMaterial != null)
+            UnityEngine.Object.Destroy(_missions.ChibiMaterial);
+        if (_missions.Chibi != null)
+            UnityEngine.Object.Destroy(_missions.Chibi);
+        (_missions.Chibi, _missions.ChibiMaterial, _missions.ChibiTransform) = (null, null, null);
     }
 }

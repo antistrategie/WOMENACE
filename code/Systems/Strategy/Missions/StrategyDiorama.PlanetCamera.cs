@@ -22,10 +22,6 @@ public sealed partial class StrategyDiorama
     // The camera keeps this far from any surface of the room.
     private const float PlanetOrbitClearance = 0.5f;
 
-    private float _planetYaw, _planetTilt, _planetDistance;
-    private float _planetYawTarget, _planetTiltTarget, _planetDistanceTarget;
-    private bool _planetOrbiting;
-    private bool _planetOrbitOn;
 
     // The starting view as a bearing about the upright, a tilt and a distance from its target.
     private static (float Yaw, float Tilt, float Distance)? _planetOrbitStart;
@@ -50,55 +46,53 @@ public sealed partial class StrategyDiorama
 
     private static NVector3 PlanetOrbitEye(float yaw, float tilt, float distance) => N(PlanetFraming.Target) + PlanetOrbitWay(yaw, tilt) * distance;
 
-    // The bearing, tilt and distance the shot was last worked out for.
-    private (float Yaw, float Tilt, float Distance) _planetShotFor = (float.NaN, float.NaN, float.NaN);
 
     private void DrivePlanetCamera()
     {
         var on = _policyScreen == VanillaUi.Screens.MissionSelect && _homeView == HomeView.Operations && _room != null && _camera != null
-            && _shellRoot?.panel != null && _planet != null && _planetMoment > 0f && _planetLay <= 0f;
+            && _shellRoot?.panel != null && _missions.Planet != null && _missions.PlanetMoment > 0f && _missions.PlanetLay <= 0f;
         if (!on)
         {
-            _planetOrbitOn = false;
+            _missions.PlanetOrbitOn = false;
             return;
         }
         var start = PlanetOrbitStart();
-        if (!_planetOrbitOn)
+        if (!_missions.PlanetOrbitOn)
         {
             // Each visit starts from the right-hand side.
-            _planetOrbitOn = true;
-            _planetOrbiting = false;
-            (_planetYaw, _planetTilt, _planetDistance) = (_planetYawTarget, _planetTiltTarget, _planetDistanceTarget) = start;
-            _planetShotFor = (float.NaN, float.NaN, float.NaN);
+            _missions.PlanetOrbitOn = true;
+            _missions.PlanetOrbiting = false;
+            (_missions.PlanetYaw, _missions.PlanetTilt, _missions.PlanetDistance) = (_missions.PlanetYawTarget, _missions.PlanetTiltTarget, _missions.PlanetDistanceTarget) = start;
+            _missions.PlanetShotFor = (float.NaN, float.NaN, float.NaN);
         }
         var mouse = UnityEngine.InputSystem.Mouse.current;
         if (mouse != null)
         {
             if (!mouse.middleButton.isPressed)
-                _planetOrbiting = false;
+                _missions.PlanetOrbiting = false;
             else if (mouse.middleButton.wasPressedThisFrame)
-                _planetOrbiting = PointerOverPlanet();
-            if (_planetOrbiting)
+                _missions.PlanetOrbiting = PointerOverPlanet();
+            if (_missions.PlanetOrbiting)
             {
                 var delta = mouse.delta.ReadValue();
-                _planetYawTarget = Math.Clamp(_planetYawTarget + delta.x * OrbitDegreesPerPixel, start.Yaw - PlanetOrbitTurnBack, start.Yaw + PlanetOrbitTurnOn);
-                _planetTiltTarget = Math.Clamp(_planetTiltTarget - delta.y * OrbitDegreesPerPixel, PlanetOrbitTiltMin, PlanetOrbitTiltMax);
+                _missions.PlanetYawTarget = Math.Clamp(_missions.PlanetYawTarget + delta.x * OrbitDegreesPerPixel, start.Yaw - PlanetOrbitTurnBack, start.Yaw + PlanetOrbitTurnOn);
+                _missions.PlanetTiltTarget = Math.Clamp(_missions.PlanetTiltTarget - delta.y * OrbitDegreesPerPixel, PlanetOrbitTiltMin, PlanetOrbitTiltMax);
             }
             var scroll = WheelNotches(mouse.scroll.ReadValue().y);
             if (MathF.Abs(scroll) > 0.01f && PointerOverPlanet())
-                _planetDistanceTarget = Math.Clamp(_planetDistanceTarget * OrbitZoom(scroll), PlanetOrbitNearest, start.Distance);
+                _missions.PlanetDistanceTarget = Math.Clamp(_missions.PlanetDistanceTarget * OrbitZoom(scroll), PlanetOrbitNearest, start.Distance);
         }
         var smoothing = OrbitSmoothing();
-        _planetYaw += (_planetYawTarget - _planetYaw) * smoothing;
-        _planetTilt += (_planetTiltTarget - _planetTilt) * smoothing;
-        _planetDistance += (_planetDistanceTarget - _planetDistance) * smoothing;
+        _missions.PlanetYaw += (_missions.PlanetYawTarget - _missions.PlanetYaw) * smoothing;
+        _missions.PlanetTilt += (_missions.PlanetTiltTarget - _missions.PlanetTilt) * smoothing;
+        _missions.PlanetDistance += (_missions.PlanetDistanceTarget - _missions.PlanetDistance) * smoothing;
 
         // The room camera's shot follows the orbit, and the camera travels to it on arriving.
         // At rest it is the shot already worked out.
-        if (_planetShotFor == (_planetYaw, _planetTilt, _planetDistance))
+        if (_missions.PlanetShotFor == (_missions.PlanetYaw, _missions.PlanetTilt, _missions.PlanetDistance))
             return;
-        _planetShotFor = (_planetYaw, _planetTilt, _planetDistance);
-        var local = PlanetOrbitEye(_planetYaw, _planetTilt, ClearDistance(_planetYaw, _planetTilt, _planetDistance));
+        _missions.PlanetShotFor = (_missions.PlanetYaw, _missions.PlanetTilt, _missions.PlanetDistance);
+        var local = PlanetOrbitEye(_missions.PlanetYaw, _missions.PlanetTilt, ClearDistance(_missions.PlanetYaw, _missions.PlanetTilt, _missions.PlanetDistance));
         var eye = _room.transform.TransformPoint(new Vector3(local.X, local.Y, local.Z));
         var focus = _room.transform.TransformPoint(PlanetFraming.Target);
         _shot = (eye, Quaternion.LookRotation(focus - eye, _room.transform.up), PlanetFraming.Fov, PlanetFraming.Shift);
@@ -116,12 +110,10 @@ public sealed partial class StrategyDiorama
     private const float RoomCell = 0.2f;
     private static readonly Vector3 RoomMapFrom = new(-21f, -1f, -9f);
     private static readonly Vector3 RoomMapTo = new(-7f, 5f, 5f);
-    private bool[,,] _roomSolid;
-    private IntPtr _roomMapped;
 
     private void MapRoom()
     {
-        if (_roomSolid != null && _roomMapped == _room.Pointer)
+        if (_missions.RoomSolid != null && _missions.RoomMapped == _room.Pointer)
             return;
         var size = (RoomMapTo - RoomMapFrom) / RoomCell;
         var (nx, ny, nz) = ((int)size.x, (int)size.y, (int)size.z);
@@ -132,7 +124,7 @@ public sealed partial class StrategyDiorama
             if (cx >= 0 && cy >= 0 && cz >= 0 && cx < nx && cy < ny && cz < nz)
                 solid[cx, cy, cz] = true;
         });
-        (_roomSolid, _roomMapped) = (solid, _room.Pointer);
+        (_missions.RoomSolid, _missions.RoomMapped) = (solid, _room.Pointer);
         Context.Log.Info($"strategy diorama: the room round the table is mapped from {faces} faces of {pieces} pieces");
     }
 
@@ -140,7 +132,7 @@ public sealed partial class StrategyDiorama
     private float RoomClearance(NVector3 local, float limit)
     {
         MapRoom();
-        var (nx, ny, nz) = (_roomSolid.GetLength(0), _roomSolid.GetLength(1), _roomSolid.GetLength(2));
+        var (nx, ny, nz) = (_missions.RoomSolid.GetLength(0), _missions.RoomSolid.GetLength(1), _missions.RoomSolid.GetLength(2));
         var reach = (int)MathF.Ceiling(limit / RoomCell);
         var (px, py, pz) = ((local.X - RoomMapFrom.x) / RoomCell, (local.Y - RoomMapFrom.y) / RoomCell, (local.Z - RoomMapFrom.z) / RoomCell);
         var (ox, oy, oz) = ((int)MathF.Floor(px), (int)MathF.Floor(py), (int)MathF.Floor(pz));
@@ -149,7 +141,7 @@ public sealed partial class StrategyDiorama
             for (var y = Math.Max(0, oy - reach); y <= Math.Min(ny - 1, oy + reach); y++)
                 for (var z = Math.Max(0, oz - reach); z <= Math.Min(nz - 1, oz + reach); z++)
                 {
-                    if (!_roomSolid[x, y, z])
+                    if (!_missions.RoomSolid[x, y, z])
                         continue;
                     // To the cell's middle, less half a cell for its own size.
                     var (dx, dy, dz) = (x + 0.5f - px, y + 0.5f - py, z + 0.5f - pz);

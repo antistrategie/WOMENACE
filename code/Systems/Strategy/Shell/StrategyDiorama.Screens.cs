@@ -393,7 +393,7 @@ public sealed partial class StrategyDiorama
             return;
         }
         // The view's hologram and panels are fully there whenever the camera is at rest.
-        if (_shotTravelling || _markerFade < 1f)
+        if (_shotTravelling || _missions.MarkerFade < 1f)
         {
             _shotTravelling = false;
             SetOperationsFade(1f);
