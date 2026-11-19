@@ -1049,7 +1049,7 @@ public sealed partial class StrategyDiorama
     internal static string CalibrationFeetFromDev()
     {
         var d = _instance;
-        var doll = d?._calibrationDoll;
+        var doll = d?._weaponRoom.CalibrationDoll;
         if (doll == null)
             return "no calibration doll";
         var room = d._weaponSet.Root.transform;

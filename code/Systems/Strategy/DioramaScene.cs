@@ -37,6 +37,7 @@ public sealed partial class StrategyDiorama
 
         public readonly PrepState Prep = new();
         public readonly MissionsState Missions = new();
+        public readonly WeaponRoomState WeaponRoom = new();
     }
 
     private DioramaScene _scene = new();

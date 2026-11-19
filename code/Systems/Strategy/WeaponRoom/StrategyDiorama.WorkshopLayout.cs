@@ -101,7 +101,7 @@ public sealed partial class StrategyDiorama
                 image.RemoveFromHierarchy();
                 name.RemoveFromHierarchy();
             });
-            _workedOnTemplate = IntPtr.Zero;
+            _weaponRoom.WorkedOnTemplate = IntPtr.Zero;
         }
         var headline = UI.Find(work, UiSelector.Name("ReqMaterialsHeadline"));
         StandPart(headline, text, WorkshopHeadingTop, null, null);
