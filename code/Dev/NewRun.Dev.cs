@@ -19,7 +19,7 @@ public static class NewRun
     public static string Start()
     {
         NewGameWindow.StartNewGame();
-        return "new game started; the leader pick dialog follows";
+        return "new game started, the leader pick dialog follows";
     }
 
     // Clicks a named interactive element on the active screen (or the open dialog), as a left
@@ -37,10 +37,9 @@ public static class NewRun
             roots.Add(doc);
         foreach (var root in roots)
         {
-            var el = UI.Find(root, UiSelector.Name(name))?.TryCast<InteractiveElement>();
-            if (el == null)
+            var el = UI.Find(root, UiSelector.Name(name));
+            if (!Diorama.Press(el))
                 continue;
-            el.OnClicked(MouseButton.LeftMouse);
             return $"clicked {name} ({el.GetIl2CppType().Name})";
         }
         return "no interactive element named " + name;
@@ -69,7 +68,7 @@ public static class NewRun
     {
         var dialog = Dialog();
         if (dialog == null)
-            return "no leader pick dialog open; current dialog " + UIManager.Get()?.GetCurrentDialog()?.GetIl2CppType().Name;
+            return "no leader pick dialog open, current dialog " + UIManager.Get()?.GetCurrentDialog()?.GetIl2CppType().Name;
         var slots = Slots(dialog);
         return $"{slots.Count} slots, picked {dialog.GetPickedLeaderCount()}: "
             + string.Join(", ", slots.Select(s => $"{s.GetIl2CppType().Name}#{s.name}"));
@@ -90,6 +89,6 @@ public static class NewRun
         }
         var picked = dialog.GetPickedLeaderCount();
         dialog.ExecuteConfirmButton();
-        return $"picked {picked} of {slots.Count}, confirmed; dialog now {UIManager.Get()?.GetCurrentDialog()?.GetIl2CppType().Name ?? "closed"}";
+        return $"picked {picked} of {slots.Count}, confirmed, dialog now {UIManager.Get()?.GetCurrentDialog()?.GetIl2CppType().Name ?? "closed"}";
     }
 }

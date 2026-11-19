@@ -25,13 +25,7 @@ public static class Rig
         var rows = new List<string>();
         foreach (var smr in UnityEngine.Object.FindObjectsOfType<SkinnedMeshRenderer>())
         {
-            var top = smr.transform;
-            var path = smr.name;
-            while (top.parent != null)
-            {
-                top = top.parent;
-                path = top.name + "/" + path;
-            }
+            var path = DevText.PathOf(smr.transform);
             if (filter != null && !path.ToLowerInvariant().Contains(filter.ToLowerInvariant()))
                 continue;
             Transform uL = null, lL = null, uR = null, lR = null, hR = null;
@@ -77,9 +71,7 @@ public static class Rig
         var seen = 0;
         foreach (var smr in UnityEngine.Object.FindObjectsOfType<SkinnedMeshRenderer>())
         {
-            var top = smr.transform;
-            var name = smr.name;
-            while (top.parent != null) { top = top.parent; name = top.name + "/" + name; }
+            var name = DevText.PathOf(smr.transform);
             if (!name.ToLowerInvariant().Contains(filter.ToLowerInvariant()) || smr.bones == null)
                 continue;
             Transform found = null, l = null, r = null;
@@ -122,8 +114,6 @@ public static class Rig
         var dinergate = GameObject.Find("WOMENACE_Dinergate");
         if (dinergate != null)
             dinergate.SetActive(false);
-        source.transform.SetPositionAndRotation(anchor.position, anchor.rotation);
-        source.fieldOfView = StrategyDiorama.RoomFov;
         context.Coroutines.Start(ShootThenShow(source, anchor, path, dinergate));
         return $"shooting {path} from the room anchor";
     }
@@ -152,6 +142,7 @@ public static class Rig
         }
         var camera = clone.GetComponent<Camera>();
         camera.depth = source.depth + 50f;
+        camera.fieldOfView = fov;
         // A close-up drops the physical camera (its sensor overrides the field of view) and pulls the
         // near plane in, since strategy cameras clip anything close. A view shot keeps the source's
         // camera whole, whose physical settings also set its exposure.
@@ -171,10 +162,8 @@ public static class Rig
         UnityEngine.Object.Destroy(clone);
         if (hidden != null)
             Diorama.ShowUi(hidden);
-        if (tex == null)
-            yield break;
-        System.IO.File.WriteAllBytes(path, (byte[])ImageConversion.EncodeToPNG(tex));
-        UnityEngine.Object.Destroy(tex);
+        if (tex != null)
+            Diorama.WritePng(tex, path);
     }
 
     // Writes how every matching element stands right now, for replaying the hold outside the
@@ -202,10 +191,10 @@ public static class Rig
                 text.Append("ELEMENT\t").Append(id).Append('\t').Append(k).Append('\n');
                 GameObject weapon = null;
                 try { element.GetAttachments()?.TryGetFirstAttachmentInSlot(Il2CppMenace.Items.VisualAlterationSlot.Hand_R, out weapon); } catch { }
-                text.Append("WEAPON\t").Append(weapon != null ? PathFrom(root.transform, weapon.transform) : "none").Append('\n');
+                text.Append("WEAPON\t").Append(weapon != null ? DevText.PathOf(weapon.transform, root.transform) : "none").Append('\n');
                 foreach (var animator in root.GetComponentsInChildren<Animator>(true))
                 {
-                    text.Append("ANIMATOR\t").Append(PathFrom(root.transform, animator.transform)).Append('\t').Append(animator.isHuman ? "human" : "generic")
+                    text.Append("ANIMATOR\t").Append(DevText.PathOf(animator.transform, root.transform)).Append('\t').Append(animator.isHuman ? "human" : "generic")
                         .Append('\t').Append(animator.runtimeAnimatorController != null ? animator.runtimeAnimatorController.name : "none").Append('\n');
                     try
                     {
@@ -241,7 +230,7 @@ public static class Rig
                     var skinned = renderer.TryCast<SkinnedMeshRenderer>();
                     var mesh = skinned != null ? skinned.sharedMesh : renderer.GetComponent<MeshFilter>()?.sharedMesh;
                     var material = renderer.sharedMaterial;
-                    text.Append("MESH\t").Append(PathFrom(root.transform, renderer.transform)).Append('\t').Append(mesh != null ? $"{mesh.name}:{mesh.vertexCount}" : "none")
+                    text.Append("MESH\t").Append(DevText.PathOf(renderer.transform, root.transform)).Append('\t').Append(mesh != null ? $"{mesh.name}:{mesh.vertexCount}" : "none")
                         .Append('\t').Append(material != null ? $"{material.name}:{material.shader?.name}" : "none").Append('\t').Append(renderer.enabled ? 1 : 0).Append('\n');
                 }
                 var back = Quaternion.Inverse(root.transform.rotation);
@@ -250,7 +239,7 @@ public static class Rig
                     var place = root.transform.InverseTransformPoint(t.position);
                     var turn = back * t.rotation;
                     var scale = t.lossyScale;
-                    text.Append("T\t").Append(PathFrom(root.transform, t)).Append('\t')
+                    text.Append("T\t").Append(DevText.PathOf(t, root.transform)).Append('\t')
                         .Append(string.Format(inv, "{0:0.#####} {1:0.#####} {2:0.#####}\t{3:0.######} {4:0.######} {5:0.######} {6:0.######}\t{7:0.####} {8:0.####} {9:0.####}\t{10}\n",
                             place.x, place.y, place.z, turn.x, turn.y, turn.z, turn.w, scale.x, scale.y, scale.z, t.gameObject.activeInHierarchy ? 1 : 0));
                 }
@@ -260,14 +249,6 @@ public static class Rig
             }
         }
         return $"wrote {written.Count}: {string.Join(", ", written)}";
-    }
-
-    private static string PathFrom(Transform root, Transform t)
-    {
-        var path = t.name;
-        for (var up = t.parent; up != null && up != root; up = up.parent)
-            path = up.name + "/" + path;
-        return t == root ? "." : path;
     }
 
     public static object Dump(string filter = null)
@@ -287,9 +268,7 @@ public static class Rig
             var firstGo = elements != null && elements.Count > 0 && elements[0] != null ? elements[0].gameObject : null;
             if (firstGo != null)
             {
-                var top = firstGo.transform; var path = firstGo.name;
-                while (top.parent != null) { top = top.parent; path = top.name + "/" + path; }
-                rows.Add($"{id} element0 path: {path}");
+                rows.Add($"{id} element0 path: {DevText.PathOf(firstGo.transform)}");
             }
             if (elements == null || elements.Count == 0)
             {
@@ -324,21 +303,20 @@ public static class Rig
         // vanilla carrier skeleton that animates, and the attached doll body that
         // renders. Report every match separately, tagged by its top-level ancestor
         // under the element, so the two can be compared.
+        var bones = ByName(root);
+        Transform Bone(string name) => bones.TryGetValue(name, out var all) ? all[0] : null;
         var extras = new List<string>();
         foreach (var name in new[] { "Hand_L", "Hand_R", "UpperArm_L", "UpperArm_R", "Hand_R_Socket" })
-        {
-            var all = FindAll(root, name);
-            if (all.Count > 1)
+            if (bones.TryGetValue(name, out var all) && all.Count > 1)
                 for (var i = 0; i < all.Count; i++)
                     extras.Add($"    {name}#{i} under [{TopAncestor(root, all[i])}] {Basis(all[i])} pos {Fmt(all[i].position)}");
-        }
-        var handL = Find(root, "Hand_L");
-        var handR = Find(root, "Hand_R");
-        var socket = Find(root, "Hand_R_Socket");
-        var upperL = Find(root, "UpperArm_L");
-        var lowerL = Find(root, "LowerArm_L");
-        var upperR = Find(root, "UpperArm_R");
-        var lowerR = Find(root, "LowerArm_R");
+        var handL = Bone("Hand_L");
+        var handR = Bone("Hand_R");
+        var socket = Bone("Hand_R_Socket");
+        var upperL = Bone("UpperArm_L");
+        var lowerL = Bone("LowerArm_L");
+        var upperR = Bone("UpperArm_R");
+        var lowerR = Bone("LowerArm_R");
 
         GameObject weapon = null;
         try
@@ -350,7 +328,7 @@ public static class Rig
         {
             return $"{id}[{index}]: attachments threw {ex.GetType().Name}";
         }
-        var weaponHandL = weapon != null ? Find(weapon, "weapon_hand_l") : null;
+        var weaponHandL = weapon != null && ByName(weapon).TryGetValue("weapon_hand_l", out var empties) ? empties[0] : null;
 
         var ik = handL != null && weaponHandL != null
             ? Quaternion.Angle(handL.rotation, weaponHandL.rotation).ToString("F1")
@@ -363,12 +341,16 @@ public static class Rig
             + (extras.Count > 0 ? "\n  DUAL-RIG:\n" + string.Join("\n", extras) : "");
     }
 
-    private static List<Transform> FindAll(GameObject root, string name)
+    // Every transform under a root by its name, in hierarchy order, from one walk of the rig.
+    private static Dictionary<string, List<Transform>> ByName(GameObject root)
     {
-        var found = new List<Transform>();
+        var found = new Dictionary<string, List<Transform>>();
         foreach (var t in root.GetComponentsInChildren<Transform>(includeInactive: true))
-            if (t.name == name)
-                found.Add(t);
+        {
+            if (!found.TryGetValue(t.name, out var named))
+                found[t.name] = named = new List<Transform>();
+            named.Add(t);
+        }
         return found;
     }
 
@@ -398,14 +380,4 @@ public static class Rig
     }
 
     private static string Fmt(Vector3 v) => $"({v.x:F2},{v.y:F2},{v.z:F2})";
-
-    private static Transform Find(GameObject root, string name)
-    {
-        if (root == null)
-            return null;
-        foreach (var t in root.GetComponentsInChildren<Transform>(includeInactive: true))
-            if (t.name == name)
-                return t;
-        return null;
-    }
 }

@@ -6,8 +6,11 @@ namespace WOMENACE.Code;
 // Hooks for the diorama dev verbs (code/Dev/Diorama.Dev.cs). *.Dev.cs files stay out of release builds.
 public sealed partial class StrategyDiorama
 {
-    // Dev: each story faction's trust level, upgrades taken and whether it has more to give, with
-    // whether a claim waits and whether the Dinergate is calling.
+    internal static GameObject Room => _instance?._scene.Room;
+
+    // The Dinergate's notice, for the faction claims report.
+    internal bool DinergateNotice => _life.DinergateNotice;
+
     // Dev: changes a story faction's trust, by its template id, and lays the shell out again so the
     // board and the Dinergate take it in.
     internal static string FactionTrustFromDev(string template, int change)
@@ -25,34 +28,8 @@ public sealed partial class StrategyDiorama
         return "no faction " + template;
     }
 
-    // Every element on any panel carrying the game font class, with the font it draws in.
-    internal static string GameFontsFromDev()
-    {
-        var lines = new List<string>();
-        void Walk(string document, UnityEngine.UIElements.VisualElement e)
-        {
-            if (e.ClassListContains(VanillaNavigation.GameFontClass))
-            {
-                var label = e.TryCast<UnityEngine.UIElements.TextElement>() ?? FirstText(e);
-                var font = label?.resolvedStyle.unityFontDefinition.fontAsset;
-                lines.Add($"{document}/{e.name}: {(font != null ? font.name : "none")} ({label?.text})");
-            }
-            for (var i = 0; i < e.childCount; i++)
-                Walk(document, e[i]);
-        }
-        static UnityEngine.UIElements.TextElement FirstText(UnityEngine.UIElements.VisualElement e)
-        {
-            for (var i = 0; i < e.childCount; i++)
-                if ((e[i].TryCast<UnityEngine.UIElements.TextElement>() ?? FirstText(e[i])) is { } found)
-                    return found;
-            return null;
-        }
-        foreach (var document in UnityEngine.Object.FindObjectsOfType<UnityEngine.UIElements.UIDocument>())
-            if (document?.rootVisualElement is { } root)
-                Walk(document.name, root);
-        return lines.Count > 0 ? string.Join("\n", lines) : "no game font elements";
-    }
-
+    // Dev: each story faction's trust level, upgrades taken and whether it has more to give, with
+    // whether a claim waits and whether the Dinergate is calling.
     internal static string FactionClaimsFromDev()
     {
         var factions = Il2CppMenace.States.StrategyState.Get()?.StoryFactions?.m_Factions;
@@ -222,36 +199,9 @@ public sealed partial class StrategyDiorama
         return text.ToString();
     }
 
-    // Dev: who is listening and what is playing: every AudioListener and whether it is on, the
-    // engine's volume and pause, and how many sources are playing.
-    internal static string EarsFromDev()
-    {
-        var lines = new List<string> { $"volume {AudioListener.volume}, paused {AudioListener.pause}" };
-        foreach (var ear in UnityEngine.Object.FindObjectsOfType<AudioListener>(true))
-            lines.Add($"listener {PathOf(ear.transform)} enabled {ear.enabled} active {ear.gameObject.activeInHierarchy}");
-        var sources = UnityEngine.Object.FindObjectsOfType<AudioSource>(true);
-        var playing = 0;
-        foreach (var source in sources)
-            if (source.isPlaying)
-            {
-                playing++;
-                if (playing <= 12)
-                    lines.Add($"playing {PathOf(source.transform)} clip {(source.clip != null ? source.clip.name : "none")} volume {source.volume} mute {source.mute} spatial {source.spatialBlend} group {(source.outputAudioMixerGroup != null ? source.outputAudioMixerGroup.name : "none")}");
-            }
-        lines.Add($"{playing} of {sources.Length} sources playing");
-        return string.Join("\n", lines);
-    }
-
-    private static string PathOf(Transform t)
-    {
-        var path = t.name;
-        for (var p = t.parent; p != null; p = p.parent)
-            path = p.name + "/" + path;
-        return path;
-    }
-
-    // Dev: every showing renderer within a reach of the room camera's line of sight end, written
-    // to a file: path, material, shader, where it is and how big.
+    // Dev: every showing renderer in the loaded scenes, written to a file: path, material, shader,
+    // colour, texture, where it is and how big, and where it stands in the room. The room camera's
+    // place and clear closes the file.
     internal static string SceneRenderersFromDev(string path)
     {
         var d = _instance;
@@ -263,7 +213,7 @@ public sealed partial class StrategyDiorama
             var m = r.sharedMaterial;
             var colour = m != null && m.HasProperty("_BaseColor") ? m.GetColor("_BaseColor").ToString() : m != null && m.HasProperty("_Color") ? m.GetColor("_Color").ToString() : "";
             var texture = m != null && m.HasProperty("_MainTex") && m.mainTexture != null ? m.mainTexture.name : "";
-            lines.Add($"{PathOf(r.transform)} | {(m != null ? m.name : "none")} | {(m != null ? m.shader.name : "")} | {colour} | {texture} | centre {r.bounds.center} size {r.bounds.size} | room {(d?._scene.Room != null ? d._scene.Room.transform.InverseTransformPoint(r.bounds.center).ToString("F2") : "")} yaw {r.transform.eulerAngles.y - (d?._scene.Room != null ? d._scene.Room.transform.eulerAngles.y : 0f):F0}");
+            lines.Add($"{DevText.PathOf(r.transform)} |{(m != null ? m.name : "none")} | {(m != null ? m.shader.name : "")} | {colour} | {texture} | centre {r.bounds.center} size {r.bounds.size} | room {(d?._scene.Room != null ? d._scene.Room.transform.InverseTransformPoint(r.bounds.center).ToString("F2") : "")} yaw {r.transform.eulerAngles.y - (d?._scene.Room != null ? d._scene.Room.transform.eulerAngles.y : 0f):F0}");
         }
         var camera = d?._scene.Camera != null ? d._scene.Camera.GetComponent<Camera>() : null;
         if (camera != null)
@@ -387,13 +337,7 @@ public sealed partial class StrategyDiorama
         if (d == null || camera == null || d.SpawnSet(set) == null)
             return "no room camera or no such room";
         d.ActivateSet(set);
-        var eye = set.Root.transform.TransformPoint(new Vector3(ex, ey, ez));
-        var target = set.Root.transform.TransformPoint(new Vector3(tx, ty, tz));
-        camera.transform.SetPositionAndRotation(eye, Quaternion.LookRotation(target - eye, Vector3.up));
-        camera.fieldOfView = fov;
-        camera.orthographic = false;
-        d._shot = (camera.transform.position, camera.transform.rotation, fov, d._lensShift);
-        d._shotTravel = 1f;
+        d.AimRoomCamera(camera, set.Root.transform, new Vector3(ex, ey, ez), new Vector3(tx, ty, tz), fov);
         return $"{room}: looking from ({ex}, {ey}, {ez}) towards ({tx}, {ty}, {tz}) at {fov}";
     }
 
@@ -404,14 +348,28 @@ public sealed partial class StrategyDiorama
         var camera = RoomCamera;
         if (d == null || camera == null || d._scene.Room == null)
             return "no room camera";
-        var eye = d._scene.Room.transform.TransformPoint(new Vector3(ex, ey, ez));
-        var target = d._scene.Room.transform.TransformPoint(new Vector3(tx, ty, tz));
-        camera.transform.SetPositionAndRotation(eye, Quaternion.LookRotation(target - eye, Vector3.up));
-        camera.fieldOfView = fov;
-        camera.orthographic = false;
-        d._shot = (camera.transform.position, camera.transform.rotation, fov, d._lensShift);
-        d._shotTravel = 1f;
+        d.AimRoomCamera(camera, d._scene.Room.transform, new Vector3(ex, ey, ez), new Vector3(tx, ty, tz), fov);
         return $"looking from ({ex}, {ey}, {ez}) towards ({tx}, {ty}, {tz}) at {fov}";
+    }
+
+    // Stands the room camera at a point of a space looking at another, as a perspective camera
+    // again after TopDown, and holds the shot, or its director puts the camera back next frame.
+    private void AimRoomCamera(Camera camera, Transform space, Vector3 eye, Vector3 target, float fov)
+    {
+        var from = space.TransformPoint(eye);
+        var to = space.TransformPoint(target);
+        camera.transform.SetPositionAndRotation(from, Quaternion.LookRotation(to - from, Vector3.up));
+        camera.fieldOfView = fov;
+        Perspective(camera);
+        _shot = (camera.transform.position, camera.transform.rotation, fov, _lensShift);
+        _shotTravel = 1f;
+    }
+
+    // Undoes what TopDown leaves on the room camera.
+    private static void Perspective(Camera camera)
+    {
+        camera.orthographic = false;
+        camera.nearClipPlane = RoomCameraNear;
     }
 
     // Shifts the room camera's lens, in parts of the frame: the view slides across the screen
@@ -443,7 +401,7 @@ public sealed partial class StrategyDiorama
         camera.nearClipPlane = near;
         d._shot = (d._scene.Camera.transform.position, rotation, camera.fieldOfView, 0f);
         d._shotTravel = 1f;
-        return $"plan over ({cx}, {cz}) from {height}, {halfHeight * 2f} m tall, {halfHeight * 2f * camera.aspect} m wide, near {near}; anchor {room.InverseTransformPoint(d._scene.Anchor.position)} looking {room.InverseTransformDirection(d._scene.Anchor.forward)}";
+        return $"plan over ({cx}, {cz}) from {height}, {halfHeight * 2f} m tall, {halfHeight * 2f * camera.aspect} m wide, near {near}, anchor {room.InverseTransformPoint(d._scene.Anchor.position)} looking {room.InverseTransformDirection(d._scene.Anchor.forward)}";
     }
 
     // Makes the room camera orthographic at a half height in room units, or perspective again at 0.
@@ -456,34 +414,6 @@ public sealed partial class StrategyDiorama
         if (size > 0f)
             camera.orthographicSize = size;
         return camera.orthographic ? $"orthographic, half height {size}" : "perspective";
-    }
-
-    // What vanilla's system map would find under the pointer: the scene's main camera, the camera
-    // the screen holds, what it has under the pointer now, and what a ray from the main camera
-    // hits across a grid of screen places (pixels from the top left).
-    internal static string StarProbeFromDev(int step)
-    {
-        var screen = Il2CppMenace.UI.UIManager.Get()?.GetActiveScreen()?.TryCast<Il2CppMenace.UI.Strategy.SystemMapUIScreen>();
-        var main = Camera.main;
-        var lines = new List<string>
-        {
-            $"main camera {(main != null ? main.name + (main.enabled ? " on" : " off") : "none")}",
-            $"screen's camera {(screen?.m_Camera != null ? screen.m_Camera.name + (screen.m_Camera.enabled ? " on" : " off") : "none")}, hovered {(screen?.m_Hovered != null ? screen.m_Hovered.name : "nothing")}",
-            $"engine's pointer {Input.mousePosition}",
-        };
-        var camera = screen?.m_Camera != null ? screen.m_Camera : main;
-        if (camera == null)
-            return string.Join("\n", lines);
-        var hits = new Dictionary<string, (int Count, int X, int Y)>();
-        for (var y = step / 2; y < Screen.height; y += step)
-            for (var x = step / 2; x < Screen.width; x += step)
-                if (Physics.Raycast(camera.ScreenPointToRay(new Vector3(x, Screen.height - y, 0f)), out var hit, 10000f))
-                {
-                    var name = hit.collider.name + "/" + (hit.collider.transform.parent != null ? hit.collider.transform.parent.name : "");
-                    hits[name] = hits.TryGetValue(name, out var had) ? (had.Count + 1, had.X, had.Y) : (1, x, y);
-                }
-        lines.AddRange(hits.Select(h => $"{h.Key}: {h.Value.Count} places, first at ({h.Value.X}, {h.Value.Y})"));
-        return string.Join("\n", lines);
     }
 
     // Shows or hides every renderer of the active room whose object's name starts with some
@@ -501,24 +431,28 @@ public sealed partial class StrategyDiorama
             renderer.enabled = show;
             count++;
             if (lines.Count < 14)
-                lines.Add($"  {renderer.name} [{renderer.sharedMaterial?.name}, {renderer.sharedMaterial?.shader?.name}, queue {renderer.sharedMaterial?.renderQueue}] at {d._scene.Active.Root.transform.InverseTransformPoint(renderer.bounds.center)} size {renderer.bounds.size} active {renderer.gameObject.activeInHierarchy}");
+                lines.Add("  " + DevText.Describe(renderer, d._scene.Active.Root.transform));
         }
         return $"{count} renderers named {nameStart}* {(show ? "shown" : "hidden")}\n" + string.Join("\n", lines);
     }
 
-    // Sets a number on the materials of every renderer of the active room whose object's name
-    // starts with some words, to find what a part's look hangs on.
+    // Sets a number on every renderer of the active room whose object's name starts with some
+    // words, to find what a part's look hangs on. A property block carries it, so the room's
+    // materials are not copied.
     internal static string PartsSetFromDev(string nameStart, string property, float value)
     {
         var d = _instance;
         if (d?._scene.Active?.Root == null)
             return "no room";
         var count = 0;
+        var block = new MaterialPropertyBlock();
         foreach (var renderer in d._scene.Active.Root.GetComponentsInChildren<Renderer>(true))
         {
             if (!renderer.name.StartsWith(nameStart, StringComparison.Ordinal))
                 continue;
-            renderer.material.SetFloat(property, value);
+            renderer.GetPropertyBlock(block);
+            block.SetFloat(property, value);
+            renderer.SetPropertyBlock(block);
             count++;
         }
         return $"{property} = {value} on {count} renderers named {nameStart}*";
@@ -587,9 +521,11 @@ public sealed partial class StrategyDiorama
         var d = _instance;
         if (d == null || d._scene.Room == null)
             return "no room";
+        d.ClearStaged();
         var doll = d.SpawnDoll(tag, "WOMENACE_BarePose");
         if (doll == null)
             return $"no body for {tag}";
+        d._staged.Add(doll);
         doll.transform.localPosition = new Vector3(x, y, z);
         doll.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
         foreach (var animator in doll.GetComponentsInChildren<Animator>())
@@ -651,10 +587,11 @@ public sealed partial class StrategyDiorama
         if (animator == null || !animator.isActiveAndEnabled || animator.runtimeAnimatorController == null)
             return "nothing";
         var info = animator.GetCurrentAnimatorStateInfo(0);
-        foreach (var body in new[] { "alva", "asteria", "cheyanne", "helen", "jiangyu", "klukai", "koleda", "lenna", "leva", "lewis", "makiatto", "nemesis", "papasha", "robella", "sextans", "soppo", "springfield", "suomi", "vector", "voymastina", "welrod" })
-            foreach (var pose in new[] { "Idle", "LongIdle", "Sit" })
-                if (info.IsName($"{body}-{pose}"))
-                    return $"{body}-{pose} at {info.normalizedTime % 1f:F2} (controller {animator.runtimeAnimatorController.name})";
+        // SpawnDoll names a doll for her body after a colon, and the pose set names its states for the body.
+        var body = doll.name.Substring(doll.name.IndexOf(':') + 1);
+        foreach (var pose in new[] { "Idle", "LongIdle", "Sit" })
+            if (info.IsName($"{body}-{pose}"))
+                return $"{body}-{pose} at {info.normalizedTime % 1f:F2} (controller {animator.runtimeAnimatorController.name})";
         return $"an unknown state (controller {animator.runtimeAnimatorController.name})";
     }
 
@@ -686,29 +623,13 @@ public sealed partial class StrategyDiorama
             _instance.Spawn();
     }
 
-    // Points the room camera from one room-space point at another (mockups and framing work).
-    internal static string AimCamera(float x, float y, float z, float tx, float ty, float tz, float fov)
-    {
-        var d = _instance;
-        if (d?._scene.Camera == null || d._scene.Room == null)
-            return "no room camera";
-        var from = d._scene.Room.transform.TransformPoint(new Vector3(x, y, z));
-        var to = d._scene.Room.transform.TransformPoint(new Vector3(tx, ty, tz));
-        d._scene.Camera.transform.SetPositionAndRotation(from, Quaternion.LookRotation(to - from, Vector3.up));
-        var camera = d._scene.Camera.GetComponent<Camera>();
-        if (fov > 0)
-            camera.fieldOfView = fov;
-        // The shot the room camera holds, or its director puts the camera back next frame.
-        d._shot = (d._scene.Camera.transform.position, d._scene.Camera.transform.rotation, camera.fieldOfView, d._lensShift);
-        d._shotTravel = 1f;
-        return $"camera at ({x}, {y}, {z}) looking at ({tx}, {ty}, {tz}), fov {camera.fieldOfView}";
-    }
-
     internal static string ResetCamera()
     {
         var d = _instance;
-        if (d?._scene.Camera == null)
+        var camera = RoomCamera;
+        if (camera == null || d._scene.Room == null)
             return "no room camera";
+        Perspective(camera);
         d.Frame(null, d._scene.Room.transform);
         return "camera reset";
     }
@@ -756,7 +677,16 @@ public sealed partial class StrategyDiorama
         return $"{doll.name} plays {state}";
     }
 
+    // The bodies the staging verbs stand in the room, each verb clearing the last one's.
     private readonly List<GameObject> _staged = new();
+
+    private void ClearStaged()
+    {
+        foreach (var old in _staged)
+            if (old != null)
+                UnityEngine.Object.Destroy(old);
+        _staged.Clear();
+    }
 
     // Stands one doll three times in a row at the stairs' foot, in her default outfit, each copy
     // held at the same moment of one lobby pose (Idle, LongIdle, Sit), with the room's
@@ -766,10 +696,7 @@ public sealed partial class StrategyDiorama
         var d = _instance;
         if (d?._scene.Room == null)
             return "no room";
-        foreach (var old in d._staged)
-            if (old != null)
-                UnityEngine.Object.Destroy(old);
-        d._staged.Clear();
+        d.ClearStaged();
         d.HideRoomDolls();
         var tag = "wmgfl_" + name;
         var poses = new[] { "Idle", "LongIdle", "Sit" };
@@ -816,10 +743,7 @@ public sealed partial class StrategyDiorama
         var at = Array.FindIndex(DollSpots, s => s.Name == spotName);
         if (at < 0)
             return "no spot " + spotName;
-        foreach (var old in d._staged)
-            if (old != null)
-                UnityEngine.Object.Destroy(old);
-        d._staged.Clear();
+        d.ClearStaged();
         d.HideRoomDolls();
         var doll = d.SpawnDoll("wmgfl_" + name, "WOMENACE_Staged0");
         if (doll == null)
@@ -1049,7 +973,7 @@ public sealed partial class StrategyDiorama
         foreach (var (_, grip) in Grips.Concat(MissionGrips))
             if (grip.Carried is { } carried && carried.Unit != null)
                 lines.Add($"{carried.Unit.parent?.name} {carried.Key}: {carried.Out * 100f:F0} of {carried.Wanted * 100f:F0} cm, {(carried.Until > 0f ? "settling" : "kept")} ({string.Join(", ", carried.Read)})");
-        return lines.Count > 0 ? string.Join("; ", lines) : "no hand held";
+        return lines.Count > 0 ? string.Join("\n", lines) : "no hand held";
     }
 
     internal static string CardHoverFromDev(int index, float x, float y)

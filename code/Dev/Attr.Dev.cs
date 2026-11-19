@@ -7,7 +7,7 @@ namespace WOMENACE.Code;
 // Attr.Curves samples every attribute-to-stat conversion so the real slopes,
 // intercepts and caps can be read off a running game (the native constants
 // live in runtime-initialised float pools, unreadable statically). Inputs at
-// or under 100 return pure vanilla values; higher inputs show the solo-doll
+// or under 100 return pure vanilla values, and higher inputs show the solo-doll
 // extensions in action.
 [DevVerb]
 public static class Attr

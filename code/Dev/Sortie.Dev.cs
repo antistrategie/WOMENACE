@@ -15,13 +15,18 @@ namespace WOMENACE.Code;
 // rather than synthesising UI clicks: MissionPrepUIScreen.TryOpen skips the map
 // POI and Plan Mission steps, and StartMission is what the launch button calls.
 //
-//   Sortie.Where   -> where we are (scene, active screen, prep readiness, in-mission)
-//   Sortie.Open    -> open mission prep for the current operation's mission
-//   Sortie.Launch  -> launch the prepped mission, once its preview has landed
-//   Sortie.Skills  -> an actor's skills as the engine judges them, with lifetime and cooldown counters
-//   Sortie.Aim     -> raise or lower the active actor's weapon for one of its skills
-//   Sortie.Use     -> use one of the active actor's skills on a tile through its own Use
-//   Sortie.EndTurn  -> end the active unit's turn and hand over to the next actor
+//   Sortie.Where         -> where we are (scene, active screen, prep readiness, in-mission)
+//   Sortie.EndOperation  -> end the current operation, cancelled, without saving
+//   Sortie.Missions      -> every available operation's missions, by index
+//   Sortie.OpenMission   -> open mission prep for one mission of one available operation
+//   Sortie.Open          -> open mission prep for the current operation's mission
+//   Sortie.Launch        -> launch the prepped mission, once its preview has landed
+//   Sortie.Skills        -> an actor's skills as the engine judges them, with lifetime and cooldown counters
+//   Sortie.EndTurn       -> end the active unit's turn and hand over to the next actor
+//   Sortie.Use           -> use one of the active actor's skills on a tile through its own Use
+//   Sortie.Aim           -> raise or lower the active actor's weapon for one of its skills
+//   Sortie.MapTexture    -> write the prep screen's map picture to a PNG
+//   Sortie.PreviewProbe  -> what the prep screen's generated preview holds
 //
 // Named Sortie, not Mission: the verb runner matches class short names
 // case-insensitively and the SDK's own Mission class would shadow it.
@@ -113,7 +118,7 @@ public static class Sortie
     {
         var screen = Prep(ActiveScreen());
         if (screen == null)
-            return new { error = "mission prep screen is not the active screen; call Sortie.Open first" };
+            return new { error = "mission prep screen is not the active screen, call Sortie.Open first" };
 
         var mission = screen.GetMission();
         if (mission == null)
@@ -124,7 +129,7 @@ public static class Sortie
         if (screen.GetMissionPreview() == null || !screen.m_IsLoadoutValid)
             return new
             {
-                error = "prep screen is not ready; poll Sortie.Where until previewReady and loadoutValid are both true",
+                error = "prep screen is not ready, poll Sortie.Where until previewReady and loadoutValid are both true",
                 previewReady = screen.GetMissionPreview() != null,
                 loadoutValid = screen.m_IsLoadoutValid,
             };
@@ -191,25 +196,20 @@ public static class Sortie
 
     // Use one of the active actor's skills on a tile, through the skill's own Use so every
     // handler fires as it would from the skill bar. The tile defaults to the actor's own for
-    // self-buffs; an attack takes the target's tile.
+    // self-buffs, and an attack takes the target's tile.
     [MutatingVerb]
     public static object Use(string skillId, Tile target = null)
     {
         var actor = TacticalManager.Get()?.GetActiveActor();
-        var skills = actor?.GetSkills()?.GetAllSkills();
-        if (skills == null)
+        if (actor?.GetSkills()?.GetAllSkills() == null)
             return new { error = "no active actor" };
-        for (var i = 0; i < skills.Count; i++)
-        {
-            var skill = skills[i]?.TryCast<Il2CppMenace.Tactical.Skills.Skill>();
-            if (skill == null || skill.GetID() != skillId)
-                continue;
-            var tile = target ?? actor.GetTile();
-            var usable = skill.IsUsable();
-            var used = skill.Use(tile, Il2CppMenace.Tactical.Skills.UsageParameter.Default);
-            return new { actor = actor.GetTemplate()?.GetID(), skill = skillId, wasUsable = usable, used, tile = tile == null ? "none" : $"{tile.GetX()},{tile.GetZ()}" };
-        }
-        return new { error = $"active actor has no skill '{skillId}'" };
+        var skill = FindSkill(actor, skillId);
+        if (skill == null)
+            return new { error = $"active actor has no skill '{skillId}'" };
+        var tile = target ?? actor.GetTile();
+        var usable = skill.IsUsable();
+        var used = skill.Use(tile, Il2CppMenace.Tactical.Skills.UsageParameter.Default);
+        return new { actor = actor.GetTemplate()?.GetID(), skill = skillId, wasUsable = usable, used, tile = tile == null ? "none" : $"{tile.GetX()},{tile.GetZ()}" };
     }
 
     // Raise (or lower) the active actor's weapon for one of its skills without firing, for
@@ -218,18 +218,23 @@ public static class Sortie
     public static object Aim(string skillId, bool on = true)
     {
         var actor = TacticalManager.Get()?.GetActiveActor();
-        var skills = actor?.GetSkills()?.GetAllSkills();
-        if (skills == null)
+        if (actor?.GetSkills()?.GetAllSkills() == null)
             return new { error = "no active actor" };
-        for (var i = 0; i < skills.Count; i++)
-        {
-            var skill = skills[i]?.TryCast<Il2CppMenace.Tactical.Skills.Skill>();
-            if (skill == null || skill.GetID() != skillId)
-                continue;
-            actor.SetAiming(on, skill);
-            return new { actor = actor.GetTemplate()?.GetID(), skill = skillId, aiming = on };
-        }
-        return new { error = $"active actor has no skill '{skillId}'" };
+        var skill = FindSkill(actor, skillId);
+        if (skill == null)
+            return new { error = $"active actor has no skill '{skillId}'" };
+        actor.SetAiming(on, skill);
+        return new { actor = actor.GetTemplate()?.GetID(), skill = skillId, aiming = on };
+    }
+
+    // The actor's active skill with this id, or null.
+    private static Il2CppMenace.Tactical.Skills.Skill FindSkill(Actor actor, string skillId)
+    {
+        var skills = actor.GetSkills()?.GetAllSkills();
+        for (var i = 0; skills != null && i < skills.Count; i++)
+            if (skills[i]?.TryCast<Il2CppMenace.Tactical.Skills.Skill>() is { } skill && skill.GetID() == skillId)
+                return skill;
+        return null;
     }
 
     private static string Describe(Il2CppMenace.Tactical.Skills.SkillEventHandler handler)
@@ -333,8 +338,6 @@ public static class Sortie
         };
     }
 
-    // For the first deployed squad found, which of the map's first six rows it may stand on, by
-    // vanilla's own rule, counted over the row's tiles.
     // The map's first four rows, a letter a tile: B blocked, I isolated, S a structure, x one the
     // first deployed squad may not stand on for another reason, and a dot where it may.
     private static string ZoneTiles(MissionPreviewResult preview, int sizeX, int sizeZ)
@@ -362,6 +365,8 @@ public static class Sortie
         return string.Join(" / ", rows);
     }
 
+    // For the first deployed squad found, which of the map's first six rows it may stand on, by
+    // vanilla's own rule, counted over the row's tiles.
     private static string ValidRows(MissionPreviewResult preview, int sizeX, int sizeZ)
     {
         for (var z = 0; z < sizeZ; z++)
@@ -380,7 +385,7 @@ public static class Sortie
                             valid++;
                     rows.Add($"row {row}: {valid}");
                 }
-                return $"squad at {x},{z}; " + string.Join(", ", rows);
+                return $"squad at {x},{z}: " + string.Join(", ", rows);
             }
         }
         return "no deployed squad found";

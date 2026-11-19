@@ -18,6 +18,7 @@ public sealed partial class StrategyDiorama : JiangyuSystem
     private const int VolumeLayer = 31;
     // The ops room's camera: GFL2's MainCamera field of view at the room's _CameraAnchor.
     internal const float RoomFov = 48.6f;
+    private const float RoomCameraNear = 0.05f;
 
     private static StrategyDiorama _instance;
 
@@ -137,7 +138,7 @@ public sealed partial class StrategyDiorama : JiangyuSystem
         _scene.Camera.transform.SetPositionAndRotation(_scene.Anchor.position, _scene.Anchor.rotation);
         var camera = _scene.Camera.AddComponent<Camera>();
         camera.fieldOfView = RoomFov;
-        camera.nearClipPlane = 0.05f;
+        camera.nearClipPlane = RoomCameraNear;
         camera.farClipPlane = 500f;
         camera.depth = depth + 1f;
         camera.clearFlags = CameraClearFlags.SolidColor;
@@ -273,7 +274,6 @@ public sealed partial class StrategyDiorama : JiangyuSystem
         }
     }
 
-    internal static GameObject Room => _instance?._scene.Room;
     internal static ModContext SystemContext => _instance?.Context;
 
     internal static Camera RoomCamera => _instance?._scene.Camera?.GetComponent<Camera>();

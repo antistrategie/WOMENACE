@@ -171,7 +171,7 @@ public sealed partial class StrategyDiorama
             screen.OnPressStart(MouseButton.LeftMouse, hovered, raw);
         else
             screen.OnPressEnd(MouseButton.LeftMouse, hovered, raw);
-        return $"{(down ? "pressed" : "released")} at panel ({at.x:0}, {at.y:0}) over {(hovered != null ? hovered.GetIl2CppType().Name : "nothing")}; "
+        return $"{(down ? "pressed" : "released")} at panel ({at.x:0}, {at.y:0}) over {(hovered != null ? hovered.GetIl2CppType().Name : "nothing")}, "
             + $"dragged {(screen.m_DraggedEntity != null ? "yes" : "no")}";
     }
 

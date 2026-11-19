@@ -519,8 +519,6 @@ public sealed partial class StrategyDiorama
             _life.DinergateAnimator?.Play("Hint", 0, 0f);
     }
 
-    internal bool DinergateNotice => _life.DinergateNotice;
-
     private void StartDinergateHud()
     {
         _life.HudRest = FindHudVariant("Icon", "HudIcon", HudIconFadeIn, HudIconFadeOut, HudIconFadeLoop);

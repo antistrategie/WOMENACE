@@ -1,5 +1,6 @@
 using Jiangyu.Sdk;
 using UnityEngine;
+using HiddenUi = System.Collections.Generic.List<(UnityEngine.UIElements.VisualElement Root, UnityEngine.UIElements.StyleEnum<UnityEngine.UIElements.DisplayStyle> Display)>;
 
 namespace WOMENACE.Code;
 
@@ -57,10 +58,29 @@ public static class Diorama
 
     public static string HallLine() => StrategyDiorama.HallLineFromDev();
 
-    public static string Ears() => StrategyDiorama.EarsFromDev();
+    // Who is listening and what is playing: every AudioListener and whether it is on, the
+    // engine's volume and pause, and how many sources are playing.
+    public static string Ears()
+    {
+        var lines = new List<string> { $"volume {AudioListener.volume}, paused {AudioListener.pause}" };
+        foreach (var ear in UnityEngine.Object.FindObjectsOfType<AudioListener>(true))
+            lines.Add($"listener {DevText.PathOf(ear.transform)} enabled {ear.enabled} active {ear.gameObject.activeInHierarchy}");
+        var sources = UnityEngine.Object.FindObjectsOfType<AudioSource>(true);
+        var playing = 0;
+        foreach (var source in sources)
+            if (source.isPlaying)
+            {
+                playing++;
+                if (playing <= 12)
+                    lines.Add($"playing {DevText.PathOf(source.transform)} clip {(source.clip != null ? source.clip.name : "none")} volume {source.volume} mute {source.mute} spatial {source.spatialBlend} group {(source.outputAudioMixerGroup != null ? source.outputAudioMixerGroup.name : "none")}");
+            }
+        lines.Add($"{playing} of {sources.Length} sources playing");
+        return string.Join("\n", lines);
+    }
 
     public static string SceneRenderers(string path) => StrategyDiorama.SceneRenderersFromDev(path);
 
+    [MutatingVerb]
     public static string Orbit(float yaw, float pitch, float zoomNotches) => StrategyDiorama.NudgeOrbit(yaw, pitch, zoomNotches);
 
     // Rests the pointer on a place on a mission card (fractions of its width and height from
@@ -69,28 +89,8 @@ public static class Diorama
     public static string CardHover(int index, float x, float y) => StrategyDiorama.CardHoverFromDev(index, x, y);
 
     // Sets a number on the materials of the hologram shown for hire.
+    [MutatingVerb]
     public static string HologramFloat(string name, float value) => StrategyDiorama.HologramFloatFromDev(name, value);
-
-    // Renderers in the room whose name or material name contains a substring, with room-space
-    // bounds (centre, size).
-    public static string Find(string part)
-    {
-        var room = StrategyDiorama.Room;
-        if (room == null)
-            return "no room";
-        var lines = new List<string>();
-        foreach (var r in room.GetComponentsInChildren<Renderer>(true))
-        {
-            var material = r.sharedMaterial != null ? r.sharedMaterial.name : "";
-            if (!r.name.Contains(part, StringComparison.OrdinalIgnoreCase) && !material.Contains(part, StringComparison.OrdinalIgnoreCase))
-                continue;
-            var b = r.bounds;
-            lines.Add($"{r.name} ({material}): centre {room.transform.InverseTransformPoint(b.center)} size {b.size}");
-            if (lines.Count >= 40)
-                break;
-        }
-        return string.Join("\n", lines);
-    }
 
     // Transforms in the room (dolls included) named exactly this, with room-space position.
     public static string Bone(string name)
@@ -113,6 +113,7 @@ public static class Diorama
 
     // Sends a click to the first element with this name on the active screen, for testing folds and
     // buttons headlessly.
+    [MutatingVerb]
     public static string UiClick(string name)
     {
         var root = Il2CppMenace.UI.UIManager.Get()?.GetActiveScreen()?.m_Container?.rootVisualElement;
@@ -140,13 +141,21 @@ public static class Diorama
         var found = new List<UnityEngine.UIElements.VisualElement>();
         foreach (var element in Jiangyu.Game.Ui.UI.FindAll(root, Jiangyu.Game.Ui.UiSelector.TypeName(typeName)))
             found.Add(element);
-        if (index >= found.Count)
+        if (index < 0 || index >= found.Count)
             return $"{found.Count} of {typeName}";
-        var interactive = found[index].TryCast<Il2CppMenace.UI.InteractiveElement>();
-        if (interactive == null)
+        if (!Press(found[index]))
             return typeName + " takes no clicks";
-        interactive.OnClicked(UnityEngine.UIElements.MouseButton.LeftMouse);
         return $"clicked {typeName} {index} of {found.Count}";
+    }
+
+    // Presses a vanilla interactive element as a left click on it does, or says it takes none.
+    internal static bool Press(UnityEngine.UIElements.VisualElement element)
+    {
+        var pressable = element?.TryCast<Il2CppMenace.UI.InteractiveElement>();
+        if (pressable == null)
+            return false;
+        pressable.OnClicked(UnityEngine.UIElements.MouseButton.LeftMouse);
+        return true;
     }
 
     // Counts frames for some seconds, then Measured gives the rate. Uncap the rate first (FrameRate).
@@ -172,20 +181,6 @@ public static class Diorama
     // Saves the floor reflection's mirror render to a PNG at a Windows path.
     public static string SaveMirror(string path) => SavePng(StrategyDiorama.MirrorTexture, path, "no mirror");
 
-    // Writes vanilla's own mission preparation map picture, which the 2D view covers with the
-    // hologram's, to compare what each shows.
-    public static string VanillaMap(string path)
-    {
-        var map = Il2CppMenace.UI.UIManager.Get()?.GetActiveScreen()?.TryCast<Il2CppMenace.UI.Strategy.MissionPrepUIScreen>()?.m_MapTexture;
-        if (map == null)
-            return "no map picture";
-        var copy = RenderTexture.GetTemporary(map.width, map.height, 0, RenderTextureFormat.ARGB32);
-        Graphics.Blit(map, copy);
-        var written = SavePng(copy, path, "no copy");
-        RenderTexture.ReleaseTemporary(copy);
-        return written;
-    }
-
     // A full collection in the game's own runtime and an unload of unused assets, as a long
     // session reaches on its own, to find what the mod holds past its life.
     [MutatingVerb]
@@ -206,9 +201,25 @@ public static class Diorama
         tex.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
         tex.Apply();
         RenderTexture.active = active;
-        System.IO.File.WriteAllBytes(path, (byte[])ImageConversion.EncodeToPNG(tex));
-        UnityEngine.Object.Destroy(tex);
+        WritePng(tex, path);
         return $"wrote {path} {rt.width}x{rt.height}";
+    }
+
+    // Writes a texture made for a capture to a PNG and destroys it, giving the file's size.
+    internal static int WritePng(Texture2D tex, string path)
+    {
+        var png = (byte[])ImageConversion.EncodeToPNG(tex);
+        System.IO.File.WriteAllBytes(path, png);
+        UnityEngine.Object.Destroy(tex);
+        return png.Length;
+    }
+
+    // Writes captured frames as <prefix>N.png, counting from 1, skipping any the capture missed.
+    private static void WriteFrames(List<Texture2D> frames, string prefix)
+    {
+        for (var i = 0; i < frames.Count; i++)
+            if (frames[i] != null)
+                WritePng(frames[i], $"{prefix}{i + 1}.png");
     }
 
     // Each room effect particle system: active, playing, live particles, renderer mode, material.
@@ -264,7 +275,7 @@ public static class Diorama
     // Shows or hides a room child by name (the effects, the Dinergate), for measuring its share of
     // the frame.
     [MutatingVerb]
-    public static string Toggle(string name, bool on)
+    public static string ShowChild(string name, bool on)
     {
         var room = StrategyDiorama.Room;
         var t = room != null ? room.transform.Find(name) : null;
@@ -349,25 +360,27 @@ public static class Diorama
     [MutatingVerb]
     public static string DollRigs(bool on) => StrategyDiorama.DollRigs(on);
 
+    [MutatingVerb]
     public static string Pose(int index, string pose) => StrategyDiorama.PoseDoll(index, pose);
 
+    [MutatingVerb]
     public static string RoomDolls() => StrategyDiorama.RespawnRoomDolls();
 
     // A click at a screen point (pixels, bottom left origin) through the real hit test.
+    [MutatingVerb]
     public static string ClickAt(float x, float y) => StrategyDiorama.ClickAt(x, y);
 
-    // Room camera from (x,y,z) looking at (tx,ty,tz) in room space. Fov 0 keeps the current one.
-    public static string Camera(float x, float y, float z, float tx, float ty, float tz, float fov) => StrategyDiorama.AimCamera(x, y, z, tx, ty, tz, fov);
-
+    [MutatingVerb]
     public static string CameraReset() => StrategyDiorama.ResetCamera();
 
     // What each tab bar destination maps to right now, and going to one (Bridge, Armory, Hiring,
     // Oci, Market, Workshop, Shop) as a click on its tab would.
     public static string NavState() => VanillaNavigation.Describe();
 
+    [MutatingVerb]
     public static string NavGo(string target) => VanillaNavigation.GoFromDev(target);
 
-
+    [MutatingVerb]
     public static string HomeView(string view) => StrategyDiorama.SetHomeViewFromDev(view);
 
     // The transforms under the first one in the room of this name: path, active, local position
@@ -436,6 +449,7 @@ public static class Diorama
     }
 
     // Adds promotion points to the campaign, to see what the UI does for a doll who can be promoted.
+    [MutatingVerb]
     public static string PromotionPoints(int amount)
     {
         var state = Il2CppMenace.States.StrategyState.Get();
@@ -447,6 +461,7 @@ public static class Diorama
 
     // Shows or hides every element of this name under the active screen, to find which element
     // draws something. Says how many it changed and each one's type and parent.
+    [MutatingVerb]
     public static string UiShow(string name, bool on)
     {
         var root = Il2CppMenace.UI.UIManager.Get()?.GetActiveScreen()?.GetRootElement();
@@ -458,7 +473,7 @@ public static class Diorama
             e.style.visibility = on ? UnityEngine.UIElements.StyleKeyword.Null : UnityEngine.UIElements.Visibility.Hidden;
             found.Add($"{e.GetIl2CppType().Name} in {e.parent?.name}");
         }
-        return $"{found.Count}: " + string.Join("; ", found.Take(12));
+        return $"{found.Count}: " + string.Join(" | ", found.Take(12));
     }
 
     // The layout of a named element of the active screen and of everything under it to a depth.
@@ -494,9 +509,7 @@ public static class Diorama
             var b = r.bounds;
             if (Mathf.Max(b.size.x, Mathf.Max(b.size.y, b.size.z)) < size)
                 continue;
-            var path = r.name;
-            for (var t = r.transform.parent; t != null && t != room.transform; t = t.parent)
-                path = t.name + "/" + path;
+            var path = DevText.PathOf(r.transform, room.transform);
             var filter = r.GetComponent<MeshFilter>();
             var mesh = filter != null && filter.sharedMesh != null ? $" mesh centre {filter.sharedMesh.bounds.center} size {filter.sharedMesh.bounds.size}" : "";
             lines.Add($"{path} ({(r.sharedMaterial != null ? $"{r.sharedMaterial.name} / {r.sharedMaterial.shader.name} queue {r.sharedMaterial.renderQueue}" : "none")}) {(r.gameObject.activeInHierarchy && r.enabled ? "on" : "off")}: centre {room.transform.InverseTransformPoint(b.center)} size {b.size} at {room.transform.InverseTransformPoint(r.transform.position)} rot {r.transform.eulerAngles} scale {r.transform.lossyScale}{mesh}");
@@ -532,6 +545,7 @@ public static class Diorama
 
     // Shows only the children of a room transform whose names are listed (comma separated), or
     // all of them for an empty list.
+    [MutatingVerb]
     public static string Only(string parent, string names)
     {
         var room = StrategyDiorama.Room;
@@ -565,9 +579,7 @@ public static class Diorama
             lines.Add($"== {under} {(root.gameObject.activeInHierarchy ? "on" : "off")} at {room.transform.InverseTransformPoint(root.position)} scale {root.lossyScale}");
             foreach (var r in root.GetComponentsInChildren<Renderer>(true))
             {
-                var path = r.name;
-                for (var t = r.transform.parent; t != null && t != root; t = t.parent)
-                    path = t.name + "/" + path;
+                var path = DevText.PathOf(r.transform, root);
                 var filter = r.GetComponent<MeshFilter>();
                 var mesh = filter != null && filter.sharedMesh != null ? $" mesh {filter.sharedMesh.name} centre {filter.sharedMesh.bounds.center} size {filter.sharedMesh.bounds.size}" : "";
                 lines.Add($"{path} [{r.GetIl2CppType().Name}] {(r.gameObject.activeInHierarchy && r.enabled ? "on" : "off")} mat {(r.sharedMaterial != null ? $"{r.sharedMaterial.name} / {r.sharedMaterial.shader.name} queue {r.sharedMaterial.renderQueue}" : "none")} at {room.transform.InverseTransformPoint(r.transform.position)} rot {r.transform.eulerAngles} scale {r.transform.lossyScale}{mesh}");
@@ -594,6 +606,7 @@ public static class Diorama
     [MutatingVerb]
     public static string OciOrbit(float yaw, float distance) => StrategyDiorama.OciOrbitFromDev(yaw, distance);
 
+    [MutatingVerb]
     public static string Look(float ex, float ey, float ez, float tx, float ty, float tz, float fov) => StrategyDiorama.LookFromDev(ex, ey, ez, tx, ty, tz, fov);
 
     [MutatingVerb]
@@ -632,7 +645,33 @@ public static class Diorama
 
     public static string StagedBounds() => StrategyDiorama.StagedBoundsFromDev();
 
-    public static string GameFonts() => StrategyDiorama.GameFontsFromDev();
+    // Every element on any panel carrying the game font class, with the font it draws in.
+    public static string GameFonts()
+    {
+        var lines = new List<string>();
+        void Walk(string document, UnityEngine.UIElements.VisualElement e)
+        {
+            if (e.ClassListContains(VanillaNavigation.GameFontClass))
+            {
+                var label = e.TryCast<UnityEngine.UIElements.TextElement>() ?? FirstText(e);
+                var font = label?.resolvedStyle.unityFontDefinition.fontAsset;
+                lines.Add($"{document}/{e.name}: {(font != null ? font.name : "none")} ({label?.text})");
+            }
+            for (var i = 0; i < e.childCount; i++)
+                Walk(document, e[i]);
+        }
+        static UnityEngine.UIElements.TextElement FirstText(UnityEngine.UIElements.VisualElement e)
+        {
+            for (var i = 0; i < e.childCount; i++)
+                if ((e[i].TryCast<UnityEngine.UIElements.TextElement>() ?? FirstText(e[i])) is { } found)
+                    return found;
+            return null;
+        }
+        foreach (var document in UnityEngine.Object.FindObjectsOfType<UnityEngine.UIElements.UIDocument>())
+            if (document?.rootVisualElement is { } root)
+                Walk(document.name, root);
+        return lines.Count > 0 ? string.Join("\n", lines) : "no game font elements";
+    }
 
     [MutatingVerb]
     public static string FactionTrust(string template, int change) => StrategyDiorama.FactionTrustFromDev(template, change);
@@ -662,7 +701,33 @@ public static class Diorama
     [MutatingVerb]
     public static string MouseButton(bool down) => StrategyDiorama.MouseButtonFromDev(down);
 
-    public static string StarProbe(int step = 20) => StrategyDiorama.StarProbeFromDev(step);
+    // What vanilla's system map would find under the pointer: the scene's main camera, the camera
+    // the screen holds, what it has under the pointer now, and what a ray from the main camera
+    // hits across a grid of screen places (pixels from the top left).
+    public static string StarProbe(int step = 20)
+    {
+        var screen = Il2CppMenace.UI.UIManager.Get()?.GetActiveScreen()?.TryCast<Il2CppMenace.UI.Strategy.SystemMapUIScreen>();
+        var main = Camera.main;
+        var lines = new List<string>
+        {
+            $"main camera {(main != null ? main.name + (main.enabled ? " on" : " off") : "none")}",
+            $"screen's camera {(screen?.m_Camera != null ? screen.m_Camera.name + (screen.m_Camera.enabled ? " on" : " off") : "none")}, hovered {(screen?.m_Hovered != null ? screen.m_Hovered.name : "nothing")}",
+            $"engine's pointer {Input.mousePosition}",
+        };
+        var camera = screen?.m_Camera != null ? screen.m_Camera : main;
+        if (camera == null)
+            return string.Join("\n", lines);
+        var hits = new Dictionary<string, (int Count, int X, int Y)>();
+        for (var y = step / 2; y < Screen.height; y += step)
+            for (var x = step / 2; x < Screen.width; x += step)
+                if (Physics.Raycast(camera.ScreenPointToRay(new Vector3(x, Screen.height - y, 0f)), out var hit, 10000f))
+                {
+                    var name = hit.collider.name + "/" + (hit.collider.transform.parent != null ? hit.collider.transform.parent.name : "");
+                    hits[name] = hits.TryGetValue(name, out var had) ? (had.Count + 1, had.X, had.Y) : (1, x, y);
+                }
+        lines.AddRange(hits.Select(h => $"{h.Key}: {h.Value.Count} places, first at ({h.Value.X}, {h.Value.Y})"));
+        return string.Join("\n", lines);
+    }
 
     public static string Dolls() => StrategyDiorama.DollsFromDev();
 
@@ -689,9 +754,11 @@ public static class Diorama
     // What lights a doll standing at a point of the active room, in room space.
     public static string ProbesNear(float x, float y, float z, int count = 6) => StrategyDiorama.ProbesNearFromDev(x, y, z, count);
 
+    [MutatingVerb]
     public static string DinergateAt(float x, float y, float z) => StrategyDiorama.MoveDinergate(x, y, z);
 
     // Opens the briefing of an operation on offer, as a click on its marker on the system map does.
+    [MutatingVerb]
     public static string OpenOperation(int index, int hud = 0)
     {
         Il2CppMenace.UI.Strategy.OperationSelectUIScreen.SetSelectedOperationIdx(index, hud);
@@ -699,38 +766,21 @@ public static class Diorama
         return "active screen now " + Il2CppMenace.UI.UIManager.Get()?.GetActiveScreen()?.GetIl2CppType().Name;
     }
 
-    // Presses the first vanilla interactive element of this type name on the active screen (a
-    // message in the list is an EventMessageElement).
-    // The index picks among several: the second roster slot is ArmoryUnitSelectSlot 1.
-    public static string PressType(string typeName, int index = 0)
-    {
-        var root = Il2CppMenace.UI.UIManager.Get()?.GetActiveScreen()?.m_Container?.rootVisualElement;
-        if (root == null)
-            return "no screen";
-        var found = Jiangyu.Game.Ui.UI.FindAll(root, Jiangyu.Game.Ui.UiSelector.TypeName(typeName)).ToList();
-        var pressable = index >= 0 && index < found.Count ? found[index].TryCast<Il2CppMenace.UI.InteractiveElement>() : null;
-        if (pressable == null)
-            return $"no {typeName} {index} of {found.Count}";
-        pressable.OnClicked(UnityEngine.UIElements.MouseButton.LeftMouse);
-        return $"pressed {typeName} {index} of {found.Count}";
-    }
-
     // Presses a button of the dialog that is open (YesButton, NoButton), as a click on it does.
+    [MutatingVerb]
     public static string DialogPress(string button = "YesButton")
     {
         var layers = Il2CppMenace.UI.UIManager.Get()?.GetPermanentLayersRoot();
         var element = layers != null ? Jiangyu.Game.Ui.UI.Find(layers, Jiangyu.Game.Ui.UiSelector.Name(button)) : null;
-        var pressable = element?.TryCast<Il2CppMenace.UI.InteractiveElement>();
-        if (pressable == null)
-            return "no " + button;
-        pressable.OnClicked(UnityEngine.UIElements.MouseButton.LeftMouse);
-        return "pressed " + button;
+        return Press(element) ? "pressed " + button : "no " + button;
     }
 
     // Closes whatever dialogs are open over the screen.
+    [MutatingVerb]
     public static string CloseDialogs() { Il2CppMenace.UI.UIManager.Get()?.CloseAllDialogs(); return "closed"; }
 
     // Opens (On) or closes (Off) the Intel board.
+    [MutatingVerb]
     public static string Intel(string state) => StrategyDiorama.IntelFromDev(state);
 
     // The active screen, the background prefab it asks for, the background the UI manager has
@@ -744,8 +794,8 @@ public static class Diorama
         var current = manager?.GetCurrentBackgroundScene();
         var cams = new List<string>();
         foreach (var cam in UnityEngine.Camera.allCameras)
-            cams.Add($"{Path(cam.transform)}@{cam.depth}");
-        return $"screen {screen?.GetIl2CppType().Name}; asks {prefab}; current {(current != null ? Path(current.transform) + (current.activeInHierarchy ? "" : " (inactive)") : "null")}; cameras [{string.Join(", ", cams)}]";
+            cams.Add($"/{DevText.PathOf(cam.transform)}@{cam.depth}");
+        return $"screen {screen?.GetIl2CppType().Name}, asks {prefab}, current {(current != null ? "/" + DevText.PathOf(current.transform) + (current.activeInHierarchy ? "" : " (inactive)") : "null")}, cameras [{string.Join(", ", cams)}]";
     }
 
     // The current vanilla background's hierarchy with each object's components. Video players
@@ -773,7 +823,7 @@ public static class Diorama
                     name += $"(mask {camera.cullingMask}, rt {camera.targetTexture?.name}, fov {camera.fieldOfView})";
                 comps.Add(name);
             }
-            lines.Add($"{Path(t)} active={t.gameObject.activeSelf} layer={t.gameObject.layer} [{string.Join(", ", comps)}]");
+            lines.Add($"/{DevText.PathOf(t)} active={t.gameObject.activeSelf} layer={t.gameObject.layer} [{string.Join(", ", comps)}]");
         }
         return string.Join("\n", lines);
     }
@@ -806,7 +856,8 @@ public static class Diorama
         return string.Join("\n", hits.OrderBy(h => h.d).Take(30).Select(h => h.s));
     }
 
-    // Room renderers whose name contains a substring: enabled, visible, room-space bounds, material.
+    // Room renderers whose name or material name contains a substring: enabled, visible,
+    // room-space bounds, material and draw order.
     public static string RendererState(string part)
     {
         var room = StrategyDiorama.Room;
@@ -814,13 +865,15 @@ public static class Diorama
             return "no room";
         var lines = new List<string>();
         foreach (var r in room.GetComponentsInChildren<Renderer>(true))
-            if (r.name.Contains(part, StringComparison.OrdinalIgnoreCase))
-                lines.Add($"{r.name} {r.GetIl2CppType().Name} enabled {r.enabled} active {r.gameObject.activeInHierarchy} visible {r.isVisible} centre {room.transform.InverseTransformPoint(r.bounds.center)} size {r.bounds.size} mat {r.sharedMaterial?.name} shader {r.sharedMaterial?.shader?.name} queue {r.sharedMaterial?.renderQueue} order {r.sortingOrder} sorting layer {r.sortingLayerID} priority {r.rendererPriority} layer {r.gameObject.layer}");
+            if (r.name.Contains(part, StringComparison.OrdinalIgnoreCase)
+                || (r.sharedMaterial != null && r.sharedMaterial.name.Contains(part, StringComparison.OrdinalIgnoreCase)))
+                lines.Add(DevText.Describe(r, room.transform));
         return string.Join("\n", lines);
     }
 
     // Sets the draw order of every room renderer whose object name contains a substring: its
-    // sorting order, and its materials' queue where one is given.
+    // sorting order, and its materials' queue where one is given. The queue goes on the shared
+    // materials, so none is copied, and every renderer drawing with one moves with it.
     [MutatingVerb]
     public static string DrawOrder(string part, int order, int queue = -1)
     {
@@ -834,25 +887,15 @@ public static class Diorama
                 continue;
             r.sortingOrder = order;
             if (queue >= 0)
-                foreach (var material in r.materials)
-                    material.renderQueue = queue;
+                foreach (var material in r.sharedMaterials)
+                    if (material != null)
+                        material.renderQueue = queue;
             n++;
         }
         return $"{n} renderers matching {part} at order {order}{(queue >= 0 ? $", queue {queue}" : "")}";
     }
 
-    // Shows or hides every room renderer whose object name contains a substring.
-    public static string Show(string part, bool on)
-    {
-        var room = StrategyDiorama.Room;
-        if (room == null)
-            return "no room";
-        var n = 0;
-        foreach (var r in room.GetComponentsInChildren<Renderer>(true))
-            if (r.name.Contains(part, StringComparison.OrdinalIgnoreCase)) { r.enabled = on; n++; }
-        return $"{(on ? "showing" : "hiding")} {n} renderers matching {part}";
-    }
-
+    [MutatingVerb]
     public static string Toggle(bool on)
     {
         StrategyDiorama.Enabled = on;
@@ -881,9 +924,9 @@ public static class Diorama
             foreach (var c in cam.GetComponents<Component>())
                 comps.Add(c == null ? "null" : c.GetIl2CppType().Name);
             var volume = cam.GetComponentInChildren<UnityEngine.Rendering.Volume>(true);
-            lines.Add($"{Path(cam.transform)} active={cam.isActiveAndEnabled} depth={cam.depth} clear={cam.clearFlags} "
+            lines.Add($"/{DevText.PathOf(cam.transform)} active={cam.isActiveAndEnabled} depth={cam.depth} clear={cam.clearFlags} "
                 + $"mask={cam.cullingMask} target={(cam.targetTexture != null ? cam.targetTexture.name : "-")} "
-                + $"pos={cam.transform.position} comps=[{string.Join(",", comps)}] volume={(volume != null ? Path(volume.transform) : "-")}");
+                + $"pos={cam.transform.position} comps=[{string.Join(",", comps)}] volume={(volume != null ? "/" + DevText.PathOf(volume.transform) : "-")}");
         }
         return string.Join("\n", lines);
     }
@@ -932,9 +975,9 @@ public static class Diorama
 
     // Takes every UI document off screen. Display, unlike visibility, is not inherited, so no
     // element under a hidden root can draw itself back in.
-    internal static List<(UnityEngine.UIElements.VisualElement, UnityEngine.UIElements.StyleEnum<UnityEngine.UIElements.DisplayStyle>)> HideUi()
+    internal static HiddenUi HideUi()
     {
-        var hidden = new List<(UnityEngine.UIElements.VisualElement, UnityEngine.UIElements.StyleEnum<UnityEngine.UIElements.DisplayStyle>)>();
+        var hidden = new HiddenUi();
         foreach (var doc in UnityEngine.Object.FindObjectsOfType<UnityEngine.UIElements.UIDocument>())
         {
             var root = doc.rootVisualElement;
@@ -946,7 +989,7 @@ public static class Diorama
         return hidden;
     }
 
-    internal static void ShowUi(List<(UnityEngine.UIElements.VisualElement, UnityEngine.UIElements.StyleEnum<UnityEngine.UIElements.DisplayStyle>)> hidden)
+    internal static void ShowUi(HiddenUi hidden)
     {
         foreach (var (root, display) in hidden)
             if (root != null)
@@ -955,17 +998,14 @@ public static class Diorama
 
     private static System.Collections.IEnumerator SnapAtEndOfFrame(string path, bool hideUi)
     {
-        var hidden = hideUi ? HideUi() : new List<(UnityEngine.UIElements.VisualElement, UnityEngine.UIElements.StyleEnum<UnityEngine.UIElements.DisplayStyle>)>();
+        var hidden = hideUi ? HideUi() : new HiddenUi();
         for (var i = 0; i < (hideUi ? 5 : 0); i++)
             yield return null;
         yield return new WaitForEndOfFrame();
         var tex = ScreenCapture.CaptureScreenshotAsTexture();
         ShowUi(hidden);
-        if (tex == null)
-            yield break;
-        var png = ImageConversion.EncodeToPNG(tex);
-        System.IO.File.WriteAllBytes(path, (byte[])png);
-        UnityEngine.Object.Destroy(tex);
+        if (tex != null)
+            WritePng(tex, path);
     }
 
     // The screen on each of several frames in a row, without the UI, as <prefix>N.png. For
@@ -991,13 +1031,7 @@ public static class Diorama
             frames.Add(ScreenCapture.CaptureScreenshotAsTexture());
         }
         ShowUi(hidden);
-        for (var i = 0; i < frames.Count; i++)
-        {
-            if (frames[i] == null)
-                continue;
-            System.IO.File.WriteAllBytes($"{prefix}{i + 1}.png", (byte[])ImageConversion.EncodeToPNG(frames[i]));
-            UnityEngine.Object.Destroy(frames[i]);
-        }
+        WriteFrames(frames, prefix);
     }
 
     // Goes to a navigation target and captures the screen, UI included, on each of the frames
@@ -1022,13 +1056,7 @@ public static class Diorama
             yield return new WaitForEndOfFrame();
             frames.Add(ScreenCapture.CaptureScreenshotAsTexture());
         }
-        for (var i = 0; i < frames.Count; i++)
-        {
-            if (frames[i] == null)
-                continue;
-            System.IO.File.WriteAllBytes($"{prefix}{i + 1}.png", (byte[])ImageConversion.EncodeToPNG(frames[i]));
-            UnityEngine.Object.Destroy(frames[i]);
-        }
+        WriteFrames(frames, prefix);
     }
 
     // Clicks an element of the active screen and reads the screen, UI included, on each of the
@@ -1094,9 +1122,7 @@ public static class Diorama
         {
             if (t == null || !t.gameObject.scene.IsValid() || !t.name.Contains(part, StringComparison.OrdinalIgnoreCase))
                 continue;
-            var path = t.name;
-            for (var up = t.parent; up != null; up = up.parent)
-                path = up.name + "/" + path;
+            var path = DevText.PathOf(t);
             var particles = t.GetComponentsInChildren<ParticleSystem>(true).Length;
             var renderers = t.GetComponentsInChildren<Renderer>(true).Length;
             rows.Add($"{path} active {t.gameObject.activeInHierarchy} particles {particles} renderers {renderers} local {t.localPosition}");
@@ -1123,12 +1149,10 @@ public static class Diorama
         tex.Apply();
         RenderTexture.active = active;
         camera.targetTexture = previous;
-        var png = ImageConversion.EncodeToPNG(tex);
-        System.IO.File.WriteAllBytes(path, (byte[])png);
-        UnityEngine.Object.Destroy(tex);
+        var bytes = WritePng(tex, path);
         rt.Release();
         UnityEngine.Object.Destroy(rt);
-        return $"wrote {path} ({png.Length} bytes)";
+        return $"wrote {path} ({bytes} bytes)";
     }
 
     // The distinct materials on the room, in a stable order.
@@ -1174,13 +1198,5 @@ public static class Diorama
             lines.Add($"  {n} ({t}) = {v}");
         }
         return string.Join("\n", lines);
-    }
-
-    private static string Path(Transform t)
-    {
-        var parts = new List<string>();
-        for (; t != null; t = t.parent)
-            parts.Insert(0, t.name);
-        return "/" + string.Join("/", parts);
     }
 }
