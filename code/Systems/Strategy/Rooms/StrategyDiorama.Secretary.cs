@@ -1,5 +1,6 @@
 using Il2CppMenace.States;
 using UnityEngine;
+using NVector3 = System.Numerics.Vector3;
 
 namespace WOMENACE.Code;
 
@@ -73,16 +74,21 @@ public sealed partial class StrategyDiorama
             // her spot for as long as the roster stays as it is.
             var dolls = new List<(string Tag, string Body)>();
             var bodies = HiredDollBodies();
+            var assets = new Dictionary<string, string>();
             foreach (var (tag, asset) in bodies)
+            {
                 dolls.Add((tag, asset.Split('/')[0]));
+                assets[tag] = asset;
+            }
             _life.CrewWears = Wearing(bodies);
             _life.CrewWornOn = _policyScreen;
             foreach (var (tag, spot) in AssignSpots(dolls))
             {
-                var doll = SpawnDoll(tag, "WOMENACE_RoomDoll_" + spot.Name);
+                var asset = assets[tag];
+                var doll = SpawnBody(asset, "WOMENACE_RoomDoll_" + spot.Name);
                 if (doll == null)
                     continue;
-                Pose(doll, spot.Pose);
+                Pose(doll, spot.Pose, asset.Split('/')[0]);
                 _life.Crew.Add(doll);
                 _life.CrewSpots[doll] = spot;
             }
@@ -232,9 +238,11 @@ public sealed partial class StrategyDiorama
     }
 
     // A doll's body in the outfit she wears now, under the room, or null when she has no model.
-    private GameObject SpawnDoll(string tag, string name)
+    private GameObject SpawnDoll(string tag, string name) => SpawnBody(Transmog.BodyAssetFor(tag, Transmog.SelectionFor(Context, tag)), name);
+
+    // A body by its asset, under the room, named for the body after a colon.
+    private GameObject SpawnBody(string asset, string name)
     {
-        var asset = Transmog.BodyAssetFor(tag, Transmog.SelectionFor(Context, tag));
         var prefab = asset != null ? Context.Assets.Load<GameObject>(asset) : null;
         if (prefab == null)
             return null;
@@ -266,14 +274,15 @@ public sealed partial class StrategyDiorama
     private const float FidgetWaitMax = 45f;
 
     // Swaps the doll's soldier controller for the poses and starts her own loop for the pose.
-    private void Pose(GameObject doll, string pose)
+    // Callers that spawned her by her body pass it, and the others have it read from her name.
+    private void Pose(GameObject doll, string pose, string body = null)
     {
         if (_poses == null)
             _poses = PosesPrefab()?.GetComponent<Animator>()?.runtimeAnimatorController;
         var animator = doll.GetComponentInChildren<Animator>();
         if (_poses == null || animator == null)
             return;
-        var body = doll.name.Substring(doll.name.IndexOf(':') + 1);
+        body ??= doll.name.Substring(doll.name.IndexOf(':') + 1);
         animator.runtimeAnimatorController = _poses;
         animator.applyRootMotion = false;
         // Her pose is read off her bones to seat her (SeatShift), before any camera has seen her.
@@ -383,6 +392,11 @@ public sealed partial class StrategyDiorama
         {
             var room = _scene.Room.transform;
             var world = room.TransformPoint(spot.Position);
+            // The faces are walked in plain maths: Unity's own would be a native call for every
+            // corner of every face of the room.
+            var (wx, wz) = (world.x, world.z);
+            var toRoom = room.worldToLocalMatrix;
+            var (r10, r11, r12, r13) = (toRoom.m10, toRoom.m11, toRoom.m12, toRoom.m13);
             var best = float.PositiveInfinity;
             foreach (var renderer in room.GetComponentsInChildren<MeshRenderer>())
             {
@@ -396,26 +410,36 @@ public sealed partial class StrategyDiorama
                     continue;
                 var vertices = mesh.vertices;
                 var triangles = mesh.triangles;
-                var matrix = renderer.transform.localToWorldMatrix;
+                var m = renderer.transform.localToWorldMatrix;
+                var (m00, m01, m02, m03, m10, m11, m12, m13, m20, m21, m22, m23) =
+                    (m.m00, m.m01, m.m02, m.m03, m.m10, m.m11, m.m12, m.m13, m.m20, m.m21, m.m22, m.m23);
+                var placed = new NVector3[vertices.Length];
+                for (var i = 0; i < placed.Length; i++)
+                {
+                    var p = vertices[i];
+                    placed[i] = new NVector3(
+                        m00 * p.x + m01 * p.y + m02 * p.z + m03,
+                        m10 * p.x + m11 * p.y + m12 * p.z + m13,
+                        m20 * p.x + m21 * p.y + m22 * p.z + m23);
+                }
                 for (var i = 0; i + 2 < triangles.Length; i += 3)
                 {
-                    var a = matrix.MultiplyPoint3x4(vertices[triangles[i]]);
-                    var b = matrix.MultiplyPoint3x4(vertices[triangles[i + 1]]);
-                    var c = matrix.MultiplyPoint3x4(vertices[triangles[i + 2]]);
+                    var (a, b, c) = (placed[triangles[i]], placed[triangles[i + 1]], placed[triangles[i + 2]]);
                     // Where the upright line through the spot crosses this face, if it does.
-                    var area = (b.x - a.x) * (c.z - a.z) - (c.x - a.x) * (b.z - a.z);
-                    if (Mathf.Abs(area) < 1e-7f)
+                    var area = (b.X - a.X) * (c.Z - a.Z) - (c.X - a.X) * (b.Z - a.Z);
+                    if (MathF.Abs(area) < 1e-7f)
                         continue;
-                    var u = ((world.x - a.x) * (c.z - a.z) - (c.x - a.x) * (world.z - a.z)) / area;
-                    var v = ((b.x - a.x) * (world.z - a.z) - (world.x - a.x) * (b.z - a.z)) / area;
+                    var u = ((wx - a.X) * (c.Z - a.Z) - (c.X - a.X) * (wz - a.Z)) / area;
+                    var v = ((b.X - a.X) * (wz - a.Z) - (wx - a.X) * (b.Z - a.Z)) / area;
                     if (u < 0f || v < 0f || u + v > 1f)
                         continue;
                     // Only faces a doll could stand on: turned up, not a wall or an underside.
-                    var normal = Vector3.Cross(b - a, c - a);
-                    if (Mathf.Abs(normal.y) < 0.7f * normal.magnitude)
+                    var normal = NVector3.Cross(b - a, c - a);
+                    if (MathF.Abs(normal.Y) < 0.7f * normal.Length())
                         continue;
-                    var y = room.InverseTransformPoint(a + (b - a) * u + (c - a) * v).y;
-                    if (Mathf.Abs(y - spot.Position.y) < Mathf.Abs(best - spot.Position.y))
+                    var hit = a + (b - a) * u + (c - a) * v;
+                    var y = r10 * hit.X + r11 * hit.Y + r12 * hit.Z + r13;
+                    if (MathF.Abs(y - spot.Position.y) < MathF.Abs(best - spot.Position.y))
                         best = y;
                 }
             }

@@ -102,10 +102,12 @@ public sealed partial class StrategyDiorama
                 worn.SetFloat(HologramFloorId, foot);
                 worn.SetFloat(HologramHeightId, tall);
                 worn.SetFloat(IntensityId, OciIntensity);
-                worn.SetFloat("_ScanDensity", OciLinesPerMetre);
+                worn.SetFloat(OciScanDensityId, OciLinesPerMetre);
             });
         return _oci.Ship;
     }
+
+    private static readonly int OciScanDensityId = Shader.PropertyToID("_ScanDensity");
 
     // What O.C.I. showed goes with its room, and is made again when the room is.
     private void ClearOci()

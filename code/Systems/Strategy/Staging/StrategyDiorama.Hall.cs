@@ -1,3 +1,5 @@
+using Quat = System.Numerics.Quaternion;
+using Vec = System.Numerics.Vector3;
 using UnityEngine;
 
 namespace WOMENACE.Code;
@@ -11,11 +13,13 @@ public sealed partial class StrategyDiorama
     // leave, so a wide orbit never looks in through a wall: every cell of ground the squad's
     // spot connects to without crossing the room's walls and pillars, less a camera's margin
     // from them (MapHall). A room whose meshes cannot be read has no floor plan and no bound.
-    private bool OnHallFloor(Vector3 local)
+    private bool OnHallFloor(Vector3 local) => OnHallFloor(local.x, local.z);
+
+    private bool OnHallFloor(float x, float z)
     {
         if (_staging.HallFloor == null)
             return true;
-        var (cx, cz) = ((int)((local.x + HallReach) / HallCell), (int)((local.z + HallReach) / HallCell));
+        var (cx, cz) = ((int)((x + HallReach) / HallCell), (int)((z + HallReach) / HallCell));
         return cx >= 0 && cz >= 0 && cx < HallSide && cz < HallSide && _staging.HallFloor[cx, cz];
     }
 
@@ -137,15 +141,16 @@ public sealed partial class StrategyDiorama
     // header, a stack of crates. A cable, a rail or a hanging lamp crosses one of them and is
     // looked past, as the eye looks past it. The walk is in the set's space and in managed
     // maths: it runs every frame the armoury shows.
-    private float ClearOfHall(Vector3 focus, Quaternion rotation, float distance)
+    private float ClearOfHall(Vec focus, Quat rotation, float distance)
     {
         if (_staging.HallSolid == null || _staging.Stage == null)
             return distance;
-        var closest = Mathf.Max(OrbitDistanceMin, _staging.FramedRadius * 1.6f);
-        var at = N(_staging.Stage.InverseTransformPoint(focus));
-        var back = N(_staging.Stage.InverseTransformDirection(rotation * Vector3.back + rotation * Vector3.right * StagePan()));
-        var right = N(_staging.Stage.InverseTransformDirection(rotation * Vector3.right)) * HallAbreast;
-        var up = N(_staging.Stage.InverseTransformDirection(rotation * Vector3.up)) * HallAbreast;
+        var closest = MathF.Max(OrbitDistanceMin, _staging.FramedRadius * 1.6f);
+        var across = Vec.Transform(Vec.UnitX, rotation);
+        var at = N(_staging.Stage.InverseTransformPoint(U(focus)));
+        var back = N(_staging.Stage.InverseTransformDirection(U(Vec.Transform(-Vec.UnitZ, rotation) + across * StagePan())));
+        var right = N(_staging.Stage.InverseTransformDirection(U(across))) * HallAbreast;
+        var up = N(_staging.Stage.InverseTransformDirection(U(Vec.Transform(Vec.UnitY, rotation)))) * HallAbreast;
         var step = HallCell * 0.5f;
         for (var d = closest; d <= distance; d += step)
         {
@@ -158,31 +163,26 @@ public sealed partial class StrategyDiorama
             if (HallSolidAt(on + up) || HallSolidAt(ahead + up)) met++;
             if (HallSolidAt(on - up) || HallSolidAt(ahead - up)) met++;
             if (met >= 4)
-                return Mathf.Max(closest, d - HallClearance);
+                return MathF.Max(closest, d - HallClearance);
         }
         return distance;
     }
 
-    private bool InsideHall(Vector3 focus, Quaternion rotation, ref float distance)
+    private bool InsideHall(Vec focus, Quat rotation, ref float distance)
     {
         if (_staging.Stage == null)
             return true;
         // Never closer than the footprint allows: a vehicle would swallow the camera.
-        var closest = Mathf.Max(OrbitDistanceMin, _staging.FramedRadius * 1.6f);
+        var closest = MathF.Max(OrbitDistanceMin, _staging.FramedRadius * 1.6f);
         // The camera stands back along its line and across by the shot's pan, and that is the
         // place asked of the floor. The line's end alone can be clear at a distance where the
         // camera, beside it, stands off the floor (in the room kept round the pillar), and
         // then the bearing is refused where coming closer would do. Its place is a straight
         // line of the distance, taken into the hall's space once: each distance asked of it
         // is plain arithmetic, where Unity's maths is an interop call per operation.
-        var start = _staging.Stage.InverseTransformPoint(focus);
-        var along = _staging.Stage.InverseTransformVector(rotation * (Vector3.back + Vector3.right * StagePan()));
-        bool Stands(float at)
-        {
-            var local = start;
-            (local.x, local.z) = (start.x + along.x * at, start.z + along.z * at);
-            return OnHallFloor(local);
-        }
+        var start = N(_staging.Stage.InverseTransformPoint(U(focus)));
+        var along = N(_staging.Stage.InverseTransformVector(U(Vec.Transform(new Vec(StagePan(), 0f, -1f), rotation))));
+        bool Stands(float at) => OnHallFloor(start.X + along.X * at, start.Z + along.Z * at);
         for (int i = 0; i < 24; i++)
         {
             if (Stands(distance))

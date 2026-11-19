@@ -97,8 +97,6 @@ public sealed partial class StrategyDiorama
         SetParameter(AddVolumeComponent<VisualEnvironment>(profile).skyType, 0);
         SetParameter(AddVolumeComponent<UnityEngine.Rendering.HighDefinition.Fog>(profile).enabled, false);
         volume.sharedProfile = profile;
-
-        _life.MirrorRoutine = Context.Coroutines.Start(FollowMirror());
     }
 
     // The interop hands the frame settings out as copies, so their bits are set on the copies' own
@@ -126,22 +124,19 @@ public sealed partial class StrategyDiorama
         hd.customRenderingSettings = true;
     }
 
-    private System.Collections.IEnumerator FollowMirror()
+    // Run by the room's driver every frame. A mirror that throws is taken away and the room goes on.
+    private void DriveMirror()
     {
-        while (_life.Mirror != null)
+        if (_life.Mirror == null)
+            return;
+        try
         {
-            try
-            {
-                UpdateMirror();
-            }
-            catch (Exception ex)
-            {
-                Context.Log.Warn($"strategy diorama: mirror failed: {ex.GetType().Name}: {ex.Message}");
-                _life.MirrorRoutine = null;
-                ClearMirror();
-                yield break;
-            }
-            yield return null;
+            UpdateMirror();
+        }
+        catch (Exception ex)
+        {
+            Context.Log.Warn($"strategy diorama: mirror failed: {ex.GetType().Name}: {ex.Message}");
+            ClearMirror();
         }
     }
 
@@ -243,9 +238,6 @@ public sealed partial class StrategyDiorama
     private void ClearMirror()
     {
         Shader.SetGlobalVector(PlanarParamsId, Vector4.zero);
-        if (_life.MirrorRoutine != null)
-            Context.Coroutines.Stop(_life.MirrorRoutine);
-        _life.MirrorRoutine = null;
         if (_life.Mirror != null)
         {
             DestroyProfile(_life.Mirror.GetComponent<UnityEngine.Rendering.Volume>()?.sharedProfile);

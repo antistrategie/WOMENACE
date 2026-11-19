@@ -55,15 +55,22 @@ public sealed partial class StrategyDiorama
         public Grip Support;
         // Each model's triangles, middle and length's direction, in the model's own space.
         public readonly List<(Transform Model, Vec[] Corners, Vec Middle, Vec Along)> Models = new();
+#if JIANGYU_DEV
+        // What was read of each part, for the dev report.
         public readonly List<string> Read = new();
+#endif
     }
 
-    // Holds the right hand of every staged Doll that has something in it.
+    // Holds the right hand of every staged Doll that has something in it. Only the Squads screen
+    // stages a squad, and its leader is read off that screen's window: the recruit's stand is
+    // another staging, and a window no longer on a panel is the last screen's.
     private void HoldCarried()
     {
         try
         {
-            var leader = _staging.SquadWindow != null ? Affinity.LeaderOf(_staging.SquadWindow) : null;
+            if (_staging.RecruitStand != null || _staging.SquadWindow?.panel == null)
+                return;
+            var leader = Affinity.LeaderOf(_staging.SquadWindow);
             if (leader == null)
                 return;
             var tag = Affinity.CharacterTag(leader);
@@ -288,7 +295,11 @@ public sealed partial class StrategyDiorama
     private static void ReadCarried(Carried carried)
     {
         carried.Models.Clear();
-        carried.Read.Clear();
+        List<string> read = null;
+#if JIANGYU_DEV
+        read = carried.Read;
+        read.Clear();
+#endif
         for (var i = 0; i < carried.Socket.childCount; i++)
         {
             var model = carried.Socket.GetChild(i);
@@ -311,7 +322,7 @@ public sealed partial class StrategyDiorama
             var corners = new List<Vec>();
             var toModel = ToMat(model.worldToLocalMatrix);
             foreach (var (part, (renderer, _)) in coarsest)
-                ReadTriangles(part, renderer, toModel, corners, carried.Read);
+                ReadTriangles(part, renderer, toModel, corners, read);
             if (corners.Count > 0)
             {
                 var (middle, along) = Lengthways(corners);
@@ -323,7 +334,7 @@ public sealed partial class StrategyDiorama
     // A rigged part is baked as its bones hold it now, and what its bones have folded away to
     // nothing is left out: such triangles have no area, and are where they are for no reason of
     // the weapon's shape. A part whose mesh the game does not keep readable is taken as the box
-    // round it.
+    // round it. What was read of the part goes into the list given, where there is one.
     private static void ReadTriangles(string part, Renderer renderer, Mat toModel, List<Vec> into, List<string> read)
     {
         Mesh mesh = null, baked = null;
@@ -339,7 +350,7 @@ public sealed partial class StrategyDiorama
                 mesh = renderer.GetComponent<MeshFilter>()?.sharedMesh;
             if (mesh == null)
             {
-                read.Add($"{part} has no mesh");
+                read?.Add($"{part} has no mesh");
                 return;
             }
             var place = ToMat(renderer.transform.localToWorldMatrix) * toModel;
@@ -351,7 +362,7 @@ public sealed partial class StrategyDiorama
                     box[i] = Vec.Transform(new Vec((i & 1) == 0 ? low.X : high.X, (i & 2) == 0 ? low.Y : high.Y, (i & 4) == 0 ? low.Z : high.Z), place);
                 foreach (var corner in BoxCorners)
                     into.Add(box[corner]);
-                read.Add($"{part} as its box");
+                read?.Add($"{part} as its box");
                 return;
             }
             var vertices = mesh.vertices;
@@ -370,9 +381,9 @@ public sealed partial class StrategyDiorama
                 into.Add(c);
                 kept++;
             }
-            read.Add($"{part} {(baked != null ? "rigged" : "fixed")} {kept} of {corners.Length / 3} triangles");
+            read?.Add($"{part} {(baked != null ? "rigged" : "fixed")} {kept} of {corners.Length / 3} triangles");
         }
-        catch (Exception ex) { read.Add($"{part} failed {ex.GetType().Name}"); }
+        catch (Exception ex) { read?.Add($"{part} failed {ex.GetType().Name}"); }
         finally
         {
             if (baked != null)

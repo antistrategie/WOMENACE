@@ -103,7 +103,7 @@ public sealed partial class StrategyDiorama
             return;
         // Vanilla greys the Assemble button's word where the project's materials are short and
         // marks the button no other way, so the shell's rules are told by a class.
-        if (_shellRoot != null && Jiangyu.Game.Ui.UI.Find(_shellRoot, Jiangyu.Game.Ui.UiSelector.Name("AssembleButton")) is { } assemble)
+        if (WorkshopPart("AssembleButton") is { } assemble)
         {
             var materialsShort = UIManager.Get()?.GetActiveScreen()?.TryCast<WorkshopUIScreen>()?.m_SelectedBlueprint?.OwnsPlayerAllCraftingMaterials() != true;
             Inline(assemble, e => e.EnableInClassList("wm-workshop__off", materialsShort), e => e.RemoveFromClassList("wm-workshop__off"));
@@ -111,9 +111,9 @@ public sealed partial class StrategyDiorama
         var station = WorkshopStation;
         // With no project picked there is nothing to say under the station, and the strip is
         // not drawn: an empty box with a heading over nothing.
-        if (_shellRoot != null && Jiangyu.Game.Ui.UI.Find(_shellRoot, Jiangyu.Game.Ui.UiSelector.Name("AssemblePanel")) is { } strip)
+        if (WorkshopPart("AssemblePanel") is { } strip)
         {
-            var takes = Jiangyu.Game.Ui.UI.Find(strip, Jiangyu.Game.Ui.UiSelector.Name("ReqMaterialsContainer"));
+            var takes = WorkshopPart("ReqMaterialsContainer", strip);
             var nothing = station == AssembleStation && (takes == null || takes.childCount == 0);
             Inline(strip, e => e.style.visibility = nothing ? UnityEngine.UIElements.Visibility.Hidden : UnityEngine.UIElements.StyleKeyword.Null,
                 e => e.style.visibility = UnityEngine.UIElements.StyleKeyword.Null);
@@ -126,9 +126,9 @@ public sealed partial class StrategyDiorama
             return;
         (_weaponRoom.WorkedOnTemplate, _weaponRoom.WorkedOnStation) = (pointer, station);
         // Its name, in the strip under it.
-        if (_shellRoot != null && Jiangyu.Game.Ui.UI.Find(_shellRoot, Jiangyu.Game.Ui.UiSelector.Name(WorkshopNameName))?.TryCast<UnityEngine.UIElements.Label>() is { } named)
+        if (WorkshopPart(WorkshopNameName)?.TryCast<UnityEngine.UIElements.Label>() is { } named)
             named.text = template != null ? (Templates.DefaultText(template.Title) ?? "").ToUpperInvariant() : "";
-        if (_shellRoot != null && Jiangyu.Game.Ui.UI.Find(_shellRoot, Jiangyu.Game.Ui.UiSelector.Name(WorkshopImageName)) is { } pictured)
+        if (WorkshopPart(WorkshopImageName) is { } pictured)
         {
             var picture = template != null ? template.TryCast<WeaponTemplate>()?.IconEquipment ?? template.Icon : null;
             pictured.style.backgroundImage = picture != null ? new UnityEngine.UIElements.StyleBackground(picture) : UnityEngine.UIElements.StyleKeyword.None;
@@ -199,7 +199,7 @@ public sealed partial class StrategyDiorama
                 material.SetFloat(HologramFloorId, foot);
                 material.SetFloat(HologramHeightId, tall);
                 material.SetFloat(HologramRevealId, 1.1f);
-                material.SetFloat("_Intensity", HologramIntensity);
+                material.SetFloat(IntensityId, HologramIntensity);
             }
             return;
         }
@@ -208,6 +208,19 @@ public sealed partial class StrategyDiorama
         var lamp = RigLight(_weaponRoom.WorkedOn, "WOMENACE_DisplayLight", new Color(1f, 0.93f, 0.84f), 3f);
         lamp.transform.position = at + (eye - at).normalized * 0.7f + Vector3.up * 0.5f;
         lamp.intensity = DisplayLumens * RigLightScale;
+    }
+
+    // A part of the Workshop's screen the looks read, a few times a second: found once under the
+    // shell's root, or under a part of it, and again only once it has left its panel.
+    private UnityEngine.UIElements.VisualElement WorkshopPart(string name, UnityEngine.UIElements.VisualElement under = null)
+    {
+        if (_shellRoot == null)
+            return null;
+        if (_weaponRoom.PartsOf != _shellRoot)
+            (_weaponRoom.PartsOf, _weaponRoom.Parts) = (_shellRoot, new Dictionary<string, UnityEngine.UIElements.VisualElement>());
+        if (!_weaponRoom.Parts.TryGetValue(name, out var part) || part == null || part.panel == null)
+            _weaponRoom.Parts[name] = part = Jiangyu.Game.Ui.UI.Find(under ?? _shellRoot, Jiangyu.Game.Ui.UiSelector.Name(name));
+        return part;
     }
 
     // The model that is the weapon itself. A weapon may carry two: a machine gun's first is its

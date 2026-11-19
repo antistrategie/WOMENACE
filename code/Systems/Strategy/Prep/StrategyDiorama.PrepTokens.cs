@@ -2,6 +2,8 @@ using Il2CppMenace.UI.Strategy;
 using Jiangyu.Game.Ui;
 using UnityEngine;
 using UnityEngine.UIElements;
+using NQuaternion = System.Numerics.Quaternion;
+using NVector3 = System.Numerics.Vector3;
 
 namespace WOMENACE.Code;
 
@@ -72,6 +74,9 @@ public sealed partial class StrategyDiorama
         public bool Heard;
         public GameObject Card;
         public GameObject Ring;
+        // Each quad's own copy of its material, which outlives the quad.
+        public Material CardMaterial;
+        public Material RingMaterial;
         public VisualElement Cell;
         public VisualElement Icon;
         public VisualElement Under;
@@ -83,7 +88,7 @@ public sealed partial class StrategyDiorama
         public float FootAlong = 0.5f;
         public float FootUp;
         // The card on the panel, as the camera last saw it.
-        public Rect Seen;
+        public PanelBox Seen;
         // A chibi's loop: whether the card plays one, where in it she started, and the frame shown.
         public bool Plays;
         public float Phase;
@@ -93,6 +98,11 @@ public sealed partial class StrategyDiorama
         public IntPtr Shown;
     }
 
+    // A box on a panel, in the panel's units.
+    private readonly record struct PanelBox(float XMin, float YMin, float XMax, float YMax)
+    {
+        public bool Contains(Vector2 point) => point.x >= XMin && point.x < XMax && point.y >= YMin && point.y < YMax;
+    }
 
 
     private void DrivePrepTokens()
@@ -103,6 +113,7 @@ public sealed partial class StrategyDiorama
         {
             if (_prep.Tokens.Count > 0)
                 ClearPrepTokens();
+            PlaceDragMarks(null);
             _prep.DragHeard = null;
             return;
         }
@@ -135,15 +146,12 @@ public sealed partial class StrategyDiorama
 
     private void DropToken(Token token)
     {
-        foreach (var part in new[] { token.Card, token.Ring })
-        {
-            if (part == null)
-                continue;
-            var material = part.GetComponent<MeshRenderer>()?.material;
+        foreach (var material in new[] { token.CardMaterial, token.RingMaterial })
             if (material != null)
                 UnityEngine.Object.Destroy(material);
-            UnityEngine.Object.Destroy(part);
-        }
+        foreach (var part in new[] { token.Card, token.Ring })
+            if (part != null)
+                UnityEngine.Object.Destroy(part);
         token.Cell?.RemoveFromHierarchy();
         token.Words?.RemoveFromHierarchy();
         if (token.Slot >= 0)
@@ -167,9 +175,11 @@ public sealed partial class StrategyDiorama
             UnityEngine.Object.Destroy(_prep.TokenRing);
         for (var i = 0; i < _prep.DragMarks.Length; i++)
         {
+            if (_prep.DragMarkMaterials[i] != null)
+                UnityEngine.Object.Destroy(_prep.DragMarkMaterials[i]);
             if (_prep.DragMarks[i] != null)
                 UnityEngine.Object.Destroy(_prep.DragMarks[i]);
-            _prep.DragMarks[i] = null;
+            (_prep.DragMarks[i], _prep.DragMarkMaterials[i]) = (null, null);
         }
         (_prep.TokensHost, _prep.TokensSettings, _prep.TokensTexture, _prep.TokensPanel, _prep.TokenRing) = (null, null, null, null, null);
     }
@@ -247,7 +257,7 @@ public sealed partial class StrategyDiorama
                 {
                     case TokenKind.Squad:
                         var leader = source.TryCast<MissionPrepDeployedEntity>()?.m_Leader;
-                        var material = token.Card.GetComponent<MeshRenderer>()?.material;
+                        var material = token.CardMaterial;
                         // A squad with no chibi of ours stands as its unit's own badge, or failing
                         // that as the small one vanilla's map draws for it.
                         var chibi = PrepChibisShown() ? Chibi(Affinity.CharacterTag(leader)) : null;
@@ -259,10 +269,10 @@ public sealed partial class StrategyDiorama
                         if (material != null && picture != null && token.Shown != showing)
                         {
                             token.Shown = showing;
-                            material.SetTexture("_MainTex", picture);
+                            material.SetTexture(MainTexId, picture);
                             // A badge may be one of many on a shared sheet: only its own part is shown.
                             var part = badge != null ? badge.textureRect : new Rect(0f, 0f, picture.width, picture.height);
-                            material.SetVector("_UvRect", new Vector4(part.width / picture.width, part.height / picture.height, part.x / picture.width, part.y / picture.height));
+                            material.SetVector(UvRectId, new Vector4(part.width / picture.width, part.height / picture.height, part.x / picture.width, part.y / picture.height));
                             token.FootUp = chibi != null ? ChibiFeet : 0f;
                             token.Size = chibi != null ? new Vector2(ChibiTiles * ChibiFrameAspect, ChibiTiles) : Vector2.one * BadgeTiles;
                             (token.Plays, token.Frame) = (chibi != null, -1);
@@ -270,7 +280,8 @@ public sealed partial class StrategyDiorama
                             token.Phase = (source.Pointer.ToInt64() >> 4) % 97 / 97f * ChibiFrames;
                         }
                         var isOpen = leader != null && open != null && leader.Pointer == open.Pointer;
-                        token.Ring.GetComponent<MeshRenderer>()?.material?.SetColor("_Tint", isOpen ? TokenRingOpen : TokenRing);
+                        if (token.RingMaterial != null)
+                            token.RingMaterial.SetColor(TokenTintId, isOpen ? TokenRingOpen : TokenRing);
                         break;
                     case TokenKind.Objective:
                         token.Icon.style.backgroundImage = Picture(UI.Find(source, UiSelector.Name(VanillaUi.Elements.PrepObjectiveIcon)));
@@ -352,10 +363,10 @@ public sealed partial class StrategyDiorama
         return _prep.TokenRing;
     }
 
-    private GameObject TokenQuad(GameObject template, string name, Texture texture, float plate)
+    private GameObject TokenQuad(GameObject template, string name, Texture texture, float plate, out Material material)
     {
         var quad = Quad(template, name, texture);
-        var material = quad.GetComponent<MeshRenderer>()?.material;
+        material = quad.GetComponent<MeshRenderer>()?.material;
         if (material != null)
         {
             PlainHologram(material, plate, TokenIntensity, Color.white);
@@ -363,6 +374,8 @@ public sealed partial class StrategyDiorama
         }
         return quad;
     }
+
+    private static readonly int TokenTintId = Shader.PropertyToID("_Tint");
 
     private Token MakeToken(TokenKind kind, VisualElement layer)
     {
@@ -373,11 +386,13 @@ public sealed partial class StrategyDiorama
         var token = new Token { Kind = kind };
         if (kind == TokenKind.Squad)
         {
-            token.Card = TokenQuad(template, "WOMENACE_PrepSquad", Texture2D.blackTexture, 1f);
+            token.Card = TokenQuad(template, "WOMENACE_PrepSquad", Texture2D.blackTexture, 1f, out token.CardMaterial);
             // A chibi or a badge is a picture with clear parts, which must add no light.
-            token.Card.GetComponent<MeshRenderer>()?.material?.SetFloat("_CutByAlpha", 1f);
-            token.Ring = TokenQuad(template, "WOMENACE_PrepSquadRing", RingTexture(), 0f);
-            token.Ring.GetComponent<MeshRenderer>().material.renderQueue = TokenQueue - 1;
+            if (token.CardMaterial != null)
+                token.CardMaterial.SetFloat(CutByAlphaId, 1f);
+            token.Ring = TokenQuad(template, "WOMENACE_PrepSquadRing", RingTexture(), 0f, out token.RingMaterial);
+            if (token.RingMaterial != null)
+                token.RingMaterial.renderQueue = TokenQueue - 1;
             token.Size = Vector2.one * BadgeTiles;
             return token;
         }
@@ -433,9 +448,10 @@ public sealed partial class StrategyDiorama
             token.Cell.Add(token.Name);
         }
 
-        token.Card = TokenQuad(template, kind == TokenKind.Contact ? "WOMENACE_PrepContact" : "WOMENACE_PrepObjective", _prep.TokensTexture, TokenPlate);
-        token.Card.GetComponent<MeshRenderer>()?.material?.SetVector("_UvRect", new Vector4(cell.width / TokenPanelSize, cell.height / TokenPanelSize,
-            cell.x / TokenPanelSize, 1f - cell.yMax / TokenPanelSize));
+        token.Card = TokenQuad(template, kind == TokenKind.Contact ? "WOMENACE_PrepContact" : "WOMENACE_PrepObjective", _prep.TokensTexture, TokenPlate, out token.CardMaterial);
+        if (token.CardMaterial != null)
+            token.CardMaterial.SetVector(UvRectId, new Vector4(cell.width / TokenPanelSize, cell.height / TokenPanelSize,
+                cell.x / TokenPanelSize, 1f - cell.yMax / TokenPanelSize));
         token.Size = new Vector2(cell.width, cell.height) * CellUnitTiles;
         token.FootAlong = centre / cell.width;
         token.FootUp = 4.5f / cell.height;
@@ -462,7 +478,6 @@ public sealed partial class StrategyDiorama
         return part;
     }
 
-    // Stands each card on its tile and keeps each contact's target over it on the screen.
     // A token coming up as the build's front reaches its tile. Only while the map is being
     // built: one made later is already standing. Tokens of a kind that come up together are
     // heard as one.
@@ -476,6 +491,12 @@ public sealed partial class StrategyDiorama
 
     private const float TokenHeardApart = 0.12f;
 
+    // A ring lies flat on the map, face up.
+    private static readonly Quaternion TokenRingTurn = U(NQuaternion.CreateFromAxisAngle(NVector3.UnitX, MathF.PI / 2f));
+
+    // Stands each card on its tile, keeps each chibi's box on the panel for the pointer, and
+    // keeps each contact's words beside it on the screen. The places are worked out in plain
+    // arithmetic: only the transforms and the camera's view are asked of the engine.
     private void PlacePrepTokens(VisualElement layer, (IntPtr Squad, Vector2Int Now, Vector2Int From, bool Valid)? drag)
     {
         var camera = _scene.Camera.GetComponent<Camera>();
@@ -484,64 +505,77 @@ public sealed partial class StrategyDiorama
         // Every card is square to the view, not turned towards the eye: turned, a card off to one
         // side shows its foot as a slope. A card also leans back as the camera rises over the map,
         // so it is seen from no steeper than a set angle and does not thin to a line from above.
-        var ahead = camera.transform.forward;
-        var pitch = Mathf.Asin(Mathf.Clamp(-ahead.y, -1f, 1f)) * Mathf.Rad2Deg;
-        ahead.y = 0f;
-        if (ahead.sqrMagnitude < 1e-6f)
-            ahead = camera.transform.up;
-        ahead.y = 0f;
-        var facing = Quaternion.LookRotation(ahead.normalized, Vector3.up) * Quaternion.Euler(Mathf.Max(0f, pitch - TokenSeenFrom), 0f, 0f);
+        var view = camera.transform;
+        var ahead = N(view.forward);
+        var pitch = MathF.Asin(Math.Clamp(-ahead.Y, -1f, 1f)) * (180f / MathF.PI);
+        ahead.Y = 0f;
+        if (ahead.LengthSquared() < 1e-6f)
+            ahead = N(view.up);
+        ahead.Y = 0f;
+        var facing = NQuaternion.CreateFromAxisAngle(NVector3.UnitY, MathF.Atan2(ahead.X, ahead.Z))
+            * NQuaternion.CreateFromAxisAngle(NVector3.UnitX, MathF.Max(0f, pitch - TokenSeenFrom) * (MathF.PI / 180f));
+        var turn = U(facing);
+        var toWorld = ToMat(_prep.Map.transform.localToWorldMatrix);
+        var now = Time.unscaledTime;
+        var screenHeight = Screen.height;
         // The words are placed in the layer, which stands in from the edges of a screen wider or
         // taller than 16:9.
         var origin = layer.worldBound.position;
         foreach (var token in _prep.Tokens.Values)
         {
-            var foot = PrepMapPoint(token.Tile.x, token.Tile.y, 0.05f);
+            var foot = NVector3.Transform(PrepMapLocal(token.Tile.x, token.Tile.y, 0.05f), toWorld);
             // A token grows out of its tile as the map is built.
-            var up = PrepBuilt(token.Tile.x, token.Tile.y) * _prep.TokensUp;
+            var up = PrepBuilt(token.Tile.x, token.Tile.y, now) * _prep.TokensUp;
             if (!token.Heard && up > 0f)
             {
                 token.Heard = true;
                 HearToken(token.Kind);
             }
             var (width, height) = (token.Size.x * _prep.MapTile * up, token.Size.y * _prep.MapTile * up);
+            var middle = foot + NVector3.Transform(new NVector3(width * (0.5f - token.FootAlong), height * (0.5f - token.FootUp), 0f), facing);
             var card = token.Card.transform;
-            card.rotation = facing;
+            card.rotation = turn;
             card.localScale = new Vector3(width, height, 1f);
-            card.position = foot + facing * new Vector3(width * (0.5f - token.FootAlong), height * (0.5f - token.FootUp), 0f);
+            card.position = new Vector3(middle.X, middle.Y, middle.Z);
             if (token.Ring != null)
             {
                 var ring = token.Ring.transform;
-                ring.rotation = Quaternion.Euler(90f, 0f, 0f);
-                ring.localScale = new Vector3(RingTiles * _prep.MapTile * up, RingTiles * _prep.MapTile * up, 1f);
-                ring.position = foot;
+                var across = RingTiles * _prep.MapTile * up;
+                ring.rotation = TokenRingTurn;
+                ring.localScale = new Vector3(across, across, 1f);
+                ring.position = new Vector3(foot.X, foot.Y, foot.Z);
             }
             if (token.Kind == TokenKind.Squad)
             {
                 if (token.Plays)
                 {
-                    var frame = (int)(Time.unscaledTime * ChibiFramesPerSecond + token.Phase) % ChibiFrames;
+                    var frame = (int)(now * ChibiFramesPerSecond + token.Phase) % ChibiFrames;
                     if (frame != token.Frame)
                     {
                         token.Frame = frame;
-                        token.Card.GetComponent<MeshRenderer>()?.material?.SetVector("_UvRect", SheetCell(frame, ChibiColumns, ChibiRows));
+                        if (token.CardMaterial != null)
+                            token.CardMaterial.SetVector(UvRectId, SheetCell(frame, ChibiColumns, ChibiRows));
                     }
                 }
                 var body = token.Plays ? ChibiBodyWidth : 1f;
-                var (low, high) = (new Vector2(float.MaxValue, float.MaxValue), new Vector2(float.MinValue, float.MinValue));
+                var cardToWorld = ToMat(card.localToWorldMatrix);
+                var (lowX, lowY, highX, highY) = (float.MaxValue, float.MaxValue, float.MinValue, float.MinValue);
                 foreach (var corner in MarkerCorners)
                 {
-                    var seen = camera.WorldToScreenPoint(card.TransformPoint(new Vector3(corner.x * body, corner.y, corner.z)));
-                    var point = RuntimePanelUtils.ScreenToPanel(layer.panel, new Vector2(seen.x, Screen.height - seen.y));
-                    (low, high) = (Vector2.Min(low, point), Vector2.Max(high, point));
+                    var place = NVector3.Transform(new NVector3(corner.x * body, corner.y, corner.z), cardToWorld);
+                    var seen = camera.WorldToScreenPoint(new Vector3(place.X, place.Y, place.Z));
+                    var point = RuntimePanelUtils.ScreenToPanel(layer.panel, new Vector2(seen.x, screenHeight - seen.y));
+                    (lowX, lowY) = (MathF.Min(lowX, point.x), MathF.Min(lowY, point.y));
+                    (highX, highY) = (MathF.Max(highX, point.x), MathF.Max(highY, point.y));
                 }
-                token.Seen = Rect.MinMaxRect(low.x, low.y, high.x, high.y);
+                token.Seen = new PanelBox(lowX, lowY, highX, highY);
             }
             if (token.Words == null)
                 continue;
-            var screen = camera.WorldToScreenPoint(card.position);
-            var at = RuntimePanelUtils.ScreenToPanel(layer.panel, new Vector2(screen.x, Screen.height - screen.y));
-            var near = screen.z > 0f && Vector2.Distance(at, _prep.PointerPanel) < ContactReach;
+            var screen = camera.WorldToScreenPoint(new Vector3(middle.X, middle.Y, middle.Z));
+            var at = RuntimePanelUtils.ScreenToPanel(layer.panel, new Vector2(screen.x, screenHeight - screen.y));
+            var (offX, offY) = (at.x - _prep.PointerPanel.x, at.y - _prep.PointerPanel.y);
+            var near = screen.z > 0f && offX * offX + offY * offY < ContactReach * ContactReach;
             token.Words.style.display = near ? DisplayStyle.Flex : DisplayStyle.None;
             token.Words.style.left = at.x - origin.x + 12f;
             token.Words.style.top = at.y - origin.y - 12f;
@@ -567,8 +601,9 @@ public sealed partial class StrategyDiorama
         {
             if (_prep.DragMarks[i] == null)
             {
-                _prep.DragMarks[i] = TokenQuad(template, "WOMENACE_PrepDragMark", Texture2D.whiteTexture, 0f);
-                _prep.DragMarks[i].GetComponent<MeshRenderer>().material.renderQueue = TokenQueue - 1;
+                _prep.DragMarks[i] = TokenQuad(template, "WOMENACE_PrepDragMark", Texture2D.whiteTexture, 0f, out _prep.DragMarkMaterials[i]);
+                if (_prep.DragMarkMaterials[i] != null)
+                    _prep.DragMarkMaterials[i].renderQueue = TokenQueue - 1;
             }
             var tile = i == 0 ? d.Now : d.From;
             var mark = _prep.DragMarks[i].transform;
@@ -577,11 +612,12 @@ public sealed partial class StrategyDiorama
             mark.localScale = new Vector3(_prep.MapTile, _prep.MapTile, 1f);
             mark.position = PrepMapPoint(tile.x + 0.5f, tile.y + 0.5f, 0.03f);
             var colour = i == 0 ? (d.Valid ? TokenRingOpen : TokenInvalid) : TokenRing * 0.5f;
-            _prep.DragMarks[i].GetComponent<MeshRenderer>().material.SetColor("_Tint", colour);
+            if (_prep.DragMarkMaterials[i] != null)
+                _prep.DragMarkMaterials[i].SetColor(TokenTintId, colour);
         }
         // The dragged squad's ring shows the same.
         foreach (var (source, token) in _prep.Tokens)
-            if (source == d.Squad && token.Ring != null)
-                token.Ring.GetComponent<MeshRenderer>()?.material?.SetColor("_Tint", d.Valid ? TokenRingOpen : TokenInvalid);
+            if (source == d.Squad && token.RingMaterial != null)
+                token.RingMaterial.SetColor(TokenTintId, d.Valid ? TokenRingOpen : TokenInvalid);
     }
 }

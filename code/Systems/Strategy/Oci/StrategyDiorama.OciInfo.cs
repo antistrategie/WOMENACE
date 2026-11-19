@@ -35,9 +35,11 @@ public sealed partial class StrategyDiorama
                 _oci.Unplaced = true;
         });
 
+    // Read from the strip's own style, which DressOciInfo sets: the resolved style lags it until
+    // the next layout, so a strip shown and hidden again before then would read as unchanged.
     private static bool OciInfoShown(ShipSlot slot) =>
         slot.m_InfoPanel?.parent is { } under && UI.Find(under, UiSelector.Name(OciInfoName)) is { } line
-            && line.resolvedStyle.display == DisplayStyle.Flex;
+            && line.style.display.keyword == StyleKeyword.Undefined && line.style.display.value == DisplayStyle.Flex;
 
     // Whether the slot has a strip.
     private bool DressOciInfo(ShipSlot slot)

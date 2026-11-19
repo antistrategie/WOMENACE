@@ -15,7 +15,6 @@ public sealed partial class StrategyDiorama
         public Camera MirrorCamera;
         public Camera RoomCamera;
         public RenderTexture MirrorTexture;
-        public object MirrorRoutine;
         // The frame the screen last changed. The mirror sits that frame out: vanilla switches its
         // background scenes after the screen policy has run, so for the rest of the frame the last
         // screen's sun can still be on beside the room's, and HDRP logs an error for a render with two

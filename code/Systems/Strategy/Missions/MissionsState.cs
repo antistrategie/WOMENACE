@@ -2,6 +2,7 @@ using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.Video;
+using NQuaternion = System.Numerics.Quaternion;
 using NVector3 = System.Numerics.Vector3;
 
 namespace WOMENACE.Code;
@@ -42,6 +43,9 @@ public sealed partial class StrategyDiorama
         public (Transform Node, Vector3 Place, Vector3 Scale) Curtain;
         public Material LandFill;
         public float LandFillBrightness = 1f;
+        // The table's land and curtain nodes, switched on or not, and the room they were found in.
+        public readonly List<Transform> LandNodes = new();
+        public IntPtr LandNodesOf;
         // How far the island has risen off the table and grown, 0 (on the table, as GFL2 draws it)
         // to 1 (enlarged over it), where it is heading, and whether it shows at all.
         public float LandAmount;
@@ -97,6 +101,11 @@ public sealed partial class StrategyDiorama
         public readonly List<(Material Material, int Queue)> StarMapQueues = new();
         public readonly List<(MeshRenderer Source, GameObject Copy, bool Marker)> StarMapParts = new();
         public readonly List<bool> StarOffTable = new();
+        // What each copy was last given, so a part is written to only when vanilla's changes.
+        public readonly List<(bool? Shown, NVector3 Scale)> StarPartsWritten = new();
+        // The room's view and the map's place when the planets' names were last placed. They are
+        // placed again only when one has changed.
+        public (NVector3 Eye, NQuaternion Facing, float Fov, float Shift, float Lift, NVector3 MapAt, float MapScale, int Width, int Height)? StarNamesPlacedFor;
         public Renderer StarBriefingPlanet;
         public Camera StarMapCamera;
         public Vector3 StarMapCameraPosition;

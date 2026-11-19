@@ -443,7 +443,18 @@ public sealed partial class StrategyDiorama
     // weighted by inverse square distance, handed to its renderers as Unity's per-renderer SH
     // (the doll shaders read unity_SHAr..SHC). Womenace/BakedScene props take the same values
     // through their own probe inputs.
-    private static readonly string[] ShNames = { "unity_SHAr", "unity_SHAg", "unity_SHAb", "unity_SHBr", "unity_SHBg", "unity_SHBb", "unity_SHC" };
+    private static readonly int[] ShIds = Array.ConvertAll(new[] { "unity_SHAr", "unity_SHAg", "unity_SHAb", "unity_SHBr", "unity_SHBg", "unity_SHBb", "unity_SHC" }, Shader.PropertyToID);
+    private static readonly int[] ProbeShIds = Array.ConvertAll(new[] { "_ProbeSH0", "_ProbeSH1", "_ProbeSH2", "_ProbeSH3", "_ProbeSH4", "_ProbeSH5", "_ProbeSH6" }, Shader.PropertyToID);
+    private static readonly int UseProbesId = Shader.PropertyToID("_UseProbes");
+    private static readonly int LightmapScaleId = Shader.PropertyToID("_LightmapScale");
+    private static readonly int ProbeOcclusionId = Shader.PropertyToID("_ProbeOcclusion");
+    private static readonly int KeyOcclusionId = Shader.PropertyToID("_KeyOcclusion");
+    private static readonly int KeyDirectionId = Shader.PropertyToID("_KeyDirection");
+    private static readonly int FaceRootUprightId = Shader.PropertyToID("_FaceRootUpright");
+    private static readonly int KeyColourId = Shader.PropertyToID("_KeyColour");
+    private static readonly int RoomLitId = Shader.PropertyToID("_RoomLit");
+    private static readonly int RoomReflectionId = Shader.PropertyToID("_RoomReflection");
+    private static readonly int UseRoomReflectionId = Shader.PropertyToID("_UseRoomReflection");
 
     // The four light probes nearest a place in the set's space, summed by inverse square
     // distance: their SH constants, their word on the sun, and the weights' total to divide by.
@@ -498,32 +509,32 @@ public sealed partial class StrategyDiorama
             renderer.GetPropertyBlock(block);
             for (int k = 0; k < 7; k++)
             {
-                block.SetVector(ShNames[k], sh[k] / total);
-                block.SetVector("_ProbeSH" + k, sh[k] / total);
+                block.SetVector(ShIds[k], sh[k] / total);
+                block.SetVector(ProbeShIds[k], sh[k] / total);
             }
-            block.SetFloat("_UseProbes", 1f);
+            block.SetFloat(UseProbesId, 1f);
             // A BakedScene prop's flat ambient level gives way to the probes.
-            block.SetFloat("_LightmapScale", 1f);
-            block.SetFloat("_ProbeOcclusion", occlusion / total);
+            block.SetFloat(LightmapScaleId, 1f);
+            block.SetFloat(ProbeOcclusionId, occlusion / total);
             // The share of a mixed sun the doll shader applies to its key light: what the probes
             // let through, or what the caller gives the place, whichever is more.
-            block.SetFloat("_KeyOcclusion", Mathf.Max(sun, occlusion / total));
+            block.SetFloat(KeyOcclusionId, Mathf.Max(sun, occlusion / total));
             // The way her key comes from, where it is a window's light and not the sun's.
-            block.SetVector("_KeyDirection", keyFrom is { } from ? new Vector4(from.x, from.y, from.z, 1f) : Vector4.zero);
+            block.SetVector(KeyDirectionId, keyFrom is { } from ? new Vector4(from.x, from.y, from.z, 1f) : Vector4.zero);
             // The face shader's frame: GFL2's sweep reads the light in the skin's root space, and
             // the rooms' bodies are rooted at a bone standing upright with them, where the rig
             // the shader's frame is for has its root turned half over.
             var root = renderer.TryCast<SkinnedMeshRenderer>()?.rootBone;
-            block.SetFloat("_FaceRootUpright", root != null && Vector3.Dot(root.up, unit.transform.up) > 0f ? 1f : 0f);
+            block.SetFloat(FaceRootUprightId, root != null && Vector3.Dot(root.up, unit.transform.up) > 0f ? 1f : 0f);
             // Her key's colour, where it is the lamps' light and not the sun's.
-            block.SetVector("_KeyColour", keyColour is { } c ? new Vector4(c.r, c.g, c.b, 1f) : Vector4.zero);
+            block.SetVector(KeyColourId, keyColour is { } c ? new Vector4(c.r, c.g, c.b, 1f) : Vector4.zero);
             // The doll shaders' room terms: GFL2's own ramp and ambient, and the room's reflection
             // probe in place of the sky.
-            block.SetFloat("_RoomLit", 1f);
+            block.SetFloat(RoomLitId, 1f);
             if (reflection != null)
             {
-                block.SetTexture("_RoomReflection", reflection);
-                block.SetFloat("_UseRoomReflection", 1f);
+                block.SetTexture(RoomReflectionId, reflection);
+                block.SetFloat(UseRoomReflectionId, 1f);
             }
             renderer.SetPropertyBlock(block);
         }

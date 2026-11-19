@@ -46,7 +46,9 @@ public sealed partial class StrategyDiorama
     // The instance goes back to Stem's pool, so it is handed back as it came: not looped.
     private void StopRoomBed()
     {
-        if (_life.RoomBed != null && _life.RoomBed.Playing)
+        // A paused bed is stopped too: dropped while paused, its looped instance would be held by
+        // nothing and could be resumed by the game's own unpausing.
+        if (_life.RoomBed != null && (_life.RoomBed.Playing || _life.RoomBed.Paused))
         {
             _life.RoomBed.Looped = false;
             _life.RoomBed.Stop();

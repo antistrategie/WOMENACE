@@ -22,6 +22,12 @@ public sealed partial class StrategyDiorama
         // The units under the staged roots, by pointer and active state, so a respawned squad is lit
         // and gripped on the frame it appears.
         public long SquadSignature;
+        // The units' renderers, by pointer, read again every few frames and whenever the units
+        // change: a body or a weapon that changes in place leaves the units as they were.
+        public long SquadShallow, SquadDeep;
+        public int SquadDeepFrame;
+        // The room camera's lens, looked up once for the orbit's every frame.
+        public Camera Lens;
         // Each unit renderer the room's probes light, with its own property block (null when it had
         // none), given back with the units.
         public readonly Dictionary<IntPtr, (Renderer Renderer, MaterialPropertyBlock Block)> ProbeLitUnits = new();

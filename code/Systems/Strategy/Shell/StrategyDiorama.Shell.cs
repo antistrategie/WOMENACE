@@ -332,6 +332,11 @@ public sealed partial class StrategyDiorama
 
     private static readonly string[] OperationsPanels = { VanillaUi.Elements.Hud, VanillaUi.Elements.MissionPois, VanillaUi.Elements.MissionWindow, VanillaUi.Elements.TopRightCorner };
 
+    // The Operations view's panels, found once for the screen root they were found under: the
+    // fade runs every frame of a camera travel.
+    private readonly VisualElement[] _operationsPanels = new VisualElement[OperationsPanels.Length];
+    private VisualElement _operationsPanelsRoot;
+
     // How far the Operations view has arrived, 0 to 1: the hologram's strength and its panels' opacity.
     private void SetOperationsFade(float k)
     {
@@ -340,12 +345,15 @@ public sealed partial class StrategyDiorama
             SetMarkersFade(k);
             if (_shellRoot == null)
                 return;
-            foreach (var name in OperationsPanels)
+            if (_operationsPanelsRoot != _shellRoot)
             {
-                var panel = UI.Find(_shellRoot, UiSelector.Name(name));
+                _operationsPanelsRoot = _shellRoot;
+                for (var i = 0; i < OperationsPanels.Length; i++)
+                    _operationsPanels[i] = UI.Find(_shellRoot, UiSelector.Name(OperationsPanels[i]));
+            }
+            foreach (var panel in _operationsPanels)
                 if (panel != null && panel.parent == _shellRoot)
                     panel.style.opacity = k >= 1f ? StyleKeyword.Null : k;
-            }
         }
         catch { }
     }
@@ -361,7 +369,9 @@ public sealed partial class StrategyDiorama
     {
         _homeScreen = screenName;
         _homeRoomShown = roomShown;
-        if (_homePending)
+        // Asked from inside the shell going on (a new shell's first frame runs at once and places
+        // it), the apply under way lays the screen out after it.
+        if (_homePending || _showingShell)
             return;
         try
         {
@@ -402,7 +412,17 @@ public sealed partial class StrategyDiorama
         // The shell stays on, so the screen underneath comes back as it was left.
         if (!_homeRoomShown || screenName != _homeScreen || screenName == null || !ShellScreens.Contains(screenName))
             return;
-        if (!ShowShell(screenName))
+        bool shown;
+        _showingShell = true;
+        try
+        {
+            shown = ShowShell(screenName);
+        }
+        finally
+        {
+            _showingShell = false;
+        }
+        if (!shown)
         {
             ClearHome();
             return;
@@ -411,6 +431,8 @@ public sealed partial class StrategyDiorama
         SetHomeLayout(home && _homeView == HomeView.Operations, screenName);
         LayOutScreen(screenName, _shellRoot);
     }
+
+    private bool _showingShell;
 
     private bool ShowShell(string screenName)
     {
@@ -422,7 +444,8 @@ public sealed partial class StrategyDiorama
             || (bar != null && !VanillaUi.Require(Context, screenName, bar, VanillaUi.Elements.TabBarButtons, VanillaUi.Elements.TabBarResources)))
             return false;
 
-        if (_shell == null || _shellRoot != root || _shell.parent != root)
+        var fresh = _shell == null || _shellRoot != root || _shell.parent != root;
+        if (fresh)
         {
             RemoveShell();
             var tree = Context.Assets.Load<VisualTreeAsset>(ShellUxml);
@@ -443,9 +466,7 @@ public sealed partial class StrategyDiorama
             root.Add(_shell);
             _shellRoot = root;
             ShareStyles(root);
-            // Before the shell is wired: wiring it runs its first frame at once, which places
-            // the shell and applies the screen again, and that may shut the bars to open them
-            // (the branch below). Moved after it, the bars would stand open while shut.
+            // Open, unless an arrival below shuts them to open them.
             MoveBars(_shell, BarsOpen);
             WireShell();
             if (bar != null)
@@ -453,23 +474,19 @@ public sealed partial class StrategyDiorama
                 AddResourceCaptions(bar);
                 LayOutResources(bar);
             }
-            // The bars open on arriving in another room, and on the first arrival of all.
-            var arrivedIn = LookFor(screenName).RoomKey;
-            if (_scene.ArrivedThroughBars || _scene.ShellRoom != arrivedIn)
-                Context.Coroutines.Start(OpenBars(_shell));
-            _scene.ArrivedThroughBars = false;
-            _scene.ShellRoom = arrivedIn;
         }
-        else if (_scene.ArrivedThroughBars)
+        // The bars open on arriving in another room and on the first arrival of all, which make a
+        // new shell, and after a cut that stayed on this screen (Kalina's shop to the workshop
+        // under it), which keeps the shell it shut.
+        var arrivedIn = LookFor(screenName).RoomKey;
+        if (_scene.ArrivedThroughBars || (fresh && _scene.ShellRoom != arrivedIn))
         {
-            // A cut that stayed on this screen (Kalina's shop to the workshop under it): the
-            // bars it shut open here.
-            _scene.ArrivedThroughBars = false;
-            _scene.ShellRoom = LookFor(screenName).RoomKey;
+            _scene.ShellRoom = arrivedIn;
             Context.Coroutines.Start(OpenBars(_shell));
         }
-        // The bars cover the screen's panels, and the vanilla resources sit on the top bar.
-        // and the Intel panel's vanilla content over the shell.
+        _scene.ArrivedThroughBars = false;
+        // The shell goes last in the root, over the screen's panels, with the tab bar that holds
+        // the vanilla resources and the Intel board's vanilla lists over it.
         var messages = UI.Find(root, UiSelector.TypeName(VanillaUi.Elements.MessagesPanel));
         var factions = UI.Find(root, UiSelector.TypeName(VanillaUi.Elements.StoryFactionList));
         if (messages != null && messages.parent != root)
@@ -478,13 +495,16 @@ public sealed partial class StrategyDiorama
             factions = null;
         RememberOrder(root, bar, messages, factions);
         OrderLast(root, _shell, bar, messages, factions);
-        RefreshIntel(root, messages, factions);
+        RefreshIntel(messages, factions);
 
         root.EnableInClassList(ShellOnClass, true);
         var homeScreen = HomeScreens.Contains(screenName);
         root.EnableInClassList(HomeViewClass, homeScreen && _homeView == HomeView.Home);
         root.EnableInClassList(OperationsViewClass, homeScreen && _homeView == HomeView.Operations);
-        RefreshShell(document, screenName);
+        RefreshShell(document, screenName, bar);
+        // Last, once the shell is all there: the drive's first frame runs at once.
+        if (fresh)
+            Context.Coroutines.Start(DriveShell(_shell));
         return true;
     }
 
@@ -690,9 +710,10 @@ public sealed partial class StrategyDiorama
             }
             // Vanilla shows its lists again when messages arrive. Off the board they stay put away.
             if (!(_intelOpen && _intelListsShown == _intelSeq))
-                foreach (var list in new[] { _boardMessages, _boardFactions })
-                    if (list != null && list.panel != null && list.style.display.value != DisplayStyle.None)
-                        list.style.display = DisplayStyle.None;
+            {
+                PutAway(_boardMessages);
+                PutAway(_boardFactions);
+            }
             // The actions follow the vanilla buttons they press (the selected mission, what is allowed).
             if (_policyScreen != null && (actions -= UnityEngine.Time.unscaledDeltaTime) <= 0f)
             {
@@ -793,6 +814,12 @@ public sealed partial class StrategyDiorama
             }
             yield return null;
         }
+
+        static void PutAway(VisualElement list)
+        {
+            if (list != null && list.panel != null && list.style.display.value != DisplayStyle.None)
+                list.style.display = DisplayStyle.None;
+        }
     }
 
     // The shell's stylesheets, attached to the screen root so shell.uss can restyle the vanilla
@@ -853,7 +880,6 @@ public sealed partial class StrategyDiorama
         Click("wm-act-secondary", () => ClickVanilla(_actionSecondary));
         Click("wm-board-close", () => SetIntel(false));
         Click("wm-board-blocker", StepBackFromIntel);
-        Context.Coroutines.Start(DriveShell(_shell));
         foreach (var destination in Destinations)
             Click(destination.Element, () => GoTo(destination));
     }
@@ -866,7 +892,7 @@ public sealed partial class StrategyDiorama
 
     private readonly List<Action> _shellUndo = new();
 
-    private void RefreshShell(VisualElement document, string screenName)
+    private void RefreshShell(VisualElement document, string screenName, Il2CppMenace.UI.Strategy.StrategyNavigation bar)
     {
         var homeScreen = HomeScreens.Contains(screenName);
         var onOperations = homeScreen && _homeView == HomeView.Operations;
@@ -906,7 +932,7 @@ public sealed partial class StrategyDiorama
             if (item == null)
                 continue;
             var here = IsHere(destination, screenName);
-            var available = here || VanillaNavigation.Available(destination.Target);
+            var available = here || VanillaNavigation.Available(destination.Target, bar);
             item.EnableInClassList("wui-nav-btn--off", !available);
             item.EnableInClassList("wui-nav-btn--here", here);
             item.pickingMode = available && !here ? PickingMode.Position : PickingMode.Ignore;

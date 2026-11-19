@@ -80,6 +80,7 @@ public sealed partial class StrategyDiorama
         public Texture2D TokenRing;
         public int TokenTick;
         public readonly GameObject[] DragMarks = new GameObject[2];
+        public readonly Material[] DragMarkMaterials = new Material[2];
         // Whether a squad was being dragged a frame ago, and whether it was over a place it may stand.
         public bool? DragHeard;
         public (int X, int Z, float Aspect) FitFor;

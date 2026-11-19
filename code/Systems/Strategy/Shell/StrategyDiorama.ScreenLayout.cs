@@ -9,8 +9,8 @@ namespace WOMENACE.Code;
 // Vanilla's windows fitted into the space between the shell's bars, screen by screen.
 public sealed partial class StrategyDiorama
 {
-    // Vanilla's windows are taller than the space between the bars. Until a screen is rebuilt for
-    // that space, its windows are scaled to fit it from their top.
+    // Vanilla's windows are taller than the space between the bars, so each screen's own layout
+    // fits them into it, scaling a window from its top where it has to.
     private void LayOutScreen(string screenName, VisualElement root)
     {
         if (root == null)
@@ -68,7 +68,6 @@ public sealed partial class StrategyDiorama
             return;
         }
         var putBack = PutBack(panel);
-        var was = panel.resolvedStyle.position;
         root.Add(panel);
         panel.style.position = Position.Absolute;
         panel.style.left = Length.Percent(50);
@@ -78,7 +77,7 @@ public sealed partial class StrategyDiorama
         panel.style.top = StyleKeyword.Auto;
         _shellUndo.Add(() =>
         {
-            panel.style.position = was;
+            panel.style.position = StyleKeyword.Null;
             panel.style.left = StyleKeyword.Null;
             panel.style.marginLeft = StyleKeyword.Null;
             panel.style.width = StyleKeyword.Null;

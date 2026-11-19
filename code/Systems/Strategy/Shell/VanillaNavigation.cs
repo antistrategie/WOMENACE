@@ -110,6 +110,9 @@ internal static partial class VanillaNavigation
     // Whether a destination can be opened from the active screen right now.
     internal static bool Available(Target target) => IsAvailable(target, FindNavigation());
 
+    // The same, against a tab bar already found, for a caller asking of several destinations.
+    internal static bool Available(Target target, StrategyNavigation navigation) => IsAvailable(target, navigation);
+
     // The active screen's tab bar, for screens that hand navigation to the diorama.
     internal static StrategyNavigation ActiveTabBar() => FindNavigation();
 }

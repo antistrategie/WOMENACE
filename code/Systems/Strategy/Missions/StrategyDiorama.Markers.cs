@@ -61,6 +61,7 @@ public sealed partial class StrategyDiorama
     private static readonly int MainTexId = Shader.PropertyToID("_MainTex");
     private static readonly int UvRectId = Shader.PropertyToID("_UvRect");
     private static readonly int CutByAlphaId = Shader.PropertyToID("_CutByAlpha");
+    private static readonly int TintId = Shader.PropertyToID("_Tint");
 
     private const float CardScanSeconds = 0.32f;
     private const float CardScanStagger = 0.07f;
@@ -333,7 +334,7 @@ public sealed partial class StrategyDiorama
             if (on != marker.Selected || force)
             {
                 marker.Selected = on;
-                material?.SetColor("_Tint", on ? CardSelectedTint : CardTint);
+                material?.SetColor(TintId, on ? CardSelectedTint : CardTint);
                 if (marker.Renderer != null)
                     marker.Renderer.sortingOrder = on ? PlanetSelectedOrder : PlanetCardOrder;
             }
@@ -377,13 +378,9 @@ public sealed partial class StrategyDiorama
             if (_missions.Markers.Count > 0)
                 TableSounds.Play(TableSounds.Cards);
         }
+        // The cards' and the chibi's materials take the fade from RefreshMarkers and
+        // ShowChibiFrame, which also know which card is under the pointer.
         _missions.MarkerFade = k;
-        foreach (var marker in _missions.Markers)
-        {
-            marker.Material?.SetFloat("_Intensity", CardIntensity * k);
-            marker.Material?.SetFloat("_Plate", CardPlate * k);
-        }
-        _missions.ChibiMaterial?.SetFloat("_Intensity", ChibiIntensity * k);
     }
 
     private void ClearMarkers()

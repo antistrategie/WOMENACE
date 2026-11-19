@@ -19,6 +19,11 @@ public sealed partial class StrategyDiorama
         public IntPtr CalibrationLeader;
         public string CalibrationTag;
         public string CalibrationWeapon;
+        // A doll whose body could not be made, not tried again until another is picked.
+        public string CalibrationDollFailed;
+        // The Workshop's parts its looks read, and the shell root they were found under.
+        public UnityEngine.UIElements.VisualElement PartsOf;
+        public Dictionary<string, UnityEngine.UIElements.VisualElement> Parts = new();
     }
 
     private WeaponRoomState _weaponRoom => _scene.WeaponRoom;

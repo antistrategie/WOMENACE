@@ -31,7 +31,10 @@ public sealed partial class StrategyDiorama
         }
         _homeUndo.Clear();
         if (!home)
+        {
+            _missionsLayoutWaits = 0;
             return;
+        }
         var root = UIManager.Get()?.GetActiveScreen()?.m_Container?.rootVisualElement;
         if (root == null)
             return;
@@ -67,7 +70,6 @@ public sealed partial class StrategyDiorama
         var window = UI.Find(root, UiSelector.Name(VanillaUi.Elements.MissionWindow));
         if (window != null)
         {
-            var windowWas = window.resolvedStyle.position;
             Dress(window, s =>
             {
                 s.position = Position.Absolute;
@@ -83,7 +85,7 @@ public sealed partial class StrategyDiorama
                 Pad(s, OpsBoxPad);
             }, s =>
             {
-                s.position = windowWas;
+                s.position = StyleKeyword.Null;
                 s.left = StyleKeyword.Null;
                 s.right = StyleKeyword.Null;
                 s.top = StyleKeyword.Null;
@@ -133,16 +135,21 @@ public sealed partial class StrategyDiorama
         if (board == null)
             return;
         // Its markers are only just placed on a first showing: their places are read once laid out.
-        var unplaced = UI.FindAll(board, UiSelector.TypeName(VanillaUi.Elements.MissionPoi)).Any(p =>
+        // A marker vanilla really places at the board's corner reads the same as one not placed
+        // yet, so it is waited for a few times and then taken where it stands.
+        var markers = UI.FindAll(board, UiSelector.TypeName(VanillaUi.Elements.MissionPoi)).ToList();
+        var unplaced = markers.Any(p =>
             p.resolvedStyle.display != DisplayStyle.None && !_missions.MarkerBoard.ContainsKey(p.Pointer)
             && !(p.resolvedStyle.left > 0f || p.resolvedStyle.top > 0f));
-        if (unplaced)
+        if (unplaced && _missionsLayoutWaits < MissionsLayoutMaxWaits)
         {
+            _missionsLayoutWaits++;
             Context.Coroutines.Start(LayOutMissionsLater());
             return;
         }
+        _missionsLayoutWaits = 0;
         var shown = new List<Il2CppMenace.UI.Strategy.MissionPoi>();
-        foreach (var element in UI.FindAll(board, UiSelector.TypeName(VanillaUi.Elements.MissionPoi)))
+        foreach (var element in markers)
         {
             var poi = element.TryCast<Il2CppMenace.UI.Strategy.MissionPoi>();
             if (poi == null || poi.resolvedStyle.display == DisplayStyle.None)
@@ -176,6 +183,10 @@ public sealed partial class StrategyDiorama
     private const float OpsBoxPad = 13f;
     private const float OpsColumnMaxHeight = 503f;
     private const string OpsBoxClass = "wui-ops";
+
+    // How many times in a row the markers have been waited for, two frames each time.
+    private int _missionsLayoutWaits;
+    private const int MissionsLayoutMaxWaits = 15;
 
     private System.Collections.IEnumerator LayOutMissionsLater()
     {
@@ -334,6 +345,7 @@ public sealed partial class StrategyDiorama
             box.style.backgroundColor = StyleKeyword.Null;
             Border(box.style, null, null);
             box.RemoveFromClassList(OpsBoxClass);
+            box.style.position = StyleKeyword.Null;
             box.style.left = StyleKeyword.Null;
             box.style.top = StyleKeyword.Null;
             box.style.right = StyleKeyword.Null;

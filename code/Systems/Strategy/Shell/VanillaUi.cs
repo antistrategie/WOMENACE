@@ -4,12 +4,12 @@ using UnityEngine.UIElements;
 
 namespace WOMENACE.Code;
 
-// Every vanilla name the strategy UI depends on: screen types, UXML element names and the
+// Every vanilla name the strategy code looks up: screen types, UXML element names and the
 // string-registered patch targets. A MENACE update that renames one shows up in two places: the
 // boot self-check lists patch targets that no longer resolve, and Require reports a screen whose
-// elements are gone, after which that screen is left vanilla.
-//
-// Element names used only in shell.uss selectors are listed here too, so Require covers them.
+// required elements are gone, after which that screen is left vanilla. A name that is not passed
+// to Require, and any name shell.uss selects by, is not reported: what it styles or places stays
+// as vanilla has it.
 internal static class VanillaUi
 {
     internal static class Screens
@@ -37,7 +37,6 @@ internal static class VanillaUi
         // The tab bar (StrategyNavigation) and its parts.
         internal const string TabBarButtons = "Buttons";
         internal const string TabBarResources = "Resources";
-        internal const string ResourceDisplay = "ResourceDisplayBig";
         internal const string PromotionPoints = "PromotionPoints";
         internal const string OciPoints = "OCIPoints";
         internal const string Authority = "Authority";
@@ -120,6 +119,11 @@ internal static class VanillaUi
         // The flat map's layers, each the map's size: objective areas, the squads placed, enemy
         // contacts and objective markers, and the parts of each marker.
         internal const string PrepObjectiveAreas = "ObjectiveAreas";
+        // The flat map's frame, its picture of the ground (which holds a box for each structure)
+        // and its deployment zones' boxes.
+        internal const string PrepMapBorder = "MapBorder";
+        internal const string PrepRects = "Rects";
+        internal const string PrepDeploymentZones = "DeploymentZones";
         internal const string PrepDeployed = "Deployed";
         internal const string PrepDeployedImage = "SmallImage";
         internal const string PrepUnitPois = "UnitPois";
@@ -134,13 +138,10 @@ internal static class VanillaUi
         internal const string PrepInfoFold = "FoldButton";
         internal const string PrepDetailsHeadline = "DetailsHeadline";
         internal const string PrepDetails = "Details";
-        internal const string PrepDetailRow = "MissionPrepDetailRow";
         internal const string PrepObjectivesHeadline = "ObjectivesHeadline";
         internal const string PrepObjectives = "Objectives";
         internal const string PrepObjectiveMark = "Icon";
-        internal const string PrepUnitColumn = "UnitListColumn";
         internal const string PrepUnitSlot = "MissionPrepUnitSelectSlot";
-        internal const string PrepDeployedIcon = "DeployedIcon";
         internal const string PrepSelectedColumn = "SelectedUnitColumn";
         internal const string PrepAbilitiesPanel = "OffmapAbilitiesPanel";
         internal const string PrepAbilities = "OffmapAbilities";
@@ -258,10 +259,9 @@ internal static class VanillaUi
         internal const string ShipInfoWindow = "ShipInfoWindow";
         // The ship upgrades screen's holder of its module slots.
         internal const string Slots = "Slots";
-        // The ship window's name of the ship, the box a module slot's name stands in, and the name.
+        // The ship window's name of the ship, and the box a module slot's name stands in.
         internal const string ShipName = "ShipName";
         internal const string SlotLabelContainer = "LabelContainer";
-        internal const string SlotModuleName = "NameLabel";
         // Inside the messages panel: its scroll view, the rows' holders and a row's parts.
         internal const string EventsScrollView = "EventsScrollView";
         internal const string SlotsContainer = "SlotsContainer";

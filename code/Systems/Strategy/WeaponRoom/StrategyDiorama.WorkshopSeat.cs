@@ -48,7 +48,7 @@ public sealed partial class StrategyDiorama
             (_weaponRoom.CalibrationLeader, _weaponRoom.CalibrationWeapon, _weaponRoom.CalibrationTag) = (picked, weapon,
                 leader != null ? Affinity.CharacterTag(leader) : weapon != null ? Calibration.OwnerTagFor(weapon) : null);
         var tag = _weaponRoom.CalibrationTag;
-        if (tag != _weaponRoom.CalibrationDollTag || (tag != null && _weaponRoom.CalibrationDoll == null))
+        if (tag != _weaponRoom.CalibrationDollTag || (tag != null && _weaponRoom.CalibrationDoll == null && tag != _weaponRoom.CalibrationDollFailed))
         {
             _weaponRoom.CalibrationDollTag = tag;
             if (_weaponRoom.CalibrationDoll != null)
@@ -60,6 +60,7 @@ public sealed partial class StrategyDiorama
             }
             _weaponRoom.CalibrationDoll = null;
             var doll = tag != null && room != null ? SpawnDoll(tag, "WOMENACE_CalibrationDoll") : null;
+            _weaponRoom.CalibrationDollFailed = doll == null && tag != null && room != null ? tag : null;
             if (doll == null)
                 return;
             _weaponRoom.CalibrationDoll = doll;

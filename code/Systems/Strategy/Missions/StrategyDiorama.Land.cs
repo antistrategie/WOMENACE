@@ -45,10 +45,20 @@ public sealed partial class StrategyDiorama
             _missions.Curtain = default;
             _missions.LandShown = null;
             _missions.LandFill = null;
-            foreach (var t in _scene.Room.GetComponentsInChildren<Transform>(true))
+            // The room's whole hierarchy is walked once for the table's nodes, and again only for
+            // another room or once one of them is gone. Until GFL2 switches a layer on, only the
+            // nodes found are looked at, each frame.
+            if (_missions.LandNodesOf != _scene.Room.Pointer || _missions.LandNodes.Any(node => node == null))
             {
-                if (t.parent == null || t.parent.name != TableEffects)
-                    continue;
+                _missions.LandNodes.Clear();
+                foreach (var t in _scene.Room.GetComponentsInChildren<Transform>(true))
+                    if (t.parent != null && t.parent.name == TableEffects
+                        && (t.name == LandNode || t.name.StartsWith(LandNode + "_", StringComparison.Ordinal) || t.name == CurtainNode))
+                        _missions.LandNodes.Add(t);
+                _missions.LandNodesOf = _scene.Room.Pointer;
+            }
+            foreach (var t in _missions.LandNodes)
+            {
                 if (t.name == LandNode || t.name.StartsWith(LandNode + "_", StringComparison.Ordinal))
                 {
                     // Only the layers GFL2 has switched on. The rest stay off.
@@ -110,5 +120,10 @@ public sealed partial class StrategyDiorama
         }
     }
 
-    private void ReleaseLand() => _missions.LandLayers.Clear();
+    private void ReleaseLand()
+    {
+        _missions.LandLayers.Clear();
+        _missions.LandNodes.Clear();
+        _missions.LandNodesOf = IntPtr.Zero;
+    }
 }

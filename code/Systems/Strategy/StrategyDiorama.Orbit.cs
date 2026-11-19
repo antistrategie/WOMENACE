@@ -27,8 +27,10 @@ public sealed partial class StrategyDiorama
     // view) rather than over the empty, see-through part of the screen.
     private static bool PointerOverUi(Vector2 screen)
     {
-        foreach (var document in UnityEngine.Object.FindObjectsOfType<UnityEngine.UIElements.UIDocument>())
+        foreach (var document in UiDocuments())
         {
+            if (document == null)
+                continue;
             var root = document.rootVisualElement;
             var panel = root?.panel;
             if (panel == null || root.resolvedStyle.display == UnityEngine.UIElements.DisplayStyle.None)
@@ -43,5 +45,24 @@ public sealed partial class StrategyDiorama
             }
         }
         return false;
+    }
+
+    // The scene's UI documents, looked up once a screen and again after a short while, since a
+    // screen can open a document of its own over itself. A search of every object is too dear
+    // for each frame the wheel turns.
+    private const float UiDocumentsSeconds = 0.5f;
+    private static UnityEngine.UIElements.UIDocument[] _uiDocuments;
+    private static string _uiDocumentsScreen;
+    private static float _uiDocumentsAt = float.NegativeInfinity;
+
+    private static UnityEngine.UIElements.UIDocument[] UiDocuments()
+    {
+        var screen = _instance?._policyScreen;
+        if (_uiDocuments == null || screen != _uiDocumentsScreen || Time.unscaledTime - _uiDocumentsAt >= UiDocumentsSeconds)
+        {
+            _uiDocuments = UnityEngine.Object.FindObjectsOfType<UnityEngine.UIElements.UIDocument>();
+            (_uiDocumentsScreen, _uiDocumentsAt) = (screen, Time.unscaledTime);
+        }
+        return _uiDocuments;
     }
 }

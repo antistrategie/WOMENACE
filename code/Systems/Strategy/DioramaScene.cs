@@ -11,6 +11,8 @@ public sealed partial class StrategyDiorama
     {
         // The ops room, the strategy layer's own set, and the room camera.
         public GameObject Room, Camera;
+        // The room camera's Camera, kept so its per-frame users need not look it up.
+        public UnityEngine.Camera Lens;
         public Transform Anchor;
 
         public readonly RoomSet Ops = new() { Asset = "environment/ops_room/main", Effects = "environment/ops_room_vfx/main", Origin = RoomOrigin, Look = OpsLook, MirrorFloor = -0.97f };

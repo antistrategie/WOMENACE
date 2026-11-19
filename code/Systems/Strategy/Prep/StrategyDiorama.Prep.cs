@@ -5,21 +5,21 @@ using UnityEngine.UIElements;
 
 namespace WOMENACE.Code;
 
-// Mission preparation: the roster at the left (one column, widened to three from the rail beside
-// it), the mission's facts as chips and its objectives in a box over the table's far corner, the
-// map on the holotable in the middle (PrepMap, PrepTokens, PrepInput), and the squad panel at the right as on Squads. The roster,
-// the objectives box and the panel are vanilla's own, left wired as they are.
+// Mission preparation: the mission's facts as chips and its objectives in a box over the table's
+// far corner, the map on the holotable in the middle (PrepMap, PrepTokens, PrepInput), and the
+// squad panel at the right as on Squads, with a two-across scrolling roster standing against it.
+// The roster, the objectives box and the panel are vanilla's own, left wired as they are.
 public sealed partial class StrategyDiorama
 {
     private const string PrepClass = "wm-prep";
     private const string PrepRosterName = "wm-prep-roster";
     private const string PrepChipsName = "wm-prep-chips";
 
-    // Vanilla's roster tile with its margin, and the roster's widths in tiles.
+    // Vanilla's roster tile with its margin, the roster's width in tiles, and its scrollbar's width.
     private const float PrepTile = 57.6f;
     private const int PrepColumns = 2;
     private const float PrepScrollerWidth = 7.2f;
-    // The count's box is the chips' height.
+    // The chips' height. The roster and the objectives start this far below the top, and a gap more.
     private const float PrepChipHeight = 24f;
     private const float PrepGap = 6.4f;
     private const float PrepInfoWidth = 210f;
@@ -515,6 +515,9 @@ public sealed partial class StrategyDiorama
             s.left = StyleKeyword.Null;
             s.top = StyleKeyword.Null;
             s.opacity = StyleKeyword.Null;
+            // The flat view stands the column at its own size and place (DrivePrepFlat).
+            s.scale = StyleKeyword.Null;
+            s.transformOrigin = StyleKeyword.Null;
             e.pickingMode = picking;
         });
         column.SendToBack();

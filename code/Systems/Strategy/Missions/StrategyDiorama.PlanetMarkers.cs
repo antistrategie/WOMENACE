@@ -132,15 +132,12 @@ public sealed partial class StrategyDiorama
             var surface = planet.InRoom(planet.OnSphere(at.x, at.y, out var onPlanet));
             if (!onPlanet)
                 return false;
-            var seen = Measure(size, at).Box;
+            var card = CardExtents(size, surface);
+            var seen = BoxOf(surface, card).Box;
             if (seen.xMin < free.Left || seen.xMax > free.Right)
                 return false;
-            var width = PlanetCardWidth * size.x / CardWidth * Mathf.Clamp(Vector3.Distance(surface, eye) / PlanetCardDistance, PlanetCardNearScale, PlanetCardFarScale);
-            var height = width * size.y / size.x;
-            var (left, far) = (height * ChibiToCard * (1f + ChibiBeside) * chibiRoom + width * CardIconCentre / size.x, width * (1f - CardIconCentre / size.x));
-            var (below, above) = (height * CardRingUp / size.y, Mathf.Max(height * (1f - CardRingUp / size.y), height * ChibiToCard * chibiRoom));
-            return OverPlanet(surface - right * left - Vector3.up * below) && OverPlanet(surface - right * left + Vector3.up * above)
-                && OverPlanet(surface + right * far - Vector3.up * below) && OverPlanet(surface + right * far + Vector3.up * above);
+            return OverPlanet(surface - right * card.Left - Vector3.up * card.Below) && OverPlanet(surface - right * card.Left + Vector3.up * card.Above)
+                && OverPlanet(surface + right * card.Right - Vector3.up * card.Below) && OverPlanet(surface + right * card.Right + Vector3.up * card.Above);
         }
         // A box that stands out past the planet or under a panel is brought in: across the picture
         // first, so the cards keep the heights their missions gave them, and then up or down it.
@@ -153,19 +150,32 @@ public sealed partial class StrategyDiorama
                 at.y = Mathf.MoveTowards(at.y, 0.5f, CardBoxStep);
             return at;
         }
+        // A card's width on a place in the room, and how far its box reaches from that place in
+        // metres: left (with the chibi's room), right, below and above.
+        (float Width, float Left, float Right, float Below, float Above) CardExtents(Vector2 size, Vector3 surface)
+        {
+            var far = Vector3.Distance(surface, eye) / PlanetCardDistance;
+            var width = PlanetCardWidth * size.x / CardWidth * Mathf.Clamp(far, PlanetCardNearScale, PlanetCardFarScale);
+            var height = width * size.y / size.x;
+            return (width,
+                height * ChibiToCard * (1f + ChibiBeside) * chibiRoom + width * CardIconCentre / size.x,
+                width * (1f - CardIconCentre / size.x),
+                height * CardRingUp / size.y,
+                Mathf.Max(height * (1f - CardRingUp / size.y), height * ChibiToCard * chibiRoom));
+        }
+        // A card's box on the screen about its place in the room, and that place on the screen.
+        (Rect Box, Vector2 Place) BoxOf(Vector3 surface, (float Width, float Left, float Right, float Below, float Above) card)
+        {
+            var (x, y, perMetre) = SeenAtStart(surface);
+            return (Rect.MinMaxRect(x - card.Left * perMetre, y - card.Below * perMetre, x + card.Right * perMetre, y + card.Above * perMetre), new Vector2(x, y));
+        }
         // A card's width on its place, and its box on the screen with that place in it.
         (float Width, Rect Box, Vector2 Place) Measure(Vector2 size, Vector2 at)
         {
             var surface = planet.InRoom(planet.OnSphere(at.x, at.y, out _));
-            var far = Vector3.Distance(surface, PlanetFraming.Eye) / PlanetCardDistance;
-            var width = PlanetCardWidth * size.x / CardWidth * Mathf.Clamp(far, PlanetCardNearScale, PlanetCardFarScale);
-            var height = width * size.y / size.x;
-            var (x, y, perMetre) = SeenAtStart(surface);
-            return (width, Rect.MinMaxRect(
-                x - (height * ChibiToCard * (1f + ChibiBeside) * chibiRoom + width * CardIconCentre / size.x) * perMetre,
-                y - height * CardRingUp / size.y * perMetre,
-                x + width * (1f - CardIconCentre / size.x) * perMetre,
-                y + Mathf.Max(height * (1f - CardRingUp / size.y), height * ChibiToCard * chibiRoom) * perMetre), new Vector2(x, y));
+            var card = CardExtents(size, surface);
+            var (box, place) = BoxOf(surface, card);
+            return (card.Width, box, place);
         }
         var asked = new List<(int Index, Vector2 Size, Vector2 At)>();
         for (var i = 0; i < pois.Count; i++)

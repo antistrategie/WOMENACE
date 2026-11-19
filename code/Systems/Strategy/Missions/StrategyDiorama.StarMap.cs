@@ -1,6 +1,8 @@
 using Il2CppMenace.UI;
 using UnityEngine;
 using UnityEngine.UIElements;
+using NQuaternion = System.Numerics.Quaternion;
+using NVector3 = System.Numerics.Vector3;
 
 namespace WOMENACE.Code;
 
@@ -139,13 +141,26 @@ public sealed partial class StrategyDiorama
         ShowTableSparks(!briefing);
         if (_missions.StarOffTable.Count != _missions.StarMapParts.Count)
             FindOffTable();
+        var written = _missions.StarPartsWritten;
+        if (written.Count != _missions.StarMapParts.Count)
+        {
+            written.Clear();
+            for (var i = 0; i < _missions.StarMapParts.Count; i++)
+                written.Add((null, new NVector3(float.NaN)));
+        }
         for (var i = 0; i < _missions.StarMapParts.Count; i++)
         {
             var (source, copy, marker) = _missions.StarMapParts[i];
             if (source == null || copy == null)
                 continue;
-            copy.SetActive(source.enabled && source.gameObject.activeInHierarchy && !(briefing && (marker || _missions.StarOffTable[i])));
-            copy.transform.localScale = source.transform.lossyScale;
+            var shown = source.enabled && source.gameObject.activeInHierarchy && !(briefing && (marker || _missions.StarOffTable[i]));
+            var scale = source.transform.lossyScale;
+            var (wasShown, wasScale) = written[i];
+            if (shown != wasShown)
+                copy.SetActive(shown);
+            if (scale.x != wasScale.X || scale.y != wasScale.Y || scale.z != wasScale.Z)
+                copy.transform.localScale = scale;
+            written[i] = (shown, new NVector3(scale.x, scale.y, scale.z));
         }
     }
 
@@ -196,8 +211,9 @@ public sealed partial class StrategyDiorama
             RestoreStarMapCamera();
             return;
         }
-        var mapCamera = _missions.StarMapSource.GetComponentInChildren<Camera>(true);
-        var roomCamera = _scene.Camera.GetComponent<Camera>();
+        // The map camera is kept once found: it stays under its scene for as long as the copy is of it.
+        var mapCamera = _missions.StarMapCamera != null ? _missions.StarMapCamera : _missions.StarMapSource.GetComponentInChildren<Camera>(true);
+        var roomCamera = _life.RoomCamera != null ? _life.RoomCamera : _scene.Camera.GetComponent<Camera>();
         if (mapCamera == null || roomCamera == null)
             return;
         if (_missions.StarMapCamera != mapCamera)
@@ -213,12 +229,19 @@ public sealed partial class StrategyDiorama
         if (_missions.StarMapNames.Count == 0)
             ReadStarMapNames(mapCamera);
         FitPlanetPlates();
+        var (eye, facing) = (roomCamera.transform.position, roomCamera.transform.rotation);
         mapCamera.transform.SetPositionAndRotation(
-            source.TransformPoint(copy.InverseTransformPoint(roomCamera.transform.position)),
-            source.rotation * (Quaternion.Inverse(copy.rotation) * roomCamera.transform.rotation));
-        mapCamera.fieldOfView = roomCamera.fieldOfView;
+            source.TransformPoint(copy.InverseTransformPoint(eye)),
+            source.rotation * (Quaternion.Inverse(copy.rotation) * facing));
+        var fov = roomCamera.fieldOfView;
+        mapCamera.fieldOfView = fov;
         // Vanilla places a planet's name once, when the map opens. Each is kept on its place in
-        // the map as the room camera sees it.
+        // the map as the room camera sees it, which moves only with the view or the map.
+        var view = (new NVector3(eye.x, eye.y, eye.z), new NQuaternion(facing.x, facing.y, facing.z, facing.w), fov, _lensShift, _lensLift,
+            new NVector3(_missions.StarPosition.x, _missions.StarPosition.y, _missions.StarPosition.z), _missions.StarScale, Screen.width, Screen.height);
+        if (_missions.StarMapNames.Count == 0 || _missions.StarNamesPlacedFor == view)
+            return;
+        _missions.StarNamesPlacedFor = view;
         foreach (var (hud, _, _, point, scale) in _missions.StarMapNames)
         {
             var seen = roomCamera.WorldToScreenPoint(copy.TransformPoint(point));
@@ -241,12 +264,15 @@ public sealed partial class StrategyDiorama
         mapCamera.transform.localPosition = _missions.StarMapCameraPosition;
         mapCamera.transform.localRotation = _missions.StarMapCameraRotation;
         mapCamera.fieldOfView = _missions.StarMapCameraFov;
+        // Every name has its reputation laid under it, but only once the names have read: until
+        // then this runs every frame, and the parts would be built again each time.
+        var names = new List<VisualElement>();
         for (var i = 0; i < hud.childCount; i++)
         {
             var name = hud.ElementAt(i);
             if (name.GetIl2CppType().Name != VanillaUi.Elements.PlanetHud)
                 continue;
-            ShowPlanetRep(name);
+            names.Add(name);
             var (left, top) = (name.resolvedStyle.left, name.resolvedStyle.top);
             if (float.IsNaN(left) || float.IsNaN(top))
                 continue;
@@ -254,6 +280,11 @@ public sealed partial class StrategyDiorama
             if (plane.Raycast(ray, out var distance))
                 _missions.StarMapNames.Add((name, left, top, source.InverseTransformPoint(ray.GetPoint(distance)), scale));
         }
+        if (_missions.StarMapNames.Count == 0)
+            return;
+        _missions.StarNamesPlacedFor = null;
+        foreach (var name in names)
+            ShowPlanetRep(name);
     }
 
     // Vanilla's whole-map camera stands this far from the map's plane, in the map's units. A
@@ -360,6 +391,7 @@ public sealed partial class StrategyDiorama
             hud.style.top = top;
         }
         _missions.StarMapNames.Clear();
+        _missions.StarNamesPlacedFor = null;
         if (_missions.StarMapCamera != null)
         {
             _missions.StarMapCamera.transform.localPosition = _missions.StarMapCameraPosition;
@@ -378,5 +410,6 @@ public sealed partial class StrategyDiorama
         (_missions.StarMap, _missions.StarMapSource) = (null, null);
         _missions.StarMapParts.Clear();
         _missions.StarOffTable.Clear();
+        _missions.StarPartsWritten.Clear();
     }
 }

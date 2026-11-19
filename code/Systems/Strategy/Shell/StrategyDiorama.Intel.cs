@@ -20,19 +20,31 @@ public sealed partial class StrategyDiorama
     {
         if (_intelOpen == open)
             return;
-        _intelOpen = open;
-        _intelSeq++;
-        _boardMeasured = 0f;
-        if (!open)
-        {
-            FactionWindow(out var list);
-            list?.HideFactionWindow();
-        }
         Sound.Click();
-        SetDinergateProjecting(open);
+        if (open)
+        {
+            _intelOpen = true;
+            _intelSeq++;
+            _boardMeasured = 0f;
+            SetDinergateProjecting(true);
+        }
+        else
+            ShutIntel();
         ApplyHome(_homeScreen, _homeRoomShown);
         if (open)
             Context.Coroutines.Start(WatchIntelEscape(_intelSeq));
+    }
+
+    // Shuts the board, and vanilla's faction window with it, which would otherwise be open still
+    // when the board next opens.
+    private void ShutIntel()
+    {
+        _intelOpen = false;
+        _intelSeq++;
+        _boardMeasured = 0f;
+        FactionWindow(out var list);
+        list?.HideFactionWindow();
+        SetDinergateProjecting(false);
     }
 
     // A click beside the board, or Escape: a faction's window shuts first, then the board.
@@ -241,16 +253,12 @@ public sealed partial class StrategyDiorama
 
     // The board is the shell's. Its lists are the vanilla messages panel and story faction list,
     // left where the screen made them and laid over the board's two columns.
-    private void RefreshIntel(VisualElement root, VisualElement messages, VisualElement factions)
+    private void RefreshIntel(VisualElement messages, VisualElement factions)
     {
         // The board belongs to the Home view of a home screen, where the Dinergate is. Leaving for
         // the Operations view or another screen shuts it.
         if (_intelOpen && !OnHomeView(_policyScreen))
-        {
-            _intelOpen = false;
-            _intelSeq++;
-            SetDinergateProjecting(false);
-        }
+            ShutIntel();
         var (count, unread) = CountMessages(messages);
         _intelListed = count;
         _intelMessages = unread;
@@ -282,8 +290,12 @@ public sealed partial class StrategyDiorama
         {
             if (_intelListsShown == seq)
                 ShowLists(messages, factions);
-            else
-                Context.Coroutines.Start(ShowListsAfter(messages, factions, seq));
+            // One wait for each opening, however often the screen is applied during it.
+            else if (_intelListsPending != seq)
+            {
+                _intelListsPending = seq;
+                Context.Coroutines.Start(ShowListsAfter(seq));
+            }
         }
         // The Dinergate calls for attention while messages wait, or a faction's upgrade waits to be
         // claimed where the board lists the factions, and the board is shut.
@@ -330,8 +342,10 @@ public sealed partial class StrategyDiorama
     private int _intelListsShown = -1;
 
     private int _intelBoardShown = -1;
+    private int _intelListsPending = -1;
 
-    private System.Collections.IEnumerator ShowListsAfter(VisualElement messages, VisualElement factions, int seq)
+    // The lists shown are the ones last placed on the board, which a later apply may have found anew.
+    private System.Collections.IEnumerator ShowListsAfter(int seq)
     {
         if (_intelBoardShown != seq)
         {
@@ -348,7 +362,7 @@ public sealed partial class StrategyDiorama
         if (!_intelOpen || seq != _intelSeq)
             yield break;
         _intelListsShown = seq;
-        ShowLists(messages, factions);
+        ShowLists(_boardMessages, _boardFactions);
     }
 
     private void ShowLists(VisualElement messages, VisualElement factions)
@@ -639,7 +653,4 @@ public sealed partial class StrategyDiorama
     }
 
     private readonly HashSet<IntPtr> _intelPlaced = new();
-
-    // How many messages wait in the vanilla messages panel.
-    internal int IntelMessages => _intelMessages;
 }

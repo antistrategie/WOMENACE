@@ -5,6 +5,7 @@ using Il2CppMenace.UI;
 using Il2CppMenace.UI.Strategy;
 using Jiangyu.Game.Ui;
 using UnityEngine;
+using NVector3 = System.Numerics.Vector3;
 
 namespace WOMENACE.Code;
 
@@ -78,7 +79,7 @@ public sealed partial class StrategyDiorama
     // When a tile's square starts up, in seconds from the map's start.
     private float PrepBuildStart(float x, float z)
     {
-        var across = _prep.MapSizeX > 1 ? Mathf.Abs(x - _prep.MapSizeX / 2f) / (_prep.MapSizeX / 2f) : 0f;
+        var across = _prep.MapSizeX > 1 ? MathF.Abs(x - _prep.MapSizeX / 2f) / (_prep.MapSizeX / 2f) : 0f;
         // The build's front gathers speed up the map and settles at its head (Ease.InOutCubic
         // of the sweep's time), so a row starts when the front reaches it.
         return Ease.InOutCubicInverse(z / Math.Max(1, _prep.MapSizeZ)) * PrepBuildSweep + across * PrepBuildSpread;
@@ -86,9 +87,9 @@ public sealed partial class StrategyDiorama
 
     // How far a thing standing on a tile has grown, 0 to 1 and a little past on the way: it
     // starts once the tile's square is most of the way home.
-    private float PrepBuilt(float x, float z)
+    private float PrepBuilt(float x, float z, float now)
     {
-        var t = (Time.unscaledTime - _prep.MapBornAt - PrepBuildStart(x, z) - PrepBuildTile * 0.7f) / PrepBuildRise;
+        var t = (now - _prep.MapBornAt - PrepBuildStart(x, z) - PrepBuildTile * 0.7f) / PrepBuildRise;
         return t <= 0f ? 0f : Ease.OutBack(t);
     }
 
@@ -135,8 +136,15 @@ public sealed partial class StrategyDiorama
     // A place on the map in the world: tile coordinates (a tile's middle is half past its number)
     // and a height in tiles.
     // The height is above the tile's own ground, or above the map's foot when onGround is off.
-    private Vector3 PrepMapPoint(float x, float z, float up, bool onGround = true) =>
-        _prep.Map.transform.TransformPoint(new Vector3(-(z - _prep.MapSizeZ / 2f) * _prep.MapTile, (up + (onGround ? PrepGroundAt(x, z) : 0f)) * _prep.MapTile, (x - _prep.MapSizeX / 2f) * _prep.MapTile));
+    private Vector3 PrepMapPoint(float x, float z, float up, bool onGround = true)
+    {
+        var local = PrepMapLocal(x, z, up, onGround);
+        return _prep.Map.transform.TransformPoint(new Vector3(local.X, local.Y, local.Z));
+    }
+
+    // The same place in the map's own space, in plain arithmetic for what is placed every frame.
+    private NVector3 PrepMapLocal(float x, float z, float up, bool onGround = true) =>
+        new(-(z - _prep.MapSizeZ / 2f) * _prep.MapTile, (up + (onGround ? PrepGroundAt(x, z) : 0f)) * _prep.MapTile, (x - _prep.MapSizeX / 2f) * _prep.MapTile);
 
     // The land's relief. The preview's elevation is a small part of 1 over a whole map, so it
     // is drawn many times its size, from the map's lowest tile up, in steps a quarter tile high:
@@ -155,14 +163,17 @@ public sealed partial class StrategyDiorama
 
     // The tile a ray lands on, as tile coordinates. The ground stands at several heights, so
     // the ray is met with each from the highest down and lands on the first whose tile is there.
+    // The ray is taken into the map's own space once, where each height is a level plane.
     private Vector2 PrepTileUnder(Ray ray)
     {
         var tile = Vector2.zero;
+        var toMap = ToMat(_prep.Map.transform.worldToLocalMatrix);
+        var from = NVector3.Transform(N(ray.origin), toMap);
+        var way = NVector3.TransformNormal(N(ray.direction), toMap);
         foreach (var level in _prep.MapLevels)
         {
-            var plane = PrepMapPoint(0f, 0f, level, false).y;
-            var local = _prep.Map.transform.InverseTransformPoint(ray.origin + ray.direction * ((plane - ray.origin.y) / ray.direction.y));
-            tile = new Vector2(local.z / _prep.MapTile + _prep.MapSizeX / 2f, _prep.MapSizeZ / 2f - local.x / _prep.MapTile);
+            var local = from + way * ((level * _prep.MapTile - from.Y) / way.Y);
+            tile = new Vector2(local.Z / _prep.MapTile + _prep.MapSizeX / 2f, _prep.MapSizeZ / 2f - local.X / _prep.MapTile);
             if (tile.x >= 0f && tile.y >= 0f && tile.x < _prep.MapSizeX && tile.y < _prep.MapSizeZ && PrepGroundAt(tile.x, tile.y) >= level - 0.01f)
                 break;
         }
@@ -231,7 +242,9 @@ public sealed partial class StrategyDiorama
             if (preview.Pointer != _prep.MapOf)
                 _prep.MapUnheard = true;
             ClearPrepMap();
-            BuildPrepMap(preview, scale, areas);
+            // A map that could not be built is tried again, as a map not yet seen.
+            if (!BuildPrepMap(preview, scale, areas))
+                return;
             (_prep.MapOf, _prep.MapScale, _prep.MapAreas, _prep.MapBornAt, _prep.MapBuilding) = (preview.Pointer, scale, areasKey, born, true);
             ShowPrepMapBuild();
         }
@@ -254,7 +267,11 @@ public sealed partial class StrategyDiorama
         (_prep.FlatPicture, _prep.FlatPictureOf) = (null, IntPtr.Zero);
         (_prep.Map, _prep.MapTexture, _prep.MapOf, _prep.MapAreas, _prep.MapMesh, _prep.MapFull, _prep.MapStarts) = (null, null, IntPtr.Zero, null, null, null, null);
         (_prep.MapShown, _prep.MapLit) = (null, null);
+        (_prep.MapSizeX, _prep.MapSizeZ, _prep.MapTile, _prep.MapGround, _prep.MapLevels) = (0, 0, 0f, null, PrepNoLevels);
     }
+
+    // The heights of a map with no relief, or of no map.
+    private static readonly float[] PrepNoLevels = { 0f };
 
     // How tall a structure stands, in tiles, from what its template is called.
     private static float PrepHeight(string template)
@@ -268,14 +285,15 @@ public sealed partial class StrategyDiorama
         return 0.5f;
     }
 
-    private void BuildPrepMap(MissionPreviewResult preview, DeploymentZoneScale scale, List<RectInt> areas)
+    // False when there is nothing yet to build the map with.
+    private bool BuildPrepMap(MissionPreviewResult preview, DeploymentZoneScale scale, List<RectInt> areas)
     {
         var template = MarkerTemplate();
         if (template == null)
-            return;
+            return false;
         int sizeX = preview.SizeX, sizeZ = preview.SizeZ;
         if (sizeX <= 0 || sizeZ <= 0)
-            return;
+            return false;
         var tiles = preview.Tiles;
         var heights = new float[sizeX, sizeZ];
         var names = new string[sizeX, sizeZ];
@@ -479,6 +497,7 @@ public sealed partial class StrategyDiorama
             material.renderQueue = TokenQueue - 2;
         }
         Context.Log.Info($"strategy diorama: mission map on the table, {sizeX} by {sizeZ} tiles, {vertices.Count} vertices");
+        return true;
     }
 
     // The walls' shades, by Shade: a structure's, the zone's refused part's, the zone's, then the

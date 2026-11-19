@@ -25,6 +25,7 @@ public sealed partial class StrategyDiorama
         public Carried Carried;
     }
 
+    // Every grip is kept by the hand bone it solves, a support hand's and a carrying hand's alike.
     private static readonly Dictionary<IntPtr, Grip> Grips = new();
     // Mission carriers' hands, by hand. The armoury clears its own grips as it closes, and these
     // go when their units do.
@@ -41,9 +42,7 @@ public sealed partial class StrategyDiorama
                 continue;
             foreach (var animator in staged.Root.GetComponentsInChildren<Animator>())
             {
-                if (animator == null || Grips.ContainsKey(animator.Pointer))
-                    continue;
-                if (!animator.isHuman)
+                if (animator == null || !animator.isHuman)
                     continue;
                 // The squad leader stands in the squad's first slot and keeps the pose her own
                 // idle gives her: only her squaddies' support hands are brought to their rifles.
@@ -53,9 +52,9 @@ public sealed partial class StrategyDiorama
                 var upper = animator.GetBoneTransform(HumanBodyBones.LeftUpperArm);
                 var lower = animator.GetBoneTransform(HumanBodyBones.LeftLowerArm);
                 var hand = animator.GetBoneTransform(HumanBodyBones.LeftHand);
-                if (target == null || upper == null || lower == null || hand == null)
+                if (target == null || upper == null || lower == null || hand == null || Grips.ContainsKey(hand.Pointer))
                     continue;
-                Grips[animator.Pointer] = new Grip { Upper = upper, Lower = lower, Hand = hand, Target = target };
+                Grips[hand.Pointer] = new Grip { Upper = upper, Lower = lower, Hand = hand, Target = target };
             }
         }
         if (Grips.Count > 0)
@@ -93,31 +92,46 @@ public sealed partial class StrategyDiorama
         SolveGrips(MissionGrips);
     }
 
+    private static bool _gripFailReported;
+
+    // A grip that throws is let go, so the others are still held on that frame and the frames after.
     private static void SolveGrips(Dictionary<IntPtr, Grip> grips)
     {
         List<IntPtr> dead = null;
         foreach (var (key, grip) in grips)
         {
-            if (grip.Upper == null || grip.Lower == null || grip.Hand == null
-                || (grip.Carried == null ? grip.Target == null : grip.Carried.Unit == null || grip.Carried.Head == null || grip.Carried.Socket == null))
+            try
+            {
+                if (grip.Upper == null || grip.Lower == null || grip.Hand == null
+                    || (grip.Carried == null ? grip.Target == null : grip.Carried.Unit == null || grip.Carried.Head == null || grip.Carried.Socket == null))
+                {
+                    (dead ??= new()).Add(key);
+                    continue;
+                }
+                if (!grip.Hand.gameObject.activeInHierarchy)
+                    continue;
+                if (grip.Carried == null)
+                    Solve(grip, N(grip.Target.position));
+                else if (CarriedPlace(grip, out var place))
+                {
+                    // A support hand on the weapon is read before the weapon moves, and brought back
+                    // to it after.
+                    var support = grip.Carried.Support;
+                    var gripping = support != null && support.Upper != null && support.Lower != null && support.Hand != null && support.Target != null
+                        && Vec.Distance(N(support.Hand.position), N(support.Target.position)) < SupportGripReach * grip.Carried.Scale;
+                    Solve(grip, place);
+                    if (gripping)
+                        Solve(support, N(support.Target.position));
+                }
+            }
+            catch (Exception ex)
             {
                 (dead ??= new()).Add(key);
-                continue;
-            }
-            if (!grip.Hand.gameObject.activeInHierarchy)
-                continue;
-            if (grip.Carried == null)
-                Solve(grip, N(grip.Target.position));
-            else if (CarriedPlace(grip, out var place))
-            {
-                // A support hand on the weapon is read before the weapon moves, and brought back
-                // to it after.
-                var support = grip.Carried.Support;
-                var gripping = support != null && support.Upper != null && support.Lower != null && support.Hand != null && support.Target != null
-                    && Vec.Distance(N(support.Hand.position), N(support.Target.position)) < SupportGripReach * grip.Carried.Scale;
-                Solve(grip, place);
-                if (gripping)
-                    Solve(support, N(support.Target.position));
+                if (!_gripFailReported)
+                {
+                    _gripFailReported = true;
+                    SystemContext?.Log.Warn($"strategy diorama: a grip failed and was let go: {ex.GetType().Name}: {ex.Message}");
+                }
             }
         }
         if (dead != null)
@@ -214,6 +228,7 @@ public sealed partial class StrategyDiorama
     private static Vec N(Vector3 v) => new(v.x, v.y, v.z);
     private static Quat N(Quaternion q) => new(q.x, q.y, q.z, q.w);
     private static Quaternion U(Quat q) => new(q.X, q.Y, q.Z, q.W);
+    private static Vector3 U(Vec v) => new(v.X, v.Y, v.Z);
 
     private static void EnsureGripDriver()
     {
@@ -223,12 +238,12 @@ public sealed partial class StrategyDiorama
         {
             if (!_gripDriverRegistered)
             {
-                ClassInjector.RegisterTypeInIl2Cpp<ArmoryGripDriver>();
+                ClassInjector.RegisterTypeInIl2Cpp<GripDriver>();
                 _gripDriverRegistered = true;
             }
-            _gripDriver = new GameObject("WOMENACE.ArmoryGrip");
+            _gripDriver = new GameObject("WOMENACE.Grip");
             UnityEngine.Object.DontDestroyOnLoad(_gripDriver);
-            _gripDriver.AddComponent(Il2CppType.Of<ArmoryGripDriver>());
+            _gripDriver.AddComponent(Il2CppType.Of<GripDriver>());
         }
         catch (Exception ex)
         {
@@ -237,10 +252,12 @@ public sealed partial class StrategyDiorama
     }
 }
 
-// Solves the armoury units' left-hand grips in LateUpdate, after their Animators have posed them.
-public sealed class ArmoryGripDriver : MonoBehaviour
+// Solves every grip in LateUpdate, after the Animators have posed their units: the armoury
+// squaddies' support hands, the right hands that carry a tripod weapon clear of a Doll's head in
+// the armoury, and the mission carriers' hands (TripodCarrySystem).
+public sealed class GripDriver : MonoBehaviour
 {
-    public ArmoryGripDriver(IntPtr pointer) : base(pointer) { }
+    public GripDriver(IntPtr pointer) : base(pointer) { }
 
     private static bool _reported;
 

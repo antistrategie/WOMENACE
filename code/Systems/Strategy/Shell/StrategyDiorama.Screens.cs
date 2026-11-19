@@ -1,5 +1,7 @@
 using Il2CppMenace.UI;
 using UnityEngine;
+using Quat = System.Numerics.Quaternion;
+using Vec = System.Numerics.Vector3;
 
 namespace WOMENACE.Code;
 
@@ -8,13 +10,15 @@ namespace WOMENACE.Code;
 // (UIManager.UpdateBackgroundScene, then UpdateActiveCamera). Right after it decides, this applies
 // the room policy for the active screen:
 //
-//   room screens  - the room and its camera on, the vanilla background object off (so it neither
-//                   renders behind the room nor plays its video), the camera framed for the screen
+//   room screens  - the room and its camera on, the camera framed for the screen, and the vanilla
+//                   background object off, so it neither renders behind the room nor plays its video
 //   other screens - the room off, the vanilla background left exactly as the manager set it
 //
-// The armoury is the exception: its vanilla background stays alive because it spawns the squad,
-// which StrategyDiorama.Armory carries into the room. A screen not listed here (the O.C.I. ship,
-// mission prep's desk) stays vanilla, and taking a screen off the list is the per-screen fallback.
+// Three room screens keep their vanilla background alive. The armoury's spawns the squad, which
+// StrategyDiorama.Armory carries into the room. The system map's and an operation's briefing's
+// hold the star system copied over the holotable, and the camera vanilla finds the pointer's
+// target through (HolotableScreens). A screen not in RoomScreens stays vanilla, and taking a
+// screen off the list is the per-screen fallback.
 public sealed partial class StrategyDiorama
 {
     // Room-space camera framings (eye, look-at, field of view), by screen.
@@ -23,9 +27,6 @@ public sealed partial class StrategyDiorama
     // Lift does the same up and down, in parts of the screen's height: what the camera looks
     // straight at is drawn below the screen's middle.
     private readonly record struct Framing(Vector3 Eye, Vector3 Target, float Fov, float Shift = 0f, float Lift = 0f);
-
-    // Down the holotable from its foot, for the screens whose vanilla background is the hologram.
-    private static readonly Framing TableFraming = new(new Vector3(-9.0f, 2.2f, 0f), new Vector3(-15.5f, 0.0f, 0f), 55f);
 
     // Mission select: straight down the table from higher up, tilted down so the whole table is
     // in view, and shifted left of the selected mission's panel, with room beside each mission's
@@ -283,16 +284,19 @@ public sealed partial class StrategyDiorama
     // by a single short step over a frame the game spent loading, so a hitch never jumps the
     // camera and a game that only runs slowly still arrives.
     private float _shotTravel = 1f;
-    // A frame's share of time for the mod's own motion: a frame that stalled for as long as a
-    // hitch (a screen opening, a map being made) counts as a shorter one, so the motion is not
-    // skipped past.
+
     // What a label says without the tags vanilla colours it with, whose own digits are not its figures.
-    private static string Untagged(string text) => System.Text.RegularExpressions.Regex.Replace(text ?? "", "<[^>]*>", "");
+    private static string Untagged(string text) => RichTextTag.Replace(text ?? "", "");
+
+    private static readonly System.Text.RegularExpressions.Regex RichTextTag = new("<[^>]*>");
 
     // A value gone towards another by no more than a step.
     private static float Towards(float value, float target, float step)
         => target > value ? MathF.Min(target, value + step) : MathF.Max(target, value - step);
 
+    // A frame's share of time for the mod's own motion: a frame that stalled for as long as a
+    // hitch (a screen opening, a map being made) counts as a shorter one, so the motion is not
+    // skipped past.
     private static float HitchStep(float longest) => HitchStep(longest, longest);
 
     private static float HitchStep(float hitch, float counted)
@@ -371,25 +375,27 @@ public sealed partial class StrategyDiorama
         KeepListening();
         if (!_shotLive)
             return;
-        var camera = _scene.Camera.GetComponent<Camera>();
+        var camera = _scene.Lens;
         if (camera == null)
             return;
         if (_shotTravel < 1f)
         {
             var step = HitchStep(ShotHitchSeconds, ShotHitchStep);
-            _shotTravel = Mathf.Min(1f, _shotTravel + step / GlideSeconds);
+            _shotTravel = MathF.Min(1f, _shotTravel + step / GlideSeconds);
         }
         var t = _shotTravel;
         if (t < 1f)
         {
             _shotTravelling = true;
             var k = Ease.InOutCubic(t);
+            var (from, to) = (N(_shotFrom.Rotation), N(_shot.Rotation));
             var facing = _shotVia is { } via
-                ? Quaternion.Slerp(Quaternion.Slerp(_shotFrom.Rotation, via, k), Quaternion.Slerp(via, _shot.Rotation, k), k)
-                : Quaternion.Slerp(_shotFrom.Rotation, _shot.Rotation, k);
-            _scene.Camera.transform.SetPositionAndRotation(Vector3.Lerp(_shotFrom.Position, _shot.Position, k), facing);
-            SetLens(camera, Mathf.Lerp(_shotFrom.Fov, _shot.Fov, k), Mathf.Lerp(_shotFrom.Shift, _shot.Shift, k), Mathf.Lerp(_shotLiftFrom, _shotLift, k));
-            SetOperationsFade(Ease.OutCubic(Mathf.Clamp01((t - 0.5f) * 2f)));
+                ? Turned(Turned(from, N(via), k), Turned(N(via), to, k), k)
+                : Turned(from, to, k);
+            var place = Vec.Lerp(N(_shotFrom.Position), N(_shot.Position), k);
+            _scene.Camera.transform.SetPositionAndRotation(new Vector3(place.X, place.Y, place.Z), U(facing));
+            SetLens(camera, Lerp(_shotFrom.Fov, _shot.Fov, k), Lerp(_shotFrom.Shift, _shot.Shift, k), Lerp(_shotLiftFrom, _shotLift, k));
+            SetOperationsFade(Ease.OutCubic(Math.Clamp((t - 0.5f) * 2f, 0f, 1f)));
             return;
         }
         // The view's hologram and panels are fully there whenever the camera is at rest.
@@ -402,6 +408,11 @@ public sealed partial class StrategyDiorama
         if (_lensShift != _shot.Shift || _lensLift != _shotLift || camera.fieldOfView != _shot.Fov)
             SetLens(camera, _shot.Fov, _shot.Shift, _shotLift);
     }
+
+    // Unity's own slerp normalises what it gives, as a rotation handed to a transform has to be.
+    private static Quat Turned(Quat from, Quat to, float k) => Quat.Normalize(Quat.Slerp(from, to, k));
+
+    private static float Lerp(float from, float to, float k) => from + (to - from) * k;
 
     private float _lensShift, _lensLift;
     // The lens's lift at the shot the camera is going to, and at the one it left.
@@ -421,8 +432,6 @@ public sealed partial class StrategyDiorama
         if (shifted)
             camera.focalLength = Camera.FieldOfViewToFocalLength(fov, camera.sensorSize.y);
     }
-
-    internal static void Reapply() => _instance?.ApplyScreenPolicy();
 
     // Screens whose vanilla background stays alive behind the room: the system map and an
     // operation's briefing. Their star system is copied over the holotable (StarMap), and vanilla's
@@ -452,11 +461,7 @@ public sealed partial class StrategyDiorama
             return;
         if (_tableTarget == null || _tableTarget.width != Screen.width || _tableTarget.height != Screen.height)
         {
-            if (_tableTarget != null)
-            {
-                _tableTarget.Release();
-                UnityEngine.Object.Destroy(_tableTarget);
-            }
+            ReleaseTexture(ref _tableTarget);
             _tableTarget = new RenderTexture(Screen.width, Screen.height, 0, RenderTextureFormat.ARGB32) { name = "WOMENACE_TableCamera" };
         }
         mapCamera.targetTexture = _tableTarget;
@@ -575,11 +580,6 @@ public sealed partial class StrategyDiorama
     private void ReleaseTableTarget()
     {
         WakeTableCamera();
-        if (_tableTarget != null)
-        {
-            _tableTarget.Release();
-            UnityEngine.Object.Destroy(_tableTarget);
-        }
-        _tableTarget = null;
+        ReleaseTexture(ref _tableTarget);
     }
 }

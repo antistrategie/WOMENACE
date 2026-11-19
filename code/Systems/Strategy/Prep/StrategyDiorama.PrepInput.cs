@@ -260,7 +260,7 @@ public sealed partial class StrategyDiorama
             _prep.Grab = Vector2.zero;
             Token held = null;
             foreach (var token in _prep.Tokens.Values)
-                if (token.Kind == TokenKind.Squad && token.Seen.Contains(_prep.PointerPanel) && (held == null || token.Seen.yMax > held.Seen.yMax))
+                if (token.Kind == TokenKind.Squad && token.Seen.Contains(_prep.PointerPanel) && (held == null || token.Seen.YMax > held.Seen.YMax))
                     held = token;
             if (held != null)
             {

@@ -105,8 +105,9 @@ public sealed partial class StrategyDiorama
             _prep.FlatPlaced = true;
             // Vanilla's own two buttons stand in the column, over the map. The shell has them.
             foreach (var name in PrepFlatButtons)
-                if (UI.Find(column, UiSelector.Name(name)) is { } button)
-                    button.style.translate = new Translate(new Length(PrepFlatMapParked, LengthUnit.Pixel), new Length(0f, LengthUnit.Pixel));
+                Inline(UI.Find(column, UiSelector.Name(name)),
+                    e => e.style.translate = new Translate(new Length(PrepFlatMapParked, LengthUnit.Pixel), new Length(0f, LengthUnit.Pixel)),
+                    e => e.style.translate = StyleKeyword.Null);
         }
         // The hologram's picture is made again when the map's zone changes (a squad with a
         // zone of its own is picked up), and the one the flat map shows is gone with the old.
@@ -122,9 +123,8 @@ public sealed partial class StrategyDiorama
             _prep.FlatUndressed = !DressPrepFlat(preview);
             CountPrepFlatDressing();
         }
-        else if (_prep.FlatZonesUndressed && UI.Find(preview, UiSelector.Name("DeploymentZones")) is { } zones)
-            for (var i = 0; i < zones.childCount; i++)
-                zones.ElementAt(i).style.opacity = 0f;
+        else if (_prep.FlatZonesUndressed)
+            HidePrepFlatBoxes(UI.Find(preview, UiSelector.Name(VanillaUi.Elements.PrepDeploymentZones)));
         _prep.FlatZonesUndressed = false;
 
         // The camera looks straight down from where the hologram's map is seen at the flat
@@ -142,7 +142,7 @@ public sealed partial class StrategyDiorama
         }
     }
 
-    private static readonly string[] PrepFlatButtons = { "StartMissionButton", "AbortButton" };
+    private static readonly string[] PrepFlatButtons = { VanillaUi.Elements.StartMissionButton, VanillaUi.Elements.AbortButton };
 
     // The shot the camera takes: the orbit's, the flat view's, or on the way between them.
     private (Vector3 Position, Quaternion Rotation, float Fov, float Shift) PrepShot((Vector3 Position, Quaternion Rotation, float Fov, float Shift) orbit)
@@ -167,24 +167,34 @@ public sealed partial class StrategyDiorama
     // deployment zone and objectives, in place of vanilla's picture and of the boxes vanilla
     // draws over it for each of those. The boxes stay, unseen: they are what the pointer is
     // over. False until the hologram's picture is there to show.
+    // Each style goes back with the shell, so vanilla's map is its own again when the shell goes.
     private bool DressPrepFlat(VisualElement preview)
     {
-        preview.style.backgroundColor = (Color)PrepFlatGround;
-        if (UI.Find(preview, UiSelector.Name("MapBorder")) is { } border)
+        Inline(preview, e => e.style.backgroundColor = (Color)PrepFlatGround, e => e.style.backgroundColor = StyleKeyword.Null);
+        Inline(UI.Find(preview, UiSelector.Name(VanillaUi.Elements.PrepMapBorder)), e =>
         {
             var line = (Color)PrepFlatLine;
-            border.style.borderLeftColor = line;
-            border.style.borderRightColor = line;
-            border.style.borderTopColor = line;
-            border.style.borderBottomColor = line;
-        }
-        // A box is unseen whole: its fill, its outline and whatever vanilla paints in it.
+            e.style.borderLeftColor = line;
+            e.style.borderRightColor = line;
+            e.style.borderTopColor = line;
+            e.style.borderBottomColor = line;
+        }, e =>
+        {
+            e.style.borderLeftColor = StyleKeyword.Null;
+            e.style.borderRightColor = StyleKeyword.Null;
+            e.style.borderTopColor = StyleKeyword.Null;
+            e.style.borderBottomColor = StyleKeyword.Null;
+        });
         foreach (var holder in PrepFlatBoxes)
-            if (UI.Find(preview, UiSelector.Name(holder)) is { } parts)
-                for (var i = 0; i < parts.childCount; i++)
-                    parts.ElementAt(i).style.opacity = 0f;
-        if (UI.Find(preview, UiSelector.Name("Rects")) is not { } ground)
+            HidePrepFlatBoxes(UI.Find(preview, UiSelector.Name(holder)));
+        var ground = UI.Find(preview, UiSelector.Name(VanillaUi.Elements.PrepRects));
+        if (ground == null)
             return false;
+        Inline(ground, _ => { }, e =>
+        {
+            e.style.backgroundImage = StyleKeyword.Null;
+            e.style.unityBackgroundImageTintColor = StyleKeyword.Null;
+        });
         // Until the hologram's picture is made, vanilla's is not shown in its place.
         if (_prep.MapTexture == null)
         {
@@ -206,7 +216,20 @@ public sealed partial class StrategyDiorama
         return true;
     }
 
-    private static readonly string[] PrepFlatBoxes = { "Rects", "DeploymentZones", "ObjectiveAreas" };
+    private static readonly string[] PrepFlatBoxes = { VanillaUi.Elements.PrepRects, VanillaUi.Elements.PrepDeploymentZones, VanillaUi.Elements.PrepObjectiveAreas };
+
+    // A box is unseen whole: its fill, its outline and whatever vanilla paints in it. Vanilla
+    // makes the boxes again as it goes, so the shell puts back those there are when it goes.
+    private void HidePrepFlatBoxes(VisualElement parts) =>
+        Inline(parts, e =>
+        {
+            for (var i = 0; i < e.childCount; i++)
+                e.ElementAt(i).style.opacity = 0f;
+        }, e =>
+        {
+            for (var i = 0; i < e.childCount; i++)
+                e.ElementAt(i).style.opacity = StyleKeyword.Null;
+        });
 
     // The button beside the turn and zoom hint that goes between the two views. In the flat
     // view the hint itself goes: there is nothing to turn.

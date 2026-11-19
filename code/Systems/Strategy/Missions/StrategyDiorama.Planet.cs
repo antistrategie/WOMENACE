@@ -78,7 +78,10 @@ public sealed partial class StrategyDiorama
         }
 
         // Where a point of the unit sphere is in room space.
-        public Vector3 InRoom(Vector3 spot) => PlanetPlace + Turn * (spot - Middle) * PlanetRadius;
+        public Vector3 InRoom(Vector3 spot) => PlanetPlace + InSection(spot);
+
+        // Where a point of the unit sphere is in the section's own space, about its middle.
+        public Vector3 InSection(Vector3 spot) => Turn * (spot - Middle) * PlanetRadius;
 
         // The same in plain maths, for what is worked out every frame.
         public NVector3 InRoom(NVector3 spot) => PlaceN + NVector3.Transform(spot - MiddleN, TurnN) * PlanetRadius;
@@ -457,7 +460,7 @@ public sealed partial class StrategyDiorama
             {
                 var (u, v) = ((float)i / PlanetAcross, (float)j / PlanetDown);
                 var at = j * (PlanetAcross + 1) + i;
-                vertices[at] = shape.Turn * (shape.OnSphere(u, v, out var onPlanet) - shape.Middle) * PlanetRadius;
+                vertices[at] = shape.InSection(shape.OnSphere(u, v, out var onPlanet));
                 uvs[at] = new Vector2(u, v);
                 colours[at] = onPlanet ? Color.white : Color.clear;
             }
@@ -485,8 +488,8 @@ public sealed partial class StrategyDiorama
                 var to = shape.OnSphere(b.U, b.V, out var toOn);
                 if (!fromOn || !toOn)
                     continue;
-                ends.Add(shape.Turn * (from - shape.Middle) * PlanetRadius);
-                ends.Add(shape.Turn * (to - shape.Middle) * PlanetRadius);
+                ends.Add(shape.InSection(from));
+                ends.Add(shape.InSection(to));
             }
         }
         Edge(f => (f, 0f), PlanetAcross);

@@ -62,6 +62,8 @@ public sealed partial class StrategyDiorama : JiangyuSystem
                     Context.Log.Warn($"strategy diorama: room drive failed: {ex.GetType().Name}: {ex.Message}");
                 failed = true;
             }
+            // After the room's camera has moved for the frame, so the reflection is of this frame's view.
+            DriveMirror();
             yield return null;
         }
     }
@@ -136,7 +138,7 @@ public sealed partial class StrategyDiorama : JiangyuSystem
                 depth = Mathf.Max(depth, other.depth);
         _scene.Camera = new GameObject("WOMENACE_StrategyRoomCamera");
         _scene.Camera.transform.SetPositionAndRotation(_scene.Anchor.position, _scene.Anchor.rotation);
-        var camera = _scene.Camera.AddComponent<Camera>();
+        var camera = _scene.Lens = _scene.Camera.AddComponent<Camera>();
         camera.fieldOfView = RoomFov;
         camera.nearClipPlane = RoomCameraNear;
         camera.farClipPlane = 500f;
@@ -276,6 +278,6 @@ public sealed partial class StrategyDiorama : JiangyuSystem
 
     internal static ModContext SystemContext => _instance?.Context;
 
-    internal static Camera RoomCamera => _instance?._scene.Camera?.GetComponent<Camera>();
+    internal static Camera RoomCamera => _instance?._scene.Lens is { } lens && lens != null ? lens : null;
 
 }
