@@ -51,7 +51,7 @@ public sealed partial class StrategyDiorama
 
     // 04Aimo_Training_Platform's "_PostEffect" volume: no colour lookup and no film grain. Its
     // polished floor mirrors the hangar through GFL2's planar reflection volume (its probe is a dim,
-    // coarse cube).
+    // coarse cube). Its mirror is less blurred than GFL2's, whose blur comes out blocky here.
     private static readonly RoomLook RefitLook = new(
         BloomThreshold: 0.9f, BloomIntensity: 0.2f,
         VignetteIntensity: 0.25f, VignetteSmoothness: 0.12f, VignetteGrey: 0.2f,
@@ -60,7 +60,7 @@ public sealed partial class StrategyDiorama
         FilmSlope: 0.91f, FilmToe: 0.47f, FilmShoulder: 0.23f, FilmBlackClip: 0f, FilmWhiteClip: 0.035f,
         LookupContribution: 0f,
         FogColour: new Color(0.5347f, 0.736f, 0.766f), FogStart: 10f, FogEnd: 400f,
-        MirrorStrength: 0.851f, MirrorBlur: 1.65f, MirrorTint: Color.white,
+        MirrorStrength: 0.851f, MirrorBlur: 0.5f, MirrorTint: Color.white,
         SfxIntensity: 0.25f);
 
     // 01Aimo_WeaponRoom_Lobby's "_PostEffect_WeaponRoom" volume: a stronger bloom and contrast

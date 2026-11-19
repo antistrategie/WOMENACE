@@ -26,6 +26,9 @@ public sealed partial class StrategyDiorama
     }
 
     private static readonly Dictionary<IntPtr, Grip> Grips = new();
+    // Mission carriers' hands, by hand. The armoury clears its own grips as it closes, and these
+    // go when their units do.
+    private static readonly Dictionary<IntPtr, Grip> MissionGrips = new();
     private static GameObject _gripDriver;
     private static bool _gripDriverRegistered;
 
@@ -86,8 +89,14 @@ public sealed partial class StrategyDiorama
 
     internal static void SolveGrips()
     {
+        SolveGrips(Grips);
+        SolveGrips(MissionGrips);
+    }
+
+    private static void SolveGrips(Dictionary<IntPtr, Grip> grips)
+    {
         List<IntPtr> dead = null;
-        foreach (var (key, grip) in Grips)
+        foreach (var (key, grip) in grips)
         {
             if (grip.Upper == null || grip.Lower == null || grip.Hand == null
                 || (grip.Carried == null ? grip.Target == null : grip.Carried.Unit == null || grip.Carried.Head == null || grip.Carried.Socket == null))
@@ -100,12 +109,25 @@ public sealed partial class StrategyDiorama
             if (grip.Carried == null)
                 Solve(grip, N(grip.Target.position));
             else if (CarriedPlace(grip, out var place))
+            {
+                // A support hand on the weapon is read before the weapon moves, and brought back
+                // to it after.
+                var support = grip.Carried.Support;
+                var gripping = support != null && support.Upper != null && support.Lower != null && support.Hand != null && support.Target != null
+                    && Vec.Distance(N(support.Hand.position), N(support.Target.position)) < SupportGripReach * grip.Carried.Scale;
                 Solve(grip, place);
+                if (gripping)
+                    Solve(support, N(support.Target.position));
+            }
         }
         if (dead != null)
             foreach (var key in dead)
-                Grips.Remove(key);
+                grips.Remove(key);
     }
+
+    // How near its weapon's weapon_hand_l a support hand is to count as on it, in metres at a
+    // Doll's own scale.
+    private const float SupportGripReach = 0.06f;
 
     // The maths runs in System.Numerics (Unity's is an interop call per operation, every frame):
     // the transforms are read once and the three rotations written back.
@@ -193,7 +215,7 @@ public sealed partial class StrategyDiorama
     private static Quat N(Quaternion q) => new(q.x, q.y, q.z, q.w);
     private static Quaternion U(Quat q) => new(q.X, q.Y, q.Z, q.W);
 
-    private void EnsureGripDriver()
+    private static void EnsureGripDriver()
     {
         if (_gripDriver != null)
             return;
@@ -210,7 +232,7 @@ public sealed partial class StrategyDiorama
         }
         catch (Exception ex)
         {
-            Context.Log.Warn($"strategy diorama: grip driver failed: {ex.GetType().Name}: {ex.Message}");
+            SystemContext?.Log.Warn($"strategy diorama: grip driver failed: {ex.GetType().Name}: {ex.Message}");
         }
     }
 }

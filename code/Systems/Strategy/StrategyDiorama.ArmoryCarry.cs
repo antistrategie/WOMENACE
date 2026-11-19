@@ -33,17 +33,24 @@ public sealed partial class StrategyDiorama
     private const float CarryRereadSeconds = 0.3f;
     private const float CarryEasing = 10f;
     // Vanilla's tripod weapons, by the part their templates' names share.
-    private const string CarryTripodId = "tripod_";
+    internal const string CarryTripodId = "tripod_";
     // How far out the hand was found to go, by Doll, outfit and weapon.
     private static readonly Dictionary<string, (float Out, Vec Way)> CarryKnown = new(StringComparer.Ordinal);
 
     private sealed class Carried
     {
         public Transform Unit, Head, Socket;
-        public float Scale, Until, RereadAt, Out, Wanted;
+        // Kept is how far out the hand was found to go, once it is known.
+        public float Scale, Until, RereadAt, Out, Wanted, Kept;
         // The way the hand goes, as her right, up and forward.
         public Vec Way = Vec.UnitX;
         public string Model, Key;
+        // Whether the weapon is carried now. A mission's carrier sets her weapon up on its
+        // tripod, and her hand comes back while it is. Null where it is always carried.
+        public Func<bool> Holds;
+        // Her support hand, where the game's own grip has it on what she carries: it goes out
+        // with the weapon. Null where nothing grips it.
+        public Grip Support;
         // Each model's triangles, middle and length's direction, in the model's own space.
         public readonly List<(Transform Model, Vec[] Corners, Vec Middle, Vec Along)> Models = new();
         public readonly List<string> Read = new();
@@ -64,7 +71,6 @@ public sealed partial class StrategyDiorama
             if (tag == null || id == null || shown == null || !id.Contains(CarryTripodId, StringComparison.Ordinal))
                 return;
             var key = $"{tag}|{Transmog.SelectionFor(Context, tag)}|{id}";
-            var known = CarryKnown.TryGetValue(key, out var found);
             var held = false;
             foreach (var staged in _stagedRoots)
             {
@@ -86,22 +92,7 @@ public sealed partial class StrategyDiorama
                         carries = ModelName(socket.GetChild(i)) == shown.name;
                     if (!carries)
                         continue;
-                    var carried = new Carried
-                    {
-                        Unit = animator.transform,
-                        Head = head,
-                        Socket = socket,
-                        Scale = animator.transform.lossyScale.y,
-                        Until = known ? 0f : Time.unscaledTime + CarrySettleSeconds,
-                        RereadAt = known ? 0f : Time.unscaledTime + CarryRereadSeconds,
-                        Out = found.Out,
-                        Wanted = found.Out,
-                        Way = known ? found.Way : Vec.UnitX,
-                        Model = shown.name,
-                        Key = key,
-                    };
-                    if (!known)
-                        ReadCarried(carried);
+                    var carried = NewCarried(animator.transform, head, socket, shown.name, key);
                     Grips[hand.Pointer] = new Grip { Upper = upper, Lower = lower, Hand = hand, KeepsTurn = true, Carried = carried };
                     held = true;
                 }
@@ -112,26 +103,87 @@ public sealed partial class StrategyDiorama
         catch (Exception ex) { Context.Log.Warn($"strategy diorama: carried weapons not held: {ex.GetType().Name}: {ex.Message}"); }
     }
 
+    // A hand to hold out with what it carries: from the frame it is seen where it was found to go
+    // before, or measured as it settles where it has not been.
+    private static Carried NewCarried(Transform unit, Transform head, Transform socket, string model, string key)
+    {
+        var known = CarryKnown.TryGetValue(key, out var found);
+        var carried = new Carried
+        {
+            Unit = unit,
+            Head = head,
+            Socket = socket,
+            Scale = unit.lossyScale.y,
+            Until = known ? 0f : Time.unscaledTime + CarrySettleSeconds,
+            RereadAt = known ? 0f : Time.unscaledTime + CarryRereadSeconds,
+            Out = found.Out,
+            Wanted = found.Out,
+            Kept = found.Out,
+            Way = known ? found.Way : Vec.UnitX,
+            Model = model,
+            Key = key,
+        };
+        if (!known)
+            ReadCarried(carried);
+        return carried;
+    }
+
+    // Holds a mission carrier's right hand, with the tripod weapon in it, clear of her head as the
+    // armoury holds a staged Doll's. Her pose there is the tripod controller's Carried state, not
+    // the armoury's, so how far the hand goes is measured and kept apart from the armoury's.
+    internal static void HoldInMission(Animator animator, Transform model, string key, Func<bool> holds)
+    {
+        if (animator == null || !animator.isHuman || model == null || model.parent == null)
+            return;
+        var head = animator.GetBoneTransform(HumanBodyBones.Head);
+        var upper = animator.GetBoneTransform(HumanBodyBones.RightUpperArm);
+        var lower = animator.GetBoneTransform(HumanBodyBones.RightLowerArm);
+        var hand = animator.GetBoneTransform(HumanBodyBones.RightHand);
+        if (head == null || upper == null || lower == null || hand == null)
+            return;
+        var carried = NewCarried(animator.transform, head, model.parent, ModelName(model), "mission|" + key);
+        carried.Holds = holds;
+        var handL = FindDescendant(model, "weapon_hand_l");
+        var (supportUpper, supportLower, supportHand) = (animator.GetBoneTransform(HumanBodyBones.LeftUpperArm),
+            animator.GetBoneTransform(HumanBodyBones.LeftLowerArm), animator.GetBoneTransform(HumanBodyBones.LeftHand));
+        if (handL != null && supportUpper != null && supportLower != null && supportHand != null)
+            carried.Support = new Grip { Upper = supportUpper, Lower = supportLower, Hand = supportHand, Target = handL, KeepsTurn = true };
+        MissionGrips[hand.Pointer] = new Grip { Upper = upper, Lower = lower, Hand = hand, KeepsTurn = true, Carried = carried };
+        EnsureGripDriver();
+    }
+
     // Where the hand is to be this frame, from where the animation has just put it. False where
     // it stays there.
     private static bool CarriedPlace(Grip grip, out Vec place)
     {
         var carried = grip.Carried;
+        var holds = carried.Holds == null || carried.Holds();
         // A hand that has settled where the animation has it is asked nothing more.
-        if (carried.Until == 0f && carried.Out == 0f && carried.Wanted == 0f)
+        if (carried.Until == 0f && carried.Out == 0f && (holds ? carried.Kept : 0f) == 0f)
         {
             place = default;
             return false;
         }
         var (right, up, forward) = (Vec.Normalize(N(carried.Unit.right)), Vec.Normalize(N(carried.Unit.up)), Vec.Normalize(N(carried.Unit.forward)));
         var now = Time.unscaledTime;
-        if (carried.Until > 0f && now >= carried.Until)
+        if (!holds)
+        {
+            // Set up, the weapon is out of her hand: the hand comes back, and a measure not yet
+            // finished starts again once she carries it.
+            carried.Wanted = 0f;
+            if (carried.Until > 0f)
+                (carried.Until, carried.RereadAt) = (now + CarrySettleSeconds, now + CarryRereadSeconds);
+        }
+        else if (carried.Until == 0f)
+            carried.Wanted = carried.Kept;
+        else if (now >= carried.Until)
         {
             carried.Until = 0f;
+            carried.Kept = carried.Wanted;
             CarryKnown[carried.Key] = (carried.Wanted, carried.Way);
             carried.Models.Clear();
         }
-        if (carried.Until > 0f)
+        else
         {
             if (carried.RereadAt > 0f && now >= carried.RereadAt)
             {

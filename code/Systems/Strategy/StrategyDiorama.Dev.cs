@@ -1028,7 +1028,7 @@ public sealed partial class StrategyDiorama
     internal static string CarryReportFromDev()
     {
         var lines = new List<string>();
-        foreach (var (_, grip) in Grips)
+        foreach (var (_, grip) in Grips.Concat(MissionGrips))
             if (grip.Carried is { } carried && carried.Unit != null)
                 lines.Add($"{carried.Unit.parent?.name} {carried.Key}: {carried.Out * 100f:F0} of {carried.Wanted * 100f:F0} cm, {(carried.Until > 0f ? "settling" : "kept")} ({string.Join(", ", carried.Read)})");
         return lines.Count > 0 ? string.Join("; ", lines) : "no hand held";
