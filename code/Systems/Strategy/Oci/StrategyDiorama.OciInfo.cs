@@ -21,20 +21,18 @@ public sealed partial class StrategyDiorama
     // The strip's height under a slot, in the shell's units, which its group makes room for.
     private const float OciInfoStrip = 18f;
 
-    // While vanilla is given its panel back, its refresh is left alone.
-    private bool _ociInfoRestoring;
 
     private void HookOciInfo() =>
         Context.Patches.Postfix("Il2CppMenace.UI.Strategy.ShipSlot", "UpdateInfoPanel", info =>
         {
-            if (_ociInfoRestoring || _shellRoot == null || !_shellRoot.ClassListContains(OciClass))
+            if (_oci.InfoRestoring || _shellRoot == null || !_shellRoot.ClassListContains(OciClass))
                 return;
             if ((info.Instance as Il2CppInterop.Runtime.InteropTypes.Il2CppObjectBase)?.TryCast<ShipSlot>() is not { } slot)
                 return;
             // A module put in or taken out changes how much room its slot takes in its group.
             var had = OciInfoShown(slot);
             if (DressOciInfo(slot) != had)
-                _ociUnplaced = true;
+                _oci.Unplaced = true;
         });
 
     private static bool OciInfoShown(ShipSlot slot) =>
@@ -54,9 +52,9 @@ public sealed partial class StrategyDiorama
             Inline(panel, e => e.style.display = DisplayStyle.None, e =>
             {
                 e.style.display = StyleKeyword.Null;
-                _ociInfoRestoring = true;
+                _oci.InfoRestoring = true;
                 try { slot.UpdateInfoPanel(); }
-                finally { _ociInfoRestoring = false; }
+                finally { _oci.InfoRestoring = false; }
             });
             if (UI.Find(under, UiSelector.Name(OciInfoName))?.TryCast<Label>() is not { } line)
             {

@@ -187,16 +187,7 @@ public sealed partial class StrategyDiorama
         {
             // Every part wears the hologram with its own texture's light and dark.
             foreach (var renderer in _weaponRoom.WorkedOn.GetComponentsInChildren<Renderer>(true))
-            {
-                Material[] own = renderer.sharedMaterials;
-                var worn = new Material[own.Length];
-                for (var i = 0; i < own.Length; i++)
-                {
-                    worn[i] = HologramOf(own[i]);
-                    _weaponRoom.WorkedOnHolograms.Add(worn[i]);
-                }
-                renderer.sharedMaterials = worn;
-            }
+                WearHolograms(renderer, _weaponRoom.WorkedOnHolograms);
         }
         if (_weaponRoom.WorkedOnHolograms.Count > 0)
         {
@@ -278,31 +269,4 @@ public sealed partial class StrategyDiorama
         return bounds;
     }
 
-    // A bare card in a room for an item's picture, as large as the picture's own shape allows
-    // within a size.
-    private static GameObject IconCard(Transform room, Sprite picture, float size)
-    {
-        var card = GameObject.CreatePrimitive(PrimitiveType.Quad);
-        var collider = card.GetComponent<Collider>();
-        if (collider != null)
-            UnityEngine.Object.Destroy(collider);
-        card.transform.SetParent(room, false);
-        var shape = picture.rect;
-        var widest = Mathf.Max(shape.width, shape.height);
-        card.transform.localScale = new Vector3(size * shape.width / widest, size * shape.height / widest, 1f);
-        return card;
-    }
-
-    // The hologram of an item's picture: its own part of the sheet it is drawn on, cut by its
-    // alpha.
-    private Material IconHologram(Sprite picture)
-    {
-        var material = new Material(HologramMaterial());
-        material.SetTexture(BaseMapId, picture.texture);
-        var sheet = picture.textureRect;
-        material.SetTextureScale(BaseMapId, new Vector2(sheet.width / picture.texture.width, sheet.height / picture.texture.height));
-        material.SetTextureOffset(BaseMapId, new Vector2(sheet.x / picture.texture.width, sheet.y / picture.texture.height));
-        material.SetFloat("_AlphaClip", 1f);
-        return material;
-    }
 }

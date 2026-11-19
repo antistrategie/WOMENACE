@@ -221,28 +221,6 @@ public sealed partial class StrategyDiorama
         return found != null ? found.gameObject : null;
     }
 
-    // The part of a sheet one of its cells is, as _UvRect takes it: cells are counted from the
-    // top left, across and then down.
-    private static Vector4 SheetCell(int index, int columns, int rows) =>
-        new(1f / columns, 1f / rows, index % columns / (float)columns, 1f - (index / columns + 1f) / rows);
-
-    // A hologram quad in the room: the holotable's own quad and shader, showing a texture.
-    private GameObject Quad(GameObject template, string name, Texture texture)
-    {
-        var quad = UnityEngine.Object.Instantiate(template, _room.transform, false);
-        quad.name = name;
-        quad.SetActive(true);
-        var material = quad.GetComponent<MeshRenderer>()?.material;
-        if (material != null)
-        {
-            material.SetTexture("_MainTex", texture);
-            material.SetFloat("_Backdrop", 0f);
-            // Depth tested: a doll in front of a card hides it.
-            material.SetFloat("_ZTest", (float)UnityEngine.Rendering.CompareFunction.LessEqual);
-        }
-        return quad;
-    }
-
     private static VisualElement ClickTarget(VisualElement layer, Marker marker)
     {
         var target = new VisualElement();

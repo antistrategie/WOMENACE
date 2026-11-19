@@ -62,25 +62,6 @@ public sealed partial class StrategyDiorama
         public bool Placed, Shown, Leaving;
     }
 
-    private GameObject _marketCubes, _marketNumber, _marketNumberHost;
-    private Mesh _marketMesh;
-    private Texture2D _marketFace;
-    private RenderTexture _marketNumberTexture;
-    private PanelSettings _marketNumberSettings;
-    private Label _marketNumberLabel;
-    private Il2CppStructArray<Vector3> _marketVertices;
-    private Il2CppStructArray<Color32> _marketColours;
-    private Color32 _marketGold, _marketCyan, _marketOver, _marketShort;
-    private readonly List<MarketCube>[] _marketPiles = { new(), new() };
-    private readonly int[] _marketCounts = new int[2];
-    private readonly int[] _marketWritten = new int[2];
-    private int _marketGive = -1, _marketGet = -1, _marketEdge = MarketEdge;
-    private bool _marketOn, _marketMoving;
-    // Whether the strip of what is on offer is opened to its full height, how far open it stands,
-    // and the strip with its chevron.
-    private bool _marketStripOpen;
-    private float _marketStripAt;
-    private VisualElement _marketStrip, _marketFold;
 
     // Each face's corners, as the corner's bits: x, y, z.
     private static readonly int[] MarketFaces =
@@ -92,14 +73,14 @@ public sealed partial class StrategyDiorama
     // no hologram quad to copy.
     private bool MarketPicture()
     {
-        if (_marketCubes != null)
+        if (_shop.MarketCubes != null)
             return true;
         var template = MarkerTemplate();
         if (template == null)
             return false;
 
         // A cube's face: a bright line round a faint fill.
-        _marketFace = new Texture2D(MarketFaceTexture, MarketFaceTexture, TextureFormat.RGBA32, true) { name = "WOMENACE_MarketCube" };
+        _shop.MarketFace = new Texture2D(MarketFaceTexture, MarketFaceTexture, TextureFormat.RGBA32, true) { name = "WOMENACE_MarketCube" };
         var pixels = new Il2CppStructArray<Color32>(MarketFaceTexture * MarketFaceTexture);
         var (line, fill) = (new Color32(255, 255, 255, 255), new Color32(MarketFaceFill, MarketFaceFill, MarketFaceFill, 255));
         for (var y = 0; y < MarketFaceTexture; y++)
@@ -108,12 +89,12 @@ public sealed partial class StrategyDiorama
                 var edge = Math.Min(Math.Min(x, y), Math.Min(MarketFaceTexture - 1 - x, MarketFaceTexture - 1 - y));
                 pixels[y * MarketFaceTexture + x] = edge < MarketFaceLine ? line : fill;
             }
-        _marketFace.SetPixels32(pixels);
-        _marketFace.Apply(true, true);
+        _shop.MarketFace.SetPixels32(pixels);
+        _shop.MarketFace.Apply(true, true);
 
         var corners = MarketMostCubes * 2 * 24;
-        _marketVertices = new Il2CppStructArray<Vector3>(corners);
-        _marketColours = new Il2CppStructArray<Color32>(corners);
+        _shop.MarketVertices = new Il2CppStructArray<Vector3>(corners);
+        _shop.MarketColours = new Il2CppStructArray<Color32>(corners);
         var uv = new Il2CppStructArray<Vector2>(corners);
         var triangles = new Il2CppStructArray<int>(MarketMostCubes * 2 * 36);
         for (var face = 0; face < MarketMostCubes * 2 * 6; face++)
@@ -122,23 +103,23 @@ public sealed partial class StrategyDiorama
             (uv[v], uv[v + 1], uv[v + 2], uv[v + 3]) = (new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(0f, 1f));
             (triangles[t], triangles[t + 1], triangles[t + 2], triangles[t + 3], triangles[t + 4], triangles[t + 5]) = (v, v + 1, v + 2, v, v + 2, v + 3);
         }
-        _marketMesh = new Mesh { name = "WOMENACE_MarketCubes" };
-        _marketMesh.MarkDynamic();
-        _marketMesh.vertices = _marketVertices;
-        _marketMesh.uv = uv;
-        _marketMesh.colors32 = _marketColours;
-        _marketMesh.triangles = triangles;
+        _shop.MarketMesh = new Mesh { name = "WOMENACE_MarketCubes" };
+        _shop.MarketMesh.MarkDynamic();
+        _shop.MarketMesh.vertices = _shop.MarketVertices;
+        _shop.MarketMesh.uv = uv;
+        _shop.MarketMesh.colors32 = _shop.MarketColours;
+        _shop.MarketMesh.triangles = triangles;
         // Never culled: the cubes are always over the table the camera looks at.
-        _marketMesh.bounds = new Bounds(new Vector3(MarketMiddleX, MarketTableY, MarketTableZ), Vector3.one * 8f);
-        (_marketGold, _marketCyan) = (Wui.Gold, new Color32(79, 220, 234, 255));
-        (_marketOver, _marketShort) = (new Color32(243, 234, 208, 255), new Color32(255, 123, 108, 255));
+        _shop.MarketMesh.bounds = new Bounds(new Vector3(MarketMiddleX, MarketTableY, MarketTableZ), Vector3.one * 8f);
+        (_shop.MarketGold, _shop.MarketCyan) = (Wui.Gold, new Color32(79, 220, 234, 255));
+        (_shop.MarketOver, _shop.MarketShort) = (new Color32(243, 234, 208, 255), new Color32(255, 123, 108, 255));
 
-        _marketCubes = Quad(template, "WOMENACE_MarketCubes", _marketFace);
-        _marketCubes.transform.localPosition = Vector3.zero;
-        _marketCubes.transform.localRotation = Quaternion.identity;
-        _marketCubes.transform.localScale = Vector3.one;
-        _marketCubes.GetComponent<MeshFilter>().sharedMesh = _marketMesh;
-        PlainHologram(_marketCubes, MarketIntensity);
+        _shop.MarketCubes = Quad(template, "WOMENACE_MarketCubes", _shop.MarketFace);
+        _shop.MarketCubes.transform.localPosition = Vector3.zero;
+        _shop.MarketCubes.transform.localRotation = Quaternion.identity;
+        _shop.MarketCubes.transform.localScale = Vector3.one;
+        _shop.MarketCubes.GetComponent<MeshFilter>().sharedMesh = _shop.MarketMesh;
+        PlainHologram(_shop.MarketCubes, MarketIntensity);
 
         MarketNumber(template);
         return true;
@@ -149,10 +130,10 @@ public sealed partial class StrategyDiorama
     private void MarketNumber(GameObject template)
     {
         if (!TexturePanel("WOMENACE_MarketNumber", _shellRoot, MarketNumberTextureWidth, MarketNumberTextureHeight, 1f,
-            out _marketNumberHost, out _marketNumberSettings, out _marketNumberTexture, out var root))
+            out _shop.MarketNumberHost, out _shop.MarketNumberSettings, out _shop.MarketNumberTexture, out var root))
             return;
-        _marketNumberLabel = new Label { pickingMode = PickingMode.Ignore };
-        var style = _marketNumberLabel.style;
+        _shop.MarketNumberLabel = new Label { pickingMode = PickingMode.Ignore };
+        var style = _shop.MarketNumberLabel.style;
         style.position = Position.Absolute;
         style.left = 0;
         style.top = 0;
@@ -163,75 +144,34 @@ public sealed partial class StrategyDiorama
         style.unityTextAlign = TextAnchor.MiddleCenter;
         style.marginLeft = style.marginRight = style.marginTop = style.marginBottom = 0;
         style.paddingLeft = style.paddingRight = style.paddingTop = style.paddingBottom = 0;
-        root.Add(_marketNumberLabel);
+        root.Add(_shop.MarketNumberLabel);
 
-        _marketNumber = Quad(template, "WOMENACE_MarketNumber", _marketNumberTexture);
-        _marketNumber.transform.localPosition = new Vector3(MarketMiddleX, MarketTableY + 0.005f, MarketTableZ);
+        _shop.MarketNumber = Quad(template, "WOMENACE_MarketNumber", _shop.MarketNumberTexture);
+        _shop.MarketNumber.transform.localPosition = new Vector3(MarketMiddleX, MarketTableY + 0.005f, MarketTableZ);
         // Its right is the view's right and its top is away from the camera.
-        _marketNumber.transform.localRotation = Quaternion.LookRotation(Vector3.down, Vector3.back);
-        _marketNumber.transform.localScale = new Vector3(MarketNumberWidth, MarketNumberWidth * MarketNumberTextureHeight / MarketNumberTextureWidth, 1f);
-        PlainHologram(_marketNumber, MarketNumberIntensity);
-    }
-
-    // A panel of its own that draws into a texture, for what is shown on a quad in the room: it
-    // takes the theme and text settings of the panel an element is in, and draws on nothing at
-    // a fixed scale.
-    private static bool TexturePanel(string name, VisualElement like, int width, int height, float scale,
-        out GameObject host, out PanelSettings settings, out RenderTexture texture, out VisualElement root)
-    {
-        (host, settings, texture, root) = (null, null, null, null);
-        UIDocument source = null;
-        if (like?.panel != null)
-            foreach (var document in UnityEngine.Object.FindObjectsOfType<UIDocument>())
-                if (document.rootVisualElement?.panel == like.panel)
-                    source = document;
-        if (source?.panelSettings == null)
-            return false;
-        texture = new RenderTexture(width, height, 0, RenderTextureFormat.ARGB32) { name = name };
-        settings = ScriptableObject.CreateInstance<PanelSettings>();
-        settings.themeStyleSheet = source.panelSettings.themeStyleSheet;
-        settings.textSettings = source.panelSettings.textSettings;
-        settings.scaleMode = PanelScaleMode.ConstantPixelSize;
-        settings.scale = scale;
-        settings.clearColor = true;
-        settings.colorClearValue = new Color(0f, 0f, 0f, 0f);
-        settings.targetTexture = texture;
-        host = new GameObject(name);
-        var panel = host.AddComponent<UIDocument>();
-        panel.panelSettings = settings;
-        root = panel.rootVisualElement;
-        return root != null;
-    }
-
-    // A hologram quad that shows its texture as it is: no tint, scan lines, plate or faded edge.
-    private static void PlainHologram(GameObject quad, float intensity)
-    {
-        var material = quad.GetComponent<MeshRenderer>().material;
-        material.SetColor("_Tint", Color.white);
-        material.SetFloat(IntensityId, intensity);
-        material.SetFloat("_ScanDepth", 0f);
-        material.SetFloat("_Plate", 0f);
-        material.SetFloat("_EdgeFade", 0f);
+        _shop.MarketNumber.transform.localRotation = Quaternion.LookRotation(Vector3.down, Vector3.back);
+        _shop.MarketNumber.transform.localScale = new Vector3(MarketNumberWidth, MarketNumberWidth * MarketNumberTextureHeight / MarketNumberTextureWidth, 1f);
+        PlainHologram(_shop.MarketNumber, MarketNumberIntensity);
     }
 
     // What the market showed goes with its room, and is made again when the room is.
     private void ClearMarket()
     {
-        foreach (var quad in new[] { _marketCubes, _marketNumber })
+        foreach (var quad in new[] { _shop.MarketCubes, _shop.MarketNumber })
             if (quad != null)
             {
                 UnityEngine.Object.Destroy(quad.GetComponent<MeshRenderer>()?.sharedMaterial);
                 UnityEngine.Object.Destroy(quad);
             }
-        foreach (var made in new UnityEngine.Object[] { _marketMesh, _marketFace, _marketNumberHost, _marketNumberSettings })
+        foreach (var made in new UnityEngine.Object[] { _shop.MarketMesh, _shop.MarketFace, _shop.MarketNumberHost, _shop.MarketNumberSettings })
             if (made != null)
                 UnityEngine.Object.Destroy(made);
-        ReleaseTexture(ref _marketNumberTexture);
-        (_marketCubes, _marketNumber, _marketNumberHost, _marketMesh, _marketFace, _marketNumberSettings, _marketNumberLabel) = (null, null, null, null, null, null, null);
-        (_marketVertices, _marketColours, _marketOn) = (null, null, false);
-        (_marketStrip, _marketFold) = (null, null);
-        (_marketWritten[0], _marketWritten[1]) = (0, 0);
-        foreach (var pile in _marketPiles)
+        ReleaseTexture(ref _shop.MarketNumberTexture);
+        (_shop.MarketCubes, _shop.MarketNumber, _shop.MarketNumberHost, _shop.MarketMesh, _shop.MarketFace, _shop.MarketNumberSettings, _shop.MarketNumberLabel) = (null, null, null, null, null, null, null);
+        (_shop.MarketVertices, _shop.MarketColours, _shop.MarketOn) = (null, null, false);
+        (_shop.MarketStrip, _shop.MarketFold) = (null, null);
+        (_shop.MarketWritten[0], _shop.MarketWritten[1]) = (0, 0);
+        foreach (var pile in _shop.MarketPiles)
             pile.Clear();
     }
 
@@ -241,36 +181,36 @@ public sealed partial class StrategyDiorama
             && _shellRoot?.panel != null;
         if (!on || !MarketPicture())
         {
-            if (_marketOn)
+            if (_shop.MarketOn)
                 ShowMarket(false);
             return;
         }
-        if (!_marketOn)
+        if (!_shop.MarketOn)
         {
             // Each visit starts with a bare table: what is on offer drops in again.
             ShowMarket(true);
-            foreach (var pile in _marketPiles)
+            foreach (var pile in _shop.MarketPiles)
                 pile.Clear();
-            (_marketGive, _marketGet, _marketMoving) = (-1, -1, true);
-            (_marketStripOpen, _marketStripAt) = (false, 0f);
+            (_shop.MarketGive, _shop.MarketGet, _shop.MarketMoving) = (-1, -1, true);
+            (_shop.MarketStripOpen, _shop.MarketStripAt) = (false, 0f);
             PlaceMarketStrip();
         }
         // The strip goes between its two heights over a moment.
-        var stripTo = _marketStripOpen ? 1f : 0f;
-        if (_marketStripAt != stripTo)
+        var stripTo = _shop.MarketStripOpen ? 1f : 0f;
+        if (_shop.MarketStripAt != stripTo)
         {
             var step = HitchStep(ShotHitchSeconds, ShotHitchStep) / MarketStripSeconds;
-            _marketStripAt = _marketStripOpen ? MathF.Min(1f, _marketStripAt + step) : MathF.Max(0f, _marketStripAt - step);
+            _shop.MarketStripAt = _shop.MarketStripOpen ? MathF.Min(1f, _shop.MarketStripAt + step) : MathF.Max(0f, _shop.MarketStripAt - step);
             PlaceMarketStrip();
         }
         if (UnityEngine.Time.frameCount % 6 == 0
             && Il2CppMenace.UI.UIManager.Get()?.GetActiveScreen()?.TryCast<BlackMarketUIScreen>() is { } screen)
         {
             var (give, get) = (screen.CalcItemsSellValue(), screen.CalcItemsBuyValue());
-            if (give != _marketGive || get != _marketGet)
+            if (give != _shop.MarketGive || get != _shop.MarketGet)
                 SetMarket(give, get);
         }
-        if (_marketMoving)
+        if (_shop.MarketMoving)
             MoveMarketCubes(HitchStep(ShotHitchSeconds, ShotHitchStep));
     }
 
@@ -278,21 +218,21 @@ public sealed partial class StrategyDiorama
     // height under its buttons, over the table.
     private void PlaceMarketStrip()
     {
-        if (_marketStrip?.panel == null || _marketFold == null)
+        if (_shop.MarketStrip?.panel == null || _shop.MarketFold == null)
             return;
-        var top = MarketStripTop + (SquadsTop + MarketButtonHeight + MarketStripGap - MarketStripTop) * Ease.InOutCubic(_marketStripAt);
-        _marketStrip.style.top = top;
-        _marketStrip.style.height = SquadsBottom - top;
-        _marketFold.style.top = top - MarketButtonHeight - MarketStripGap;
+        var top = MarketStripTop + (SquadsTop + MarketButtonHeight + MarketStripGap - MarketStripTop) * Ease.InOutCubic(_shop.MarketStripAt);
+        _shop.MarketStrip.style.top = top;
+        _shop.MarketStrip.style.height = SquadsBottom - top;
+        _shop.MarketFold.style.top = top - MarketButtonHeight - MarketStripGap;
     }
 
     private void ShowMarket(bool on)
     {
-        if (on != _marketOn)
+        if (on != _shop.MarketOn)
             Cue(on ? TableCue.Appear : TableCue.Vanish);
-        _marketOn = on;
-        _marketCubes?.SetActive(on);
-        _marketNumber?.SetActive(on);
+        _shop.MarketOn = on;
+        _shop.MarketCubes?.SetActive(on);
+        _shop.MarketNumber?.SetActive(on);
     }
 
     // The two sides' worth, as cubes: both blocks share the cube's worth and size, which the
@@ -300,62 +240,62 @@ public sealed partial class StrategyDiorama
     private void SetMarket(int give, int get)
     {
         // The first worth of a visit arrives with the table. A change after it is counted out.
-        if (_marketGive >= 0)
+        if (_shop.MarketGive >= 0)
             TableSounds.Play(TableSounds.Count);
-        (_marketGive, _marketGet) = (give, get);
+        (_shop.MarketGive, _shop.MarketGet) = (give, get);
         var worth = MarketCubeWorth;
         while ((Math.Max(give, get) + worth - 1) / worth > MarketMostCubes)
             worth *= 2;
-        (_marketCounts[0], _marketCounts[1]) = ((give + worth - 1) / worth, (get + worth - 1) / worth);
-        var most = Math.Max(_marketCounts[0], _marketCounts[1]);
-        _marketEdge = MarketEdge;
-        while (_marketEdge * _marketEdge * _marketEdge < most)
-            _marketEdge++;
+        (_shop.MarketCounts[0], _shop.MarketCounts[1]) = ((give + worth - 1) / worth, (get + worth - 1) / worth);
+        var most = Math.Max(_shop.MarketCounts[0], _shop.MarketCounts[1]);
+        _shop.CubeEdge = MarketEdge;
+        while (_shop.CubeEdge * _shop.CubeEdge * _shop.CubeEdge < most)
+            _shop.CubeEdge++;
         for (var side = 0; side < 2; side++)
         {
-            var pile = _marketPiles[side];
+            var pile = _shop.MarketPiles[side];
             var staying = pile.Count(c => !c.Leaving);
-            if (_marketCounts[side] > staying)
+            if (_shop.MarketCounts[side] > staying)
             {
                 // Cubes on their way out stand at the block's end, and go before any is added.
                 pile.RemoveAll(c => c.Leaving);
-                for (var i = staying; i < _marketCounts[side]; i++)
+                for (var i = staying; i < _shop.MarketCounts[side]; i++)
                     pile.Add(new MarketCube { Drop = MarketDropHeight, Speed = -MarketDropSpeed, Wait = (i - staying) * MarketDropStagger });
             }
             else
-                for (int i = pile.Count - 1, going = staying - _marketCounts[side]; i >= 0 && going > 0; i--)
+                for (int i = pile.Count - 1, going = staying - _shop.MarketCounts[side]; i >= 0 && going > 0; i--)
                     if (!pile[i].Leaving)
                     {
                         pile[i].Leaving = true;
                         going--;
                     }
         }
-        if (_marketNumberLabel != null)
+        if (_shop.MarketNumberLabel != null)
         {
             var balance = give - get;
             // Nothing on either side is no trade, which has no balance to show.
-            _marketNumberLabel.text = give + get == 0 ? "" : balance > 0 ? $"+{balance}" : balance.ToString();
-            _marketNumberLabel.style.color = balance < 0 ? new Color(1f, 0.48f, 0.42f) : give + get > 0 ? new Color(0.33f, 0.79f, 0.61f) : Color.white;
+            _shop.MarketNumberLabel.text = give + get == 0 ? "" : balance > 0 ? $"+{balance}" : balance.ToString();
+            _shop.MarketNumberLabel.style.color = balance < 0 ? new Color(1f, 0.48f, 0.42f) : give + get > 0 ? new Color(0.33f, 0.79f, 0.61f) : Color.white;
         }
-        _marketMoving = true;
+        _shop.MarketMoving = true;
     }
 
     // Every cube goes towards its cell, falls if it is in the air, and is written into the mesh.
     private void MoveMarketCubes(float seconds)
     {
         var ease = 1f - MathF.Exp(-seconds * 9f);
-        var cell = MarketSquare / _marketEdge;
-        var level = Math.Min(_marketCounts[0], _marketCounts[1]);
+        var cell = MarketSquare / _shop.CubeEdge;
+        var level = Math.Min(_shop.MarketCounts[0], _shop.MarketCounts[1]);
         var moving = false;
         for (var side = 0; side < 2; side++)
         {
-            var pile = _marketPiles[side];
+            var pile = _shop.MarketPiles[side];
             var (shown, index) = (0, 0);
-            var floor = _marketEdge * _marketEdge;
+            var floor = _shop.CubeEdge * _shop.CubeEdge;
             for (var i = 0; i < pile.Count; i++)
             {
                 var cube = pile[i];
-                var (layer, row, column) = (index / floor, index % floor / _marketEdge, index % _marketEdge);
+                var (layer, row, column) = (index / floor, index % floor / _shop.CubeEdge, index % _shop.CubeEdge);
                 // Filled from the view's left and from the far row, a floor at a time.
                 var toX = MarketSquareX[side] + MarketSquare / 2f - (column + 0.5f) * cell;
                 var toZ = MarketTableZ - MarketSquare / 2f + (row + 0.5f) * cell;
@@ -391,20 +331,20 @@ public sealed partial class StrategyDiorama
                 }
                 moving |= cube.Leaving || cube.Wait > 0f || cube.Drop > 0f || cube.Speed != 0f || MathF.Abs(size - cube.Size) > 0.0005f
                     || MathF.Abs(toX - cube.X) > 0.0005f || MathF.Abs(toZ - cube.Z) > 0.0005f;
-                var colour = cube.Leaving || index < level ? side == 0 ? _marketGold : _marketCyan : side == 0 ? _marketOver : _marketShort;
+                var colour = cube.Leaving || index < level ? side == 0 ? _shop.MarketGold : _shop.MarketCyan : side == 0 ? _shop.MarketOver : _shop.MarketShort;
                 if (shown < MarketMostCubes)
                     WriteMarketCube(side * MarketMostCubes + shown++, cube.X, MarketTableY + (layer + 0.5f) * cell + cube.Drop, cube.Z, cube.Size / 2f, colour);
                 if (!cube.Leaving)
                     index++;
             }
             // Places a block has given up are drawn as nothing.
-            for (var gone = shown; gone < _marketWritten[side]; gone++)
-                WriteMarketCube(side * MarketMostCubes + gone, 0f, 0f, 0f, 0f, _marketGold);
-            _marketWritten[side] = shown;
+            for (var gone = shown; gone < _shop.MarketWritten[side]; gone++)
+                WriteMarketCube(side * MarketMostCubes + gone, 0f, 0f, 0f, 0f, _shop.MarketGold);
+            _shop.MarketWritten[side] = shown;
         }
-        _marketMesh.vertices = _marketVertices;
-        _marketMesh.colors32 = _marketColours;
-        _marketMoving = moving;
+        _shop.MarketMesh.vertices = _shop.MarketVertices;
+        _shop.MarketMesh.colors32 = _shop.MarketColours;
+        _shop.MarketMoving = moving;
     }
 
     private void WriteMarketCube(int place, float x, float y, float z, float half, Color32 colour)
@@ -417,8 +357,8 @@ public sealed partial class StrategyDiorama
             corner.x = x + ((bits & 1) != 0 ? half : -half);
             corner.y = y + ((bits & 2) != 0 ? half : -half);
             corner.z = z + ((bits & 4) != 0 ? half : -half);
-            _marketVertices[first + i] = corner;
-            _marketColours[first + i] = colour;
+            _shop.MarketVertices[first + i] = corner;
+            _shop.MarketColours[first + i] = colour;
         }
     }
 
@@ -462,15 +402,15 @@ public sealed partial class StrategyDiorama
             fold.RegisterCallback((EventCallback<ClickEvent>)(_ =>
             {
                 Sound.Click();
-                _marketStripOpen = !_marketStripOpen;
-                fold.EnableInClassList("wm-market-fold--open", _marketStripOpen);
+                _shop.MarketStripOpen = !_shop.MarketStripOpen;
+                fold.EnableInClassList("wm-market-fold--open", _shop.MarketStripOpen);
             }));
             panels.Add(fold);
             _shellUndo.Add(fold.RemoveFromHierarchy);
         }
-        fold.EnableInClassList("wm-market-fold--open", _marketStripOpen);
+        fold.EnableInClassList("wm-market-fold--open", _shop.MarketStripOpen);
         fold.style.right = 1280f - stripRight;
-        (_marketStrip, _marketFold) = (trade, fold);
+        (_shop.MarketStrip, _shop.MarketFold) = (trade, fold);
         PlaceMarketStrip();
         // The lists scroll on the shell's slim bar.
         foreach (var scroll in UI.FindAll(panels, UiSelector.TypeName("ScrollView")))

@@ -14,104 +14,13 @@ public sealed partial class StrategyDiorama
     private const float PullMachineHeight = 1.6f;
     private const float MachineShift = -0.2f;
     private static readonly Framing MachineFraming = new(new Vector3(-14.4f, 0.95f, 3.4f), new Vector3(-14.4f, 0.68f, 0f), 42f, MachineShift);
-    // Kalina's shop on Buy and Sell: the table from its side, drawn to the right of the list.
-    private static readonly Framing ShopFraming = new(new Vector3(-14.4f, 1.64f, 4.44f), new Vector3(-14.4f, 0.45f, 0f), 42f, MachineShift, 0.11f);
-    private const string ShopClass = "wm-kalina";
-    private const string ShopProcurementClass = "wm-kalina--procurement";
     // How long a pull runs, and how soon a click may cut it short.
     private const float PullSeconds = 8.7f;
     private const float PullSkipAfter = 0.6f;
 
-    private bool _pullOn, _shopProcurement, _machineForShop;
-    // The holotable is the shop's basket. Every item put in it stands on the table as a
-    // hologram of its picture, on a ring the table projects it from, with how many of it are
-    // wanted at its shoulder. A few of them stand one behind another as well, which tells one
-    // from several at a glance and no more than that. The cards are in the part of the table
-    // seen between the shop's panel and Kalina, in rows that start at the front, and are
-    // smaller the more there are. The shop looks across the table from low down, so a card
-    // hides the table for some way behind it: a row stands far enough behind the one in front
-    // for most of it to be seen over it, and to one side of it. They are lit more than the ship
-    // is, being small pictures seen past two panels. The basket is looked at every few frames.
-    private static readonly Vector3 ShopCartAt = new(-13.92f, -0.12f, 0.5f);
-    private const float ShopCartWidth = 1.45f;
-    private const float ShopCartDepth = 1.15f;
-    // How many of its own heights a card must be behind another to be mostly seen over it.
-    private const float ShopCardClearance = 2.2f;
-    private const float ShopCardLargest = 0.5f;
-    private const int ShopCardsInRow = 4;
-    private const int ShopCardsDeep = 5;
-    private const float ShopCardIntensity = 2.8f;
-    private const float ShopRingIntensity = 1.4f;
-    private const int ShopCardFrames = 10;
-    // The counts are labels in one panel of their own, drawn into one texture: a grid of cells,
-    // each count's quad showing its own cell.
-    private const int ShopCountColumns = 8;
-    private const int ShopCountRows = 6;
-    private const int ShopCountCellWidth = 128;
-    private const int ShopCountCellHeight = 64;
-    private const float ShopCountPlate = 0.8f;
-    private readonly List<GameObject> _shopCards = new();
-    private readonly List<Material> _shopCardMaterials = new();
-    private readonly List<(Il2CppMenace.Items.BaseItemTemplate Template, int Count)> _shopBasket = new();
-    private readonly List<UnityEngine.UIElements.Label> _shopCounts = new();
-    private RenderTexture _shopCountTexture;
-    private UnityEngine.UIElements.PanelSettings _shopCountSettings;
-    private GameObject _shopCountHost;
-    private long _shopCartFor;
-    private long _shopCartCounts;
-    // The cards of an item new to the basket rise from the table. Each is its material and
-    // when it started.
-    private const float ShopCardRise = 0.35f;
-    private readonly List<(Material Material, float Started)> _shopArriving = new();
-    private readonly HashSet<IntPtr> _shopStanding = new();
-
-    // The panel the counts are drawn by, made the first time a basket is shown.
-    private bool ShopCountPanel()
-    {
-        if (_shopCountHost != null)
-            return true;
-        if (!TexturePanel("WOMENACE_ShopCounts", _shellRoot, ShopCountColumns * ShopCountCellWidth, ShopCountRows * ShopCountCellHeight, 1f,
-            out _shopCountHost, out _shopCountSettings, out _shopCountTexture, out var root))
-            return false;
-        for (var i = 0; i < ShopCountColumns * ShopCountRows; i++)
-        {
-            var label = new UnityEngine.UIElements.Label { pickingMode = UnityEngine.UIElements.PickingMode.Ignore };
-            var style = label.style;
-            style.position = UnityEngine.UIElements.Position.Absolute;
-            style.left = i % ShopCountColumns * ShopCountCellWidth;
-            style.top = i / ShopCountColumns * ShopCountCellHeight;
-            style.width = ShopCountCellWidth;
-            style.height = ShopCountCellHeight;
-            style.fontSize = 44;
-            style.color = Color.white;
-            // What a cell draws is what its quad darkens the room behind, so a count is read
-            // over whatever stands behind it.
-            style.backgroundColor = Color.black;
-            style.unityFontStyleAndWeight = FontStyle.Bold;
-            style.unityTextAlign = TextAnchor.MiddleCenter;
-            style.marginLeft = style.marginRight = style.marginTop = style.marginBottom = 0;
-            style.paddingLeft = style.paddingRight = style.paddingTop = style.paddingBottom = 0;
-            root.Add(label);
-            _shopCounts.Add(label);
-        }
-        return true;
-    }
-
-    // The basket's holograms go with the room, and the panel their counts are drawn by with them.
-    private void ClearShopCart()
-    {
-        ShowShopCart(false);
-        foreach (var made in new UnityEngine.Object[] { _shopCountHost, _shopCountSettings, _shopCountTexture })
-            if (made != null)
-                UnityEngine.Object.Destroy(made);
-        (_shopCountHost, _shopCountSettings, _shopCountTexture) = (null, null, null);
-        _shopCounts.Clear();
-    }
-    private Action _pullDone;
-    private object _pullRoutine;
 
     // Whether a pull is running at the machine, which shows the ops room behind Kalina's shop.
-    internal static bool PullRunning => _instance?._pullOn ?? false;
+    internal static bool PullRunning => _instance?._shop.PullOn ?? false;
 
     // Runs a pull at the machine: one or ten, at a rarity (white, purple, golden, colorful), and
     // calls back when it is over or was cut short. False where there is no room or no machine
@@ -119,17 +28,21 @@ public sealed partial class StrategyDiorama
     internal static bool PlayPull(bool ten, string rarity, Action done)
     {
         var d = _instance;
-        if (d == null || !Enabled || d._pullOn)
+        if (d == null || !Enabled || d._shop.PullOn)
             return false;
-        if (d._machine == null && d._room != null && d._camera != null && d._active == d._ops)
+        // Made here for the shop, it goes when the shop is done with it, as one DriveShop makes.
+        if (d._shop.Machine == null && d._room != null && d._camera != null && d._active == d._ops)
+        {
             ShowMachine(PullMachineHeight, 0f, 0f);
-        if (d._machine == null)
+            d._shop.MachineForShop = d._shop.Machine != null;
+        }
+        if (d._shop.Machine == null)
             return false;
-        d._pullOn = true;
+        d._shop.PullOn = true;
         d.SetPullBars(true);
-        d._pullDone = done;
+        d._shop.PullDone = done;
         PlayMachine(ten ? "Ten" : "One", -1f, true, rarity);
-        d._pullRoutine = d.Context.Coroutines.Start(d.RunPull());
+        d._shop.PullRoutine = d.Context.Coroutines.Start(d.RunPull());
         return true;
     }
 
@@ -184,22 +97,21 @@ public sealed partial class StrategyDiorama
         public bool Shown = true;
     }
 
-    private readonly List<SkitPicture> _skit = new();
 
     private void ClearSkit()
     {
-        foreach (var picture in _skit)
+        foreach (var picture in _shop.Skit)
         {
             UnityEngine.Object.Destroy(picture.Material);
             UnityEngine.Object.Destroy(picture.Picture);
         }
-        _skit.Clear();
+        _shop.Skit.Clear();
     }
 
     private void MakeSkit(string rarity)
     {
         ClearSkit();
-        var body = _machine != null ? _machine.GetComponentInChildren<Animator>() : null;
+        var body = _shop.Machine != null ? _shop.Machine.GetComponentInChildren<Animator>() : null;
         var template = MarkerTemplate();
         if (body == null || template == null)
             return;
@@ -221,7 +133,7 @@ public sealed partial class StrategyDiorama
             picture.transform.localRotation = rig.Turn;
             picture.transform.localScale = new Vector3(rig.Cell.x * metres, rig.Cell.y * metres, 1f);
             picture.transform.localPosition = stands;
-            _skit.Add(new SkitPicture { Rig = rig, Picture = picture, Transform = picture.transform, Material = material, Stands = stands });
+            _shop.Skit.Add(new SkitPicture { Rig = rig, Picture = picture, Transform = picture.transform, Material = material, Stands = stands });
         }
     }
 
@@ -229,7 +141,7 @@ public sealed partial class StrategyDiorama
     private void PlaceSkit(float at)
     {
         at = Math.Max(at, 0f);
-        foreach (var picture in _skit)
+        foreach (var picture in _shop.Skit)
         {
             var rig = picture.Rig;
             var beat = rig.Beats[0];
@@ -273,251 +185,81 @@ public sealed partial class StrategyDiorama
     // The machine as it stands between pulls: still, its lights running and its screen's scene on.
     private void RestMachine()
     {
-        var animator = _machine != null ? _machine.GetComponentInChildren<Animator>() : null;
+        var animator = _shop.Machine != null ? _shop.Machine.GetComponentInChildren<Animator>() : null;
         if (animator == null)
             return;
         ClearSkit();
         animator.speed = 1f;
         animator.Play("Rest", 0, 0f);
-        foreach (var (name, effect) in _machineEffects)
+        foreach (var (name, effect) in _shop.MachineEffects)
             effect.SetActive(name is "body:Loop" or "body:BJ001");
-    }
-
-    // Kalina's shop in the ops room: the machine stands on the table while Procurement is open,
-    // and the camera's view follows the shop's own tabs, which change without a screen change.
-    private void DriveShop()
-    {
-        var open = _policyScreen == VanillaUi.Screens.Workshop && ShopSystem.IsShopOpen;
-        var procurement = open && ShopSystem.IsProcurementOpen;
-        if (procurement != _shopProcurement)
-        {
-            _shopProcurement = procurement;
-            if (open)
-            {
-                ApplyScreenPolicy();
-                ApplyHome(_homeScreen, _homeRoomShown);
-            }
-        }
-        // Nothing is asked of the clock while there is no shop open and no basket standing.
-        if ((open || _shopCartFor != 0) && UnityEngine.Time.frameCount % ShopCardFrames == 0)
-            ShowShopCart(open && !procurement && _room != null && _active == _ops);
-        if (_shopArriving.Count > 0)
-            RaiseShopCards();
-        if (_pullOn)
-            return;
-        var wanted = procurement && _room != null && _camera != null && _active == _ops;
-        if (wanted && _machine == null)
-        {
-            ShowMachine(PullMachineHeight, 0f, 0f);
-            _machineForShop = _machine != null;
-            RestMachine();
-        }
-        else if (!wanted && _machine != null && _machineForShop)
-        {
-            ShowMachine(0f, 0f, 0f);
-            _machineForShop = false;
-        }
-    }
-
-    // Stands the basket on the table, or clears it. Nothing is touched while the basket is as
-    // it was last shown.
-    private void ShowShopCart(bool shown)
-    {
-        _shopBasket.Clear();
-        if (shown)
-            ShopSystem.Basket(_shopBasket);
-        // What stands on the table follows which items are in the basket and how many of each
-        // are stacked. The number at a card's shoulder is a label, so a count that changes
-        // nothing else is written to its label and nothing is built.
-        var (basket, counts) = (0L, 0L);
-        foreach (var (template, count) in _shopBasket)
-        {
-            basket = unchecked(basket * 31 + template.Pointer.ToInt64() * 7 + Math.Min(count, ShopCardsDeep));
-            counts = unchecked(counts * 31 + count);
-        }
-        if (basket == _shopCartFor)
-        {
-            if (counts != _shopCartCounts)
-                for (var i = 0; i < _shopBasket.Count && i < _shopCounts.Count; i++)
-                    _shopCounts[i].text = ShopCount(_shopBasket[i].Count);
-            _shopCartCounts = counts;
-            return;
-        }
-        (_shopCartFor, _shopCartCounts) = (basket, counts);
-        _shopArriving.Clear();
-        foreach (var card in _shopCards)
-            UnityEngine.Object.Destroy(card);
-        foreach (var material in _shopCardMaterials)
-            UnityEngine.Object.Destroy(material);
-        _shopCards.Clear();
-        _shopCardMaterials.Clear();
-        var marker = MarkerTemplate();
-        if (_shopBasket.Count == 0 || HologramMaterial() == null || _room == null || marker == null)
-        {
-            _shopStanding.Clear();
-            return;
-        }
-        var counted = ShopCountPanel();
-        var rows = (_shopBasket.Count + ShopCardsInRow - 1) / ShopCardsInRow;
-        var inRow = (_shopBasket.Count + rows - 1) / rows;
-        var size = Mathf.Min(ShopCardLargest, ShopCartWidth / inRow * 0.8f);
-        if (rows > 1)
-            size = Mathf.Min(size, ShopCartDepth / (rows - 1) / ShopCardClearance);
-        var between = rows > 1 ? ShopCartDepth / (rows - 1) : 0f;
-        // The cards face the shop's view of the table. A ring lies on the table.
-        var away = ShopCartAt - ShopFraming.Eye;
-        away.y = 0f;
-        var facing = Quaternion.LookRotation(away.normalized, Vector3.up);
-        var lying = Quaternion.LookRotation(Vector3.down, Vector3.back);
-        for (var i = 0; i < _shopBasket.Count; i++)
-        {
-            var (item, count) = _shopBasket[i];
-            var picture = item.Icon;
-            if (picture == null || picture.texture == null)
-                continue;
-            var (row, column) = (i / inRow, i % inRow);
-            var across = Mathf.Min(inRow, _shopBasket.Count - row * inRow);
-            var aside = rows > 1 ? (row % 2 == 0 ? -0.25f : 0.25f) : 0f;
-            var foot = ShopCartAt + new Vector3((column - (across - 1) / 2f + aside) * ShopCartWidth / inRow, 0f, -row * between);
-            var ring = Quad(marker, "wm-shop-ring", RingTexture());
-            ring.transform.localPosition = foot + new Vector3(0f, 0.004f, 0f);
-            ring.transform.localRotation = lying;
-            ring.transform.localScale = new Vector3(size * 0.95f, size * 0.95f, 1f);
-            var ringMaterial = ring.GetComponent<MeshRenderer>().material;
-            ringMaterial.SetFloat(IntensityId, ShopRingIntensity);
-            ringMaterial.SetFloat("_ScanDepth", 0f);
-            ringMaterial.SetFloat("_Plate", 0f);
-            ringMaterial.SetFloat("_EdgeFade", 0f);
-            _shopCards.Add(ring);
-            _shopCardMaterials.Add(ringMaterial);
-            if (counted && i < _shopCounts.Count)
-            {
-                _shopCounts[i].text = ShopCount(count);
-                var number = Quad(marker, "wm-shop-count", _shopCountTexture);
-                // At the card's shoulder, a little nearer than the card so it is drawn over it.
-                number.transform.localPosition = foot + new Vector3(size * 0.38f, size * 0.92f, 0.03f);
-                number.transform.localRotation = facing;
-                number.transform.localScale = new Vector3(size * 0.6f, size * 0.6f * ShopCountCellHeight / ShopCountCellWidth, 1f);
-                PlainHologram(number, MarketNumberIntensity);
-                var numberMaterial = number.GetComponent<MeshRenderer>().material;
-                numberMaterial.SetFloat("_Plate", ShopCountPlate);
-                numberMaterial.SetVector(UvRectId, SheetCell(i, ShopCountColumns, ShopCountRows));
-                _shopCards.Add(number);
-                _shopCardMaterials.Add(numberMaterial);
-            }
-            var shape = picture.rect;
-            var widest = Mathf.Max(shape.width, shape.height);
-            var material = IconHologram(picture);
-            material.SetFloat(HologramFloorId, _room.transform.TransformPoint(foot).y);
-            material.SetFloat(HologramHeightId, size * 1.3f);
-            var arriving = !_shopStanding.Contains(item.Pointer);
-            material.SetFloat(HologramRevealId, arriving ? 0f : ShopCardRevealed);
-            material.SetFloat(IntensityId, ShopCardIntensity);
-            _shopCardMaterials.Add(material);
-            if (arriving)
-                _shopArriving.Add((material, Time.unscaledTime));
-            for (var behind = 0; behind < Mathf.Min(count, ShopCardsDeep); behind++)
-            {
-                var card = IconCard(_room.transform, picture, size);
-                card.name = "wm-shop-card";
-                // Each stands on the table, a little behind the one in front of it.
-                card.transform.localPosition = foot + new Vector3(behind * size * 0.05f, size * shape.height / widest / 2f, -behind * size * 0.1f);
-                card.transform.localRotation = facing;
-                card.GetComponent<Renderer>().sharedMaterial = material;
-                _shopCards.Add(card);
-            }
-        }
-        _shopStanding.Clear();
-        foreach (var (item, _) in _shopBasket)
-            _shopStanding.Add(item.Pointer);
-    }
-
-    private const float ShopCardRevealed = 1.1f;
-
-    private static string ShopCount(int count) => "×" + count.ToString(System.Globalization.CultureInfo.InvariantCulture);
-
-    // Raises the cards that are new to the basket.
-    private void RaiseShopCards()
-    {
-        var now = Time.unscaledTime;
-        for (var i = _shopArriving.Count - 1; i >= 0; i--)
-        {
-            var (material, started) = _shopArriving[i];
-            var share = Math.Min(1f, (now - started) / ShopCardRise);
-            material.SetFloat(HologramRevealId, share * ShopCardRevealed);
-            if (share >= 1f)
-                _shopArriving.RemoveAt(i);
-        }
-    }
-
-    // The shop's own panel is a list at the left of the ops room, Kalina at the right on Buy and
-    // Sell, and the machine's side of the frame left clear on Procurement.
-    private void LayOutShop(UnityEngine.UIElements.VisualElement root)
-    {
-        var open = ShopSystem.IsShopOpen;
-        if (open && !root.ClassListContains(ShopClass))
-            _shellUndo.Add(() =>
-            {
-                root.RemoveFromClassList(ShopClass);
-                root.RemoveFromClassList(ShopProcurementClass);
-            });
-        root.EnableInClassList(ShopClass, open);
-        root.EnableInClassList(ShopProcurementClass, open && ShopSystem.IsProcurementOpen);
     }
 
     private System.Collections.IEnumerator RunPull()
     {
         var started = Time.unscaledTime;
-        while (_pullOn && Time.unscaledTime - started < PullSeconds)
+        while (_shop.PullOn && Time.unscaledTime - started < PullSeconds)
         {
             var mouse = UnityEngine.InputSystem.Mouse.current;
             if (Time.unscaledTime - started > PullSkipAfter && mouse != null && mouse.leftButton.wasPressedThisFrame)
                 break;
             yield return null;
         }
-        _pullRoutine = null;
+        _shop.PullRoutine = null;
         EndPull();
     }
 
     // The machine goes, the shop's screen has its own backing again, and the shop is told.
     private void EndPull()
     {
-        if (!_pullOn)
+        if (!_shop.PullOn)
             return;
-        if (_pullRoutine != null)
-            Context.Coroutines.Stop(_pullRoutine);
-        _pullRoutine = null;
-        _pullOn = false;
+        if (_shop.PullRoutine != null)
+            Context.Coroutines.Stop(_shop.PullRoutine);
+        _shop.PullRoutine = null;
+        _shop.PullOn = false;
         SetPullBars(false);
-        if (_machineCameraRoutine != null)
-            Context.Coroutines.Stop(_machineCameraRoutine);
-        _machineCameraRoutine = null;
+        if (_shop.MachineCameraRoutine != null)
+            Context.Coroutines.Stop(_shop.MachineCameraRoutine);
+        _shop.MachineCameraRoutine = null;
         StopMachineEffects();
         RestMachine();
         // The camera goes back to the shop's own view of the machine.
         _shotFraming = null;
         ApplyScreenPolicy();
-        var done = _pullDone;
-        _pullDone = null;
+        var done = _shop.PullDone;
+        _shop.PullDone = null;
         done?.Invoke();
     }
 
-    private GameObject _machine;
-    private readonly List<Il2CppStem.SoundInstance> _machineSounds = new();
+    // A pull the scene ends under: the shop is still told it is over, so it shows itself again.
+    // The bars and the camera go with the scene.
+    private void AbandonPull()
+    {
+        if (!_shop.PullOn)
+            return;
+        if (_shop.PullRoutine != null)
+            Context.Coroutines.Stop(_shop.PullRoutine);
+        (_shop.PullRoutine, _shop.PullOn) = (null, false);
+        var done = _shop.PullDone;
+        _shop.PullDone = null;
+        try { done?.Invoke(); }
+        catch (Exception ex) { Context.Log.Warn($"strategy diorama: an abandoned pull's ending failed: {ex.GetType().Name}: {ex.Message}"); }
+    }
+
 
     // The pull's effects stop being switched, and what it was playing stops with them: a pull
     // cut short takes its sounds with it.
     private void StopMachineEffects()
     {
-        if (_machineEffectsRoutine != null)
-            Context.Coroutines.Stop(_machineEffectsRoutine);
-        _machineEffectsRoutine = null;
-        foreach (var sound in _machineSounds)
+        if (_shop.MachineEffectsRoutine != null)
+            Context.Coroutines.Stop(_shop.MachineEffectsRoutine);
+        _shop.MachineEffectsRoutine = null;
+        foreach (var sound in _shop.MachineSounds)
             if (sound != null && sound.Playing)
                 sound.Stop();
-        _machineSounds.Clear();
+        _shop.MachineSounds.Clear();
     }
-    private readonly List<Material> _machineMaterials = new();
 
     // Stands the machine over the holotable, in the ship's place where O.C.I. is showing: its
     // height in metres (zero takes it away), how far along the table from its middle, and its turn.
@@ -527,19 +269,19 @@ public sealed partial class StrategyDiorama
         if (d?._room == null)
             return "no room";
         d.StopMachineCamera();
-        foreach (var material in d._machineMaterials)
+        foreach (var material in d._shop.MachineMaterials)
             UnityEngine.Object.Destroy(material);
-        d._machineMaterials.Clear();
-        if (d._machine != null)
-            UnityEngine.Object.Destroy(d._machine);
-        d._machine = null;
+        d._shop.MachineMaterials.Clear();
+        if (d._shop.Machine != null)
+            UnityEngine.Object.Destroy(d._shop.Machine);
+        d._shop.Machine = null;
         d.StopMachineEffects();
-        d._machineEffects.Clear();
+        d._shop.MachineEffects.Clear();
         d.ClearSkit();
         if (height <= 0f)
         {
-            if (d._ociShip != null)
-                d._ociShip.SetActive(d._ociOn);
+            if (d._oci.Ship != null)
+                d._oci.Ship.SetActive(d._oci.On);
             return "machine away";
         }
         var prefab = d.Context.Assets.Load<GameObject>("environment/gacha_machine/main");
@@ -554,49 +296,39 @@ public sealed partial class StrategyDiorama
         machine.transform.localScale = Vector3.one * (height / modelHeight);
         var foot = machine.transform.position.y;
         foreach (var renderer in machine.GetComponentsInChildren<Renderer>(true))
-        {
-            Material[] own = renderer.sharedMaterials;
-            var worn = new Material[own.Length];
-            for (var i = 0; i < own.Length; i++)
+            d.WearHolograms(renderer, d._shop.MachineMaterials, (worn, _) =>
             {
-                worn[i] = d.HologramOf(own[i]);
-                worn[i].SetFloat(HologramFloorId, foot);
-                worn[i].SetFloat(HologramHeightId, height);
-                worn[i].SetFloat(IntensityId, OciIntensity);
-                worn[i].SetFloat("_ScanDensity", 60f);
-                worn[i].SetFloat(HologramRevealId, 1.1f);
+                worn.SetFloat(HologramFloorId, foot);
+                worn.SetFloat(HologramHeightId, height);
+                worn.SetFloat(IntensityId, OciIntensity);
+                worn.SetFloat("_ScanDensity", 60f);
+                worn.SetFloat(HologramRevealId, 1.1f);
                 // More of the machine's own pastel colours than a doll keeps, or it reads as white.
-                worn[i].SetFloat("_OwnColour", 0.75f);
-                d._machineMaterials.Add(worn[i]);
-            }
-            renderer.sharedMaterials = worn;
-        }
-        d._machine = machine;
+                worn.SetFloat("_OwnColour", 0.75f);
+            });
+        d._shop.Machine = machine;
         // GFL2's effects for the pull, each off until its moment: the pull's own and the
         // machine's in the machine's space, the capsule's on its first capsule, and the camera's
         // on a holder that goes where the pull's camera does.
-        d._machineEffects.Clear();
+        d._shop.MachineEffects.Clear();
         var body = machine.GetComponentInChildren<Animator>();
         if (body != null)
         {
             Transform Node(string name) => body.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == name);
-            d._machineCameraNode = Node("Camera");
-            d._machineCameraEffects = new GameObject("wm-machine-camera-effects").transform;
-            d._machineCameraEffects.SetParent(body.transform, false);
+            d._shop.MachineCameraNode = Node("Camera");
+            d._shop.MachineCameraEffects = new GameObject("wm-machine-camera-effects").transform;
+            d._shop.MachineCameraEffects.SetParent(body.transform, false);
             d.StageMachineEffects("environment/gacha_machine_vfx/main", body.transform, "fx");
             d.StageMachineEffects("environment/gacha_machine_vfx_body/main", body.transform, "body");
             d.StageMachineEffects("environment/gacha_machine_vfx_egg/main", Node("TwistEggA_01"), "egg");
             d.StageMachineEffects("environment/gacha_machine_vfx_egg_one/main", Node("TwistEggA_01"), "one");
-            d.StageMachineEffects("environment/gacha_machine_vfx_camera/main", d._machineCameraEffects, "cam");
+            d.StageMachineEffects("environment/gacha_machine_vfx_camera/main", d._shop.MachineCameraEffects, "cam");
         }
-        if (d._ociShip != null)
-            d._ociShip.SetActive(false);
-        return $"machine {height} m tall at {machine.transform.localPosition}, {d._machineMaterials.Count} materials, {d._machineEffects.Count} effects";
+        if (d._oci.Ship != null)
+            d._oci.Ship.SetActive(false);
+        return $"machine {height} m tall at {machine.transform.localPosition}, {d._shop.MachineMaterials.Count} materials, {d._shop.MachineEffects.Count} effects";
     }
 
-    private object _machineCameraRoutine, _machineEffectsRoutine;
-    private readonly Dictionary<string, GameObject> _machineEffects = new();
-    private Transform _machineCameraNode, _machineCameraEffects;
 
     // One of the pull's effect prefabs under a part of the machine. Its effects are the children
     // of its VFX groups, kept by the prefab's tag and their name, with a 2 for the second group.
@@ -611,7 +343,7 @@ public sealed partial class StrategyDiorama
         foreach (var node in staged.GetComponentsInChildren<Transform>(true))
             if (node.parent != null && node.parent.name.StartsWith("VFX", StringComparison.Ordinal))
             {
-                _machineEffects[$"{tag}{(node.parent.name == "VFX (2)" ? "2" : "")}:{node.name}"] = node.gameObject;
+                _shop.MachineEffects[$"{tag}{(node.parent.name == "VFX (2)" ? "2" : "")}:{node.name}"] = node.gameObject;
                 node.gameObject.SetActive(false);
             }
     }
@@ -620,9 +352,9 @@ public sealed partial class StrategyDiorama
     // node carries its lens's focal length as its scale, which they must not take.
     private void PlaceMachineCameraEffects()
     {
-        if (_machineCameraNode == null || _machineCameraEffects == null)
+        if (_shop.MachineCameraNode == null || _shop.MachineCameraEffects == null)
             return;
-        _machineCameraEffects.SetPositionAndRotation(_machineCameraNode.position, _machineCameraNode.rotation);
+        _shop.MachineCameraEffects.SetPositionAndRotation(_shop.MachineCameraNode.position, _shop.MachineCameraNode.rotation);
     }
 
     // GFL2's timeline for the pull (Ani_One and Ani_Ten in its bundle, a group of tracks for each
@@ -691,11 +423,11 @@ public sealed partial class StrategyDiorama
     {
         PlaceMachineCameraEffects();
         PlaceSkit(at);
-        foreach (var effect in _machineEffects.Values)
+        foreach (var effect in _shop.MachineEffects.Values)
             effect.SetActive(false);
         foreach (var (name, start, length) in schedule)
         {
-            if (!_machineEffects.TryGetValue(name, out var effect) || at < start || at > start + length)
+            if (!_shop.MachineEffects.TryGetValue(name, out var effect) || at < start || at > start + length)
                 continue;
             effect.SetActive(true);
             foreach (var particles in effect.GetComponentsInChildren<ParticleSystem>(true))
@@ -711,11 +443,11 @@ public sealed partial class StrategyDiorama
     {
         var bank = SoundIds.FromName(Procurement.SoundBankId);
         var heard = new bool[sounds.Length];
-        foreach (var effect in _machineEffects.Values)
+        foreach (var effect in _shop.MachineEffects.Values)
             effect.SetActive(false);
         var started = Time.unscaledTime;
         var shown = new bool[schedule.Length];
-        while (_machine != null && Time.unscaledTime - started < 10f)
+        while (_shop.Machine != null && Time.unscaledTime - started < 10f)
         {
             var at = Time.unscaledTime - started;
             PlaceMachineCameraEffects();
@@ -725,17 +457,17 @@ public sealed partial class StrategyDiorama
                 {
                     heard[i] = true;
                     if (new Il2CppStem.ID(bank, SoundIds.FromName(sounds[i].Sound)).Play(1f, 1f) is { } playing)
-                        _machineSounds.Add(playing);
+                        _shop.MachineSounds.Add(playing);
                 }
             for (var i = 0; i < schedule.Length; i++)
             {
                 var on = at >= schedule[i].Start && at <= schedule[i].Start + schedule[i].Length;
-                if (on != shown[i] && _machineEffects.TryGetValue(schedule[i].Effect, out var effect))
+                if (on != shown[i] && _shop.MachineEffects.TryGetValue(schedule[i].Effect, out var effect))
                     effect.SetActive(shown[i] = on);
             }
             yield return null;
         }
-        _machineEffectsRoutine = null;
+        _shop.MachineEffectsRoutine = null;
     }
 
     // Plays one of the machine's pull clips (One or Ten) from its start, or holds it at a moment
@@ -744,7 +476,7 @@ public sealed partial class StrategyDiorama
     internal static string PlayMachine(string clip, float at, bool camera, string rarity)
     {
         var d = _instance;
-        var animator = d?._machine != null ? d._machine.GetComponentInChildren<Animator>() : null;
+        var animator = d?._shop.Machine != null ? d._shop.Machine.GetComponentInChildren<Animator>() : null;
         if (animator == null)
             return "no machine, or it has no animator";
         const float clipSeconds = 8.15f;
@@ -755,32 +487,32 @@ public sealed partial class StrategyDiorama
         var schedule = MachineSchedule(clip == "Ten", rarity);
         d.MakeSkit(rarity);
         if (at < 0f)
-            d._machineEffectsRoutine = d.Context.Coroutines.Start(d.PlayMachineEffects(schedule, MachineSounds(clip == "Ten", rarity)));
+            d._shop.MachineEffectsRoutine = d.Context.Coroutines.Start(d.PlayMachineEffects(schedule, MachineSounds(clip == "Ten", rarity)));
         else
             d.HoldMachineEffects(schedule, at);
         d.StopMachineCamera();
         if (camera)
-            d._machineCameraRoutine = d.Context.Coroutines.Start(d.FollowMachineCamera(at < 0f ? clipSeconds + 2f : float.PositiveInfinity));
+            d._shop.MachineCameraRoutine = d.Context.Coroutines.Start(d.FollowMachineCamera(at < 0f ? clipSeconds + 2f : float.PositiveInfinity));
         return (at < 0f ? $"playing {clip}" : $"{clip} held at {at} s") + $", {rarity}" + (camera ? ", with its camera" : "");
     }
 
     // The room camera is its screen's own again.
     private void StopMachineCamera()
     {
-        if (_machineCameraRoutine == null)
+        if (_shop.MachineCameraRoutine == null)
             return;
-        Context.Coroutines.Stop(_machineCameraRoutine);
-        _machineCameraRoutine = null;
+        Context.Coroutines.Stop(_shop.MachineCameraRoutine);
+        _shop.MachineCameraRoutine = null;
         LeaveMachineCamera();
     }
 
     // O.C.I. takes its own view back. A pull's view goes with the pull.
     private void LeaveMachineCamera()
     {
-        if (!_ociOn)
+        if (!_oci.On)
             return;
         _shotLift = OciFraming.Lift;
-        _ociShotFor = (float.NaN, float.NaN);
+        _oci.ShotFor = (float.NaN, float.NaN);
     }
 
     // The room camera eases to the machine's Camera node and then stays on it: the node stands
@@ -794,10 +526,10 @@ public sealed partial class StrategyDiorama
 
     private System.Collections.IEnumerator FollowMachineCamera(float seconds)
     {
-        var node = _machineCameraNode;
+        var node = _shop.MachineCameraNode;
         var up = _room.transform.up;
         var (from, lift, started) = (_shot, _shotLift, Time.unscaledTime);
-        while (node != null && _machine != null)
+        while (node != null && _shop.Machine != null)
         {
             var since = Time.unscaledTime - started;
             if (since >= seconds)
@@ -812,7 +544,7 @@ public sealed partial class StrategyDiorama
             _shotLift = lift + (PullLift - lift) * k;
             yield return null;
         }
-        _machineCameraRoutine = null;
+        _shop.MachineCameraRoutine = null;
         LeaveMachineCamera();
     }
 }

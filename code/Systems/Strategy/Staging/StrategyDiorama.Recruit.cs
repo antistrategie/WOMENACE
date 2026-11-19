@@ -745,40 +745,6 @@ public sealed partial class StrategyDiorama
         _candidateDrawn = 0f;
     }
 
-    // The hologram's material, which whatever is shown as one wears a copy of.
-    private Material HologramMaterial()
-    {
-        if (_hologram != null)
-            return _hologram;
-        _hologram = Context.Assets.Load<GameObject>(HologramAsset)?.GetComponent<MeshRenderer>()?.sharedMaterial;
-        if (_hologram == null)
-            return null;
-        // Set on the loaded material, over whatever it was saved with, and so on every copy
-        // of it: finer lines with narrower gaps, a quieter glow along an outline and some of
-        // the thing's own colours, so that a face and what is worn can be read.
-        _hologram.SetFloat("_ScanRows", HologramRows);
-        _hologram.SetFloat("_ScanGap", HologramLineGap);
-        _hologram.SetFloat("_RimBoost", HologramRim);
-        _hologram.SetFloat("_OwnColour", HologramOwnColour);
-        return _hologram;
-    }
-
-    // Where a material may keep its picture, whichever shader it is drawn with.
-    private static readonly string[] HologramSourceMaps = { "_BaseMap", "_BaseColorMap", "_MainTex" };
-
-    // A copy of the hologram carrying a material's own picture, for its light and dark.
-    private Material HologramOf(Material source)
-    {
-        var worn = new Material(HologramMaterial());
-        foreach (var map in HologramSourceMaps)
-            if (source != null && source.HasProperty(map) && source.GetTexture(map) != null)
-            {
-                worn.SetTexture(BaseMapId, source.GetTexture(map));
-                break;
-            }
-        return worn;
-    }
-
     // Every renderer of the doll wears the hologram, with its own texture's light and dark.
     private void WearHologram(GameObject doll)
     {
@@ -795,20 +761,13 @@ public sealed partial class StrategyDiorama
                 continue;
             }
             top = Mathf.Max(top, renderer.bounds.max.y);
-            Material[] own = renderer.sharedMaterials;
-            var worn = new Material[own.Length];
-            for (var i = 0; i < own.Length; i++)
+            _candidateOwn.Add((renderer, renderer.sharedMaterials));
+            WearHolograms(renderer, _candidateHolograms, (worn, source) =>
             {
-                var source = own[i];
-                var material = HologramOf(source);
                 var shader = source != null && source.shader != null ? source.shader.name : "";
                 if (HologramSkips.Any(skip => shader.Contains(skip, StringComparison.Ordinal)))
-                    material.SetFloat(HologramOpacityId, 0f);
-                worn[i] = material;
-                _candidateHolograms.Add(material);
-            }
-            _candidateOwn.Add((renderer, own));
-            renderer.sharedMaterials = worn;
+                    worn.SetFloat(HologramOpacityId, 0f);
+            });
         }
         foreach (var material in _candidateHolograms)
         {

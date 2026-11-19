@@ -207,8 +207,8 @@ public sealed partial class StrategyDiorama : JiangyuSystem
         ClearWorkshop();
         ClearOci();
         ClearMarket();
+        AbandonPull();
         ShowMachine(0f, 0f, 0f);
-        _pullOn = false;
         ClearShopCart();
         ClearSets();
         if (_camera != null)

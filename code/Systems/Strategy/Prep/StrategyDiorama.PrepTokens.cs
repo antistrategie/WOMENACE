@@ -352,19 +352,6 @@ public sealed partial class StrategyDiorama
         return _prep.TokenRing;
     }
 
-    // A hologram's material with nothing of the screen's about it: no scan lines, no faded
-    // edge, the whole texture, all of it shown.
-    private static void PlainHologram(Material material, float plate, float intensity, Color tint)
-    {
-        material.SetFloat("_ScanDepth", 0f);
-        material.SetFloat("_EdgeFade", 0f);
-        material.SetFloat("_Reveal", 1f);
-        material.SetFloat("_Plate", plate);
-        material.SetFloat("_Intensity", intensity);
-        material.SetColor("_Tint", tint);
-        material.SetVector("_UvRect", new Vector4(1f, 1f, 0f, 0f));
-    }
-
     private GameObject TokenQuad(GameObject template, string name, Texture texture, float plate)
     {
         var quad = Quad(template, name, texture);

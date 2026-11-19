@@ -71,29 +71,8 @@ public sealed partial class StrategyDiorama
     private const string OciGroupClass = "wm-oci-group";
     private const string OciLineOnClass = "wm-oci-line--on";
 
-    private GameObject _ociShip;
-    private readonly List<Material> _ociHolograms = new();
-    private float _ociReveal;
-    private bool _ociOn, _ociOrbiting;
-    // The view each visit opens on, round the ship from it, and the view the shot was last made for.
-    private (float Yaw, float Tilt, float Distance) _ociStart;
-    private float _ociYaw, _ociDistance, _ociYawTarget, _ociDistanceTarget;
-    private (float Yaw, float Distance) _ociShotFor;
-    // A group with the parts of its line, and the group the pointer is over.
-    private readonly List<(VisualElement Group, Vector3 Anchor, VisualElement Stem, VisualElement Line, VisualElement Ring)> _ociGroups = new();
-    private int _ociPicked = -1;
-    // Each slot's group, by the slot, the slots' holder and how many elements it had when laid
-    // out, and whether a slot was left out of the layout because vanilla had not yet set it up.
-    private readonly Dictionary<IntPtr, int> _ociSlotGroups = new();
-    private VisualElement _ociSlotsHolder;
-    private int _ociSlotCount;
-    private bool _ociUnplaced;
-    // The slots whose kind is not known yet, asked again every few frames until one is.
-    private readonly List<ShipSlot> _ociUnresolved = new();
     // A slot is drawn once it stands in its group, so none shows where vanilla puts it.
     private const string OciPlacedClass = "wm-oci-slot--placed";
-    // Frames the lines are still placed for after anything they follow last moved.
-    private int _ociSettling;
 
     private static (float Yaw, float Tilt, float Distance) OciOrbitStart()
     {
@@ -105,46 +84,36 @@ public sealed partial class StrategyDiorama
     // The ship over the table, made once for the room and put away between visits.
     private GameObject OciShip()
     {
-        if (_ociShip != null)
-            return _ociShip;
+        if (_oci.Ship != null)
+            return _oci.Ship;
         var prefab = Context.Assets.Load<GameObject>(ElmoAsset);
         if (prefab == null || HologramMaterial() == null)
             return null;
-        _ociShip = UnityEngine.Object.Instantiate(prefab, _room.transform, false);
-        _ociShip.name = OciShipName;
-        _ociShip.transform.localPosition = OciShipFoot;
-        _ociShip.transform.localRotation = OciShipFacing;
-        _ociShip.transform.localScale = Vector3.one * (OciShipLength / ElmoLength);
-        var foot = _ociShip.transform.position.y;
+        _oci.Ship = UnityEngine.Object.Instantiate(prefab, _room.transform, false);
+        _oci.Ship.name = OciShipName;
+        _oci.Ship.transform.localPosition = OciShipFoot;
+        _oci.Ship.transform.localRotation = OciShipFacing;
+        _oci.Ship.transform.localScale = Vector3.one * (OciShipLength / ElmoLength);
+        var foot = _oci.Ship.transform.position.y;
         var tall = ElmoHeight * OciShipLength / ElmoLength;
-        foreach (var renderer in _ociShip.GetComponentsInChildren<Renderer>(true))
-        {
-            Material[] own = renderer.sharedMaterials;
-            var worn = new Material[own.Length];
-            for (var i = 0; i < own.Length; i++)
+        foreach (var renderer in _oci.Ship.GetComponentsInChildren<Renderer>(true))
+            WearHolograms(renderer, _oci.Holograms, (worn, _) =>
             {
-                worn[i] = HologramOf(own[i]);
-                worn[i].SetFloat(HologramFloorId, foot);
-                worn[i].SetFloat(HologramHeightId, tall);
-                worn[i].SetFloat(IntensityId, OciIntensity);
-                worn[i].SetFloat("_ScanDensity", OciLinesPerMetre);
-                _ociHolograms.Add(worn[i]);
-            }
-            renderer.sharedMaterials = worn;
-        }
-        return _ociShip;
+                worn.SetFloat(HologramFloorId, foot);
+                worn.SetFloat(HologramHeightId, tall);
+                worn.SetFloat(IntensityId, OciIntensity);
+                worn.SetFloat("_ScanDensity", OciLinesPerMetre);
+            });
+        return _oci.Ship;
     }
 
     // What O.C.I. showed goes with its room, and is made again when the room is.
     private void ClearOci()
     {
-        foreach (var material in _ociHolograms)
+        foreach (var material in _oci.Holograms)
             if (material != null)
                 UnityEngine.Object.Destroy(material);
-        _ociHolograms.Clear();
-        _ociGroups.Clear();
-        _ociSlotGroups.Clear();
-        (_ociShip, _ociOn, _ociPicked) = (null, false, -1);
+        _oci.Holograms.Clear();
     }
 
     private void DriveOci()
@@ -153,79 +122,79 @@ public sealed partial class StrategyDiorama
             && _shellRoot?.panel != null;
         if (!on)
         {
-            if (_ociOn && _ociShip != null)
+            if (_oci.On && _oci.Ship != null)
             {
-                _ociShip.SetActive(false);
+                _oci.Ship.SetActive(false);
                 Cue(TableCue.Vanish);
             }
-            _ociOn = false;
+            _oci.On = false;
             return;
         }
         var ship = OciShip();
         if (ship == null)
             return;
-        if (!_ociOn)
+        if (!_oci.On)
         {
             // Each visit opens on the side view, the ship drawn in from its foot.
-            _ociOn = true;
+            _oci.On = true;
             Cue(TableCue.Appear);
-            _ociOrbiting = false;
-            _ociStart = OciOrbitStart();
-            _ociShotFor = (_ociYaw, _ociDistance) = (_ociYawTarget, _ociDistanceTarget) = (_ociStart.Yaw, _ociStart.Distance);
-            _ociReveal = 0f;
+            _oci.Orbiting = false;
+            _oci.Start = OciOrbitStart();
+            _oci.ShotFor = (_oci.Yaw, _oci.Distance) = (_oci.YawTarget, _oci.DistanceTarget) = (_oci.Start.Yaw, _oci.Start.Distance);
+            _oci.Reveal = 0f;
             ship.SetActive(true);
         }
-        if (_ociReveal < 1f)
+        if (_oci.Reveal < 1f)
         {
-            _ociReveal = MathF.Min(1f, _ociReveal + HitchStep(ShotHitchSeconds, ShotHitchStep) / OciRevealSeconds);
-            var drawn = Ease.InOutCubic(_ociReveal) * 1.1f;
-            foreach (var material in _ociHolograms)
+            _oci.Reveal = MathF.Min(1f, _oci.Reveal + HitchStep(ShotHitchSeconds, ShotHitchStep) / OciRevealSeconds);
+            var drawn = Ease.InOutCubic(_oci.Reveal) * 1.1f;
+            foreach (var material in _oci.Holograms)
                 material.SetFloat(HologramRevealId, drawn);
         }
         var mouse = UnityEngine.InputSystem.Mouse.current;
         if (mouse != null)
         {
             if (!mouse.middleButton.isPressed)
-                _ociOrbiting = false;
+                _oci.Orbiting = false;
             else if (mouse.middleButton.wasPressedThisFrame)
-                _ociOrbiting = PointerOverOciRoom();
-            if (_ociOrbiting)
+                _oci.Orbiting = PointerOverOciRoom();
+            if (_oci.Orbiting)
             {
                 // Round the ship a part of the way and no higher or lower: tilted or further
                 // round, the camera sees out of the room's windows.
-                _ociYawTarget = Math.Clamp(_ociYawTarget + mouse.delta.ReadValue().x * OrbitDegreesPerPixel, _ociStart.Yaw - OciTurn, _ociStart.Yaw + OciTurn);
+                _oci.YawTarget = Math.Clamp(_oci.YawTarget + mouse.delta.ReadValue().x * OrbitDegreesPerPixel, _oci.Start.Yaw - OciTurn, _oci.Start.Yaw + OciTurn);
             }
             var scroll = WheelNotches(mouse.scroll.ReadValue().y);
             if (MathF.Abs(scroll) > 0.01f && PointerOverOciRoom())
-                _ociDistanceTarget = Math.Clamp(_ociDistanceTarget * OrbitZoom(scroll), OciNearest, _ociStart.Distance);
+                _oci.DistanceTarget = Math.Clamp(_oci.DistanceTarget * OrbitZoom(scroll), OciNearest, _oci.Start.Distance);
         }
         var smoothing = OrbitSmoothing();
-        _ociYaw += (_ociYawTarget - _ociYaw) * smoothing;
-        _ociDistance += (_ociDistanceTarget - _ociDistance) * smoothing;
-        if (_ociShotFor != (_ociYaw, _ociDistance))
+        _oci.Yaw += (_oci.YawTarget - _oci.Yaw) * smoothing;
+        _oci.Distance += (_oci.DistanceTarget - _oci.Distance) * smoothing;
+        if (_oci.ShotFor != (_oci.Yaw, _oci.Distance))
         {
-            _ociShotFor = (_ociYaw, _ociDistance);
+            _oci.ShotFor = (_oci.Yaw, _oci.Distance);
             // The camera keeps clear of the room's walls all the way round.
-            var (target, way) = (N(OciFraming.Target), PlanetOrbitWay(_ociYaw, _ociStart.Tilt));
-            var local = target + way * ClearDistance(target, way, _ociDistance, OciNearest);
+            var (target, way) = (N(OciFraming.Target), PlanetOrbitWay(_oci.Yaw, _oci.Start.Tilt));
+            var local = target + way * ClearDistance(target, way, _oci.Distance, OciNearest);
             var eye = _room.transform.TransformPoint(new Vector3(local.X, local.Y, local.Z));
             var focus = _room.transform.TransformPoint(OciFraming.Target);
             _shot = (eye, Quaternion.LookRotation(focus - eye, _room.transform.up), OciFraming.Fov, OciFraming.Shift);
-            _ociSettling = 30;
+            _oci.Settling = 30;
         }
         if (_shotTravel < 1f)
-            _ociSettling = 30;
+            _oci.Settling = 30;
         // Vanilla sets its slots up over the first frames the screen shows, and the fairies' come
         // later: a slot added, or one set up after the last layout, is given its place at once.
-        var holder = _ociSlotsHolder?.panel != null ? _ociSlotsHolder
+        var holder = _oci.SlotsHolder?.panel != null ? _oci.SlotsHolder
             : UnityEngine.Time.frameCount % 10 == 0 ? UI.Find(_shellRoot, UiSelector.Name(VanillaUi.Elements.Slots)) : null;
-        if (holder != null && (holder.childCount != _ociSlotCount || _ociUnplaced
-            || (_ociUnresolved.Count > 0 && UnityEngine.Time.frameCount % 10 == 0 && OciSlotResolved())))
+        if (holder != null && (holder.childCount != _oci.SlotCount || _oci.Unplaced
+            || (_oci.Unresolved.Count > 0 && UnityEngine.Time.frameCount % 10 == 0 && OciSlotResolved())))
             LayOutOci(_shellRoot);
         PickOciGroup();
-        if (_ociSettling > 0)
+        if (_oci.Settling > 0)
         {
-            _ociSettling--;
+            _oci.Settling--;
             PlaceOciLines(ship);
         }
     }
@@ -236,20 +205,10 @@ public sealed partial class StrategyDiorama
     private bool OciSlotResolved()
     {
         var ships = Il2CppMenace.States.StrategyState.Get()?.ShipUpgrades;
-        foreach (var slot in _ociUnresolved)
+        foreach (var slot in _oci.Unresolved)
             if (slot != null && OciSlotTemplate(slot, ships)?.GetID() != null)
                 return true;
         return false;
-    }
-
-    internal static string OciOrbitFromDev(float yaw, float distance)
-    {
-        var d = _instance;
-        if (d == null || !d._ociOn)
-            return "O.C.I. is not showing";
-        var start = d._ociStart;
-        (d._ociYawTarget, d._ociDistanceTarget) = (Math.Clamp(yaw, start.Yaw - OciTurn, start.Yaw + OciTurn), Math.Clamp(distance, OciNearest, start.Distance));
-        return $"orbit to {d._ociYawTarget:F0}, {d._ociDistanceTarget:F1}";
     }
 
     // Whether the pointer is over the room: nothing of the shell's or vanilla's panels under it.
@@ -267,15 +226,15 @@ public sealed partial class StrategyDiorama
         var over = -1;
         for (var element = UnderPointer(); element != null && over < 0; element = element.parent)
             if (element.ClassListContains(OciGroupClass))
-                over = _ociGroups.FindIndex(g => g.Group == element);
-            else if (_ociSlotGroups.TryGetValue(element.Pointer, out var group))
+                over = _oci.Groups.FindIndex(g => g.Group == element);
+            else if (_oci.SlotGroups.TryGetValue(element.Pointer, out var group))
                 over = group;
-        if (over == _ociPicked)
+        if (over == _oci.Picked)
             return;
-        _ociPicked = over;
-        for (var i = 0; i < _ociGroups.Count; i++)
+        _oci.Picked = over;
+        for (var i = 0; i < _oci.Groups.Count; i++)
         {
-            var (_, _, stem, line, ring) = _ociGroups[i];
+            var (_, _, stem, line, ring) = _oci.Groups[i];
             stem.EnableInClassList(OciLineOnClass, i == over);
             line.EnableInClassList(OciLineOnClass, i == over);
             ring.EnableInClassList(OciLineOnClass, i == over);
@@ -287,16 +246,16 @@ public sealed partial class StrategyDiorama
     {
         var camera = _camera.GetComponent<Camera>();
         var panel = _shellRoot.panel;
-        foreach (var (group, anchor, stem, line, ring) in _ociGroups)
+        foreach (var (group, anchor, stem, line, ring) in _oci.Groups)
         {
             var box = group.worldBound;
             var at = camera.WorldToScreenPoint(ship.transform.TransformPoint(anchor));
-            var shown = at.z > 0f && box.width > 1f && _ociReveal > 0.5f;
+            var shown = at.z > 0f && box.width > 1f && _oci.Reveal > 0.5f;
             stem.style.display = line.style.display = ring.style.display = shown ? DisplayStyle.Flex : DisplayStyle.None;
             if (!shown)
             {
                 // Asked again until the groups have been laid out and the ship is drawn.
-                _ociSettling = Math.Max(_ociSettling, 2);
+                _oci.Settling = Math.Max(_oci.Settling, 2);
                 continue;
             }
             // The lines are placed in their holder, which stands in from the edges of a screen
@@ -392,10 +351,10 @@ public sealed partial class StrategyDiorama
             {
                 madeLines.RemoveFromHierarchy();
                 madeGroups.RemoveFromHierarchy();
-                _ociGroups.Clear();
+                _oci.Groups.Clear();
             });
-            _ociGroups.Clear();
-            _ociPicked = -1;
+            _oci.Groups.Clear();
+            _oci.Picked = -1;
         }
         // Every slot stands in its kind's group, in the slots' own order. The slots stay in
         // vanilla's holder, which lies over the whole screen, and are placed over their group.
@@ -403,28 +362,28 @@ public sealed partial class StrategyDiorama
         for (var i = 0; i < slots.childCount; i++)
             if (slots[i].TryCast<ShipSlot>() is { } one)
                 all.Add(one);
-        _ociSlotsHolder = slots;
-        _ociSlotCount = slots.childCount;
-        _ociUnplaced = false;
-        _ociUnresolved.Clear();
+        _oci.SlotsHolder = slots;
+        _oci.SlotCount = slots.childCount;
+        _oci.Unplaced = false;
+        _oci.Unresolved.Clear();
         var ships = Il2CppMenace.States.StrategyState.Get()?.ShipUpgrades;
         // A group is as wide as a slot, and the groups are spread evenly across their row.
         var column = OciSlotWidth + OciGroupPad * 2f;
         var step = (OciGroupsWidth - column) / (OciAnchors.Length - 1);
         // How far down its group the next slot goes, by the group.
         var held = new Dictionary<int, float>();
-        _ociSlotGroups.Clear();
+        _oci.SlotGroups.Clear();
         foreach (var slot in all.OrderBy(s => s.SlotIdx))
         {
             var template = OciSlotTemplate(slot, ships);
             var kind = template?.GetID();
             if (kind == null)
             {
-                _ociUnresolved.Add(slot);
+                _oci.Unresolved.Add(slot);
                 continue;
             }
             var name = $"wm-oci-group-{kind}";
-            var index = _ociGroups.FindIndex(g => g.Group.name == name);
+            var index = _oci.Groups.FindIndex(g => g.Group.name == name);
             if (index < 0)
             {
                 var group = new VisualElement { name = name };
@@ -455,12 +414,12 @@ public sealed partial class StrategyDiorama
                 stem.style.height = OciStem;
                 var anchor = OciAnchors.FirstOrDefault(a => a.Kind == kind);
                 // A kind with no part of the hull on record points at the ship's middle.
-                _ociGroups.Add((group, anchor.Kind != null ? anchor.Anchor : new Vector3(0f, ElmoHeight * 0.5f, 0f), stem, line, ring));
-                index = _ociGroups.Count - 1;
+                _oci.Groups.Add((group, anchor.Kind != null ? anchor.Anchor : new Vector3(0f, ElmoHeight * 0.5f, 0f), stem, line, ring));
+                index = _oci.Groups.Count - 1;
             }
             var down = held.GetValueOrDefault(index);
             held[index] = down + OciSlotPitch + (DressOciInfo(slot) ? OciInfoStrip : 0f);
-            _ociSlotGroups[slot.Pointer] = index;
+            _oci.SlotGroups[slot.Pointer] = index;
             // What the slot had is put back, since the fairies' slots are placed from code.
             var (position, left, top) = (slot.style.position, slot.style.left, slot.style.top);
             // The sizes given are the slot's as laid out, which come out as wanted once drawn.
@@ -504,8 +463,8 @@ public sealed partial class StrategyDiorama
                 e.style.marginBottom = StyleKeyword.Null;
             });
         }
-        for (var i = 0; i < _ociGroups.Count; i++)
-            _ociGroups[i].Group.style.height = OciGroupHead + held.GetValueOrDefault(i) + OciGroupPad;
-        _ociSettling = 30;
+        for (var i = 0; i < _oci.Groups.Count; i++)
+            _oci.Groups[i].Group.style.height = OciGroupHead + held.GetValueOrDefault(i) + OciGroupPad;
+        _oci.Settling = 30;
     }
 }
