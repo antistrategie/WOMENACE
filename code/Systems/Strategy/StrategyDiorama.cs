@@ -20,10 +20,6 @@ public sealed partial class StrategyDiorama : JiangyuSystem
     internal const float RoomFov = 48.6f;
 
     private static StrategyDiorama _instance;
-    // The ops room, the strategy layer's own set, and the room camera.
-    private GameObject _room;
-    private GameObject _camera;
-    private Transform _anchor;
 
     public override void OnInit()
     {
@@ -234,12 +230,6 @@ public sealed partial class StrategyDiorama : JiangyuSystem
             _hiddenVanilla.SetActive(true);
         _hiddenVanilla = null;
         _lastShellScreen = null;
-        // The next scene's first shell is a first arrival: it opens through the bars.
-        _shellRoom = null;
-        _arrivedThroughBars = false;
-        _cutting = false;
-        _arriveOnOperations = false;
-        _arriveAtStation = null;
         _dinergate = null;
         _crew.Clear();
         _crewSpots.Clear();
@@ -251,9 +241,8 @@ public sealed partial class StrategyDiorama : JiangyuSystem
         StrategyMusicSystem.Rest();
         _dollRigs.Clear();
         _dinergateAnimator = null;
-        _room = null;
-        _camera = null;
-        _anchor = null;
+        // The next scene starts from nothing: no room, no camera, no arrival yet.
+        _scene = new DioramaScene();
     }
 
     // A runtime volume profile and its components, which outlive the objects holding them.

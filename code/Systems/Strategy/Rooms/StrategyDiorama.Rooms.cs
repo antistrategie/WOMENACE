@@ -112,14 +112,7 @@ public sealed partial class StrategyDiorama
     // millimetre at two kilometres), and the dolls' hair is simulated from the positions of their
     // bones, where that coarseness shows as a tremor that never settles.
     private static readonly Vector3 RoomOrigin = new(0f, -100f, 0f);
-    private readonly RoomSet _ops = new() { Asset = "environment/ops_room/main", Effects = "environment/ops_room_vfx/main", Origin = RoomOrigin, Look = OpsLook, MirrorFloor = -0.97f };
-    private readonly RoomSet _refitSet = new() { Asset = "environment/refit_room/main", Effects = "environment/refit_room_vfx/main", Origin = RoomOrigin + new Vector3(0f, 0f, 100f), Look = RefitLook, MirrorFloor = 0f };
-    // GFL2's weapon room stands on its crew deck, well off its scene's origin: the set's origin
-    // brings the middle of its floor to a hundred metres along x from the ops room's.
-    private readonly RoomSet _weaponSet = new() { Asset = "environment/weapon_room/main", Effects = "environment/weapon_room_vfx/main", Origin = RoomOrigin + new Vector3(133.5f, -18.55f, 96.5f), Look = WeaponLook, MirrorFloor = 18.55f };
-    private RoomSet[] Sets => _sets ??= new[] { _ops, _refitSet, _weaponSet };
-    private RoomSet[] _sets;
-    private RoomSet _active;
+    // The sets themselves, one for each room, are the scene's (DioramaScene).
 
     // GFL2 renders without an exposure step, so the room camera exposes at HDRP's neutral value
     // (an exposure multiplier of 1, EV100 = -log2(1.2)) and the lightmap's values arrive as GFL2
@@ -536,6 +529,7 @@ public sealed partial class StrategyDiorama
         }
     }
 
+    // Destroys what the sets made. The sets themselves go with the scene (DioramaScene).
     private void ClearSets()
     {
         foreach (var set in Sets)
@@ -549,13 +543,7 @@ public sealed partial class StrategyDiorama
             }
             if (set.Grade != null)
                 UnityEngine.Object.Destroy(set.Grade);
-            set.Root = null;
-            set.Volume = null;
-            set.Grade = null;
-            set.Sun = null;
-            set.LiveLights.Clear();
         }
-        _active = null;
         for (var i = 0; i < MaxLiveLights; i++)
             SetLiveLight(i, Vector4.zero, Vector4.zero, Vector4.zero, Vector4.zero);
         Shader.SetGlobalVector("_WmFogLinear", new Vector4(0f, 0f, 1e6f, 1e7f));

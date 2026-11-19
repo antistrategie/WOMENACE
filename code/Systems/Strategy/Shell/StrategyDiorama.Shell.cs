@@ -79,9 +79,6 @@ public sealed partial class StrategyDiorama
     // preparation) has its own two actions along the bottom and no destinations.
     private static bool ShowsDestinations(string screenName) =>
         screenName is not (VanillaUi.Screens.OperationSelect or VanillaUi.Screens.MissionPrep);
-
-    // Set by the Operations button on another screen: the home screen it goes to opens on Operations.
-    private bool _arriveOnOperations;
     // The running operation's name, as mission select's header shows it.
     private string _operationName;
     private const string ShellUxml = "diorama/shell";
@@ -140,10 +137,6 @@ public sealed partial class StrategyDiorama
         _ => false,
     };
 
-    // The station asked for from another screen, and until when: the Workshop takes it up once
-    // its panels are built, which is some frames after it is the screen.
-    private int? _arriveAtStation;
-    private float _arriveAtStationUntil;
     private const float ArriveAtStationSeconds = 5f;
     // The Workshop's own switches, which are there once its panels are.
     private const string WorkshopPanelsName = "wm-workshop-tabs";

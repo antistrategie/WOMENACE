@@ -19,8 +19,6 @@ public sealed partial class StrategyDiorama
         _ => OpsRoomKey,
     };
 
-    private bool _cutting;
-
     // Goes to a destination through the vanilla tab bar. Into another room the bars shut first, the
     // cut happens behind them, and the next screen's shell opens them.
     private void GoTo(VanillaNavigation.Target target)
@@ -110,9 +108,6 @@ public sealed partial class StrategyDiorama
     private const string BarsCutClass = "wm-bars-cut";
     private const float BarsCutSeconds = 0.2f;
     private const float BarsShutMaxSeconds = 1f;
-    // The room the last shell was in, and whether the bars were shut to leave it.
-    private string _shellRoom;
-    private bool _arrivedThroughBars;
 
     private void ShutBars(VisualElement shell, string paceClass)
     {
