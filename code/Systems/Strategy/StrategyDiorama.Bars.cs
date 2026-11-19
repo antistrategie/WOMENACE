@@ -73,7 +73,10 @@ public sealed partial class StrategyDiorama
     private void CoverCut()
     {
         UncoverCut();
-        var host = UIManager.Get()?.GetPermanentLayersRoot();
+        // The permanent layers keep to 16:9 in the middle of a wider screen, as every screen's
+        // root does, so the cover goes on the panel's own root, which is the whole screen.
+        var layers = UIManager.Get()?.GetPermanentLayersRoot();
+        var host = layers?.panel?.visualTree ?? layers;
         if (host == null)
             return;
         _cutCover = new VisualElement { pickingMode = PickingMode.Ignore };
@@ -205,12 +208,17 @@ public sealed partial class StrategyDiorama
         // for some frames, each of them a long one, and bars that opened over them would open
         // in jerks. A long frame counts for little of the moment, so one stall does not use
         // the whole of it up.
+        // The shell reaches past the screen's root to the edges of a screen wider than 16:9 only
+        // once the root has a size to measure, which a screen still loading may not have had on
+        // the shell's first frame. It is placed again every frame while shut, so the black covers
+        // the whole screen and not only the root's part of it.
         var (held, shut, even) = (0f, 0f, 0);
         while (held < BarsHeldSeconds || (even < BarsEvenFrames && shut < BarsHeldMaxSeconds))
         {
             yield return null;
             if (shell.panel == null || _shell != shell)
                 yield break;
+            PlaceShell(shell);
             var frame = UnityEngine.Time.unscaledDeltaTime;
             held += MathF.Min(frame, BarsEvenFrame);
             shut += frame;
@@ -228,6 +236,7 @@ public sealed partial class StrategyDiorama
             waited = true;
             if (shell.panel == null || _shell != shell)
                 yield break;
+            PlaceShell(shell);
             if (!picking)
             {
                 awaited += UnityEngine.Time.unscaledDeltaTime;

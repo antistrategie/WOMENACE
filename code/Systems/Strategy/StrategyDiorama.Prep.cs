@@ -213,8 +213,11 @@ public sealed partial class StrategyDiorama
         // the heading down, so the arrow comes down with it to stay level.
         Inline(UI.Find(info, UiSelector.Name(VanillaUi.Elements.PrepInfoFold)), e => e.style.top = PrepGap, e => e.style.top = StyleKeyword.Null);
         // The list's rows are restyled on every refresh (RefreshPrep). They go back with the shell.
-        Inline(UI.Find(info, UiSelector.Name(VanillaUi.Elements.PrepObjectives)), _ => { }, e =>
+        // Vanilla's 10 under the list goes, so the box's own padding is all there is under it, as
+        // over the heading.
+        Inline(UI.Find(info, UiSelector.Name(VanillaUi.Elements.PrepObjectives)), e => e.style.marginBottom = 0f, e =>
         {
+            e.style.marginBottom = StyleKeyword.Null;
             e.style.borderLeftWidth = StyleKeyword.Null;
             e.style.marginLeft = StyleKeyword.Null;
             e.style.paddingLeft = StyleKeyword.Null;

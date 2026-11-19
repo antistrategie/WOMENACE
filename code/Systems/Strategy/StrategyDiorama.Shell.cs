@@ -57,11 +57,18 @@ public sealed partial class StrategyDiorama
 
     private static ShellLook LookFor(string screenName) => screenName switch
     {
-        VanillaUi.Screens.Armory or VanillaUi.Screens.Hiring => new(RefittingRoomKey, "REFITTING ROOM", null, null),
+        VanillaUi.Screens.Armory => new(RefittingRoomKey, "REFITTING ROOM", "WOMENACE::ui/shell/tab_roster", "ROSTER"),
+        VanillaUi.Screens.Hiring => new(RefittingRoomKey, "REFITTING ROOM", "WOMENACE::ui/shell/nav_recruitment", "RECRUITMENT"),
         VanillaUi.Screens.BlackMarket => new(OpsRoomKey, "OPS ROOM", "WOMENACE::ui/shell/market", "MARKET"),
-        // Kalina's shop is hosted on the workshop screen and belongs to the market.
-        VanillaUi.Screens.Workshop when ShopSystem.IsShopOpen => new(OpsRoomKey, "OPS ROOM", "WOMENACE::ui/shell/market", "MARKET"),
-        VanillaUi.Screens.Workshop => new(WeaponRoomKey, "WEAPON ROOM", null, null),
+        // Kalina's shop is hosted on the workshop screen and stands in the ops room.
+        VanillaUi.Screens.Workshop when ShopSystem.IsShopOpen => new(OpsRoomKey, "OPS ROOM", "WOMENACE::ui/shell/tab_kalina", "KALINA'S SHOP"),
+        // The workshop's stations change without a screen change, which applies the screen again.
+        VanillaUi.Screens.Workshop => WorkshopStation switch
+        {
+            CalibrateStation => new(WeaponRoomKey, "WEAPON ROOM", "WOMENACE::ui/shell/nav_calibration", "CALIBRATION"),
+            DisassembleStation => new(WeaponRoomKey, "WEAPON ROOM", "WOMENACE::ui/shell/nav_disassembly", "DISASSEMBLY"),
+            _ => new(WeaponRoomKey, "WEAPON ROOM", "WOMENACE::ui/shell/nav_assembly", "ASSEMBLY"),
+        },
         VanillaUi.Screens.ShipUpgrades => new(OpsRoomKey, "OPS ROOM", "WOMENACE::ui/shell/oci", "O.C.I."),
         VanillaUi.Screens.OperationSelect => new(OpsRoomKey, "OPS ROOM", "WOMENACE::ui/shell/operations_title", "OPERATIONS"),
         VanillaUi.Screens.MissionPrep => new(OpsRoomKey, "OPS ROOM", "WOMENACE::ui/shell/mission_prep", "DEPLOYMENT"),
@@ -258,6 +265,12 @@ public sealed partial class StrategyDiorama
     private (float Left, float Top, float Right, float Bottom)? _shellInset;
     private const float BarPadding = 32f;
 
+    private static UnityEngine.Rect Middle16By9(UnityEngine.Rect screen)
+    {
+        var (width, height) = (MathF.Min(screen.width, screen.height * 16f / 9f), MathF.Min(screen.height, screen.width * 9f / 16f));
+        return new UnityEngine.Rect(screen.x + (screen.width - width) / 2f, screen.y + (screen.height - height) / 2f, width, height);
+    }
+
     private void PlaceShell(VisualElement shell)
     {
         var root = shell.parent;
@@ -265,8 +278,13 @@ public sealed partial class StrategyDiorama
         if (whole == null)
             return;
         var (inner, outer) = (root.worldBound, whole.worldBound);
-        if (!(inner.width > 1f) || !(outer.width > 1f))
+        if (!(outer.width > 1f) || !(outer.height > 1f))
             return;
+        // A screen just opened has no layout on its first frame, which is the frame its shell is
+        // made on, and a shell left to the root's size then shows the room either side of its
+        // black. Its root will be the screen's middle 16:9, so that is where it is taken to be.
+        if (!(inner.width > 1f))
+            inner = Middle16By9(outer);
         var inset = (MathF.Max(inner.xMin - outer.xMin, 0f), MathF.Max(inner.yMin - outer.yMin, 0f),
             MathF.Max(outer.xMax - inner.xMax, 0f), MathF.Max(outer.yMax - inner.yMax, 0f));
         if (_shellInset is { } was && MathF.Abs(was.Left - inset.Item1) + MathF.Abs(was.Top - inset.Item2)

@@ -90,8 +90,11 @@ Shader "Womenace/DollHologram"
             {
                 float period = max(3.0, round(_ScreenSize.y / _ScanRows));
                 float gap = max(1.0, round(period * _ScanGap));
-                float row = floor(input.positionCS.y) + floor(_Time.y * _ScanRowSpeed);
-                wave = fmod(row, period) + 0.5 < gap ? 0.0 : 1.0;
+                // In whole numbers. A float fmod divides through a reciprocal, which for three is
+                // not exact, and a row at the start of its line can come out a whole line in: on a
+                // 1080-row screen, three rows to a line, no row would be cut.
+                uint row = (uint)input.positionCS.y + (uint)(_Time.y * _ScanRowSpeed);
+                wave = row % (uint)period < (uint)gap ? 0.0 : 1.0;
             }
             float front = saturate(1.0 - (_Reveal - up) * _Height / 0.05) * step(_Reveal, 1.0);
             clip(max(wave - _ScanGap, front - 0.5));

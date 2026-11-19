@@ -7,7 +7,7 @@ namespace WOMENACE.Code;
 // Each unit of the squad standing in the refitting room has its name lying on the floor in front
 // of it, where vanilla floats a label under each unit that tracks its own camera. The names are
 // drawn by a panel of their own into one texture, a row each, and every unit's plate is a hologram
-// quad showing its row. They are in the unit window's heading face, read off its own slot headings.
+// quad showing its row. They are in the shell's face (MENACE's Jura Bold), read off its title.
 //
 // The leader stands in the first slot and her squaddies in the rest, in her squad's order, as the
 // armoury spawns them. The plates are placed again whenever the squad is (StrategyDiorama.Armory.cs),
@@ -48,7 +48,7 @@ public sealed partial class StrategyDiorama
         if (!TexturePanel("WOMENACE_SquadNames", _shellRoot, NamePlateTextureWidth, NamePlateRowHeight * NamePlateRows, 1f,
             out _namePlateHost, out _namePlateSettings, out _namePlateTexture, out var root))
             return false;
-        var heading = _squadWindow != null ? UI.Find(_squadWindow, UiSelector.Name(VanillaUi.Elements.SlotHeaderText)) : null;
+        var heading = _shell != null ? UI.Find(_shell, UiSelector.Name("wm-shell-title")) : null;
         for (var row = 0; row < NamePlateRows; row++)
         {
             var label = new Label { pickingMode = PickingMode.Ignore };
