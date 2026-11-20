@@ -429,12 +429,9 @@ public sealed class StartrailInsightSystem : JiangyuSystem
                 }
                 vision.Path.Add(stop);
                 // Route points sit at whatever height the mover's own path keeps (a vehicle's is
-                // not its wheels), so each is dropped onto its tile's ground.
-                var map = TacticalManager.Get()?.GetMap();
-                if (map != null)
-                    for (var i = 0; i < vision.Path.Count; i++)
-                        if (map.GetTileAtPos(vision.Path[i]) is { } tile)
-                            vision.Path[i] = new Vector3(vision.Path[i].x, tile.GetPos().y, vision.Path[i].z);
+                // not its wheels), and a straight run between two of them cuts through any rise
+                // between, so the route is walked in short steps laid on the ground.
+                vision.Path = OnGround(vision.Path);
                 vision.Summary += $" [path {vision.Path.Count} pts, y {vision.Path.Min(p => p.y):F1}..{vision.Path.Max(p => p.y):F1}]";
             }
 
@@ -529,11 +526,15 @@ public sealed class StartrailInsightSystem : JiangyuSystem
                 // The thread arcs from where the enemy will stand to the unit it may attack.
                 var from = enemy.GetPos() + offset;
                 var to = victim.GetPos();
+                // It keeps its height over the ground where a rise stands between the two.
+                var terrain = TacticalManager.Get()?.GetMap()?.GetTerrain();
                 var thread = new List<Vector3>();
                 for (var i = 0; i <= 12; i++)
                 {
                     var f = i / 12f;
-                    thread.Add(Vector3.Lerp(from, to, f) + Vector3.up * (1.1f + 0.5f * Mathf.Sin(f * Mathf.PI)));
+                    var point = Vector3.Lerp(from, to, f);
+                    point.y = MathF.Max(point.y, Ground(terrain, point, point.y));
+                    thread.Add(point + Vector3.up * (1.1f + 0.5f * Mathf.Sin(f * Mathf.PI)));
                 }
                 if (Ribbon(thread, 0f, 0.3f, ThreadMaterial(prefab)) is { } line)
                     parts.Add(line);
@@ -738,6 +739,36 @@ public sealed class StartrailInsightSystem : JiangyuSystem
             materials[i] = material;
         return materials;
     }
+
+    // How far apart the points of a route laid on the ground are.
+    private const float GroundStep = 0.5f;
+
+    // The route walked in steps of GroundStep, each at the ground's height there. Without the
+    // map's terrain each point keeps to its tile's height.
+    private static List<Vector3> OnGround(List<Vector3> route)
+    {
+        var map = TacticalManager.Get()?.GetMap();
+        var terrain = map?.GetTerrain();
+        float Height(Vector3 p) => terrain != null ? Ground(terrain, p, p.y)
+            : map?.GetTileAtPos(p) is { } tile ? tile.GetPos().y : p.y;
+        var laid = new List<Vector3>();
+        if (route.Count == 0)
+            return laid;
+        laid.Add(new Vector3(route[0].x, Height(route[0]), route[0].z));
+        for (var i = 1; i < route.Count; i++)
+        {
+            var steps = Math.Max(1, (int)MathF.Ceiling(Vector3.Distance(route[i - 1], route[i]) / GroundStep));
+            for (var s = 1; s <= steps; s++)
+            {
+                var p = Vector3.Lerp(route[i - 1], route[i], s / (float)steps);
+                laid.Add(new Vector3(p.x, Height(p), p.z));
+            }
+        }
+        return laid;
+    }
+
+    private static float Ground(Terrain terrain, Vector3 at, float fallback) =>
+        terrain != null ? terrain.SampleHeight(at) + terrain.GetPosition().y : fallback;
 
     // A flat strip of smoke along the points, lifted off them by lift: UV0 is metres along by
     // 0..1 across and UV1.x is 0..1 along, which is what VisionTrail reads.

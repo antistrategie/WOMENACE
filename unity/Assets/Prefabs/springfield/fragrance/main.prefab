@@ -3615,6 +3615,37 @@ Transform:
   - {fileID: 8576837257939199901}
   m_Father: {fileID: 1570320146304180442}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2792552954558997383
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6519667849508839192}
+  m_Layer: 0
+  m_Name: pistol_holster
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6519667849508839192
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2792552954558997383}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.7392739, y: 0.06377382, z: 0.012531906, w: 0.67026114}
+  m_LocalPosition: {x: 0.2351, y: 0.0835, z: -0.1035}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7679444792729696704}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2874213286357275501
 GameObject:
   m_ObjectHideFlags: 0
@@ -7480,6 +7511,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1570320146304180442}
+  - {fileID: 6519667849508839192}
   m_Father: {fileID: 2249804305752343263}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8123013760024987364

@@ -264,8 +264,20 @@ public sealed partial class StrategyDiorama
         return new UnityEngine.Rect(screen.x + (screen.width - width) / 2f, screen.y + (screen.height - height) / 2f, width, height);
     }
 
+    // Kalina's shop is added to the workshop screen's root by its own injection, which can land
+    // after the shell has gone last in the root and so stand over the shutters. It goes back under
+    // the shell whenever the shutters move.
+    private static void KeepShopUnderShell(VisualElement shell)
+    {
+        var root = shell.parent;
+        var shop = root != null ? UI.Find(root, UiSelector.Name(ShopSystem.RootName)) : null;
+        if (shop != null && shop.parent == root && root.IndexOf(shop) > root.IndexOf(shell))
+            shop.PlaceBehind(shell);
+    }
+
     private void PlaceShell(VisualElement shell)
     {
+        KeepShopUnderShell(shell);
         var root = shell.parent;
         var whole = root?.panel?.visualTree;
         if (whole == null)
@@ -609,6 +621,10 @@ public sealed partial class StrategyDiorama
 
     private bool _intelOpen;
 
+    // Whether vanilla's event dialog plays over the screen. The room's clickable parts (the
+    // Dinergate, the holotable) answer no clicks under it, as their tags show none.
+    private bool _eventShowing;
+
     // Applies an inline style to a vanilla element and remembers how to take it off again.
     private void Inline(VisualElement element, Action<VisualElement> apply, Action<VisualElement> undo)
     {
@@ -668,7 +684,7 @@ public sealed partial class StrategyDiorama
         var eventPlaying = false;
         var resumeIntel = false;
         var recount = 0f;
-        var boardScan = UI.Find(shell, UiSelector.Class("wui-board__scan"));
+        var boardScan = UI.Find(UI.Find(shell, UiSelector.Name("wm-board")), UiSelector.Class("wui-board__scan"));
         while (tag != null && _shell == shell)
         {
             var camera = RoomCamera;
@@ -708,11 +724,13 @@ public sealed partial class StrategyDiorama
                 DriftScan(boardScan, UnityEngine.Time.unscaledTime);
                 DriftScan(_factionScan, UnityEngine.Time.unscaledTime);
             }
-            // Vanilla shows its lists again when messages arrive. Off the board they stay put away.
+            // Vanilla shows its lists again when messages arrive. Off the board, and the faction
+            // list off the event's trust panel, they stay put away.
             if (!(_intelOpen && _intelListsShown == _intelSeq))
             {
                 PutAway(_boardMessages);
-                PutAway(_boardFactions);
+                if (!_eventFactions.Listed)
+                    PutAway(_boardFactions);
             }
             // The actions follow the vanilla buttons they press (the selected mission, what is allowed).
             if (_policyScreen != null && (actions -= UnityEngine.Time.unscaledDeltaTime) <= 0f)
@@ -734,16 +752,20 @@ public sealed partial class StrategyDiorama
             {
                 events = 0.15f;
                 var layers = UIManager.Get()?.GetPermanentLayersRoot();
-                var playing = layers != null && UI.Find(layers, UiSelector.TypeName(VanillaUi.Elements.EventDialog)) != null;
+                var dialog = layers != null ? UI.Find(layers, UiSelector.TypeName(VanillaUi.Elements.EventDialog)) : null;
+                var playing = dialog != null;
+                _eventShowing = playing;
                 // The bars come in for it, as for a cutscene. Their contents stay where they are.
                 if (playing != eventPlaying && !covered)
                 {
                     eventPlaying = playing;
                     MoveBars(shell, playing ? BarEventHeight : BarsOpen);
-                    // The bars are bare for it: their contents and the vanilla resources go.
+                    // The bars' own contents go for it. The vanilla resources stay on the top bar,
+                    // and the factions' trust shows beside the dialog, so a choice is not made blind.
                     shell.EnableInClassList(BarsEventClass, playing);
-                    shell.parent?.EnableInClassList(BarsEventClass, playing);
                 }
+                // Before the board comes back, which takes the faction list off the panel.
+                WatchEventFactions(shell, eventPlaying ? dialog : null);
                 // The event takes the middle of the screen, so the board it was opened from steps aside.
                 if (playing && _intelOpen)
                 {
@@ -758,6 +780,7 @@ public sealed partial class StrategyDiorama
                         SetIntel(true);
                 }
             }
+            DriveEventFactions();
             // Kalina's shop opens and shuts on the workshop screen without a screen change, and its
             // stations change what it is doing, with the camera going between them.
             if (_policyScreen == VanillaUi.Screens.Workshop && (_shellShop != ShopSystem.IsShopOpen || _workshopStation != WorkshopStation))
@@ -965,6 +988,7 @@ public sealed partial class StrategyDiorama
             catch { }
         }
         _shellUndo.Clear();
+        _eventFactions = new();
         _intelPlaced.Clear();
         _inlined.Clear();
         _inlinedStyles.Clear();
@@ -976,7 +1000,7 @@ public sealed partial class StrategyDiorama
                 _shellRoot.EnableInClassList(HomeViewClass, false);
                 _shellRoot.EnableInClassList(OperationsViewClass, false);
                 CoverVanilla(_shellRoot, false);
-                _shellRoot.EnableInClassList(BarsEventClass, false);
+                _shellRoot.EnableInClassList(BarsBareClass, false);
                 foreach (var caption in UI.FindAll(_shellRoot, UiSelector.Class(CaptionClass)))
                     caption.RemoveFromHierarchy();
             }

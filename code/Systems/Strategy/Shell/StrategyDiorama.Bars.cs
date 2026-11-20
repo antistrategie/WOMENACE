@@ -113,6 +113,7 @@ public sealed partial class StrategyDiorama
     {
         shell.AddToClassList(paceClass);
         shell.AddToClassList(BarsClosedClass);
+        KeepShopUnderShell(shell);
         CoverVanilla(shell.parent, true);
         MoveBars(shell, null);
     }
@@ -143,6 +144,9 @@ public sealed partial class StrategyDiorama
         UI.Find(root, UiSelector.Name(VanillaUi.Elements.SuppliesPanel))?.EnableInClassList(CoveredClass, covered);
     }
     private const string BarsEventClass = "wm-bars-event";
+    // On the screen's root while a Procurement pull plays: the vanilla resources go too, and the
+    // pull has the frame to itself.
+    private const string BarsBareClass = "wm-bars-bare";
     // How tall shell.uss makes a bar, in panel pixels: what stands on a bar is placed by it.
     private const float BarHeight = 90f;
     // How far the black's edges stand from the screen's edges: open, and while a story event plays.
@@ -183,6 +187,7 @@ public sealed partial class StrategyDiorama
         shell.AddToClassList(BarsSnapClass);
         // The vanilla resources sit over the top bar and wait for it too.
         var root = shell.parent;
+        KeepShopUnderShell(shell);
         CoverVanilla(root, true);
         var placed = MoveBars(shell, null);
         yield return null;

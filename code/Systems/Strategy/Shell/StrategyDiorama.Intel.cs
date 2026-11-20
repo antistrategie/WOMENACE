@@ -146,26 +146,37 @@ public sealed partial class StrategyDiorama
         var host = backing?.parent;
         if (host == null || UI.Find(host, UiSelector.Name(FactionFrameName)) != null)
             return;
-        var frame = new VisualElement { name = FactionFrameName, pickingMode = PickingMode.Ignore };
-        frame.AddToClassList("wui-holo-frame");
-        VisualElement Part(VisualElement parent, params string[] classes)
-        {
-            var part = new VisualElement { pickingMode = PickingMode.Ignore };
-            foreach (var c in classes)
-                part.AddToClassList(c);
-            parent.Add(part);
-            return part;
-        }
-        Part(frame, "wui-board__glow");
-        _factionScan = Part(Part(frame, "wui-board__fx"), "wui-board__scan");
-        foreach (var corner in new[] { "tl", "tr", "bl", "br" })
-            Part(frame, "wui-holo__corner", "wui-holo__corner--" + corner);
-        host.Add(frame);
+        (var frame, _factionScan) = AddHoloFrame(host, FactionFrameName);
         _shellUndo.Add(() =>
         {
             frame.RemoveFromHierarchy();
             _factionScan = null;
         });
+    }
+
+    // The board's hologram laid over a panel: the soft glow round it, the drifting scanlines over
+    // its fill and the corners, in one frame of their own that takes no pointer. The scanlines are
+    // returned for DriftScan.
+    private static (VisualElement Frame, VisualElement Scan) AddHoloFrame(VisualElement host, string name)
+    {
+        var frame = new VisualElement { name = name, pickingMode = PickingMode.Ignore };
+        frame.AddToClassList("wui-holo-frame");
+        HoloPart(frame, "wui-board__glow");
+        var scan = HoloPart(HoloPart(frame, "wui-board__fx"), "wui-board__scan");
+        foreach (var corner in new[] { "tl", "tr", "bl", "br" })
+            HoloPart(frame, "wui-holo__corner", "wui-holo__corner--" + corner);
+        host.Add(frame);
+        return (frame, scan);
+    }
+
+    // A part of the shell's own drawing, which takes no pointer.
+    private static VisualElement HoloPart(VisualElement parent, params string[] classes)
+    {
+        var part = new VisualElement { pickingMode = PickingMode.Ignore };
+        foreach (var c in classes)
+            part.AddToClassList(c);
+        parent.Add(part);
+        return part;
     }
 
     private VisualElement _factionScan;
@@ -290,7 +301,11 @@ public sealed partial class StrategyDiorama
         var seq = _intelSeq;
         var messagesWidth = factions != null ? BoardWidth - 4 * BoardPad - FactionsWidth : BoardWidth - 2 * BoardPad;
         PlaceOnBoard(messages, BoardLeft + BoardPad, messagesWidth, VanillaUi.Elements.MessagesInner, VanillaUi.Elements.MessagesHeader);
-        PlaceOnBoard(factions, BoardLeft + BoardWidth - BoardPad - FactionsWidth, FactionsWidth, VanillaUi.Elements.StoryFactionsInner, VanillaUi.Elements.StoryFactionsHeadline);
+        // While a story event plays the faction list is on the event's trust panel instead.
+        if (_eventFactions.On)
+            PlaceOnEventPanel(factions);
+        else
+            PlaceOnBoard(factions, BoardLeft + BoardWidth - BoardPad - FactionsWidth, FactionsWidth, VanillaUi.Elements.StoryFactionsInner, VanillaUi.Elements.StoryFactionsHeadline);
         if (_intelOpen)
         {
             if (_intelListsShown == seq)
@@ -584,10 +599,17 @@ public sealed partial class StrategyDiorama
     // How long after the click the board starts to grow: most of the Dinergate's flight.
     private const float BoardDelaySeconds = 0.36f;
 
-    // Lays a vanilla list over one of the board's columns, hidden until the board has grown. Set on
-    // the elements themselves, since the lists' own rules outrank shell.uss. The list's own heading
-    // goes, the board's column names it.
-    private void PlaceOnBoard(VisualElement panel, float leftFromCentre, float width, string innerName, string headingName)
+    // Lays a vanilla list over one of the board's columns, hidden until the board has grown.
+    private void PlaceOnBoard(VisualElement panel, float leftFromCentre, float width, string innerName, string headingName) =>
+        PlaceList(panel, Length.Percent(50), Length.Percent(50), leftFromCentre, -BoardHeight / 2f + BoardListsTop,
+            width, BoardHeight - BoardListsTop - BoardPad, innerName, headingName);
+
+    // Lays a vanilla list over a hologram of the shell's, hidden until the hologram has grown. Set
+    // on the elements themselves, since the lists' own rules outrank shell.uss. The list's own
+    // heading goes, the hologram names it. Every placement sets the same styles, so a list moved
+    // between the board and the event's trust panel carries nothing of the other.
+    private void PlaceList(VisualElement panel, Length left, Length top, float marginLeft, float marginTop, float width, float height,
+        string innerName, string headingName)
     {
         if (panel == null)
             return;
@@ -609,14 +631,14 @@ public sealed partial class StrategyDiorama
         }
         panel.style.display = DisplayStyle.None;
         panel.style.position = Position.Absolute;
-        panel.style.left = Length.Percent(50);
-        panel.style.top = Length.Percent(50);
+        panel.style.left = left;
+        panel.style.top = top;
         panel.style.right = StyleKeyword.Auto;
         panel.style.bottom = StyleKeyword.Auto;
-        panel.style.marginLeft = leftFromCentre;
-        panel.style.marginTop = -BoardHeight / 2f + BoardListsTop;
+        panel.style.marginLeft = marginLeft;
+        panel.style.marginTop = marginTop;
         panel.style.width = width;
-        panel.style.height = BoardHeight - BoardListsTop - BoardPad;
+        panel.style.height = height;
         var inner = UI.Find(panel, UiSelector.Name(innerName));
         if (inner != null && inner != panel)
         {

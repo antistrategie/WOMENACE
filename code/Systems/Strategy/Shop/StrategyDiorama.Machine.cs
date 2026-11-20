@@ -179,7 +179,7 @@ public sealed partial class StrategyDiorama
             return;
         MoveBars(_shell, pulling ? BarEventHeight : BarsOpen);
         _shell.EnableInClassList(BarsEventClass, pulling);
-        _shell.parent?.EnableInClassList(BarsEventClass, pulling);
+        _shell.parent?.EnableInClassList(BarsBareClass, pulling);
     }
 
     // The machine as it stands between pulls: still, its lights running and its screen's scene on.

@@ -58,6 +58,9 @@ public sealed partial class ShopSystem : JiangyuSystem
     private bool _buy = true;
     private int _holdEpoch, _scrollEpoch, _lastBalance = -1, _lastPieces = -1;
 
+    // The shop's element in the workshop screen's root, which the strategy shell keeps under its shutters.
+    internal const string RootName = "wm-shop-root";
+
     public override void OnInit()
     {
         Instance = this;
@@ -115,7 +118,7 @@ public sealed partial class ShopSystem : JiangyuSystem
     private void Bind(VisualElement root)
     {
         _root = root;
-        root.name = "wm-shop-root";
+        root.name = RootName;
         UiLayout.Fill(root);
         root.pickingMode = PickingMode.Ignore;
         // Only detaching this injection ends the shop view. Removing a child tile must not

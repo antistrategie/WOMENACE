@@ -74,8 +74,11 @@ internal static class VanillaUi
         // The permanent layers' bug report button, by type.
         internal const string BugReportButton = "BugReportButton";
         internal const string HelpButton = "OnboardingOverlayButton";
-        // A story event's dialog, by type.
+        // A story event's dialog, by type, and the parts of it that reach furthest left, by name:
+        // its window, the stage picture behind it, and the left speaker's picture with the mask
+        // that clips it.
         internal const string EventDialog = "EventDialog";
+        internal const string EventWindow = "Window";
         // The tab bar's outer box and a resource display's amount.
         internal const string TabBarContainer = "Container";
         internal const string ResourceAmount = "Amount";

@@ -31,7 +31,7 @@
 /* Shut, the bars' contents are hidden. They show once the bars have opened. */
 .wui-bar > * { transition-property: opacity; transition-duration: 0.2s; transition-delay: 0.15s; }
 .wm-bars-closed .wui-bar > * { opacity: 0; transition-duration: 0s; transition-delay: 0s; }
-/* A story event plays between bare bars */
+/* A story event plays between bare bars. The vanilla resources stay on the top one. */
 .wm-bars-event .wui-bar > * { opacity: 0; transition-duration: 0.2s; transition-delay: 0s; }
 
 /* Title block: the ship's name over the room and screen */
@@ -111,6 +111,11 @@
 .wui-board__title { color: var(--ink); font-size: 13px; letter-spacing: 0.8px; padding: 0; margin: 0; }
 .wui-board__count { color: rgb(0, 0, 0); background-color: var(--gold); font-size: 9px; padding: 0 4px; margin: 0 0 0 8px; }
 .wui-board__empty { color: var(--ink-meta); font-size: 10px; letter-spacing: 0.6px; padding: 0; margin: 10px 0 0 0; }
+/* The story factions' trust the Dinergate projects at the left of the frame while a story event
+   plays, the board's faction column on its own. Placed and sized by code, and grown out from its
+   left edge. */
+.wui-event-factions { left: 0; top: 0; margin-left: 0; margin-top: 0; padding: 14px 20px 20px 20px; transform-origin: 0% 50%; }
+.wui-event-factions .wui-board__glow { display: none; }
 
 /* A resource's name on gold, before its amount, added to the vanilla resource displays in the top bar */
 .wui-res-caption { color: rgb(0, 0, 0); background-color: var(--gold); font-size: 7px; letter-spacing: 0.7px; -unity-text-align: middle-center; padding: 0 6px; margin: 0; }
@@ -242,7 +247,8 @@
     transition-delay: 0.25s;
 }
 .wm-shell-on .strategy-navigation.wm-covered { opacity: 0; transition-duration: 0s; transition-delay: 0s; }
-.wm-shell-on.wm-bars-event .strategy-navigation { opacity: 0; transition-duration: 0.2s; transition-delay: 0s; }
+/* A Procurement pull has the frame to itself */
+.wm-shell-on.wm-bars-bare .strategy-navigation { opacity: 0; transition-duration: 0.2s; transition-delay: 0s; }
 .wm-shell-on .strategy-navigation #Container { width: auto; background-color: rgba(0, 0, 0, 0); border-width: 0; padding: 0; margin: 0; }
 .wm-shell-on .strategy-navigation #Ship { display: none; }
 .wm-shell-on .strategy-navigation #Line { display: none; }

@@ -64,6 +64,11 @@
       <HintPath>$(GameAssembliesDir)/UnityEngine.PhysicsModule.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <!-- Terrain.SampleHeight, for laying Nemesis's foresight trails on the ground. -->
+    <Reference Include="UnityEngine.TerrainModule">
+      <HintPath>$(GameAssembliesDir)/UnityEngine.TerrainModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
     <!-- The game's Jura SDF font asset, applied to mod UI that does not inherit it. -->
     <Reference Include="UnityEngine.TextCoreTextEngineModule">
       <HintPath>$(GameAssembliesDir)/UnityEngine.TextCoreTextEngineModule.dll</HintPath>

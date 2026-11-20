@@ -241,7 +241,7 @@ public sealed partial class StrategyDiorama
     private bool OverDinergate(Vector2 screenPoint)
     {
         var camera = _scene.Camera != null ? _scene.Camera.GetComponent<Camera>() : null;
-        if (camera == null || !camera.isActiveAndEnabled || _life.Dinergate == null || PointerOverUi(screenPoint))
+        if (camera == null || !camera.isActiveAndEnabled || _life.Dinergate == null || _eventShowing || PointerOverUi(screenPoint))
             return false;
         var ray = camera.ScreenPointToRay(new Vector3(screenPoint.x, screenPoint.y, 0f));
         return Physics.Raycast(ray, out var hit, 50f) && hit.collider != null && hit.collider.gameObject == _life.Dinergate;
@@ -289,7 +289,7 @@ public sealed partial class StrategyDiorama
     private bool OverTable(Vector2 screenPoint)
     {
         var camera = RoomCamera;
-        if (camera == null || !camera.isActiveAndEnabled || _scene.Room == null || _shell == null || _intelOpen || !OnHomeView(_policyScreen))
+        if (camera == null || !camera.isActiveAndEnabled || _scene.Room == null || _shell == null || _intelOpen || _eventShowing || !OnHomeView(_policyScreen))
             return false;
         // The table's tag is a part of it.
         var tag = _life.TableTag;

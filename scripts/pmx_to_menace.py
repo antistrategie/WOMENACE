@@ -386,7 +386,9 @@ def parse_reference_armature(gltf_path: Path) -> ReferenceArmature:
     # "backpack", "Foot_*_ColliderRotator") as children of humanoid joints but
     # NOT in the skin's joints array (they're sockets, never skinned to). They
     # still need to participate in the grafted-bone set so PrefabAttachment
-    # lookups by name resolve on the the PMX character rig.
+    # lookups by name resolve on the the PMX character rig. The reference is
+    # exported from the current game: a body without a socket the game mounts
+    # to (pistol_holster, where every pistol accessory hangs) gets no model there.
     bone_indices: set[int] = set(joint_indices)
     changed = True
     while changed:
