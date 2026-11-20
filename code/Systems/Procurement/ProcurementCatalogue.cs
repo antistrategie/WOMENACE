@@ -50,8 +50,9 @@ public sealed class ProcurementCatalogue
             foreach (var weaponClass in WeaponClasses.All)
                 foreach (var id in WeaponParts.ForClass(weaponClass))
                     Add(entries, id, ProcurementSection.Parts, log);
-            foreach (var id in new[] { "commodity.construct_alloys", "commodity.construct_weapon_parts",
-                "commodity.construct_advanced_alloys", "commodity.construct_cybernetic_optics" })
+            foreach (var id in new[] { "commodity.construct_weapon_parts", "commodity.construct_cybernetic_optics",
+                "commodity.construct_volatile_reagents", "commodity.construct_advanced_alloys",
+                "commodity.construct_fusion_power_cells", "commodity.construct_bioprocessor" })
                 Add(entries, id, ProcurementSection.Materials, log);
             // The first entry wins deduplication, so explicit limits precede standard stock.
             foreach (var (id, limit) in SpecialItems)

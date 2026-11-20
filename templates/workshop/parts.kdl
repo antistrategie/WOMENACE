@@ -1,7 +1,3 @@
-patch "CommodityTemplate" "commodity.construct_alloys" {
-    append "Tags" "crafting_material"
-}
-
 clone "CommodityTemplate" from="commodity.construct_weapon_parts" id="commodity.wmgfl_part_ar_barrel" {
     set "Title" {
         set "m_DefaultTranslation" "AR Barrel"
@@ -492,11 +488,15 @@ clone "BlueprintTemplate" from="blueprint.squad_weapon_electro_magnetic_enhanced
     set "m_CraftingResult" "commodity.wmgfl_calibration_core"
     clear "m_CraftingMaterials"
     append "m_CraftingMaterials" {
-        set "Template" "commodity.construct_alloys"
+        set "Template" "commodity.construct_weapon_parts"
         set "Count" 2
     }
     append "m_CraftingMaterials" {
-        set "Template" "commodity.construct_weapon_parts"
+        set "Template" "commodity.construct_cybernetic_optics"
+        set "Count" 1
+    }
+    append "m_CraftingMaterials" {
+        set "Template" "commodity.construct_volatile_reagents"
         set "Count" 1
     }
 }
@@ -527,7 +527,11 @@ clone "BlueprintTemplate" from="blueprint.squad_weapon_electro_magnetic_enhanced
         set "Count" 2
     }
     append "m_CraftingMaterials" {
-        set "Template" "commodity.construct_cybernetic_optics"
+        set "Template" "commodity.construct_fusion_power_cells"
+        set "Count" 1
+    }
+    append "m_CraftingMaterials" {
+        set "Template" "commodity.construct_bioprocessor"
         set "Count" 1
     }
 }
