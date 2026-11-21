@@ -107,16 +107,29 @@ namespace Womenace.EditorTools
             // LoadPrefabContents' preview copy does not survive the save.
             var loaded = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath));
             PrefabUtility.UnpackPrefabInstance(loaded, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
-            // BakeVehicle's root is the model itself, with the Animator on it. A
-            // prefab this pass already wrapped keeps its model under "model", so
-            // a rerun rebuilds the same shape.
-            var model = loaded.GetComponent<Animator>() == null && loaded.transform.Find("model") is { } inner ? inner.gameObject : loaded;
+            // BakeVehicle hangs the model under "rotator", with the Animator there
+            // and the clips' paths starting from it. A summon hovers and never
+            // tilts to the ground, so the rotator is the model. A prefab this
+            // pass already wrapped keeps its model under "model", so a rerun
+            // rebuilds the same shape. A bake from before the rotator has the
+            // Animator on its root, which is the model itself.
+            var model = loaded.transform.Find("rotator") is { } rotator ? rotator.gameObject
+                : loaded.GetComponent<Animator>() == null && loaded.transform.Find("model") is { } inner ? inner.gameObject : loaded;
+            // A one-mesh FBX leaves its mesh on the bake's root, which goes with it.
+            if (model != loaded && loaded.GetComponent<Renderer>() != null)
+            {
+                UnityEngine.Object.DestroyImmediate(loaded);
+                throw new InvalidOperationException(prefabPath + " carries its mesh on the root, outside the rotator. Parent the mesh under an empty node in the FBX and bake again.");
+            }
             var wrapper = new GameObject(loaded.name);
             try
             {
                 // Rehang the model under a fresh scale-1 root at the hover height.
+                // The rotator keeps the rotation and scale of the bake's root it
+                // leaves, which an FBX's axis conversion can put there.
+                var leavesRoot = model.transform.parent == loaded.transform && model.name == "rotator";
                 model.name = "model";
-                model.transform.SetParent(wrapper.transform, false);
+                model.transform.SetParent(wrapper.transform, leavesRoot);
                 if (loaded != model) UnityEngine.Object.DestroyImmediate(loaded);
                 model.transform.localPosition = new Vector3(0f, hover, 0f);
 
@@ -142,7 +155,7 @@ namespace Womenace.EditorTools
                     var muzzle = new GameObject(MuzzleName).transform;
                     muzzle.SetParent(bone, false);
                     muzzle.localPosition = muzzleOffset;
-                    muzzle.rotation = model.transform.rotation;
+                    muzzle.rotation = wrapper.transform.rotation;
                     muzzle.localScale = new Vector3(1f / bone.lossyScale.x, 1f / bone.lossyScale.y, 1f / bone.lossyScale.z);
                 }
 
