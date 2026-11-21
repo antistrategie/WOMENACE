@@ -468,7 +468,7 @@ public sealed partial class StrategyDiorama
             var kept = template != null && template.Pointer == _staging.CandidateTemplate && _staging.CandidateReal;
             // Vanilla opens on the first leader already hired. Here that is nobody to show, so
             // the first candidate is picked for it.
-            if (status != UnitLeaderStatus.Hirable && !kept && FirstCandidate() is { } first)
+            if (!IsCandidate(status) && !kept && FirstCandidate() is { } first)
             {
                 screen.OnUnitSlotClicked(first);
                 (template, status) = Selected(screen, roster);
@@ -483,7 +483,7 @@ public sealed partial class StrategyDiorama
                 row.marginTop = 0;
                 row.marginBottom = RecruitPad;
             }
-            var shown = status == UnitLeaderStatus.Hirable || kept;
+            var shown = IsCandidate(status) || kept;
             window.EnableInClassList(RecruitEmptyClass, !shown);
             if (UI.Find(_shellRoot, UiSelector.Name(RecruitEmptyName)) is { } empty)
                 empty.style.display = !shown && FirstCandidate() == null ? DisplayStyle.Flex : DisplayStyle.None;
@@ -505,6 +505,10 @@ public sealed partial class StrategyDiorama
         var template = screen.m_SelectedSlot?.GetLeaderTemplate();
         return (template, StatusOf(roster, template));
     }
+
+    // Vanilla lists a dismissed leader among those for hire, and hires her back from there.
+    private static bool IsCandidate(UnitLeaderStatus status) =>
+        status is UnitLeaderStatus.Hirable or UnitLeaderStatus.Dismissed;
 
     private static UnitLeaderStatus StatusOf(Roster roster, UnitLeaderTemplate template)
     {

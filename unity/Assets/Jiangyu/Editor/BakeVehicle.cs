@@ -593,11 +593,29 @@ namespace Jiangyu.Mod
                 if (instance.transform.Find("__jiangyu_timer") == null)
                     new GameObject("__jiangyu_timer").transform.SetParent(instance.transform, false);
 
-                var animator = instance.GetComponentInChildren<Animator>();
-                if (animator == null) animator = instance.AddComponent<Animator>();
+                // A vehicle whose MovementType hugs slopes tilts the root's child named
+                // "rotator" to the ground (Element.HugSlope), and Element.Create logs an
+                // error for a vehicle without one, as vanilla's are all built. The whole
+                // model goes under it with the Animator, so every clip path stays
+                // relative to the same parent and binds as authored.
+                var rotator = new GameObject("rotator").transform;
+                rotator.SetParent(instance.transform, false);
+                foreach (var child in instance.transform.Cast<Transform>().Where(t => t != rotator).ToArray())
+                    child.SetParent(rotator, worldPositionStays: false);
+                var avatar = AssetDatabase.LoadAllAssetsAtPath(fbxPath).OfType<Avatar>().FirstOrDefault();
+                // The import's own Animator sits on the root, where its paths would gain a
+                // "rotator/" prefix. Grafted vanilla subtrees keep theirs.
+                foreach (var stray in instance.GetComponentsInChildren<Animator>(true)
+                             .Where(a => !IsUnderAny(a.transform, graftRoots)).ToArray())
+                    UnityEngine.Object.DestroyImmediate(stray);
+                foreach (var clip in AssetDatabase.LoadAllAssetsAtPath(fbxPath).OfType<AnimationClip>())
+                    if (AnimationUtility.GetCurveBindings(clip).Any(b => b.path.Length == 0 && b.type == typeof(Transform)))
+                        Debug.LogWarning("Jiangyu BakeVehicle: clip '" + clip.name + "' moves the model's root, "
+                            + "which now sits under the rotator and fights its slope tilt.");
+
+                var animator = rotator.gameObject.AddComponent<Animator>();
                 animator.runtimeAnimatorController = controller;
                 animator.applyRootMotion = false;
-                var avatar = AssetDatabase.LoadAllAssetsAtPath(fbxPath).OfType<Avatar>().FirstOrDefault();
                 if (avatar != null) animator.avatar = avatar;
 
                 var prefabPath = outDir + "/main.prefab";

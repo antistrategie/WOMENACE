@@ -56,6 +56,7 @@ public sealed partial class StrategyDiorama
         var selector = screen.m_UnitSelector;
         // In the roster's order, which does not change: vanilla reorders the squads on the map as
         // one is picked. The open squad, if it is not deployed, comes last as what it would add.
+        // Each badge is the leader template's: a pilot's GetTemplate is her vehicle's, which has the vehicle's badge.
         var squads = new List<(IntPtr Leader, int Cost, UnityEngine.Sprite Badge, bool Would)>();
         var openDeployed = false;
         foreach (var element in UI.FindAll(_shellRoot, UiSelector.TypeName(VanillaUi.Elements.PrepUnitSlot)))
@@ -63,11 +64,11 @@ public sealed partial class StrategyDiorama
             var leader = element.TryCast<MissionPrepUnitSelectSlot>()?.GetLeader();
             if (leader == null || selector == null || selector.GetDeployedEntity(leader) == null)
                 continue;
-            squads.Add((leader.Pointer, leader.GetDeployCosts().GetAmount(), leader.GetTemplate()?.Badge, false));
+            squads.Add((leader.Pointer, leader.GetDeployCosts().GetAmount(), leader.LeaderTemplate?.GetBadge(), false));
             openDeployed |= open != null && open.Pointer == leader.Pointer;
         }
         if (open != null && !openDeployed)
-            squads.Add((open.Pointer, open.GetDeployCosts().GetAmount(), open.GetTemplate()?.Badge, true));
+            squads.Add((open.Pointer, open.GetDeployCosts().GetAmount(), open.LeaderTemplate?.GetBadge(), true));
         var signature = $"{limit}:{open?.Pointer}:{string.Join(",", squads.Select(s => $"{s.Leader}={s.Cost}{(s.Would ? "?" : "")}"))}";
         if (signature == _prep.SectionsOf)
             return;

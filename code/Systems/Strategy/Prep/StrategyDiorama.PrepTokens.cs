@@ -259,10 +259,11 @@ public sealed partial class StrategyDiorama
                         var leader = source.TryCast<MissionPrepDeployedEntity>()?.m_Leader;
                         var material = token.CardMaterial;
                         // A squad with no chibi of ours stands as its unit's own badge, or failing
-                        // that as the small one vanilla's map draws for it.
+                        // that as the small one vanilla's map draws for it. The badge is the leader
+                        // template's: a pilot's GetTemplate is her vehicle's, with the vehicle's badge.
                         var chibi = PrepChibisShown() ? Chibi(Affinity.CharacterTag(leader)) : null;
                         var badge = chibi != null ? null
-                            : leader?.GetTemplate()?.Badge
+                            : leader?.LeaderTemplate?.GetBadge()
                                 ?? UI.Find(source, UiSelector.Name(VanillaUi.Elements.PrepDeployedImage))?.resolvedStyle.backgroundImage.sprite;
                         var picture = chibi != null ? chibi : badge != null ? badge.texture : null;
                         var showing = chibi != null ? chibi.Pointer : badge != null ? badge.Pointer : IntPtr.Zero;
