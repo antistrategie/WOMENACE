@@ -250,9 +250,6 @@ public sealed class WorkshopSystem : JiangyuSystem
             var slot = element.TryCast<BlackMarketItemSlot>();
             WorkshopItemStyle.Apply(slot, slot.m_ItemTemplate);
         }
-        var resultId = screen.m_SelectedBlueprint?.GetCraftingResult()?.GetID();
-        foreach (var element in UI.FindAll(screen.m_ProjectPreview, UiSelector.Name("Image")))
-            element.style.unityBackgroundImageTintColor = WorkshopItemStyle.Tint(resultId);
         // Vanilla fills what a project takes when one is picked as well as when the window is.
         CountRequired(screen);
     }
