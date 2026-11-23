@@ -14,12 +14,12 @@ public sealed partial class StrategyDiorama
     // Each vanilla resource display gets its name before its amount.
     private static void AddResourceCaptions(VisualElement bar)
     {
-        foreach (var (element, key, fallback) in ResourceCaptions)
+        foreach (var (element, text) in ResourceCaptions)
         {
             var display = UI.Find(bar, UiSelector.Name(element));
             if (display == null || UI.Find(display, UiSelector.Class(CaptionClass)) != null)
                 continue;
-            var caption = new Label(Locale.Text(key, fallback)) { pickingMode = PickingMode.Ignore };
+            var caption = new Label(text.Resolve()) { pickingMode = PickingMode.Ignore };
             caption.AddToClassList(CaptionClass);
             // The game's bold face: the tab bar's own is the regular one, thin for black on gold.
             VanillaNavigation.ApplyGameFont(caption);
@@ -49,7 +49,7 @@ public sealed partial class StrategyDiorama
         if (resources == null)
             return;
         // Each resource is a gold-edged box: its name on gold, its amount on black.
-        foreach (var (element, _, _) in ResourceCaptions)
+        foreach (var (element, _) in ResourceCaptions)
         {
             var display = UI.Find(bar, UiSelector.Name(element));
             InlineStyle(display, s =>

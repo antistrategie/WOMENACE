@@ -25,7 +25,10 @@ public sealed partial class StrategyDiorama
 
     // What the shell shows for a screen: the room and, where the room holds more than one screen,
     // the screen.
-    private readonly record struct ShellLook(string RoomKey, string Room, string ScreenKey, string Screen);
+    private readonly record struct ShellLook(LocalisedText Room, LocalisedText Screen)
+    {
+        public string RoomKey => Room.Key;
+    }
 
     private static readonly HashSet<string> ShellScreens = new()
     {
@@ -37,42 +40,42 @@ public sealed partial class StrategyDiorama
     // A screen's own actions on the bottom bar: the vanilla buttons the two actions press, their
     // labels, whether the lesser one is a retreat or a loss, the vanilla label that names what they
     // act on, and whether the main one goes out through the bars.
-    private readonly record struct ShellActions(string Primary, string PrimaryKey, string PrimaryLabel,
-        string Secondary, string SecondaryKey, string SecondaryLabel, bool SecondaryDanger, string Info, bool ThroughBars);
+    private readonly record struct ShellActions(string Primary, LocalisedText PrimaryLabel,
+        string Secondary, LocalisedText SecondaryLabel, bool SecondaryDanger, string Info, bool ThroughBars);
 
     private static ShellActions? ActionsFor(string screenName, bool onOperations) => screenName switch
     {
-        VanillaUi.Screens.MissionSelect when onOperations => new(VanillaUi.Elements.PlanMissionButton, "WOMENACE::ui/shell/plan_mission", "PLAN MISSION",
-            VanillaUi.Elements.AbortButton, "WOMENACE::ui/shell/abort_operation", "ABORT OPERATION", true, VanillaUi.Elements.MissionName, false),
-        VanillaUi.Screens.OperationSelect => new(VanillaUi.Elements.StartOperationButton, "WOMENACE::ui/shell/start_operation", "START OPERATION",
-            VanillaUi.Elements.CloseButton, "WOMENACE::ui/shell/back", "BACK", false, VanillaUi.Elements.OperationNameRow, false),
-        VanillaUi.Screens.MissionPrep => new(VanillaUi.Elements.StartMissionButton, "WOMENACE::ui/shell/start_mission", "START MISSION",
-            VanillaUi.Elements.AbortButton, "WOMENACE::ui/shell/back", "BACK", false, null, true),
+        VanillaUi.Screens.MissionSelect when onOperations => new(VanillaUi.Elements.PlanMissionButton, new LocalisedText("WOMENACE::ui/shell/plan_mission", "PLAN MISSION"),
+            VanillaUi.Elements.AbortButton, new LocalisedText("WOMENACE::ui/shell/abort_operation", "ABORT OPERATION"), true, VanillaUi.Elements.MissionName, false),
+        VanillaUi.Screens.OperationSelect => new(VanillaUi.Elements.StartOperationButton, new LocalisedText("WOMENACE::ui/shell/start_operation", "START OPERATION"),
+            VanillaUi.Elements.CloseButton, new LocalisedText("WOMENACE::ui/shell/back", "BACK"), false, VanillaUi.Elements.OperationNameRow, false),
+        VanillaUi.Screens.MissionPrep => new(VanillaUi.Elements.StartMissionButton, new LocalisedText("WOMENACE::ui/shell/start_mission", "START MISSION"),
+            VanillaUi.Elements.AbortButton, new LocalisedText("WOMENACE::ui/shell/back", "BACK"), false, null, true),
         _ => null,
     };
 
-    private const string OpsRoomKey = "WOMENACE::ui/shell/ops_room";
-    private const string WeaponRoomKey = "WOMENACE::ui/shell/weapon_room";
-    private const string RefittingRoomKey = "WOMENACE::ui/shell/refitting_room";
+    private static readonly LocalisedText OpsRoom = new LocalisedText("WOMENACE::ui/shell/ops_room", "OPS ROOM");
+    private static readonly LocalisedText WeaponRoom = new LocalisedText("WOMENACE::ui/shell/weapon_room", "WEAPON ROOM");
+    private static readonly LocalisedText RefittingRoom = new LocalisedText("WOMENACE::ui/shell/refitting_room", "REFITTING ROOM");
 
     private static ShellLook LookFor(string screenName) => screenName switch
     {
-        VanillaUi.Screens.Armory => new(RefittingRoomKey, "REFITTING ROOM", "WOMENACE::ui/shell/tab_roster", "ROSTER"),
-        VanillaUi.Screens.Hiring => new(RefittingRoomKey, "REFITTING ROOM", "WOMENACE::ui/shell/nav_recruitment", "RECRUITMENT"),
-        VanillaUi.Screens.BlackMarket => new(OpsRoomKey, "OPS ROOM", "WOMENACE::ui/shell/market", "MARKET"),
+        VanillaUi.Screens.Armory => new(RefittingRoom, new LocalisedText("WOMENACE::ui/shell/tab_roster", "ROSTER")),
+        VanillaUi.Screens.Hiring => new(RefittingRoom, new LocalisedText("WOMENACE::ui/shell/nav_recruitment", "RECRUITMENT")),
+        VanillaUi.Screens.BlackMarket => new(OpsRoom, new LocalisedText("WOMENACE::ui/shell/market", "MARKET")),
         // Kalina's shop is hosted on the workshop screen and stands in the ops room.
-        VanillaUi.Screens.Workshop when ShopSystem.IsShopOpen => new(OpsRoomKey, "OPS ROOM", "WOMENACE::ui/shell/tab_kalina", "KALINA'S SHOP"),
+        VanillaUi.Screens.Workshop when ShopSystem.IsShopOpen => new(OpsRoom, new LocalisedText("WOMENACE::ui/shell/tab_kalina", "KALINA'S SHOP")),
         // The workshop's stations change without a screen change, which applies the screen again.
         VanillaUi.Screens.Workshop => WorkshopStation switch
         {
-            CalibrateStation => new(WeaponRoomKey, "WEAPON ROOM", "WOMENACE::ui/shell/nav_calibration", "CALIBRATION"),
-            DisassembleStation => new(WeaponRoomKey, "WEAPON ROOM", "WOMENACE::ui/shell/nav_disassembly", "DISASSEMBLY"),
-            _ => new(WeaponRoomKey, "WEAPON ROOM", "WOMENACE::ui/shell/nav_assembly", "ASSEMBLY"),
+            CalibrateStation => new(WeaponRoom, new LocalisedText("WOMENACE::ui/shell/nav_calibration", "CALIBRATION")),
+            DisassembleStation => new(WeaponRoom, new LocalisedText("WOMENACE::ui/shell/nav_disassembly", "DISASSEMBLY")),
+            _ => new(WeaponRoom, new LocalisedText("WOMENACE::ui/shell/nav_assembly", "ASSEMBLY")),
         },
-        VanillaUi.Screens.ShipUpgrades => new(OpsRoomKey, "OPS ROOM", "WOMENACE::ui/shell/oci", "O.C.I."),
-        VanillaUi.Screens.OperationSelect => new(OpsRoomKey, "OPS ROOM", "WOMENACE::ui/shell/operations_title", "OPERATIONS"),
-        VanillaUi.Screens.MissionPrep => new(OpsRoomKey, "OPS ROOM", "WOMENACE::ui/shell/mission_prep", "DEPLOYMENT"),
-        _ => new(OpsRoomKey, "OPS ROOM", null, null),
+        VanillaUi.Screens.ShipUpgrades => new(OpsRoom, new LocalisedText("WOMENACE::ui/shell/oci", "O.C.I.")),
+        VanillaUi.Screens.OperationSelect => new(OpsRoom, new LocalisedText("WOMENACE::ui/shell/operations_title", "OPERATIONS")),
+        VanillaUi.Screens.MissionPrep => new(OpsRoom, new LocalisedText("WOMENACE::ui/shell/mission_prep", "DEPLOYMENT")),
+        _ => new(OpsRoom, default),
     };
 
     // A screen that is stepped into and backed out of (an operation's briefing, mission
@@ -94,12 +97,12 @@ public sealed partial class StrategyDiorama
     private VisualElement _shell;
     private VisualElement _shellRoot;
 
-    private static readonly (string Element, string Key, string Fallback)[] ResourceCaptions =
+    private static readonly (string Element, LocalisedText Caption)[] ResourceCaptions =
     {
-        (VanillaUi.Elements.PromotionPoints, "WOMENACE::ui/shell/promotion", "PROMOTION"),
-        (VanillaUi.Elements.OciPoints, "WOMENACE::ui/shell/oci_points", "O.C.I."),
-        (VanillaUi.Elements.Authority, "WOMENACE::ui/shell/authority", "AUTHORITY"),
-        (VanillaUi.Elements.Squaddies, "WOMENACE::ui/shell/dummies", "DUMMIES"),
+        (VanillaUi.Elements.PromotionPoints, new LocalisedText("WOMENACE::ui/shell/promotion", "PROMOTION")),
+        (VanillaUi.Elements.OciPoints, new LocalisedText("WOMENACE::ui/shell/oci_points", "O.C.I.")),
+        (VanillaUi.Elements.Authority, new LocalisedText("WOMENACE::ui/shell/authority", "AUTHORITY")),
+        (VanillaUi.Elements.Squaddies, new LocalisedText("WOMENACE::ui/shell/dummies", "DUMMIES")),
     };
 
     // A destination on the bottom row: its button, the room whose group it stands in, where it
@@ -108,21 +111,21 @@ public sealed partial class StrategyDiorama
 
     private static readonly Destination[] Destinations =
     {
-        new("wm-nav-oci", OpsRoomKey, VanillaNavigation.Target.Oci),
-        new("wm-nav-market", OpsRoomKey, VanillaNavigation.Target.Market),
-        new("wm-nav-kalina", OpsRoomKey, VanillaNavigation.Target.Shop),
-        new("wm-nav-roster", RefittingRoomKey, VanillaNavigation.Target.Armory),
-        new("wm-nav-recruit", RefittingRoomKey, VanillaNavigation.Target.Hiring),
-        new("wm-nav-assembly", WeaponRoomKey, VanillaNavigation.Target.Workshop, AssembleStation),
-        new("wm-nav-disassembly", WeaponRoomKey, VanillaNavigation.Target.Workshop, DisassembleStation),
-        new("wm-nav-calibration", WeaponRoomKey, VanillaNavigation.Target.Workshop, CalibrateStation),
+        new("wm-nav-oci", OpsRoom.Key, VanillaNavigation.Target.Oci),
+        new("wm-nav-market", OpsRoom.Key, VanillaNavigation.Target.Market),
+        new("wm-nav-kalina", OpsRoom.Key, VanillaNavigation.Target.Shop),
+        new("wm-nav-roster", RefittingRoom.Key, VanillaNavigation.Target.Armory),
+        new("wm-nav-recruit", RefittingRoom.Key, VanillaNavigation.Target.Hiring),
+        new("wm-nav-assembly", WeaponRoom.Key, VanillaNavigation.Target.Workshop, AssembleStation),
+        new("wm-nav-disassembly", WeaponRoom.Key, VanillaNavigation.Target.Workshop, DisassembleStation),
+        new("wm-nav-calibration", WeaponRoom.Key, VanillaNavigation.Target.Workshop, CalibrateStation),
     };
 
     private static readonly (string Element, string RoomKey)[] DestinationGroups =
     {
-        ("wm-nav-group-ops", OpsRoomKey),
-        ("wm-nav-group-refitting", RefittingRoomKey),
-        ("wm-nav-group-weapon", WeaponRoomKey),
+        ("wm-nav-group-ops", OpsRoom.Key),
+        ("wm-nav-group-refitting", RefittingRoom.Key),
+        ("wm-nav-group-weapon", WeaponRoom.Key),
     };
 
     private static bool IsHere(Destination destination, string screenName) => destination.Target switch
@@ -227,15 +230,15 @@ public sealed partial class StrategyDiorama
         {
             hint = new VisualElement { name = PanHintName, pickingMode = PickingMode.Ignore };
             hint.AddToClassList("wm-pan-hint");
-            foreach (var (key, fallbackKey, action, fallbackAction) in new[]
+            foreach (var (key, action) in new[]
             {
-                ("WOMENACE::ui/shell/pan_key", "MMB", "WOMENACE::ui/shell/pan_action", "ROTATE"),
-                ("WOMENACE::ui/shell/zoom_key", "SCROLL", "WOMENACE::ui/shell/zoom_action", "ZOOM"),
+                (new LocalisedText("WOMENACE::ui/shell/pan_key", "MMB"), new LocalisedText("WOMENACE::ui/shell/pan_action", "ROTATE")),
+                (new LocalisedText("WOMENACE::ui/shell/zoom_key", "SCROLL"), new LocalisedText("WOMENACE::ui/shell/zoom_action", "ZOOM")),
             })
             {
-                var input = new Label(Locale.Text(key, fallbackKey)) { pickingMode = PickingMode.Ignore };
+                var input = new Label(key.Resolve()) { pickingMode = PickingMode.Ignore };
                 input.AddToClassList("wm-pan-hint__key");
-                var does = new Label(Locale.Text(action, fallbackAction)) { pickingMode = PickingMode.Ignore };
+                var does = new Label(action.Resolve()) { pickingMode = PickingMode.Ignore };
                 does.AddToClassList("wm-pan-hint__action");
                 hint.Add(input);
                 hint.Add(does);
@@ -473,6 +476,8 @@ public sealed partial class StrategyDiorama
             _shell.style.bottom = 0;
             _shellInset = null;
             UI.Localise(_shell);
+            // The ship's name is found by name (the O.C.I. screen gives it to vanilla's ship panel), so it is set here rather than through a localised UXML name.
+            SetText("wm-shell-ship", Locale.Text("WOMENACE::ui/shell/ship", "MCV ELMO"));
             // MENACE's bold face (Jura-Bold), set outright as the shell's font.
             VanillaNavigation.ApplyGameFont(_shell);
             root.Add(_shell);
@@ -559,8 +564,8 @@ public sealed partial class StrategyDiorama
         _actionThroughBars = actions?.ThroughBars ?? false;
         if (actions is not { } a || _shellRoot == null)
             return;
-        SetText("wm-act-primary-label", Locale.Text(a.PrimaryKey, a.PrimaryLabel));
-        SetText("wm-act-secondary-label", Locale.Text(a.SecondaryKey, a.SecondaryLabel));
+        SetText("wm-act-primary-label", a.PrimaryLabel.Resolve());
+        SetText("wm-act-secondary-label", a.SecondaryLabel.Resolve());
         UI.Find(_shell, UiSelector.Name("wm-act-secondary"))?.EnableInClassList("wui-act--danger", a.SecondaryDanger);
         SetText("wm-act-info", a.Info != null ? VanillaText(a.Info).ToUpperInvariant() : "");
         foreach (var (element, vanilla) in new[] { ("wm-act-primary", a.Primary), ("wm-act-secondary", a.Secondary) })
@@ -931,9 +936,9 @@ public sealed partial class StrategyDiorama
 
         var screen = LookFor(screenName);
         _shellShop = ShopSystem.IsShopOpen;
-        var room = Locale.Text(screen.RoomKey, screen.Room);
+        var room = screen.Room.Resolve();
         var within = onOperations ? Locale.Text("WOMENACE::ui/shell/operations_title", "OPERATIONS")
-            : screen.Screen != null ? Locale.Text(screen.ScreenKey, screen.Screen) : null;
+            : screen.Screen.HasText ? screen.Screen.Resolve() : null;
         SetText("wm-shell-title", within != null ? room + "  //  " + within : room);
         RefreshActions(screenName, onOperations);
 

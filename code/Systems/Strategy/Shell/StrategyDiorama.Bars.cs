@@ -14,9 +14,9 @@ public sealed partial class StrategyDiorama
 {
     private static string RoomOf(VanillaNavigation.Target target) => target switch
     {
-        VanillaNavigation.Target.Armory or VanillaNavigation.Target.Hiring => RefittingRoomKey,
-        VanillaNavigation.Target.Workshop => WeaponRoomKey,
-        _ => OpsRoomKey,
+        VanillaNavigation.Target.Armory or VanillaNavigation.Target.Hiring => RefittingRoom.Key,
+        VanillaNavigation.Target.Workshop => WeaponRoom.Key,
+        _ => OpsRoom.Key,
     };
 
     // Goes to a destination through the vanilla tab bar. Into another room the bars shut first, the
