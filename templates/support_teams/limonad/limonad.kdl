@@ -98,6 +98,11 @@ clone "EntityTemplate" from="player_squad.carda" id="player_squad.limonad" {
 
     set "OverrideAnimatorController" #null
     set "AnimatorTemplate" "animator.limonad"
+    // Carda's squad aims with its Animation slot, which leaves the element's facing alone and
+    // hands the turn to the human soldier controller's rotation parameters. The team's own
+    // controller has no turning states, so it aims as vanilla's constructs do, by turning the
+    // whole element to the target (Element.AimAt).
+    set "AimWithVisualSlot" enum="VisualAlterationSlot" "EntireModel"
 
     // The emblem: the team's rocket skill icon over the Great Wall Railway Outpost Garrison's logo.
     set "Badge" asset="limonad/badge_unit_window"

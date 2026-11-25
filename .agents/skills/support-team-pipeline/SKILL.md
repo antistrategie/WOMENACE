@@ -170,7 +170,10 @@ every parameter the driver of vanilla's `animator.construct_soldier` (the templa
   the fire skill, so its uses and icon change without changing the vanilla weapon's.
 - `player_squad.<team>`: the team tag and `jy_armor_restricted`, `jy_weapon_restricted`,
   `jy_special_restricted`, `jy_vehicle_restricted`, one element, scale pinned, the badges, and
-  the affiliation as `Title`.
+  the affiliation as `Title`. `AimWithVisualSlot` is `EntireModel`, so aiming turns the whole
+  element to its target as a construct's does. The Doll squads it is cloned from aim with the
+  `Animation` slot, which leaves the turn to the human controller's rotation parameters, and
+  the team's controller has no states that read them.
 - `squad_leader.<team>` with the portraits and badges.
 - The unlock event (`unlock.kdl`): a clone of the faction's Honor Guard event with its own trust
   gate, and an effect whose `Effects[0].Leaders[0]` is the team's leader.
