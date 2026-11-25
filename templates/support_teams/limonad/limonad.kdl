@@ -1,0 +1,147 @@
+clone "TagTemplate" from="unique" id="wmgfl_team_limonad"
+
+// Team Limonad, GFL2's ATG01 Armed Echelon. One element whose body is the whole crew and
+// launcher (SupportTeamSystem loads limonad/default/main), on the construct animator contract.
+// Its body, clips and sprites are built by scripts/support_team/prepare_team.py. The speaker's Tags carry no wmgfl token, so the Doll systems
+// keyed on that marker leave the team alone.
+clone "SpeakerTemplate" from="sy" id="wmgfl_limonad_speaker" {
+    set "Tags" "female infantry"
+    set "Nickname" {
+        set "m_DefaultTranslation" "Limonad"
+    }
+    // The full name heads the unit window and the mission's unit panel, so it names the team.
+    // Tarkhun, the crew's leader, is the first of the crew listed under it.
+    set "Forename" {
+        set "m_DefaultTranslation" "Team Limonad"
+    }
+    set "Surname" {
+        set "m_DefaultTranslation" ""
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            Name: Team Limonad
+
+            Role: Rocket-Propelled Grenade Team
+
+            Members: Tarkhun (team leader), Citro (loader), Bakhmaro (gunner)
+            """
+    }
+
+    // The bark and slot portraits are the crew's three faces side by side, the stand image the
+    // whole team (scripts/support_team/make_team_sprites.py).
+    set "BarkImage" asset="limonad/bark"
+    set "StandLookLeftImage" asset="limonad/stand_look_left"
+    set "StandLookRightImage" asset="limonad/stand_look_right"
+    set "StandLookRightInactiveImage" asset="limonad/stand_look_right_inactive"
+}
+
+clone "ElementAnimatorTemplate" from="animator.construct_soldier" id="animator.limonad" {
+    set "DeathBehaviour" enum="AnimatorDeathBehaviour" "DeathAnimations"
+}
+
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.limonad_default" {
+    set "Title" {
+        set "m_DefaultTranslation" "Limonad Field Kit"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Field Kit"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Team Limonad's own field gear. It cannot be swapped out."
+    }
+    append "OnlyEquipableBy" "wmgfl_team_limonad"
+    append "Tags" "jy_no_sell"
+}
+
+clone "WeaponTemplate" from="specialweapon.rmc_rocket_launcher_tier2_L31" id="weapon.limonad" {
+    set "Title" {
+        set "m_DefaultTranslation" "Limonad RPG"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "RPG"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Team Limonad's rocket-propelled grenade launcher."
+    }
+    // The team's main weapon. Its launcher is part of the team's body, so the weapon carries
+    // no model of its own for the back or the hand.
+    set "SlotType" enum="ItemSlot" "InfantryWeapon"
+    set "Model" #null
+    set "ModelSecondary" #null
+
+    set "Icon" asset="weapon/limonad/Icon"
+    set "IconEquipment" asset="weapon/limonad/IconEquipment"
+    set "IconEquipmentDisabled" asset="weapon/limonad/IconEquipmentDisabled"
+    set "IconSkillBar" asset="weapon/limonad/IconSkillBar"
+    set "IconSkillBarDisabled" asset="weapon/limonad/IconSkillBarDisabled"
+    append "OnlyEquipableBy" "wmgfl_team_limonad"
+    append "Tags" "jy_no_sell"
+    set "SkillsGranted" index=0 "active.limonad_launch_rocket"
+}
+
+// The launcher's fire, with the team's own ammunition and skill icon: five rockets where the
+// L31 MAAL carries three. A clone, so vanilla's launchers keep theirs.
+clone "SkillTemplate" from="active.launch_rocket" id="active.limonad_launch_rocket" {
+    set "Icon" asset="weapon/limonad/SkillIcon"
+    set "IconDisabled" asset="weapon/limonad/SkillIconDisabled"
+    set "Uses" 5
+}
+
+clone "EntityTemplate" from="player_squad.carda" id="player_squad.limonad" {
+    append "Tags" "wmgfl_team_limonad"
+    append "Tags" "jy_armor_restricted"
+    append "Tags" "jy_weapon_restricted"
+    append "Tags" "jy_special_restricted"
+    append "Tags" "jy_vehicle_restricted"
+
+    set "OverrideAnimatorController" #null
+    set "AnimatorTemplate" "animator.limonad"
+
+    // The emblem: the team's rocket skill icon over the Great Wall Railway Outpost Garrison's logo.
+    set "Badge" asset="limonad/badge_unit_window"
+    set "BadgeWhite" asset="limonad/badge_white"
+
+    // The affiliation, which the header shows after the rank, as a Doll's squad does.
+    set "Title" {
+        set "m_DefaultTranslation" "Doll Community"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "An Armed Echelon rocket team: Tarkhun leads, Citro loads, Bakhmaro fires."
+    }
+
+    clear "Items"
+    append "Items" "armor.limonad_default"
+    append "Items" "weapon.limonad"
+
+    set "Properties" {
+        set "MinElements" 1
+        set "MaxElements" 1
+    }
+
+    set "Scale" {
+        set "x" 1.0
+        set "y" 1.0
+    }
+    set "OverrideScaleForSquadLeader" #false
+}
+
+clone "UnitLeaderTemplate" from="squad_leader.carda" id="squad_leader.limonad" {
+    set "InfantryUnitTemplate" "player_squad.limonad"
+    set "SpeakerTemplate" "wmgfl_limonad_speaker"
+    set "CustomHead" #null
+    set "UnitTitle" {
+        set "m_DefaultTranslation" "Armed Echelon"
+    }
+    set "UnitDescription" {
+        set "m_DefaultTranslation" "Team Limonad, a rocket-propelled grenade team: Tarkhun leads, Citro loads, Bakhmaro fires."
+    }
+
+    set "Slot" asset="limonad/slot"
+    set "SlotInactive" asset="limonad/slot_inactive"
+    set "SlotBadge" asset="limonad/slot_badge"
+
+    set "BadgeDragged" asset="limonad/badge_dragged"
+    set "BigBadge" asset="limonad/big_badge"
+    set "BadgeUnitWindow" asset="limonad/badge_unit_window"
+    set "BadgeMini" asset="limonad/badge_mini"
+}

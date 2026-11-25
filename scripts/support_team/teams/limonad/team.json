@@ -1,0 +1,76 @@
+{
+  "team": "limonad",
+  "code": "ATG01",
+  "archives": {
+    "crew_idle_scene": "3ea58d9f564452a501684cd2bee3f822.bundle:0",
+    "idle_clips": "1c43a9bca353835b6decf8d805c8335e.bundle:0",
+    "crew_weapon_ultraskill": "682741420b806b97fcc8bf992b685d3c.bundle:0",
+    "launcher_mesh": "d65cc541bbf81dd95d89500783ab37a0.bundle:1482410",
+    "launcher_textures": "8fdfa9c54b2a7b2194fbe164d4daf84e.bundle:0",
+    "launcher_material": "a7503c924346e5c2aa51cace10f4ce13.bundle:5666921",
+    "laptop_mesh": "73879a3f3af316cb933d897582c8fae6.bundle:0",
+    "laptop_skin": "e601a00c4c7724b1747a1b735207cac7.bundle:153158",
+    "lind_clips": "1a476fe52d06a2ce8e173e5ae076f667.bundle:0"
+  },
+  "exports": [
+    {
+      "out": "export/states",
+      "scene_root": "c_ATG01_Idle",
+      "archives": ["crew_idle_scene", "idle_clips", "launcher_mesh", "launcher_textures", "launcher_material", "lind_clips"],
+      "objects": {
+        "ATG01_MemberA": ["c_ATG01_MemberA_slg_Idel", "@lind"],
+        "ATG01_MemberB": ["c_ATG01_MemberB_slg_Idel", "@lind"],
+        "ATG01_MemberC": ["c_ATG01_MemberC_slg_Idel", "@lind"],
+        "ATG01_WL": ["c_ATG01_slg_Idel_Weapon"],
+        "ATG01_Bullet_WL": ["c_ATG01_slg_Idel_Bullet"]
+      }
+    },
+    {
+      "out": "export/states",
+      "scene_root": "c_ATG01_Idle",
+      "archives": ["crew_idle_scene", "idle_clips", "laptop_mesh", "laptop_skin"],
+      "objects": {
+        "Laptop": ["c_ATG01_slg_Idel_Laptop"]
+      }
+    },
+    {
+      "out": "export/ult",
+      "scene_root": "ATG01_UltraSkill",
+      "archives": ["crew_weapon_ultraskill", "launcher_mesh", "launcher_textures", "launcher_material"],
+      "objects": {
+        "ATG01_MemberA": ["c_ATG01_MemberA_slg_Ultraskill"],
+        "ATG01_MemberB": ["c_ATG01_MemberB_slg_Ultraskill"],
+        "ATG01_WL": ["c_ATG01_slg_UltraSkill_Weapon"],
+        "ATG01_Bullet_WL": ["c_ATG01_slg_UltraSkill_Bullet"],
+        "Binocle": ["c_ATG01_slg_UltraSkill_Binocle"]
+      }
+    }
+  ],
+  "clip_sets": {
+    "lind": ["c_LindSSR01_slg_Run", "c_LindSSR01_slg_RunStart", "c_LindSSR01_slg_RunStop", "c_LindSSR01_slg_Idle",
+             "c_LindSSR01_slg_Fire", "c_LindSSR01_slg_KnockBack", "c_LindSSR01_slg_Die", "c_LindSSR01_slg_MoveOverCover"]
+  },
+  "art": {
+    "Support_Whole_GuildWar_ATG01": "594fe376fa7175a31ff91609ffc4f101.bundle:0",
+    "Skill_ATG01_Active": "9405364c5f0c1f4a8bcb6fd5fd6e4113.bundle:0",
+    "Img_Guild_Faction_Logo_1": "dec79686b3c2cd1d42cc3477969cc949.bundle:0",
+    "Support_Ammo_ATG_01_2": "ee6abb5ab82bbfd899333c1b219e4804.bundle:0"
+  },
+  "weapon_render": {
+    "fbx": "export/states/ATG01_WL/ATG01_WL.fbx",
+    "diffuse": "export/states/ATG01_WL/cw_ATG01_WL_d.png",
+    "size": [2400, 1200],
+    "view": "x"
+  },
+  "sprites": {
+    "whole": "Support_Whole_GuildWar_ATG01",
+    "heads": ["625,840,130", "1005,890,165", "1445,995,150"],
+    "logo": "Img_Guild_Faction_Logo_1",
+    "icon": "Skill_ATG01_Active",
+    "items": {"standard_rpg_ammo": "Support_Ammo_ATG_01_2"}
+  },
+  "install": {
+    "textures_from": "export/states",
+    "skip_textures": ["Laptop_rmo.png", "RampMap_Linear_RGBAHalf.png", "c_AGL01_MemberA_slg_hair_spc.png"]
+  }
+}

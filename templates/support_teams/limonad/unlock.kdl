@@ -1,0 +1,42 @@
+clone "ConversationEffectsTemplate" from="ce.event_story_honorguard_mock" id="ce.wmgfl_team_limonad" {
+    // Vanilla's Honor Guard unlock, pointed at the team's leader. The effect list is
+    // Odin-serialised, and Jiangyu writes the decoded list back.
+    set "Effects" index=0 {
+        set "Leaders" index=0 "squad_leader.limonad"
+    }
+    set "m_GameDesignComment" "Team Limonad is now available for hire."
+    set "Description" {
+        set "m_DefaultTranslation" "Team Limonad is now available for hire."
+    }
+}
+
+// Team Limonad joins through Zayn-Beecher, as Roisin Murdock does, one trust level before her.
+// Murdock's event needs FACTION_ZBC_TRUST_LEVEL >= 2 + unlocked_honor_guards, so this one needs
+// 1 + unlocked_honor_guards. It does not raise unlocked_honor_guards itself, so the team never
+// delays a vanilla Honor Guard.
+clone "ConversationTemplate" from="event_story_honorguard_mock" id="event_wmgfl_team_limonad" {
+    set "Comment" "Team Limonad, an Armed Echelon, joins through Zayn-Beecher trust."
+    set "Path" "Story/event_wmgfl_team_limonad"
+    // ReqOpsPlayed is the operations played before the event can come: the number to adjust.
+    set "EventSettings" index=0 {
+        set "Message" "ARMED ECHELON"
+        set "Title" "ARMED ECHELON"
+        set "ReqOpsPlayed" 1
+    }
+    set "Condition" {
+        set "ExpressionStr" "FACTION_ZBC_TRUST_LEVEL >= 1+ unlocked_honor_guards"
+    }
+    // The nodes keep vanilla's order: the unlock effect, Hayflick's line and the highlighted
+    // hire line. The counter action is gone, and every node has its own Guid. Hayflick speaks
+    // vanilla's own voiced line for a faction's offered fighter (event_story_responding_to_
+    // faction_relations_trust_generalized_hg), and the team is named in the unvoiced narrator
+    // line, as vanilla's hire lines are.
+    set "Nodes" {
+        set "Guid" 1309554171
+        clear "m_SerializedNodes"
+        append "m_SerializedNodes" "ACTION|{\"Guid\":1309554172,\"m_SerAction\":\"Effects|{\\\"TemplateName\\\":\\\"ce.wmgfl_team_limonad\\\"}\"}"
+        append "m_SerializedNodes" "SAY|{\"Guid\":1309554173,\"Sound\":{\"bankId\":-1907433889,\"itemId\":410870032},\"RoleGuid\":117488444,\"Text\":\"Major, a faction is so pleased with our work that they have offered someone to fight for us.\"}"
+        append "m_SerializedNodes" "SAY|{\"Guid\":1309554174,\"Sound\":{\"bankId\":0,\"itemId\":0},\"RoleGuid\":0,\"Text\":\"<style=\\\"Highlight\\\"><align=\\\"center\\\">*Zayn-Beecher's Armed Echelon Team Limonad (Tarkhun, Citro and Bakhmaro) is now available for hire.*</align></style>\"}"
+        append "m_SerializedNodes" "EMPTY|{\"Guid\":1309554175}"
+    }
+}

@@ -1,0 +1,830 @@
+{
+  "team": "limonad",
+  "preview": false,
+  "out_dir": "states",
+  "review": "states/limonad_review.blend",
+  "members": [
+    "export/states/ATG01_MemberA/ATG01_MemberA.fbx",
+    "export/states/ATG01_MemberB/ATG01_MemberB.fbx",
+    "export/states/ATG01_MemberC/ATG01_MemberC.fbx"
+  ],
+  "props": [
+    "export/states/ATG01_WL/ATG01_WL.fbx",
+    "export/states/ATG01_Bullet_WL/ATG01_Bullet_WL.fbx",
+    "export/states/Laptop/Laptop.fbx"
+  ],
+  "extra_sources": [
+    "export/ult/ATG01_MemberA/ATG01_MemberA.fbx",
+    "export/ult/ATG01_MemberB/ATG01_MemberB.fbx",
+    "export/ult/ATG01_WL/ATG01_WL.fbx"
+  ],
+  "texture_dirs": [
+    "export/states/ATG01_MemberA",
+    "export/states/ATG01_MemberB",
+    "export/states/ATG01_MemberC",
+    "export/states/ATG01_WL",
+    "export/states/Laptop"
+  ],
+  "crew": [
+    "ATG01_MemberA",
+    "ATG01_MemberB",
+    "ATG01_MemberC"
+  ],
+  "prop_names": [
+    "limonad_ATG01_WL",
+    "limonad_ATG01_Bullet_WL",
+    "limonad_Laptop"
+  ],
+  "formation_clip": {
+    "ATG01_MemberA": "c_ATG01_MemberA_slg_Idel",
+    "ATG01_MemberB": "c_ATG01_MemberB_slg_Idel",
+    "ATG01_MemberC": "c_ATG01_MemberC_slg_Idel"
+  },
+  "prop_idle": {
+    "limonad_ATG01_WL": "c_ATG01_slg_Idel_Weapon",
+    "limonad_ATG01_Bullet_WL": "c_ATG01_slg_Idel_Bullet",
+    "limonad_Laptop": "c_ATG01_slg_Idel_Laptop"
+  },
+  "states": [
+    {
+      "name": "Idle",
+      "loop": true,
+      "native": true,
+      "crew": {
+        "ATG01_MemberA": {
+          "clip": "c_ATG01_MemberA_slg_Idel"
+        },
+        "ATG01_MemberB": {
+          "clip": "c_ATG01_MemberB_slg_Idel"
+        },
+        "ATG01_MemberC": {
+          "clip": "c_ATG01_MemberC_slg_Idel"
+        }
+      },
+      "props": {
+        "limonad_ATG01_WL": "idle",
+        "limonad_ATG01_Bullet_WL": "idle",
+        "limonad_Laptop": "idle"
+      }
+    },
+    {
+      "name": "Run",
+      "loop": true,
+      "in_place": true,
+      "crew": {
+        "ATG01_MemberA": {
+          "clip": "c_LindSSR01_slg_Run",
+          "offset": 0
+        },
+        "ATG01_MemberB": {
+          "clip": "c_LindSSR01_slg_Run",
+          "offset": 11,
+          "upper": {
+            "clip": "c_ATG01_MemberB_slg_Ultraskill",
+            "frame": 90,
+            "from": [
+              "IndexFinger1_L",
+              "MiddleFinger1_L",
+              "ThumbFinger1_L",
+              "Cup_L",
+              "IndexFinger1_R",
+              "MiddleFinger1_R",
+              "ThumbFinger1_R",
+              "Cup_R"
+            ]
+          }
+        },
+        "ATG01_MemberC": {
+          "clip": "c_LindSSR01_slg_Run",
+          "offset": 22,
+          "upper": {
+            "clip": "c_ATG01_MemberC_slg_Idel",
+            "frame": 1,
+            "from": [
+              "Scapula_L",
+              "Scapula_R"
+            ]
+          }
+        }
+      },
+      "props": {
+        "limonad_ATG01_WL": {
+          "carrier": "ATG01_MemberB",
+          "bone": "Chest_M",
+          "from_bone": "Shoulder_R",
+          "pivot": [
+            0.068,
+            0.029,
+            -0.20500000000000002
+          ],
+          "rot": [
+            135.0,
+            0.0,
+            20.0
+          ],
+          "at": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "steady": 0.3,
+          "grips_ref": {
+            "prop_ref": "ATG01_WL",
+            "carrier_ref": "ATG01_MemberB",
+            "frame": 90,
+            "shift": {
+              "L": [
+                0.0,
+                0.0,
+                -0.08
+              ]
+            },
+            "elbow_push": {
+              "L": [
+                0.3,
+                -0.2,
+                0.15
+              ]
+            }
+          }
+        },
+        "limonad_ATG01_Bullet_WL": {
+          "carrier": "ATG01_MemberC",
+          "bone": "Wrist_R",
+          "match": {
+            "prop_ref": "idle:limonad_ATG01_Bullet_WL",
+            "carrier_ref": "idle:ATG01_MemberC",
+            "frame": 1
+          }
+        },
+        "limonad_Laptop": {
+          "carrier": "ATG01_MemberA",
+          "bone": "Chest_M",
+          "from_bone": "Chest_M",
+          "pivot": [
+            0.0,
+            0.031,
+            -0.096
+          ],
+          "rot": [
+            70.0,
+            0.0,
+            180.0
+          ],
+          "at": [
+            0.0,
+            -0.22,
+            -0.22
+          ],
+          "grips": {
+            "L": {
+              "at": [
+                0.2,
+                0.06,
+                -0.02
+              ],
+              "fingers": [
+                0.0,
+                -1.0,
+                0.0
+              ],
+              "thumb": [
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            "R": {
+              "at": [
+                -0.2,
+                0.06,
+                -0.02
+              ],
+              "fingers": [
+                0.0,
+                -1.0,
+                0.0
+              ],
+              "thumb": [
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          }
+        }
+      },
+      "lower_knees": 0.35,
+      "idle_hair": true
+    },
+    {
+      "name": "Kneel",
+      "loop": true,
+      "native": true,
+      "crew": {
+        "ATG01_MemberA": {
+          "clip": "c_ATG01_MemberA_slg_Idel"
+        },
+        "ATG01_MemberB": {
+          "clip": "c_ATG01_MemberB_slg_Ultraskill",
+          "range": [
+            41,
+            42
+          ],
+          "place": "shift",
+          "upper": {
+            "clip": "c_ATG01_MemberB_slg_Ultraskill",
+            "frame": 41,
+            "from": [
+              "Root_M"
+            ]
+          }
+        },
+        "ATG01_MemberC": {
+          "clip": "c_ATG01_MemberC_slg_Idel"
+        }
+      },
+      "props": {
+        "limonad_ATG01_WL": {
+          "follow": "ATG01_MemberB",
+          "prop_ref": "ATG01_WL",
+          "range": [
+            41,
+            41
+          ]
+        },
+        "limonad_ATG01_Bullet_WL": "idle",
+        "limonad_Laptop": "idle"
+      }
+    },
+    {
+      "name": "AimIn",
+      "crew": {
+        "ATG01_MemberA": {
+          "clip": "c_ATG01_MemberA_slg_Ultraskill",
+          "range": [
+            41,
+            95
+          ],
+          "place": "shift"
+        },
+        "ATG01_MemberB": {
+          "clip": "c_ATG01_MemberB_slg_Ultraskill",
+          "range": [
+            41,
+            95
+          ],
+          "place": "shift"
+        },
+        "ATG01_MemberC": {
+          "clip": "c_ATG01_MemberC_slg_Idel",
+          "place": "native"
+        }
+      },
+      "props": {
+        "limonad_ATG01_WL": {
+          "follow": "ATG01_MemberB",
+          "prop_ref": "ATG01_WL",
+          "range": [
+            41,
+            95
+          ]
+        },
+        "limonad_ATG01_Bullet_WL": "idle",
+        "limonad_Laptop": {
+          "carrier": "ATG01_MemberA",
+          "ground": {
+            "distance": 0.9,
+            "angle": -45.0,
+            "lid": 20.0
+          }
+        }
+      },
+      "length_from": "ATG01_MemberB"
+    },
+    {
+      "name": "AimHold",
+      "crew": {
+        "ATG01_MemberA": {
+          "clip": "c_ATG01_MemberA_slg_Ultraskill",
+          "range": [
+            95,
+            105
+          ],
+          "place": "shift"
+        },
+        "ATG01_MemberB": {
+          "clip": "c_ATG01_MemberB_slg_Ultraskill",
+          "range": [
+            95,
+            105
+          ],
+          "place": "shift"
+        },
+        "ATG01_MemberC": {
+          "clip": "c_ATG01_MemberC_slg_Idel",
+          "place": "native"
+        }
+      },
+      "props": {
+        "limonad_ATG01_WL": {
+          "follow": "ATG01_MemberB",
+          "prop_ref": "ATG01_WL",
+          "range": [
+            95,
+            105
+          ]
+        },
+        "limonad_ATG01_Bullet_WL": "idle",
+        "limonad_Laptop": {
+          "carrier": "ATG01_MemberA",
+          "ground": {
+            "distance": 0.9,
+            "angle": -45.0,
+            "lid": 20.0
+          }
+        }
+      },
+      "loop": true,
+      "length_from": "ATG01_MemberB",
+      "pingpong": true
+    },
+    {
+      "name": "Fire",
+      "crew": {
+        "ATG01_MemberA": {
+          "clip": "c_ATG01_MemberA_slg_Ultraskill",
+          "range": [
+            95,
+            150
+          ],
+          "place": "shift"
+        },
+        "ATG01_MemberB": {
+          "clip": "c_ATG01_MemberB_slg_Ultraskill",
+          "range": [
+            95,
+            150
+          ],
+          "place": "shift"
+        },
+        "ATG01_MemberC": {
+          "clip": "c_ATG01_MemberC_slg_Idel",
+          "place": "native"
+        }
+      },
+      "props": {
+        "limonad_ATG01_WL": {
+          "follow": "ATG01_MemberB",
+          "prop_ref": "ATG01_WL",
+          "range": [
+            95,
+            150
+          ]
+        },
+        "limonad_ATG01_Bullet_WL": "idle",
+        "limonad_Laptop": {
+          "carrier": "ATG01_MemberA",
+          "ground": {
+            "distance": 0.9,
+            "angle": -45.0,
+            "lid": 20.0
+          }
+        }
+      },
+      "length_from": "ATG01_MemberB"
+    },
+    {
+      "name": "Hit",
+      "crew": {
+        "ATG01_MemberA": {
+          "clip": "c_LindSSR01_slg_KnockBack",
+          "offset": 0
+        },
+        "ATG01_MemberB": {
+          "clip": "c_LindSSR01_slg_KnockBack",
+          "offset": 3,
+          "upper": {
+            "clip": "c_ATG01_MemberB_slg_Ultraskill",
+            "frame": 90,
+            "from": [
+              "IndexFinger1_L",
+              "MiddleFinger1_L",
+              "ThumbFinger1_L",
+              "Cup_L",
+              "IndexFinger1_R",
+              "MiddleFinger1_R",
+              "ThumbFinger1_R",
+              "Cup_R"
+            ]
+          }
+        },
+        "ATG01_MemberC": {
+          "clip": "c_LindSSR01_slg_KnockBack",
+          "offset": 6,
+          "upper": {
+            "clip": "c_ATG01_MemberC_slg_Idel",
+            "frame": 1,
+            "from": [
+              "Scapula_L",
+              "Scapula_R"
+            ]
+          }
+        }
+      },
+      "props": {
+        "limonad_ATG01_WL": {
+          "carrier": "ATG01_MemberB",
+          "bone": "Chest_M",
+          "from_bone": "Shoulder_R",
+          "pivot": [
+            0.068,
+            0.029,
+            -0.315
+          ],
+          "rot": [
+            110.0,
+            0.0,
+            0.0
+          ],
+          "at": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "steady": 0.3,
+          "grips_ref": {
+            "prop_ref": "ATG01_WL",
+            "carrier_ref": "ATG01_MemberB",
+            "frame": 90,
+            "shift": {
+              "L": [
+                0.0,
+                0.0,
+                -0.16
+              ]
+            }
+          }
+        },
+        "limonad_ATG01_Bullet_WL": {
+          "carrier": "ATG01_MemberC",
+          "bone": "Wrist_R",
+          "match": {
+            "prop_ref": "idle:limonad_ATG01_Bullet_WL",
+            "carrier_ref": "idle:ATG01_MemberC",
+            "frame": 1
+          }
+        },
+        "limonad_Laptop": {
+          "carrier": "ATG01_MemberA",
+          "bone": "Chest_M",
+          "from_bone": "Chest_M",
+          "pivot": [
+            0.0,
+            0.031,
+            -0.096
+          ],
+          "rot": [
+            70.0,
+            0.0,
+            180.0
+          ],
+          "at": [
+            0.0,
+            -0.22,
+            -0.22
+          ],
+          "grips": {
+            "L": {
+              "at": [
+                0.2,
+                0.06,
+                -0.02
+              ],
+              "fingers": [
+                0.0,
+                -1.0,
+                0.0
+              ],
+              "thumb": [
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            "R": {
+              "at": [
+                -0.2,
+                0.06,
+                -0.02
+              ],
+              "fingers": [
+                0.0,
+                -1.0,
+                0.0
+              ],
+              "thumb": [
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          }
+        }
+      },
+      "idle_hair": true
+    },
+    {
+      "name": "Death",
+      "crew": {
+        "ATG01_MemberA": {
+          "clip": "c_LindSSR01_slg_Die",
+          "offset": 0
+        },
+        "ATG01_MemberB": {
+          "clip": "c_LindSSR01_slg_Die",
+          "offset": 10,
+          "upper": {
+            "clip": "c_ATG01_MemberB_slg_Ultraskill",
+            "frame": 90,
+            "from": [
+              "IndexFinger1_L",
+              "MiddleFinger1_L",
+              "ThumbFinger1_L",
+              "Cup_L",
+              "IndexFinger1_R",
+              "MiddleFinger1_R",
+              "ThumbFinger1_R",
+              "Cup_R"
+            ]
+          }
+        },
+        "ATG01_MemberC": {
+          "clip": "c_LindSSR01_slg_Die",
+          "offset": 20,
+          "upper": {
+            "clip": "c_ATG01_MemberC_slg_Idel",
+            "frame": 1,
+            "from": [
+              "Scapula_L",
+              "Scapula_R"
+            ]
+          }
+        }
+      },
+      "props": {
+        "limonad_ATG01_WL": {
+          "carrier": "ATG01_MemberB",
+          "bone": "Chest_M",
+          "from_bone": "Shoulder_R",
+          "pivot": [
+            0.068,
+            0.029,
+            -0.315
+          ],
+          "rot": [
+            110.0,
+            0.0,
+            0.0
+          ],
+          "at": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "grips_ref": {
+            "prop_ref": "ATG01_WL",
+            "carrier_ref": "ATG01_MemberB",
+            "frame": 90,
+            "shift": {
+              "L": [
+                0.0,
+                0.0,
+                -0.16
+              ]
+            }
+          }
+        },
+        "limonad_ATG01_Bullet_WL": {
+          "carrier": "ATG01_MemberC",
+          "bone": "Wrist_R",
+          "match": {
+            "prop_ref": "idle:limonad_ATG01_Bullet_WL",
+            "carrier_ref": "idle:ATG01_MemberC",
+            "frame": 1
+          }
+        },
+        "limonad_Laptop": {
+          "carrier": "ATG01_MemberA",
+          "bone": "Chest_M",
+          "from_bone": "Chest_M",
+          "pivot": [
+            0.0,
+            0.031,
+            -0.096
+          ],
+          "rot": [
+            70.0,
+            0.0,
+            180.0
+          ],
+          "at": [
+            0.0,
+            -0.22,
+            -0.22
+          ],
+          "grips": {
+            "L": {
+              "at": [
+                0.2,
+                0.06,
+                -0.02
+              ],
+              "fingers": [
+                0.0,
+                -1.0,
+                0.0
+              ],
+              "thumb": [
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            "R": {
+              "at": [
+                -0.2,
+                0.06,
+                -0.02
+              ],
+              "fingers": [
+                0.0,
+                -1.0,
+                0.0
+              ],
+              "thumb": [
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          }
+        }
+      },
+      "idle_hair": true
+    },
+    {
+      "name": "Vault",
+      "travel": "ATG01_MemberB",
+      "crew": {
+        "ATG01_MemberA": {
+          "clip": "c_LindSSR01_slg_MoveOverCover",
+          "offset": 0
+        },
+        "ATG01_MemberB": {
+          "clip": "c_LindSSR01_slg_MoveOverCover",
+          "offset": 0,
+          "upper": {
+            "clip": "c_ATG01_MemberB_slg_Ultraskill",
+            "frame": 90,
+            "from": [
+              "IndexFinger1_L",
+              "MiddleFinger1_L",
+              "ThumbFinger1_L",
+              "Cup_L",
+              "IndexFinger1_R",
+              "MiddleFinger1_R",
+              "ThumbFinger1_R",
+              "Cup_R"
+            ]
+          }
+        },
+        "ATG01_MemberC": {
+          "clip": "c_LindSSR01_slg_MoveOverCover",
+          "offset": 0,
+          "upper": {
+            "clip": "c_ATG01_MemberC_slg_Idel",
+            "frame": 1,
+            "from": [
+              "Scapula_L",
+              "Scapula_R"
+            ]
+          }
+        }
+      },
+      "props": {
+        "limonad_ATG01_WL": {
+          "carrier": "ATG01_MemberB",
+          "bone": "Chest_M",
+          "from_bone": "Shoulder_R",
+          "pivot": [
+            0.068,
+            0.029,
+            -0.315
+          ],
+          "rot": [
+            75.0,
+            0.0,
+            0.0
+          ],
+          "at": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "steady": 0.3,
+          "grips_ref": {
+            "prop_ref": "ATG01_WL",
+            "carrier_ref": "ATG01_MemberB",
+            "frame": 90,
+            "shift": {
+              "L": [
+                0.0,
+                0.0,
+                -0.16
+              ]
+            }
+          }
+        },
+        "limonad_ATG01_Bullet_WL": {
+          "carrier": "ATG01_MemberC",
+          "bone": "Wrist_R",
+          "match": {
+            "prop_ref": "idle:limonad_ATG01_Bullet_WL",
+            "carrier_ref": "idle:ATG01_MemberC",
+            "frame": 1
+          }
+        },
+        "limonad_Laptop": {
+          "carrier": "ATG01_MemberA",
+          "bone": "Chest_M",
+          "from_bone": "Chest_M",
+          "pivot": [
+            0.0,
+            0.031,
+            -0.096
+          ],
+          "rot": [
+            70.0,
+            0.0,
+            180.0
+          ],
+          "at": [
+            0.0,
+            -0.22,
+            -0.22
+          ],
+          "grips": {
+            "L": {
+              "at": [
+                0.2,
+                0.06,
+                -0.02
+              ],
+              "fingers": [
+                0.0,
+                -1.0,
+                0.0
+              ],
+              "thumb": [
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            "R": {
+              "at": [
+                -0.2,
+                0.06,
+                -0.02
+              ],
+              "fingers": [
+                0.0,
+                -1.0,
+                0.0
+              ],
+              "thumb": [
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          }
+        }
+      },
+      "idle_hair": true
+    }
+  ],
+  "markers": [
+    {
+      "name": "launcher_muzzle",
+      "prop": "limonad_ATG01_WL",
+      "bone": "Prop",
+      "at": [
+        0.0,
+        0.036,
+        0.56
+      ]
+    }
+  ]
+}
