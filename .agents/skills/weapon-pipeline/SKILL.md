@@ -120,16 +120,17 @@ The `asset="weapon/<name>/main"` KDL ref points at this prefab.
 
 ## 4. Icons
 
-Three sprite icons feed the WeaponTemplate: `Icon` (912×320 catalogue tile), `IconEquipment` (smaller inventory thumbnail), `IconSkillBar` (skill-row glyph). MENACE's vanilla icons are dark matte gunmetal, soft painterly rendering, on pure white. Match that or it'll stand out.
+A WeaponTemplate takes five icons, all flat side renders of the weapon's own model:
 
-Generate via Gemini's image model, fed the source render plus four vanilla MENACE icons as style anchors:
+| Icon | Size |
+|---|---|
+| `Icon` | 144×144, the square catalogue icon |
+| `IconEquipment`, `IconEquipmentDisabled` | 912×318 |
+| `IconSkillBar`, `IconSkillBarDisabled` | 465×111 |
 
-1. Render the weapon in Blender with `scripts/weapon/render_weapon.py --mode flat --view side` to produce a clean 912×320 side profile of the actual model.
-2. Hand Gemini the source render + 4 vanilla MENACE icons (any 912×318 weapon sprite extracted from MENACE's `resources.assets`).
-3. Prompt: repaint the source in the reference art style, preserve geometry exactly, side profile, white background, same dimensions.
-4. Crop/resize the result for `IconEquipment` and `IconSkillBar`.
+`scripts/weapon/weapon_icons.py <name>` renders all five from `unity/Assets/Authored/weapon/<name>/raw.glb` through `render_weapon.py` and writes them to `assets/sprites/weapon/<name>/`. A disabled icon is its enabled one in grey at 55% brightness, as the game's own are. The asset names become `weapon/<name>/Icon` etc in KDL.
 
-Save the three PNGs to `assets/sprites/weapon/<name>/{Icon,IconEquipment,IconSkillBar}.png`. The asset names become `weapon/<name>/Icon` etc in KDL.
+A Doll weapon's calibration component (`commodity.wmgfl_component_<name>` in her `weapon_ranks.kdl`) has an icon of its own: the weapon's outline as line art, in the workshop icons' cream, or in the interface's gold for an SSR weapon (a name ending `_ssr`). `scripts/weapon/component_icon.py <name>` draws it to `assets/sprites/weapon/<name>/component.png`, and the component sets `Icon` to `weapon/<name>/component`.
 
 ## 5. WeaponTemplate clone
 
@@ -143,7 +144,9 @@ clone "WeaponTemplate" from="<parent_weapon>" id="weapon.<character>_<name>" {
     set "SkillsGranted" index=1 "active.fire_<character>_<name>_<mode>"   // aimed/sustained/burst
     set "Icon" asset="weapon/<name>/Icon"
     set "IconEquipment" asset="weapon/<name>/IconEquipment"
+    set "IconEquipmentDisabled" asset="weapon/<name>/IconEquipmentDisabled"
     set "IconSkillBar" asset="weapon/<name>/IconSkillBar"
+    set "IconSkillBarDisabled" asset="weapon/<name>/IconSkillBarDisabled"
 }
 ```
 
@@ -257,7 +260,9 @@ A skill's visuals are plain prefab references on the SkillTemplate, so a beam we
 ```
 scripts/
 ├── bake_weapon.py                    Blender preprocessor (shared across weapons)
-├── render_weapon.py                  Optional: render the weapon to a transparent PNG (icon prep)
+├── render_weapon.py                  Renders the weapon to a transparent PNG
+├── weapon_icons.py                   The WeaponTemplate's five icons, from render_weapon.py
+├── component_icon.py                 The calibration component's line-art icon
 └── .config/<weapon>.json             Per-weapon config (gitignored)
 
 unity/Assets/
@@ -266,7 +271,7 @@ unity/Assets/
 
 assets/
 ├── audio/weapons/<class>/            Custom gunshot WAVs (96 kHz, close + distant)
-└── sprites/weapon/<name>/            Icon / IconEquipment / IconSkillBar PNGs
+└── sprites/weapon/<name>/            Icon, IconEquipment, IconSkillBar (+ Disabled) and component PNGs
 
 templates/
 ├── dolls/<doll>/weapon.kdl           WeaponTemplate + Skill clones

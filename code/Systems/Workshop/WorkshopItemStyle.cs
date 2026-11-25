@@ -10,9 +10,6 @@ internal static class WorkshopItemStyle
     public static void Apply(VisualElement slot, BaseItemTemplate template)
     {
         var id = template?.TryCast<BlueprintTemplate>()?.GetCraftingResult()?.GetID() ?? template?.GetID();
-        var icon = UI.Find(slot, UiSelector.Name("Icon")) ?? UI.Find(slot, UiSelector.Name("Image"));
-        if (icon != null)
-            icon.style.unityBackgroundImageTintColor = Tint(id);
 
         var badge = UI.Find(slot, UiSelector.Name("wm-part-class"))?.TryCast<Label>();
         if (!WeaponParts.IsPart(id))
@@ -55,6 +52,4 @@ internal static class WorkshopItemStyle
             stack.style.left = stack.style.bottom = new StyleLength(0f);
         }
     }
-
-    public static Color Tint(string id) => id == CalibrationCores.AdvancedId ? new Color(1f, .85f, .2f, 1f) : Color.white;
 }

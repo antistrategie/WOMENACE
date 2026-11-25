@@ -87,8 +87,8 @@ public sealed partial class StrategyDiorama
             tabs.style.top = SquadsTop;
             tabs.style.width = RosterWidth - RosterTileInset - RosterScrollerWidth;
             tabs.style.height = RosterTabsHeight;
-            tabs.Add(RosterTab(root, "WOMENACE::ui/squads/active", "ACTIVE", false));
-            tabs.Add(RosterTab(root, "WOMENACE::ui/squads/deceased", "DECEASED", true));
+            tabs.Add(RosterTab(root, new LocalisedText("WOMENACE::ui/squads/active", "ACTIVE"), false));
+            tabs.Add(RosterTab(root, new LocalisedText("WOMENACE::ui/squads/deceased", "DECEASED"), true));
             // Beside the list and under the unit window in the screen's own row, so the window's
             // flyouts (the gift panel) open over the tabs.
             if (list.parent != null)
@@ -152,11 +152,11 @@ public sealed partial class StrategyDiorama
     private const string RosterTabsName = "wm-roster-tabs";
     private const float RosterScrollerWidth = 8f;
 
-    private VisualElement RosterTab(VisualElement root, string key, string fallback, bool deceased)
+    private VisualElement RosterTab(VisualElement root, LocalisedText text, bool deceased)
     {
         var tab = new VisualElement();
         tab.AddToClassList("wui-seg");
-        var label = new Label(Locale.Text(key, fallback));
+        var label = new Label(text.Resolve());
         label.AddToClassList("wui-seg__label");
         tab.Add(label);
         tab.RegisterCallback((EventCallback<ClickEvent>)(_ =>
@@ -422,13 +422,13 @@ public sealed partial class StrategyDiorama
             return;
         var tabs = new VisualElement { name = PanelTabsName };
         tabs.AddToClassList("wui-utab-row");
-        var names = new[] { ("WOMENACE::ui/squads/loadout", "LOADOUT"), ("WOMENACE::ui/squads/appearance", "APPEARANCE"), ("WOMENACE::ui/squads/affinity", "AFFINITY") };
+        var names = new[] { new LocalisedText("WOMENACE::ui/squads/loadout", "LOADOUT"), new LocalisedText("WOMENACE::ui/squads/appearance", "APPEARANCE"), new LocalisedText("WOMENACE::ui/squads/affinity", "AFFINITY") };
         for (var i = 0; i < names.Length; i++)
         {
             var index = i;
             var tab = new VisualElement { name = PanelTabName + i };
             tab.AddToClassList("wui-utab");
-            var label = new Label(Locale.Text(names[i].Item1, names[i].Item2));
+            var label = new Label(names[i].Resolve());
             label.AddToClassList("wui-utab__label");
             tab.Add(label);
             tab.RegisterCallback((EventCallback<ClickEvent>)(_ =>
@@ -444,8 +444,8 @@ public sealed partial class StrategyDiorama
         var dress = new VisualElement { name = DressRowName };
         dress.AddToClassList("wui-seg-row");
         dress.AddToClassList("wm-squads__dress");
-        dress.Add(DressTab(window, "WOMENACE::ui/squads/dress_leader", "SQUAD LEADER", false));
-        dress.Add(DressTab(window, "WOMENACE::ui/squads/dress_links", "DUMMY LINKS", true));
+        dress.Add(DressTab(window, new LocalisedText("WOMENACE::ui/squads/dress_leader", "SQUAD LEADER"), false));
+        dress.Add(DressTab(window, new LocalisedText("WOMENACE::ui/squads/dress_links", "DUMMY LINKS"), true));
         appearance.Add(dress);
         if (TransmogPickerSystem.Instance?.BuildHosted() is { } outfits)
             appearance.Add(Scrolling(outfits));
@@ -553,11 +553,11 @@ public sealed partial class StrategyDiorama
         AffinitySystem.ShowLevel(affinity, AffinityLevelName, level, top, share);
     }
 
-    private VisualElement DressTab(VisualElement window, string key, string fallback, bool links)
+    private VisualElement DressTab(VisualElement window, LocalisedText text, bool links)
     {
         var tab = new VisualElement { name = links ? "wm-dress-links" : "wm-dress-leader" };
         tab.AddToClassList("wui-seg");
-        var label = new Label(Locale.Text(key, fallback));
+        var label = new Label(text.Resolve());
         label.AddToClassList("wui-seg__label");
         tab.Add(label);
         tab.RegisterCallback((EventCallback<ClickEvent>)(_ =>
