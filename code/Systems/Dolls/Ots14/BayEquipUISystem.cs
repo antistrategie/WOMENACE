@@ -76,12 +76,13 @@ public sealed class BayEquipUISystem : JiangyuSystem
             var slot = FindSpecialSlot(window);
             var grid = UI.Find(window, UiSelector.Name(GridName));
 
-            // Sextans carries no special weapon at all (blades live in the
-            // weapon slot and jy_special_restricted empties the dropdown), so
-            // her window hides the whole special-weapon box, header included,
+            // Sextans and the support teams carry no special weapon at all
+            // (Sextans' blades live in the weapon slot, a team's weapon is its
+            // own, and jy_special_restricted empties the dropdown), so their
+            // window hides the whole special-weapon box, header included,
             // rather than showing a dead slot. The window is reused across
             // leaders, so everyone else gets it shown back.
-            slot?.SetVisible(characterTag != "wmgfl_sextans");
+            slot?.SetVisible(characterTag != "wmgfl_sextans" && !SupportTeams.IsTeam(leader));
 
             if (characterTag != Bay.CharacterTag || slot == null)
             {

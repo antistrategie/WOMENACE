@@ -4,9 +4,15 @@ clone "TagTemplate" from="unique" id="jy_special_restricted"
 
 clone "TagTemplate" from="unique" id="jy_vehicle_restricted"
 
+clone "TagTemplate" from="unique" id="jy_armor_restricted"
+
 clone "TagTemplate" from="unique" id="jy_no_sell"
 
 clone "TagTemplate" from="unique" id="wmgfl_gift"
+
+// An item any support team (Armed Echelon) may take. A team's slots list only these and the
+// items tagged for that team alone (SupportTeamEquipSystem).
+clone "TagTemplate" from="unique" id="wmgfl_support_item"
 
 // Carried by no unit: an armour whose OnlyEquipableBy names only this tag never
 // appears in any equip dropdown. Doll outfits use it, so they exist purely as

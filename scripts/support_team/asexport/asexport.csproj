@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Built against AssetStudioMod's own libraries, which are not on NuGet. Pass the folder they are
+    installed in:  dotnet build -p:AssetStudioDir="<AssetStudioMod folder>"
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>asexport</AssemblyName>
+    <PlatformTarget>x64</PlatformTarget>
+    <!-- AssetStudio is Windows-only, which every call into it would otherwise warn about. -->
+    <NoWarn>$(NoWarn);CA1416</NoWarn>
+  </PropertyGroup>
+  <Target Name="RequireAssetStudio" BeforeTargets="ResolveAssemblyReferences" Condition="'$(AssetStudioDir)' == '' Or !Exists('$(AssetStudioDir)/AssetStudio.dll')">
+    <Error Text="Set AssetStudioDir to the AssetStudioMod folder that holds AssetStudio.dll: dotnet build -p:AssetStudioDir=&quot;...&quot;" />
+  </Target>
+  <ItemGroup>
+    <Reference Include="AssetStudio"><HintPath>$(AssetStudioDir)/AssetStudio.dll</HintPath></Reference>
+    <Reference Include="AssetStudioUtility"><HintPath>$(AssetStudioDir)/AssetStudioUtility.dll</HintPath></Reference>
+    <Reference Include="AssetStudioFBXWrapper"><HintPath>$(AssetStudioDir)/AssetStudioFBXWrapper.dll</HintPath></Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <!-- The FBX writer's native library and the rest of AssetStudio's dependencies sit beside it. -->
+    <None Include="$(AssetStudioDir)/*.dll" Exclude="$(AssetStudioDir)/AssetStudioModGUI.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>%(Filename)%(Extension)</Link>
+    </None>
+  </ItemGroup>
+</Project>

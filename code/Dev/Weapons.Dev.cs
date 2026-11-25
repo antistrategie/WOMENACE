@@ -27,8 +27,11 @@ public static class Weapons
         if (owned == null)
             return new { error = "no strategy state / owned items" };
         // Weapons first, then accessories (grenades, charges), which share the owned-item stock.
-        Il2CppMenace.Items.BaseItemTemplate template = Templates.Resolve<Il2CppMenace.Items.WeaponTemplate>(
-            weaponId, GiveCache, msg => context.Log.Warn($"weapons: {msg}"));
+        // Each kind is checked for the id before it is asked for: the game's own lookup logs an
+        // error for a missing name, which the error log screen then shows.
+        Il2CppMenace.Items.BaseItemTemplate template = Templates.Exists<Il2CppMenace.Items.WeaponTemplate>(weaponId)
+            ? Templates.Resolve<Il2CppMenace.Items.WeaponTemplate>(weaponId, GiveCache, msg => context.Log.Warn($"weapons: {msg}"))
+            : null;
         template ??= Templates.Exists<Il2CppMenace.Items.AccessoryTemplate>(weaponId)
             ? Templates.ById<Il2CppMenace.Items.AccessoryTemplate>(weaponId)
             : null;

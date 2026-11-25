@@ -12,6 +12,11 @@ namespace WOMENACE.Code;
 // The leader stands in the first slot and her squaddies in the rest, in her squad's order, as the
 // armoury spawns them. The plates are placed again whenever the squad is (StrategyDiorama.Armory.cs),
 // not every frame: the units stand still once they have settled.
+//
+// A support team (SupportTeams) is one unit holding its whole crew and takes no squaddies, so its
+// crew have the rows instead: a plate each, on the floor just in front of its crew member. No two
+// crew stand in one place, so the names never lie over each other, where a line across the team's
+// front would crowd two members one behind the other from the camera's side.
 public sealed partial class StrategyDiorama
 {
     // The infantry root of the armoury's squad, and the most units it holds.
@@ -26,6 +31,12 @@ public sealed partial class StrategyDiorama
     private const float NamePlateAhead = 0.5f;
     private const float NamePlateLift = 0.01f;
     private const float NamePlateIntensity = 1.4f;
+    // A crew member's plate is narrower than a unit's, since the crew stand closer together than
+    // squad slots, and lies this far in front of her.
+    private const float CrewNamePlateWidth = 1.2f;
+    private const float CrewNameAhead = 0.3f;
+    // The bone in a crew member's rig that places her.
+    private const string CrewHipsBone = "Root_M";
 
 
     // The texture, its labels and the plates, made once while the squad is staged.
@@ -86,6 +97,9 @@ public sealed partial class StrategyDiorama
         // Its top is away from the camera, so it reads from where the squad is shot.
         var lying = Quaternion.LookRotation(Vector3.down, -_staging.SquadFacing);
         var floor = _staging.Stage.TransformPoint(ArmoryStand).y + NamePlateLift;
+        var team = SupportTeams.Of(leader);
+        if (team != null && squad.childCount > 0 && PlaceCrewPlates(team, StandingUnit(squad.GetChild(0)), lying, floor))
+            return;
         for (var row = 0; row < NamePlateRows; row++)
         {
             var unit = row < squad.childCount ? StandingUnit(squad.GetChild(row)) : null;
@@ -97,13 +111,60 @@ public sealed partial class StrategyDiorama
                 continue;
             }
             var text = name.ToUpperInvariant();
-            if (_staging.NamePlateLabels[row].text != text)
-                _staging.NamePlateLabels[row].text = text;
             var at = unit.position + _staging.SquadFacing * NamePlateAhead;
             at.y = floor;
-            plate.transform.SetPositionAndRotation(at, lying);
-            plate.SetActive(true);
+            ShowNamePlate(row, text, NamePlateWidth, at, lying);
         }
+    }
+
+    private void ShowNamePlate(int row, string text, float width, Vector3 at, Quaternion lying)
+    {
+        if (_staging.NamePlateLabels[row].text != text)
+            _staging.NamePlateLabels[row].text = text;
+        var plate = _staging.NamePlates[row].transform;
+        plate.localScale = new Vector3(width, width * NamePlateRowHeight / NamePlateTextureWidth, 1f);
+        plate.SetPositionAndRotation(at, lying);
+        plate.gameObject.SetActive(true);
+    }
+
+    // Each crew member's plate, false when the team's body is not standing or a member's rig is not
+    // found in it, which leaves the unit to the plain leader plate.
+    private bool PlaceCrewPlates(SupportTeams.Team team, Transform unit, Quaternion lying, float floor)
+    {
+        var count = team.CrewCount;
+        if (unit == null || count > NamePlateRows)
+            return false;
+        var hips = new Transform[count];
+        for (var i = 0; i < count; i++)
+        {
+            var member = Descendant(unit, team.Crew[i].Node);
+            hips[i] = member != null ? Descendant(member, CrewHipsBone) : null;
+            if (hips[i] == null)
+                return false;
+        }
+        var ahead = CrewNameAhead * _staging.Stage.lossyScale.x;
+        for (var i = 0; i < count; i++)
+        {
+            var at = hips[i].position + _staging.SquadFacing * ahead;
+            at.y = floor;
+            ShowNamePlate(i, team.Crew[i].Name.ToUpperInvariant(), CrewNamePlateWidth, at, lying);
+        }
+        for (var row = count; row < NamePlateRows; row++)
+            _staging.NamePlates[row].SetActive(false);
+        return true;
+    }
+
+    private static Transform Descendant(Transform root, string name)
+    {
+        if (root.name == name)
+            return root;
+        for (var i = 0; i < root.childCount; i++)
+        {
+            var found = Descendant(root.GetChild(i), name);
+            if (found != null)
+                return found;
+        }
+        return null;
     }
 
     // The floor's mirror leaves the plates out: they lie on the floor, and a name reflected

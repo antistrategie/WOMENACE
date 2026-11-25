@@ -408,7 +408,9 @@ public sealed class SoloSquadSystem : JiangyuSystem
             if (squaddies == null)
                 return;
             var solo = IsSolo(leader);
-            squaddies.style.display = solo ? DisplayStyle.None : DisplayStyle.Flex;
+            // A support team takes no squaddies either (SupportTeamSquadSystem), so its row
+            // is hidden here too, where the row's one writer is.
+            squaddies.style.display = solo || SupportTeams.IsTeam(leader) ? DisplayStyle.None : DisplayStyle.Flex;
             if (solo)
             {
                 Context.Log.Debug($"solo squad: window shows {leader.GetTemplate()?.GetID()}, minValid={leader.GetMinValidSquaddies()}, maxValid={leader.GetMaxValidSquaddies()}, assigned={leader.m_SquaddieIds?.Count ?? -1}");
