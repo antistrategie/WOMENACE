@@ -81,7 +81,6 @@ public static class SupportTeams
     };
 
     private static readonly Dictionary<string, Team> BySquadId = new(StringComparer.Ordinal);
-    private static readonly Dictionary<string, Team> ByLeaderId = new(StringComparer.Ordinal);
     private static readonly Dictionary<string, Team> ByLockedItemId = new(StringComparer.Ordinal);
 
     static SupportTeams()
@@ -89,18 +88,27 @@ public static class SupportTeams
         foreach (var team in All)
         {
             BySquadId[team.SquadId] = team;
-            ByLeaderId[team.LeaderId] = team;
             ByLockedItemId[team.WeaponId] = team;
             ByLockedItemId[team.ArmorId] = team;
         }
     }
 
-    // Verdicts by template pointer: these sit under every squaddie validation pass and every
-    // body pick, and the id string otherwise marshals each time. Il2cpp does not move objects,
-    // so a pointer stays a stable key until the templates are rebuilt.
-    private static readonly Dictionary<IntPtr, Team> ByTemplate = new();
+    // Verdicts by template pointer, one cache for each id map: these sit under every squaddie
+    // validation pass, every body pick and every item removal, and the id string otherwise
+    // marshals each time. Il2cpp does not move objects, so a pointer stays a stable key until the
+    // templates are rebuilt.
+    private static readonly Dictionary<IntPtr, Team> SquadByTemplate = new();
+    private static readonly Dictionary<IntPtr, Team> LockedByTemplate = new();
 
-    public static void ClearCache() => ByTemplate.Clear();
+    public static void ClearCache()
+    {
+        SquadByTemplate.Clear();
+        LockedByTemplate.Clear();
+    }
+
+    // Set by SupportTeamSystem, so a failed lookup is reported.
+    internal static Jiangyu.Sdk.IModLog Log;
+    private static readonly HashSet<string> Reported = new(StringComparer.Ordinal);
 
     // A strategy-layer leader. GetTemplate returns the unit template (player_squad.<name>).
     public static Team Of(BaseUnitLeader leader)
@@ -108,49 +116,66 @@ public static class SupportTeams
         try
         {
             var template = leader?.GetTemplate();
-            return template == null ? null : Lookup(template.Pointer, () => template.GetID() ?? template.name, BySquadId);
+            return template == null ? null : Lookup(template.Pointer, () => template.GetID() ?? template.name, BySquadId, SquadByTemplate);
         }
-        catch { return null; }
+        catch (Exception ex) { return Failed("leader lookup", ex); }
     }
 
     public static Team Of(EntityTemplate template)
     {
         try
         {
-            return template == null ? null : Lookup(template.Pointer, () => template.GetID() ?? template.name, BySquadId);
+            return template == null ? null : Lookup(template.Pointer, () => template.GetID() ?? template.name, BySquadId, SquadByTemplate);
         }
-        catch { return null; }
-    }
-
-    public static Team OfLeaderTemplate(UnitLeaderTemplate template)
-    {
-        try
-        {
-            return template == null ? null : Lookup(template.Pointer, () => template.GetID() ?? template.name, ByLeaderId);
-        }
-        catch { return null; }
+        catch (Exception ex) { return Failed("entity lookup", ex); }
     }
 
     public static bool IsTeam(BaseUnitLeader leader) => Of(leader) != null;
 
-    // A team's own weapon or outfit, which no removal may take off it. Item removals run for
-    // every item in the game, so the verdict is cached like the others.
-    public static bool IsLocked(Il2CppMenace.Items.Item item)
+    // A team's own weapon or outfit in that team's own container, which no removal may take off
+    // it. The same item anywhere else (another leader's container, should it ever get there) is
+    // an ordinary item. Item removals run for every item in the game, so the template verdict is
+    // cached and the container's owner is only read for a team's own items.
+    public static bool IsLocked(Il2CppMenace.Items.ItemContainer container, Il2CppMenace.Items.Item item)
     {
         try
         {
             var template = item?.GetTemplate();
-            return template != null && Lookup(template.Pointer, () => template.GetID(), ByLockedItemId) != null;
+            var team = template == null ? null : Lookup(template.Pointer, () => template.GetID(), ByLockedItemId, LockedByTemplate);
+            return team != null && OwnerTeam(container) == team;
         }
-        catch { return false; }
+        catch (Exception ex)
+        {
+            Failed("item lock", ex);
+            return false;
+        }
     }
 
-    private static Team Lookup(IntPtr pointer, Func<string> id, Dictionary<string, Team> map)
+    // The team a container belongs to: a strategy leader's, or a team's entity in a mission.
+    private static Team OwnerTeam(Il2CppMenace.Items.ItemContainer container)
     {
-        if (ByTemplate.TryGetValue(pointer, out var known))
+        var owner = container?.GetOwner() as Il2CppInterop.Runtime.InteropTypes.Il2CppObjectBase;
+        if (owner == null)
+            return null;
+        if (owner.TryCast<BaseUnitLeader>() is { } leader)
+            return Of(leader);
+        return owner.TryCast<Entity>() is { } entity ? Of(entity.GetTemplate()) : null;
+    }
+
+    private static Team Lookup(IntPtr pointer, Func<string> id, Dictionary<string, Team> map, Dictionary<IntPtr, Team> cache)
+    {
+        if (cache.TryGetValue(pointer, out var known))
             return known;
         map.TryGetValue(id() ?? "", out var team);
-        ByTemplate[pointer] = team;
+        cache[pointer] = team;
         return team;
+    }
+
+    // Reported once for each kind of lookup, since a lookup that throws throws on every call.
+    private static Team Failed(string what, Exception ex)
+    {
+        if (Reported.Add(what))
+            Log?.Warn($"support team: {what} failed: {ex.GetType().Name}: {ex.Message}");
+        return null;
     }
 }

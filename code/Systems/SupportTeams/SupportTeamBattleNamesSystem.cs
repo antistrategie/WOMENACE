@@ -11,8 +11,9 @@ namespace WOMENACE.Code;
 // from the leader's squaddie ids. A support team has no squaddies, so the list would be empty:
 // it lists the whole crew instead, under the team's name in the header.
 //
-// A pool button keeps the tooltip vanilla gave it for whichever squaddie last used it, and a crew
-// member is no squaddie to describe, so the crew's buttons have theirs taken off.
+// A pool button keeps the tooltip and the click and hover actions vanilla gave it for whichever
+// squaddie last used it. A crew member is no squaddie to describe or select, so the crew's buttons
+// have all of them taken off.
 public sealed class SupportTeamBattleNamesSystem : JiangyuSystem
 {
     public override void OnInit()
@@ -37,7 +38,11 @@ public sealed class SupportTeamBattleNamesSystem : JiangyuSystem
                     continue;
                 VisualElementExtensions.Show(button);
                 button.SetText(team.Crew[i].Name, false);
-                button.m_CreateTooltipFunc = null;
+                button.SetCreateTooltipFunc(null);
+                button.SetOnLeftClickedAction(null);
+                button.SetOnRightClickedAction(null);
+                button.SetOnHoverStartAction(null);
+                button.SetOnHoverEndAction(null);
             }
             if (panel.m_SquaddiesContainer != null)
                 VisualElementExtensions.Show(panel.m_SquaddiesContainer);

@@ -10,7 +10,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>asexport</AssemblyName>
     <PlatformTarget>x64</PlatformTarget>
-    <!-- AssetStudio is Windows-only, which every call into it would otherwise warn about. -->
+    <!-- AssetStudio marks its imaging calls Windows-only, which every call into it would otherwise
+         warn about. The portable build of AssetStudioModCLI carries the native libraries for Linux
+         too, and the exporter runs there through `dotnet asexport.dll`. -->
     <NoWarn>$(NoWarn);CA1416</NoWarn>
   </PropertyGroup>
   <Target Name="RequireAssetStudio" BeforeTargets="ResolveAssemblyReferences" Condition="'$(AssetStudioDir)' == '' Or !Exists('$(AssetStudioDir)/AssetStudio.dll')">
@@ -24,6 +26,12 @@
   <ItemGroup>
     <!-- The FBX writer's native library and the rest of AssetStudio's dependencies sit beside it. -->
     <None Include="$(AssetStudioDir)/*.dll" Exclude="$(AssetStudioDir)/AssetStudioModGUI.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>%(Filename)%(Extension)</Link>
+    </None>
+    <!-- The portable build keeps its native libraries per platform under runtimes/, which the
+         loader does not search, so the ones for this machine go beside the exporter. -->
+    <None Include="$(AssetStudioDir)/runtimes/$(NETCoreSdkPortableRuntimeIdentifier)/native/*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>%(Filename)%(Extension)</Link>
     </None>

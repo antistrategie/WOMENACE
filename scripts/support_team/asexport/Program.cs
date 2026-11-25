@@ -8,12 +8,14 @@
 // object is written to <out_dir>/<object>/<object>.fbx with its textures beside it.
 using AssetStudio;
 
-if (args.Length < 4) { Console.Error.WriteLine("usage: asexport <out> <scene_root> <bundles...> -- <obj>=<clip,...>"); return 1; }
+const string Usage = "usage: asexport <out> <scene_root> <bundle>... -- <object>=<clip>[,<clip>] ...";
+var split = Array.IndexOf(args, "--");
+if (split < 0) { Console.Error.WriteLine($"no -- between the bundles and the objects\n{Usage}"); return 1; }
+if (split < 3 || split == args.Length - 1) { Console.Error.WriteLine(Usage); return 1; }
 var outDir = args[0];
 var sceneRoot = args[1];
-var split = Array.IndexOf(args, "--");
 var bundles = args[2..split];
-var jobs = args[(split + 1)..].Select(a => a.Split('=')).ToDictionary(p => p[0], p => p.Length > 1 ? p[1].Split(',', StringSplitOptions.RemoveEmptyEntries) : Array.Empty<string>());
+var jobs = args[(split + 1)..].Select(a => a.Split('=', 2)).ToDictionary(p => p[0], p => p.Length > 1 ? p[1].Split(',', StringSplitOptions.RemoveEmptyEntries) : Array.Empty<string>());
 
 var manager = new AssetsManager();
 manager.LoadFilesAndFolders(bundles);

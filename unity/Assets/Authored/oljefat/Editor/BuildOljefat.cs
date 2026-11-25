@@ -34,8 +34,8 @@ namespace WOMENACE.Editor
             const string prefabPath = "Assets/Prefabs/oljefat/default/main.prefab";
             try
             {
-                BuildTitan.EnsureFolder(animDir);
-                BuildTitan.EnsureFolder("Assets/Prefabs/oljefat/default");
+                BakeAssets.EnsureFolder(animDir);
+                BakeAssets.EnsureFolder("Assets/Prefabs/oljefat/default");
 
                 var imp = (ModelImporter)AssetImporter.GetAtPath(fbx);
                 if (imp == null) { Debug.LogError("oljefat: FBX not found at " + fbx); return false; }
@@ -219,15 +219,9 @@ namespace WOMENACE.Editor
 
         private static Material BuildMaterial(string srcDir, string animDir, string baseName, Shader shader, Texture2D mask)
         {
-            var alb = BuildTitan.LoadTex($"{srcDir}/textures/{baseName}_d.png", sRGB: true, isNormal: false);
-            var nrm = BuildTitan.LoadTex($"{srcDir}/textures/{baseName}_n.png", sRGB: false, isNormal: true);
-            var mat = new Material(shader) { name = "oljefat_" + baseName };
-            if (alb != null) foreach (var p in new[] { "_BaseMap", "_BaseColorMap", "_MainTex" }) if (mat.HasProperty(p)) mat.SetTexture(p, alb);
-            if (nrm != null) foreach (var p in new[] { "_NormalMap", "_BumpMap", "_Normal" }) if (mat.HasProperty(p)) mat.SetTexture(p, nrm);
-            foreach (var p in new[] { "_MaskMap", "_Mask", "_MetallicGlossMap" }) if (mat.HasProperty(p)) mat.SetTexture(p, mask);
-            if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", Color.white);
-            if (mat.HasProperty("_SupportDecals")) mat.SetFloat("_SupportDecals", 0f);
-            mat.EnableKeyword("_DISABLE_DECALS");
+            var alb = BakeAssets.LoadTex($"{srcDir}/textures/{baseName}_d.png", sRGB: true, isNormal: false);
+            var nrm = BakeAssets.LoadTex($"{srcDir}/textures/{baseName}_n.png", sRGB: false, isNormal: true);
+            var mat = Gfl2Materials.Menace(shader, "oljefat_" + baseName, alb, nrm, mask);
             AssetDatabase.CreateAsset(mat, $"{animDir}/{mat.name}.mat");
             return mat;
         }

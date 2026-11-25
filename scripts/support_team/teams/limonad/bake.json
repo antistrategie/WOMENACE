@@ -1,0 +1,19 @@
+{
+  "canon_height": 1.40,
+  "head_bone_height": 1.21,
+  "muzzle_marker": "launcher_muzzle",
+  "damage_height": 1.0,
+  "stowed_while_aiming": "Laptop",
+  "prop_texture_sets": ["cw_ATG01_WL", "Laptop"],
+  "ramps": [
+    {"part": "_face", "ramp": "Assets/Authored/shared/ramps/ramp_skin.png"},
+    {"part": "_hair", "ramp": "Assets/Authored/voymastina/ramps/ramp_hair.png"},
+    {"part": "_upper", "ramp": "Assets/Authored/voymastina/ramps/ramp_cloth_main.png"},
+    {"part": "_lower", "ramp": "Assets/Authored/voymastina/ramps/ramp_cloth_main.png"}
+  ],
+  "default_ramp": "Assets/Authored/shared/ramps/ramp_weapon.png",
+  "events": [
+    {"state": "Run", "clip": "Assets/Imported/rmc_default_female_soldier_2/AnimationClip/Rifle_SprintLoop.anim"},
+    {"state": "Vault", "clip": "Assets/Imported/rmc_default_female_soldier_2/AnimationClip/AC_Human_Vault1mShort.anim"}
+  ]
+}

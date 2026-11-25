@@ -8,17 +8,23 @@ namespace WOMENACE.Code;
 //
 // Body: EntityVisuals.DetermineArmorPrefab is the body-prefab pick for the tactical spawn and the
 // armoury preview. A team's element renders its registered body, loaded from the mod's bundles the
-// first time the team is shown, so a team nobody fields costs no memory. TransmogSystem patches
+// first time the team is shown, so a team nobody fields costs no memory. The mod's asset registry
+// keeps each loaded asset for the session and hands the same one back, so only a missing body is
+// remembered here, to warn about it once. TransmogSystem patches
 // the same method for Dolls and returns early for any entity that is not one, so the two never
 // both write a result.
 public sealed class SupportTeamSystem : JiangyuSystem
 {
-    private readonly Dictionary<string, GameObject> _bodies = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _missingBodies = new(StringComparer.Ordinal);
 
     public override void OnInit()
     {
+        SupportTeams.Log = Context.Log;
         Context.Patches.Postfix("Il2CppMenace.Tactical.EntityVisuals", "DetermineArmorPrefab", OnDetermineArmorPrefab);
     }
+
+    // The registry's verdicts are keyed by template pointer, which a rebuild invalidates.
+    public override void OnTemplatesApplied() => SupportTeams.ClearCache();
 
     // Args: EntityTemplate, Squaddie, elementIndex, Gender, ItemContainer, UnitLeaderTemplate,
     // PseudoRandom.
@@ -40,15 +46,11 @@ public sealed class SupportTeamSystem : JiangyuSystem
 
     private GameObject Body(SupportTeams.Team team)
     {
-        if (_bodies.TryGetValue(team.Name, out var cached) && cached != null)
-            return cached;
-        var body = Context.Assets.Load<GameObject>(team.BodyAsset);
-        if (body == null)
-        {
-            Context.Log.Warn($"support team: no body '{team.BodyAsset}' in the bundles");
+        if (_missingBodies.Contains(team.BodyAsset))
             return null;
-        }
-        _bodies[team.Name] = body;
+        var body = Context.Assets.Load<GameObject>(team.BodyAsset);
+        if (body == null && _missingBodies.Add(team.BodyAsset))
+            Context.Log.Warn($"support team: no body '{team.BodyAsset}' in the bundles");
         return body;
     }
 }

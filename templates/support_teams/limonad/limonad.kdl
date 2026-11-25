@@ -2,8 +2,8 @@ clone "TagTemplate" from="unique" id="wmgfl_team_limonad"
 
 // Team Limonad, GFL2's ATG01 Armed Echelon. One element whose body is the whole crew and
 // launcher (SupportTeamSystem loads limonad/default/main), on the construct animator contract.
-// Its body, clips and sprites are built by scripts/support_team/prepare_team.py. The speaker's Tags carry no wmgfl token, so the Doll systems
-// keyed on that marker leave the team alone.
+// Its body, clips and sprites are built by scripts/support_team/prepare_team.py. The speaker's
+// Tags carry no wmgfl token, so the Doll systems keyed on that marker leave the team alone.
 clone "SpeakerTemplate" from="sy" id="wmgfl_limonad_speaker" {
     set "Tags" "female infantry"
     set "Nickname" {
@@ -21,14 +21,16 @@ clone "SpeakerTemplate" from="sy" id="wmgfl_limonad_speaker" {
         set "m_DefaultTranslation" """
             Name: Team Limonad
 
-            Role: Rocket-Propelled Grenade Team
+            Proficiency: RPG Team
 
-            Members: Tarkhun (team leader), Citro (loader), Bakhmaro (gunner)
+            Members: Tarkhun (leader), Citro (loader), Bakhmaro (operator)
+
+            Affiliation(s): Doll Community
             """
     }
 
-    // The bark and slot portraits are the crew's three faces side by side, the stand image the
-    // whole team (scripts/support_team/make_team_sprites.py).
+    // The bark and slot portraits are the middle Doll's face, as the roster's other portraits are
+    // a Doll's head, and the stand image is the whole crew (scripts/support_team/make_team_sprites.py).
     set "BarkImage" asset="limonad/bark"
     set "StandLookLeftImage" asset="limonad/stand_look_left"
     set "StandLookRightImage" asset="limonad/stand_look_right"
@@ -47,7 +49,7 @@ clone "ArmorTemplate" from="armor.player_fatigues" id="armor.limonad_default" {
         set "m_DefaultTranslation" "Field Kit"
     }
     set "Description" {
-        set "m_DefaultTranslation" "Team Limonad's own field gear. It cannot be swapped out."
+        set "m_DefaultTranslation" "The crew's own field gear. It smells faintly of what Balthilde calls antifreeze."
     }
     append "OnlyEquipableBy" "wmgfl_team_limonad"
     append "Tags" "jy_no_sell"
@@ -61,7 +63,7 @@ clone "WeaponTemplate" from="specialweapon.rmc_rocket_launcher_tier2_L31" id="we
         set "m_DefaultTranslation" "RPG"
     }
     set "Description" {
-        set "m_DefaultTranslation" "Team Limonad's rocket-propelled grenade launcher."
+        set "m_DefaultTranslation" "From Captain Ussery's unit issue. The Military issued Ussery heavy weapons, but his unit no longer has human operators qualified on this weapons system, so it was given to the Commander as part of their deal."
     }
     // The team's main weapon. Its launcher is part of the team's body, so the weapon carries
     // no model of its own for the back or the hand.
@@ -106,7 +108,7 @@ clone "EntityTemplate" from="player_squad.carda" id="player_squad.limonad" {
         set "m_DefaultTranslation" "Doll Community"
     }
     set "Description" {
-        set "m_DefaultTranslation" "An Armed Echelon rocket team: Tarkhun leads, Citro loads, Bakhmaro fires."
+        set "m_DefaultTranslation" "A trio who constantly reek of alcohol. Its members are the leader Tarkhun, the loader Citro and the operator Bakhmaro. All three of them were personally selected by the Commander from Doll Community candidates and have fairly strong fighting spirit. The three of them had a good relationship before they became a team."
     }
 
     clear "Items"
@@ -133,7 +135,7 @@ clone "UnitLeaderTemplate" from="squad_leader.carda" id="squad_leader.limonad" {
         set "m_DefaultTranslation" "Armed Echelon"
     }
     set "UnitDescription" {
-        set "m_DefaultTranslation" "Team Limonad, a rocket-propelled grenade team: Tarkhun leads, Citro loads, Bakhmaro fires."
+        set "m_DefaultTranslation" "A trio who constantly reek of alcohol. Its members are the leader Tarkhun, the loader Citro and the operator Bakhmaro. All three of them were personally selected by the Commander from Doll Community candidates and have fairly strong fighting spirit. The three of them had a good relationship before they became a team."
     }
 
     set "Slot" asset="limonad/slot"
@@ -144,4 +146,106 @@ clone "UnitLeaderTemplate" from="squad_leader.carda" id="squad_leader.limonad" {
     set "BigBadge" asset="limonad/big_badge"
     set "BadgeUnitWindow" asset="limonad/badge_unit_window"
     set "BadgeMini" asset="limonad/badge_mini"
+
+    // The crew are Doll Community, so the portraits stand on its disc, as a Doll's do.
+    set "FactionBackground" asset="factions/background_doll_community_1180x1040"
+    set "BigBackground" asset="factions/background_doll_community_972x906"
+    set "SlotFactionBackground" asset="factions/background_doll_community_162x162"
+
+    // GFL2 gives the team no voice but its skill call-out, so every bark the leader inherits is
+    // silent, and the moods are blank, as Carda's lines are her own.
+    set "HiringSelectBarkSound" {
+        set "bankId" 0
+        set "itemId" 0
+    }
+    set "HiredBarkSound" {
+        set "bankId" 0
+        set "itemId" 0
+    }
+    set "PromotionBarkSounds" index=0 {
+        set "Sound" {
+            set "bankId" 0
+            set "itemId" 0
+        }
+    }
+    set "PromotionBarkSounds" index=1 {
+        set "Sound" {
+            set "bankId" 0
+            set "itemId" 0
+        }
+    }
+    set "PromotionBarkSounds" index=2 {
+        set "Sound" {
+            set "bankId" 0
+            set "itemId" 0
+        }
+    }
+    set "PromotionBarkSounds" index=3 {
+        set "Sound" {
+            set "bankId" 0
+            set "itemId" 0
+        }
+    }
+
+    clear "EmotionalStateResponses"
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Eager"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Determined"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Overconfident"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Euphoric"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Hesitant"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Frustrated"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Disheartened"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Miserable"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "GoodwillTowards"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "AnimosityTowards"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
 }

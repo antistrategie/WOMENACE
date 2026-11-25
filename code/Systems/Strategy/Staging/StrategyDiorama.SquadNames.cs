@@ -22,7 +22,9 @@ public sealed partial class StrategyDiorama
     // The infantry root of the armoury's squad, and the most units it holds.
     private const string SquadFullRoot = "Squad_Full";
     private const int NamePlateRows = 9;
-    // A row of the texture, and the plate's width on the floor, in metres.
+    // A row of the texture, and the plate's width on the floor. Lengths on the floor are in the
+    // stage's metres: a plate is a child of the stage and scales with it, so an offset from a unit
+    // is scaled by the stage too.
     private const int NamePlateTextureWidth = 1024;
     private const int NamePlateRowHeight = 128;
     private const int NamePlateFontSize = 72;
@@ -97,9 +99,11 @@ public sealed partial class StrategyDiorama
         // Its top is away from the camera, so it reads from where the squad is shot.
         var lying = Quaternion.LookRotation(Vector3.down, -_staging.SquadFacing);
         var floor = _staging.Stage.TransformPoint(ArmoryStand).y + NamePlateLift;
+        var scale = _staging.Stage.lossyScale.x;
         var team = SupportTeams.Of(leader);
-        if (team != null && squad.childCount > 0 && PlaceCrewPlates(team, StandingUnit(squad.GetChild(0)), lying, floor))
+        if (team != null && squad.childCount > 0 && PlaceCrewPlates(team, StandingUnit(squad.GetChild(0)), lying, floor, scale))
             return;
+        var ahead = NamePlateAhead * scale;
         for (var row = 0; row < NamePlateRows; row++)
         {
             var unit = row < squad.childCount ? StandingUnit(squad.GetChild(row)) : null;
@@ -111,7 +115,7 @@ public sealed partial class StrategyDiorama
                 continue;
             }
             var text = name.ToUpperInvariant();
-            var at = unit.position + _staging.SquadFacing * NamePlateAhead;
+            var at = unit.position + _staging.SquadFacing * ahead;
             at.y = floor;
             ShowNamePlate(row, text, NamePlateWidth, at, lying);
         }
@@ -129,7 +133,7 @@ public sealed partial class StrategyDiorama
 
     // Each crew member's plate, false when the team's body is not standing or a member's rig is not
     // found in it, which leaves the unit to the plain leader plate.
-    private bool PlaceCrewPlates(SupportTeams.Team team, Transform unit, Quaternion lying, float floor)
+    private bool PlaceCrewPlates(SupportTeams.Team team, Transform unit, Quaternion lying, float floor, float scale)
     {
         var count = team.CrewCount;
         if (unit == null || count > NamePlateRows)
@@ -137,12 +141,12 @@ public sealed partial class StrategyDiorama
         var hips = new Transform[count];
         for (var i = 0; i < count; i++)
         {
-            var member = Descendant(unit, team.Crew[i].Node);
-            hips[i] = member != null ? Descendant(member, CrewHipsBone) : null;
+            var member = FindDescendant(unit, team.Crew[i].Node);
+            hips[i] = member != null ? FindDescendant(member, CrewHipsBone) : null;
             if (hips[i] == null)
                 return false;
         }
-        var ahead = CrewNameAhead * _staging.Stage.lossyScale.x;
+        var ahead = CrewNameAhead * scale;
         for (var i = 0; i < count; i++)
         {
             var at = hips[i].position + _staging.SquadFacing * ahead;
@@ -152,19 +156,6 @@ public sealed partial class StrategyDiorama
         for (var row = count; row < NamePlateRows; row++)
             _staging.NamePlates[row].SetActive(false);
         return true;
-    }
-
-    private static Transform Descendant(Transform root, string name)
-    {
-        if (root.name == name)
-            return root;
-        for (var i = 0; i < root.childCount; i++)
-        {
-            var found = Descendant(root.GetChild(i), name);
-            if (found != null)
-                return found;
-        }
-        return null;
     }
 
     // The floor's mirror leaves the plates out: they lie on the floor, and a name reflected

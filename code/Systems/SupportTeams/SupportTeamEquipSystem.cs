@@ -1,6 +1,6 @@
 using AccessTools = HarmonyLib.AccessTools;
 using HarmonyMethod = HarmonyLib.HarmonyMethod;
-using RemoveHarmony = HarmonyLib.Harmony;
+using HarmonyPatcher = HarmonyLib.Harmony;
 using Il2CppInterop.Runtime.InteropTypes;
 using Il2CppMenace.Items;
 using Il2CppMenace.UI.Strategy;
@@ -29,7 +29,9 @@ namespace WOMENACE.Code;
 // no accessory slot, and vanilla's OnlyEquipableBy works the other way (an item naming who may
 // take it), so the list is cut here. UnitWindowEquipment.UpdateEquipmentAlternatives builds it
 // through SortedFilteredItemList.GetSortedAndFilteredItems, and while it does so for a team, that
-// call's result loses every item the team does not accept.
+// call's result loses every item the team does not accept. The team is cleared in a finalizer, which
+// runs however UpdateEquipmentAlternatives ends, so a list that throws never leaves the cut on for
+// the lists other screens build after it.
 public sealed class SupportTeamEquipSystem : JiangyuSystem
 {
     // Unequip buttons this system hid, so only those are shown again for another leader. Vanilla
@@ -37,7 +39,8 @@ public sealed class SupportTeamEquipSystem : JiangyuSystem
     private readonly HashSet<IntPtr> _hiddenButtons = new();
 
     private static SupportTeamEquipSystem Instance;
-    private RemoveHarmony _removePatch;
+    // The patches the SDK cannot place: overloads it cannot tell apart, and a finalizer.
+    private HarmonyPatcher _harmony;
     // The team whose slot list is being built, for the length of UpdateEquipmentAlternatives.
     private SupportTeams.Team _listingFor;
 
@@ -47,19 +50,21 @@ public sealed class SupportTeamEquipSystem : JiangyuSystem
         Context.Patches.Prefix("Il2CppMenace.Items.ItemContainer", "TryUnequip", OnTryUnequip);
         // ItemContainer.Remove has two overloads of two parameters each, which the SDK cannot tell
         // apart by name and count, so both are patched here by their parameter types.
-        _removePatch = new RemoveHarmony("WOMENACE.SupportTeamEquipSystem");
-        _removePatch.Patch(RemoveOverload(typeof(Item), typeof(ItemEquipFlags)),
+        _harmony = new HarmonyPatcher("WOMENACE.SupportTeamEquipSystem");
+        _harmony.Patch(RemoveOverload(typeof(Item), typeof(ItemEquipFlags)),
             prefix: new HarmonyMethod(typeof(SupportTeamEquipSystem), nameof(OnRemoveItem)));
-        _removePatch.Patch(RemoveOverload(typeof(ItemSlot), typeof(int)),
+        _harmony.Patch(RemoveOverload(typeof(ItemSlot), typeof(int)),
             prefix: new HarmonyMethod(typeof(SupportTeamEquipSystem), nameof(OnRemoveAt)));
         // The sorted list has a second two-parameter overload (of BaseItem), so this one is
         // patched by its parameter types too.
-        _removePatch.Patch(AccessTools.DeclaredMethod(typeof(SortedFilteredItemList), nameof(SortedFilteredItemList.GetSortedAndFilteredItems),
+        _harmony.Patch(AccessTools.DeclaredMethod(typeof(SortedFilteredItemList), nameof(SortedFilteredItemList.GetSortedAndFilteredItems),
                 new[] { typeof(TemplateList).MakeByRefType(), typeof(TemplateList) })
                 ?? throw new MissingMethodException(typeof(SortedFilteredItemList).FullName, nameof(SortedFilteredItemList.GetSortedAndFilteredItems)),
             postfix: new HarmonyMethod(typeof(SupportTeamEquipSystem), nameof(OnSortedList)));
-        Context.Patches.Prefix("Il2CppMenace.UI.Strategy.UnitWindowEquipment", "UpdateEquipmentAlternatives", OnListStart);
-        Context.Patches.Postfix("Il2CppMenace.UI.Strategy.UnitWindowEquipment", "UpdateEquipmentAlternatives", OnListEnd);
+        _harmony.Patch(AccessTools.DeclaredMethod(typeof(UnitWindowEquipment), nameof(UnitWindowEquipment.UpdateEquipmentAlternatives))
+                ?? throw new MissingMethodException(typeof(UnitWindowEquipment).FullName, nameof(UnitWindowEquipment.UpdateEquipmentAlternatives)),
+            prefix: new HarmonyMethod(typeof(SupportTeamEquipSystem), nameof(OnListStart)),
+            finalizer: new HarmonyMethod(typeof(SupportTeamEquipSystem), nameof(OnListEnd)));
         Context.Patches.Prefix("Il2CppMenace.Items.ItemContainer", "UnequipAll", OnUnequipAll);
         Context.Patches.Prefix("Il2CppMenace.UI.Strategy.UnitWindowEquipment", "OnEquipmentSlotRightClick", OnSlotClick);
         Context.Patches.Prefix("Il2CppMenace.UI.Strategy.UnitWindowEquipment", "OnEquipmentSlotLeftClick", OnSlotClick);
@@ -72,10 +77,10 @@ public sealed class SupportTeamEquipSystem : JiangyuSystem
 
     public override void OnUnload()
     {
-        try { _removePatch?.UnpatchSelf(); }
+        try { _harmony?.UnpatchSelf(); }
         finally
         {
-            _removePatch = null;
+            _harmony = null;
             if (Instance == this)
                 Instance = null;
         }
@@ -86,10 +91,18 @@ public sealed class SupportTeamEquipSystem : JiangyuSystem
            ?? throw new MissingMethodException(typeof(ItemContainer).FullName, nameof(ItemContainer.Remove));
 
     // Set on every list, so a list for anyone else is never cut.
-    private void OnListStart(PatchInfo info)
-        => _listingFor = SupportTeams.Of((info.Instance as Il2CppObjectBase)?.TryCast<UnitWindowEquipment>()?.m_Leader);
+    private static void OnListStart(UnitWindowEquipment __instance)
+    {
+        if (Instance != null)
+            Instance._listingFor = SupportTeams.Of(__instance?.m_Leader);
+    }
 
-    private void OnListEnd(PatchInfo info) => _listingFor = null;
+    // A finalizer that takes no exception leaves any exception to go on as it was.
+    private static void OnListEnd()
+    {
+        if (Instance != null)
+            Instance._listingFor = null;
+    }
 
     private static void OnSortedList(TemplateList __1)
     {
@@ -114,21 +127,21 @@ public sealed class SupportTeamEquipSystem : JiangyuSystem
 
     private void OnTryUnequip(PatchInfo info)
     {
-        if (info.Args is { Count: > 0 } && SupportTeams.IsLocked(AsItem(info.Args[0])))
+        if (info.Args is { Count: > 0 } && SupportTeams.IsLocked((info.Instance as Il2CppObjectBase)?.TryCast<ItemContainer>(), AsItem(info.Args[0])))
             Refuse(info, "unequip");
     }
 
     // Harmony prefixes: returning false skips the removal and leaves its result false.
-    private static bool OnRemoveItem(Item __0, ref bool __result) => Allow(__0, ref __result);
+    private static bool OnRemoveItem(ItemContainer __instance, Item __0, ref bool __result) => Allow(__instance, __0, ref __result);
 
     private static bool OnRemoveAt(ItemContainer __instance, ItemSlot __0, int __1, ref bool __result)
-        => Allow(ItemAt(__instance, __0, __1), ref __result);
+        => Allow(__instance, ItemAt(__instance, __0, __1), ref __result);
 
-    private static bool Allow(Item item, ref bool result)
+    private static bool Allow(ItemContainer container, Item item, ref bool result)
     {
         try
         {
-            if (!SupportTeams.IsLocked(item))
+            if (!SupportTeams.IsLocked(container, item))
                 return true;
             result = false;
             Instance?.Context.Log.Debug("support team: refused to remove a team's own item");
@@ -156,7 +169,7 @@ public sealed class SupportTeamEquipSystem : JiangyuSystem
             {
                 if (all[i] is not { } item)
                     continue;
-                if (SupportTeams.IsLocked(item))
+                if (SupportTeams.IsLocked(container, item))
                     locked = true;
                 else
                     others.Add(item);

@@ -112,7 +112,8 @@ public sealed class SupportTeamUnitTypeSystem : JiangyuSystem
 
     private Sprite Icon(SupportTeams.Team team)
     {
-        if (_icons.TryGetValue(team.Name, out var cached) && cached != null)
+        // A null entry is a recorded miss, so a missing icon is warned about once.
+        if (_icons.TryGetValue(team.Name, out var cached))
             return cached;
         var icon = Context.Assets.Load<Sprite>(team.TypeIconAsset);
         if (icon == null)

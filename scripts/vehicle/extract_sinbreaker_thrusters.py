@@ -9,11 +9,14 @@ so these offsets address an archive, not an object inside the first archive.
 import argparse
 import json
 import math
-import struct
+import sys
 from pathlib import Path
 
 import UnityPy
 from UnityPy.helpers.MeshHelper import MeshHandler
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from gfl2.client import read_archive  # noqa: E402
 
 
 MODEL_BUNDLE = "07a19a46f978facf2788df78d91d0746.bundle"
@@ -50,31 +53,6 @@ ARCHIVES = [
     ("ed7d3d8d40ba9d482a3a3c772f770f6d.bundle", 5533472),
     ("bbd466f229aff1838b0ae797885eb3ad.bundle", 4874621),
 ]
-
-
-def decrypt(data):
-    if data.startswith(b"UnityFS\0"):
-        return data
-    signature = b"UnityFS\0\0\0\0\x075.x."
-    key = bytes(a ^ b for a, b in zip(data[:16], signature))
-    count = min(len(data), 32768)
-    return bytes(data[i] ^ key[i % 16] for i in range(count)) + data[count:]
-
-
-def read_archive(path, offset):
-    with path.open("rb") as stream:
-        stream.seek(offset)
-        header = decrypt(stream.read(256))
-        if not header.startswith(b"UnityFS\0"):
-            raise ValueError(f"Not a UnityFS archive: {path}:{offset}")
-        position = 12
-        for _ in range(2):
-            position = header.index(b"\0", position) + 1
-        length = struct.unpack_from(">q", header, position)[0]
-        if not 0 < length <= path.stat().st_size - offset:
-            raise ValueError(f"Invalid archive length: {path}:{offset}")
-        stream.seek(offset)
-        return decrypt(stream.read(length))
 
 
 def vectors(values, axes):

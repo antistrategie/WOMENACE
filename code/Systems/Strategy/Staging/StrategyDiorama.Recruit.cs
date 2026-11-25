@@ -711,8 +711,8 @@ public sealed partial class StrategyDiorama
         _staging.CandidateHolograms.Clear();
     }
 
-    // Stands the leader's own model on the stand as a hologram. A leader with no model of ours
-    // leaves the stand empty.
+    // Stands the leader's own model on the stand as a hologram, a Doll's or an Armed Echelon's
+    // crew. A leader with no model of ours leaves the stand empty.
     private void ShowCandidate(UnitLeaderTemplate template, Roster roster)
     {
         var pointer = template != null ? template.Pointer : IntPtr.Zero;
@@ -725,13 +725,19 @@ public sealed partial class StrategyDiorama
             return;
         var leader = roster.GetLeaderByTemplate(template, out _) ?? roster.GetTempLeader(template);
         var tag = leader != null ? Affinity.CharacterTag(leader) : null;
-        var doll = tag != null ? SpawnDoll(tag, "candidate") : null;
+        // An Armed Echelon has no Doll tag: its crew body stands there instead, on its own
+        // controller, whose first state is the crew's idle, as the doll poses fit no crew rig.
+        var team = tag == null && leader != null ? SupportTeams.Of(leader) : null;
+        var doll = tag != null ? SpawnDoll(tag, "candidate")
+            : team != null ? SpawnBody(team.BodyAsset, "candidate")
+            : null;
         if (doll == null)
             return;
         doll.transform.SetParent(_staging.RecruitSlot, false);
         doll.transform.localPosition = Vector3.zero;
         doll.transform.localRotation = Quaternion.identity;
-        Pose(doll, "Idle");
+        if (team == null)
+            Pose(doll, "Idle");
         _staging.Candidate = doll;
         WearHologram(doll);
         _staging.CandidateDrawn = 0f;

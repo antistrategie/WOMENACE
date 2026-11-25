@@ -49,8 +49,8 @@ namespace WOMENACE.Editor
             var prefabPath = $"Assets/Prefabs/titan/{variant}/main.prefab";
             try
             {
-                EnsureFolder(animDir);
-                EnsureFolder($"Assets/Prefabs/titan/{variant}");
+                BakeAssets.EnsureFolder(animDir);
+                BakeAssets.EnsureFolder($"Assets/Prefabs/titan/{variant}");
 
                 var imp = (ModelImporter)AssetImporter.GetAtPath(fbx);
                 if (imp == null) { Debug.LogError("titan: FBX not found at " + fbx); return false; }
@@ -293,49 +293,16 @@ namespace WOMENACE.Editor
 
         private static Material BuildMaterial(string srcDir, string animDir, string baseName, Shader shader, Texture2D mask)
         {
-            var alb = LoadTex($"{srcDir}/textures/{baseName}_d.png", sRGB: true, isNormal: false);
-            var nrm = LoadTex($"{srcDir}/textures/{baseName}_n.png", sRGB: false, isNormal: true);
-            var mat = new Material(shader) { name = "titan_" + baseName };
-            if (alb != null) foreach (var p in new[] { "_BaseMap", "_BaseColorMap", "_MainTex" }) if (mat.HasProperty(p)) mat.SetTexture(p, alb);
-            if (nrm != null) foreach (var p in new[] { "_NormalMap", "_BumpMap", "_Normal" }) if (mat.HasProperty(p)) mat.SetTexture(p, nrm);
-            foreach (var p in new[] { "_MaskMap", "_Mask", "_MetallicGlossMap" }) if (mat.HasProperty(p)) mat.SetTexture(p, mask);
-            if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", Color.white);
-            if (mat.HasProperty("_SupportDecals")) mat.SetFloat("_SupportDecals", 0f);
-            mat.EnableKeyword("_DISABLE_DECALS");
+            var alb = BakeAssets.LoadTex($"{srcDir}/textures/{baseName}_d.png", sRGB: true, isNormal: false);
+            var nrm = BakeAssets.LoadTex($"{srcDir}/textures/{baseName}_n.png", sRGB: false, isNormal: true);
+            var mat = Gfl2Materials.Menace(shader, "titan_" + baseName, alb, nrm, mask);
             AssetDatabase.CreateAsset(mat, $"{animDir}/{mat.name}.mat");
             Debug.Log($"titan material {baseName}: albedo={(alb ? alb.name : "-")} normal={(nrm ? nrm.name : "-")}");
             return mat;
         }
 
-        // HDRP mask layout R=metallic, G=AO, B=detail, A=smoothness. Without one the
-        // shader reads a white mask, which is full chrome.
-        internal static Texture2D MatteMask(string animDir)
-        {
-            var path = $"{animDir}/titan_matte_mask.asset";
-            var existing = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-            if (existing != null) return existing;
-            var t = new Texture2D(4, 4, TextureFormat.RGBA32, false, true);
-            var px = new Color32[16];
-            for (var i = 0; i < px.Length; i++) px[i] = new Color32(0, 255, 0, 40);
-            t.SetPixels32(px); t.Apply();
-            AssetDatabase.CreateAsset(t, path);
-            return t;
-        }
-
-        internal static Texture2D LoadTex(string path, bool sRGB, bool isNormal)
-        {
-            if (!System.IO.File.Exists(path)) return null;
-            if (AssetImporter.GetAtPath(path) is TextureImporter imp)
-            {
-                var tt = isNormal ? TextureImporterType.NormalMap : TextureImporterType.Default;
-                if (imp.textureType != tt || imp.sRGBTexture != sRGB)
-                {
-                    imp.textureType = tt; imp.sRGBTexture = sRGB;
-                    imp.SaveAndReimport();
-                }
-            }
-            return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-        }
+        internal static Texture2D MatteMask(string animDir) =>
+            Gfl2Materials.MatteMask($"{animDir}/titan_matte_mask.asset", 40);
 
         // Copy a clip and strip the planar travel on the top skeleton bone only.
         internal static AnimationClip MakeInPlace(AnimationClip src, string animDir, string assetName, bool loop)
@@ -470,14 +437,6 @@ namespace WOMENACE.Editor
                 Debug.Log($"footsteps: {events.Count} event(s) on {walk.name} at [{string.Join(", ", events.Select(e => e.time.ToString("0.00")))}] of {walk.length:0.00}s");
             }
             finally { UnityEngine.Object.DestroyImmediate(inst); }
-        }
-
-        internal static void EnsureFolder(string path)
-        {
-            if (AssetDatabase.IsValidFolder(path)) return;
-            var parent = System.IO.Path.GetDirectoryName(path).Replace('\\', '/');
-            if (!AssetDatabase.IsValidFolder(parent)) EnsureFolder(parent);
-            AssetDatabase.CreateFolder(parent, System.IO.Path.GetFileName(path));
         }
     }
 }

@@ -45,6 +45,59 @@
     "limonad_ATG01_Bullet_WL": "c_ATG01_slg_Idel_Bullet",
     "limonad_Laptop": "c_ATG01_slg_Idel_Laptop"
   },
+  "spine_bone": "Spine2_M",
+  "prop_materials": [
+    "cw_",
+    "laptop",
+    "binocle"
+  ],
+  "coat": {
+    "chains": {
+      "L": [
+        [
+          "Cloth_L01",
+          "front"
+        ],
+        [
+          "Cloth_L04",
+          "side"
+        ],
+        [
+          "Cloth_L07",
+          "back"
+        ]
+      ],
+      "R": [
+        [
+          "Cloth_R01",
+          "front"
+        ],
+        [
+          "Cloth_R04",
+          "side"
+        ],
+        [
+          "Cloth_R07",
+          "back"
+        ]
+      ]
+    },
+    "follow": {
+      "front": [
+        1.0,
+        0.3
+      ],
+      "side": [
+        0.7,
+        0.6
+      ],
+      "back": [
+        0.3,
+        0.9
+      ]
+    },
+    "parent": "Spine1_M"
+  },
   "states": [
     {
       "name": "Idle",
@@ -296,7 +349,13 @@
           "ground": {
             "distance": 0.9,
             "angle": -45.0,
-            "lid": 20.0
+            "lid": 20.0,
+            "pivot": [
+              0.0,
+              0.003,
+              0.015
+            ],
+            "lid_bone": "Lid"
           }
         }
       },
@@ -341,7 +400,13 @@
           "ground": {
             "distance": 0.9,
             "angle": -45.0,
-            "lid": 20.0
+            "lid": 20.0,
+            "pivot": [
+              0.0,
+              0.003,
+              0.015
+            ],
+            "lid_bone": "Lid"
           }
         }
       },
@@ -388,7 +453,13 @@
           "ground": {
             "distance": 0.9,
             "angle": -45.0,
-            "lid": 20.0
+            "lid": 20.0,
+            "pivot": [
+              0.0,
+              0.003,
+              0.015
+            ],
+            "lid_bone": "Lid"
           }
         }
       },

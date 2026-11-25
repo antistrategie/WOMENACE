@@ -14,17 +14,21 @@ script runs the steps in order, each one reading what the step before it wrote i
     export    each object with its clips to FBX (asexport, on AssetStudioMod), into <work>/export
     art       the 2D art (whole team, skill icon, faction logo, items), into <work>/art
     states    the per-state takes (build_team_states.py in Blender), into <work>/states
-    render    a side render of the weapon (render_weapon.py in Blender), into <work>/art
+    render    a side render of the weapon (scripts/weapon/render_weapon.py in Blender), into <work>/art
     sprites   the portraits, badges and icons (make_team_sprites.py), into assets/
     install   the state FBXs and the crew's textures into unity/Assets/Authored/<team>/default
 
-after which the Unity bake builds the prefab (for Limonad, WOMENACE.Editor.BuildLimonad.Build).
+after which the Unity bake builds the prefab (WOMENACE.Editor.BuildSupportTeam.Build -team <team>).
 
     uv run scripts/support_team/prepare_team.py limonad --work <dir> --bundles <AssetBundles_Windows> \\
         --assetstudio <AssetStudioMod folder> --blender <blender executable> [--steps cut,export,...]
 
 --bundles is the client's GF2_Exilium_Data/LocalCache/Data/AssetBundles_Windows. The work folder
 is scratch space outside the repository, kept between runs so a later step can be run alone.
+
+export builds asexport against AssetStudioMod's libraries and runs it through `dotnet`, on Windows
+or Linux. On Linux --assetstudio is the portable AssetStudioModCLI build, which carries the native
+FBX library for Linux beside the Windows one.
 """
 import argparse
 import json
@@ -37,8 +41,6 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
 sys.path.insert(0, str(HERE))
 import gfl2_client  # noqa: E402
-
-STEPS = ["cut", "export", "art", "states", "render", "sprites", "install"]
 
 
 def run(cmd):
@@ -55,7 +57,9 @@ def export(team, work, args):
     project = HERE / "asexport"
     run(["dotnet", "build", project / "asexport.csproj", "-nologo", "-v", "q", "-c", "Release",
          f"-p:AssetStudioDir={args.assetstudio}"])
-    exe = project / "bin" / "Release" / "net10.0" / "asexport.exe"
+    # Run through the dotnet host rather than the apphost, whose name differs between Windows
+    # (asexport.exe) and Linux (asexport).
+    dll = project / "bin" / "Release" / "net10.0" / "asexport.dll"
     sets = team.get("clip_sets", {})
     for job in team["exports"]:
         jobs = []
@@ -63,7 +67,7 @@ def export(team, work, args):
             names = [c for clip in clips for c in (sets[clip[1:]] if clip.startswith("@") else [clip])]
             jobs.append(f"{obj}={','.join(names)}")
         bundles = [work / "bundles" / f"{a}.bundle" for a in job["archives"]]
-        run([exe, work / job["out"], job["scene_root"], *bundles, "--", *jobs])
+        run(["dotnet", dll, work / job["out"], job["scene_root"], *bundles, "--", *jobs])
 
 
 def art(team, work, args):
@@ -79,18 +83,25 @@ def states(team, work, args):
 def render(team, work, args):
     r = team["weapon_render"]
     w, h = r["size"]
-    run([args.blender, "--background", "--factory-startup", "--python", HERE / "render_weapon.py", "--",
-         work / r["fbx"], work / r["diffuse"], work / "art" / "weapon_render.png", w, h, r.get("view", "x")])
+    # Studio light with cavity, and a margin of an eighth of the weapon's length each side, which
+    # leaves make_team_sprites.py room to straighten a weapon that runs at an angle to its axes.
+    run([args.blender, "--background", "--factory-startup", "--python", REPO / "scripts" / "weapon" / "render_weapon.py",
+         "--", "--fbx", work / r["fbx"], "--diffuse", work / r["diffuse"], "--lod0-only", "--axis", r["axis"],
+         "--mode", "studio", "--padding", "0.125", "--width", w, "--height", h,
+         "--out", work / "art" / "weapon_render.png"])
+
+
+def art_png(work, name):
+    return work / "art" / f"{name}.png"
 
 
 def sprites(team, work, args):
     s = team["sprites"]
-    art_png = lambda name: work / "art" / f"{name}.png"  # noqa: E731
-    cmd = ["uv", "run", HERE / "make_team_sprites.py", "--team", team["team"], "--whole", art_png(s["whole"]),
-           "--heads", *s["heads"], "--logo", art_png(s["logo"]), "--icon", art_png(s["icon"]),
+    cmd = ["uv", "run", HERE / "make_team_sprites.py", "--team", team["team"], "--whole", art_png(work, s["whole"]),
+           "--heads", *s["heads"], "--lead", str(s["lead"]), "--front-outline", *s["front_outline"], "--logo", art_png(work, s["logo"]), "--icon", art_png(work, s["icon"]),
            "--weapon-render", work / "art" / "weapon_render.png"]
     if s.get("items"):
-        cmd += ["--item", *[f"{n}={art_png(a)}" for n, a in s["items"].items()]]
+        cmd += ["--item", *[f"{n}={art_png(work, a)}" for n, a in s["items"].items()]]
     run(cmd)
 
 
@@ -105,6 +116,11 @@ def install(team, work, args):
         if png.name not in skip:
             shutil.copy2(png, dest / "textures" / png.name)
     print(f"textures -> {dest / 'textures'}")
+
+
+# In the order they run. Each step reads what the one before it wrote.
+STEPS = {"cut": cut, "export": export, "art": art, "states": states, "render": render, "sprites": sprites,
+         "install": install}
 
 
 def main():
@@ -130,7 +146,7 @@ def main():
             raise SystemExit("export needs --assetstudio")
     for step in steps:
         print(f"== {step}", flush=True)
-        globals()[step](team, work, args)
+        STEPS[step](team, work, args)
 
 
 if __name__ == "__main__":

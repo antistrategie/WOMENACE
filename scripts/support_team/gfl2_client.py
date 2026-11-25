@@ -6,16 +6,18 @@
 """Read the GFL2 client's packed asset archives: index them, cut one out, export textures.
 
 Most of the client's archives are stored end to end inside other `.bundle` files in
-`GF2_Exilium_Data/LocalCache/Data/AssetBundles_Windows`, each one lightly encrypted. An archive is
-named here as `<pack>:<offset>`, the pack file it sits in and its byte offset there. Cut out on its
-own, an archive is a plain UnityFS bundle that AssetStudio and UnityPy read normally.
+`GF2_Exilium_Data/LocalCache/Data/AssetBundles_Windows`, each one lightly encrypted (see
+scripts/gfl2/client.py, which reads them). An archive is named here as `<pack>:<offset>`, the pack
+file it sits in and its byte offset there. Cut out on its own, an archive is a plain UnityFS bundle
+that AssetStudio and UnityPy read normally.
 
 Four subcommands:
 
     gfl2_client.py index <bundles_dir> <index.jsonl>
         One line per archive: {"pack", "offset", "size", "names": {type: [object names]}}.
         Every archive in the client, about 61,000, so it takes a while. Search it for an object
-        name to find the archive that holds it.
+        name to find the archive that holds it. It opens every archive rather than reading the
+        client's GFF index, which names archives but not the objects in them.
 
     gfl2_client.py cut <bundles_dir> <pack:offset> <out.bundle>
         Writes one archive, decrypted, as a standalone bundle.
@@ -31,61 +33,24 @@ the script header pins for `uv run`.
 """
 import argparse
 import json
-import os
 import re
-import struct
 import sys
-from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 
 import UnityPy
 
-UnityPy.config.FALLBACK_UNITY_VERSION = "2019.4.29f1"
-# Every archive starts with this header. The client XORs the first 32 KiB of each with a 16 byte
-# key, so the key is the first 16 bytes read against it.
-SIGNATURE = b"UnityFS\0\0\0\0\x075.x."
-SPAN = 32768
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from gfl2.client import UNITY_VERSION, archives, read_archive, scan_packs  # noqa: E402
+
+UnityPy.config.FALLBACK_UNITY_VERSION = UNITY_VERSION
 INDEXED = {"GameObject", "Mesh", "AnimationClip", "Avatar", "AnimatorController", "AnimatorOverrideController",
            "TextAsset", "Texture2D", "Material", "Sprite", "AudioClip", "MonoScript"}
-
-
-def decrypt(data):
-    if data.startswith(b"UnityFS\0"):
-        return data
-    key = bytes(a ^ b for a, b in zip(data[:16], SIGNATURE))
-    n = min(len(data), SPAN)
-    return bytes(data[i] ^ key[i % 16] for i in range(n)) + data[n:]
-
-
-def archives(path):
-    """Every archive in one pack file, as (offset, decrypted bytes)."""
-    size = path.stat().st_size
-    offset = 0
-    with path.open("rb") as s:
-        while offset + 64 < size:
-            s.seek(offset)
-            header = decrypt(s.read(256))
-            if not header.startswith(b"UnityFS\0"):
-                return
-            # Past the signature and two version strings sits the archive's total length.
-            p = 12
-            for _ in range(2):
-                p = header.index(b"\0", p) + 1
-            length = struct.unpack_from(">q", header, p)[0]
-            if not 0 < length <= size - offset:
-                return
-            s.seek(offset)
-            yield offset, decrypt(s.read(length))
-            offset += length
 
 
 def archive(bundles, name):
     """One archive's bytes, by `<pack>:<offset>`."""
     pack, offset = name.rsplit(":", 1)
-    for at, data in archives(Path(bundles) / pack):
-        if at == int(offset):
-            return data
-    raise SystemExit(f"no archive at {name}")
+    return read_archive(Path(bundles) / pack, int(offset))
 
 
 def scan(path):
@@ -118,14 +83,10 @@ def scan(path):
 
 
 def index(bundles, dest):
-    files = sorted(p for p in Path(bundles).iterdir() if p.suffix == ".bundle")
-    with ProcessPoolExecutor(max(2, (os.cpu_count() or 4) - 2)) as pool, Path(dest).open("w", encoding="utf-8") as f:
-        futures = [pool.submit(scan, p) for p in files]
-        for i, future in enumerate(as_completed(futures), 1):
-            for rec in future.result():
+    with Path(dest).open("w", encoding="utf-8") as f:
+        for recs in scan_packs(bundles, scan):
+            for rec in recs:
                 f.write(json.dumps(rec) + "\n")
-            if i % 1000 == 0 or i == len(files):
-                print(f"{i}/{len(files)}", file=sys.stderr, flush=True)
 
 
 def cut(bundles, name, out):

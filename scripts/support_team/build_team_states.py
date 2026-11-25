@@ -2,30 +2,127 @@
 
 Every crew member was exported with the same set of clips (her native idle and the donor Doll
 clips). For each state the crew play their clip a little out of step, the props either play
-their native idle or ride their carrier's weapon socket, and the result is baked into one take.
+their native idle or ride their carrier, and the result is baked into one take.
 
     blender --background --factory-startup --python build_team_states.py --
         <spec.json> <work_dir> [<state>...]
 
-prepare_team.py runs it as its `states` step. The spec (teams/<team>/states.json) names the
-sources, the output folder and the states, its paths relative to <work_dir>. Naming states after
-it bakes only those. The Idle state is written with the meshes as <team>_default.fbx, the body the
-Unity bake builds the prefab from. Every other state is written as <team>_<state>.fbx with the
-armatures only, so its clip binds to the same bone paths.
+prepare_team.py runs it as its `states` step. Naming states after <work_dir> bakes only those. The
+Idle state is written with the meshes as <team>_default.fbx, the body the Unity bake builds the
+prefab from. Every other state is written as <team>_<state>.fbx with the armatures only, so its
+clip binds to the same bone paths. A "motion" empty under the team root carries the team's
+travel (see "travel").
 
-Root motion: a "motion" empty under the team root carries the team's travel. A state with
-"travel": "<member>" moves that member's Root_M ground travel onto it and holds every member
-in place relative to it, so the Unity import takes the travel as root motion from the motion
-node. A state with "in_place": true pins every member's root bone (the donor run travels on it).
+The spec is teams/<team>/states.json. Its paths are relative to <work_dir>, so the spec in the
+repository holds no machine's paths. Bones are named as on the GFL2 crew rig (Root_M, Hip_L and
+so on). Every option:
+
+    team             the asset name, which prefixes every output and the props' armatures
+    out_dir          where the FBXs go
+    review           a .blend written at the end with every state back to back, for checking
+    preview          true renders side and front PNGs of each state into <out_dir>/preview
+    members          the crew's exports, one FBX each
+    props            the props' exports, whose armatures are named <team>_<file stem>
+    extra_sources    exports from other GFL2 scenes (the ult), read as references by file stem
+    texture_dirs     folders whose PNGs colour the review's materials
+    crew             the members' armature names (their file stems)
+    prop_names       the props' armature names
+    formation_clip   per member, her native idle: its first frame gives her place in the team
+    prop_idle        per prop, its native idle
+    spine_bone       the bone a slung prop rides unless it names one, and the bone whose
+                     direction gives a member's facing for "facing" and "ground"
+    prop_materials   name prefixes of the props' materials, coloured in the review from the
+                     texture named "<material>_d"
+    coat             a long coat that donor clips leave still:
+        chains       per side, [bone, "front" | "side" | "back"] for each chain's root bone. A
+                     clip that leaves the first chain's bone unkeyed is a donor clip
+        follow       per position, [share of the thigh's swing taken going forward, going back]
+        parent       the bone the chains hang from, in whose frame the swing is measured
+    markers          empties hung on a prop's bone that ride every take, so the Unity bake can
+                     hang a skill point on one: name, prop, bone, and "at" (the prop armature's
+                     space at rest)
+    states           the states, in order
+
+A state:
+
+    name             the state, and the FBX's suffix in lower case
+    native           the crew keep their clips' own root placement ("place": "native") by default
+    loop             the clips repeat, each member running "offset" frames ahead
+    length           the take's length in frames, unless "pingpong" or "length_from" sets it
+    length_from      the member whose clip span (and offset) gives the length
+    pingpong         with "loop", every clip plays the length_from member's span forwards and
+                     then backwards, so a held pose that is not a cycle loops without a jump
+    in_place         every member's root bone stays on her formation spot (a donor run travels
+                     on it)
+    travel           a member whose Root_M ground travel moves onto the motion empty, every
+                     member held in place relative to it, so the Unity import takes the travel
+                     as root motion from the motion node
+    idle_hair        each member's hair chains (under Head_M) hold her native idle's first
+                     frame, where a donor clip leaves them in a bind pose that cuts the face
+    lower_knees      a share (0 to 1) of each donor-clip thigh's forward swing taken back, so
+                     the knees rise no higher than the coat can follow
+    crew             per member, what she plays:
+        clip         the clip
+        range        [first, last] frames of it, or the whole clip
+        offset       frames she runs ahead (loop) or starts late, so the crew are out of step
+        place        "formation" (default unless native): her root on her formation spot plus
+                     the clip's own travel unless in_place, facing the team's way. "shift": the
+                     clip's own motion and facing, moved to start on her formation spot (a take
+                     from another scene). "native": as the clip has it
+        upper        {clip, frame, from}: the bones under "from" (one bone or a list, Spine1_M
+                     by default) hold that clip's pose at that frame for the whole take
+    props            per prop, one of:
+        "idle"       it plays its native idle, in step with a pingpong when there is one
+        follow       {follow: member, prop_ref, range}: keyed frame by frame where the extra
+                     source <prop_ref> has it over that range, moved as the member's "shift"
+                     moved her
+        match        {carrier, bone (Wrist_R by default), match: {prop_ref, carrier_ref,
+                     frame}}: held on the carrier's bone as the reference holds it at that
+                     frame. "idle:<name>" names the team's own prop or member in its native idle
+        ground       {carrier, ground: {distance, angle, pivot, lid, lid_bone}}: stood on the
+                     ground "distance" metres from her root, "angle" degrees round from her
+                     facing (positive to her left), its +Z towards her and +Y up, with "pivot"
+                     (its own space, the origin by default) on that spot. "lid" opens
+                     "lid_bone" that many degrees about the bone's head along X. Placed once,
+                     at the first state that grounds it, and kept there in later ones
+        otherwise    slung on the carrier, placed at frame 1 in her frame (x right, y back,
+                     z up, the team facing -Y):
+            carrier, bone   who carries it and on which bone (spine_bone by default)
+            at              where it goes, from her root or from "from_bone"'s head
+            from_bone       the bone "at" is measured from
+            pivot           the point of the prop (its own space) that goes to "at", in place
+                            of its mesh's centre
+            rot             a full turn (degrees, XYZ) from its own axes, for a prop whose long
+                            axis alone does not fix how it is held
+            dir, flip       without "rot", the way its long axis points, and that reversed
+            facing          "at" and the turn are taken in the carrier's own facing at frame 1
+                            rather than the team's
+            steady          keyed frame by frame, taking only this share of the bone's turn
+                            since frame 1, so a donor run's chest sway is not copied in full.
+                            Without it a Child Of constraint holds the prop rigidly
+            idle_pose       prop bones posed as its native idle has them at frame 1
+            grips           per side ("L", "R"), where her hand goes, kept in the prop's space:
+                            a point from "at" in her frame, or {at, fingers, thumb | palm} with
+                            the way the knuckles point ("forearm" carries on along the forearm)
+                            and the way the thumb side or the palm faces
+            grips_ref       {prop_ref, carrier_ref, frame, shift, elbow_push}: each wrist's
+                            whole placement and elbow read from a reference scene at a frame.
+                            "shift" moves a hand along the prop (its own space), "elbow_push"
+                            moves an elbow's bend target (the team's frame)
+
+swing_coat is not an option. With "coat" set, every member on a donor clip has her coat chains
+swung with her thighs frame by frame: each chain turns about its root by its "follow" share of
+the thigh's swing from rest, the forward share while the thigh is ahead of rest and the back share
+while it is behind, so the thighs do not pass through the coat.
 """
 import json
 import math
+import os
+import re
 import sys
 
 import bpy
 from mathutils import Euler, Matrix, Quaternion, Vector
-
-import os
 
 _args = sys.argv[sys.argv.index("--") + 1:]
 spec = json.load(open(_args[0], encoding="utf-8"))
@@ -46,6 +143,15 @@ for _key in ("members", "props", "extra_sources", "texture_dirs"):
 os.makedirs(spec["out_dir"], exist_ok=True)
 team = spec["team"]
 out_dir = spec["out_dir"]
+spine_bone = spec["spine_bone"]
+coat = spec.get("coat")
+
+# Built up as the script runs: each member's formation spot, each grounded prop's placement,
+# the reference placements read from the extra sources, and each baked state for the review.
+places = {}
+grounded = {}
+tracks = {}
+review = []
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 scene = bpy.context.scene
@@ -65,7 +171,7 @@ def fcurves(action):
                 yield from bag.fcurves
 
 
-# ---- fold the per-object exports into one team, as merge_team_fbx.py does ----
+# ---- fold the per-object exports into one team ----
 def load(src, name):
     """Import one AssetStudio export and fold its 0.01 scene root into the team root. Returns the
     objects it added and its armature."""
@@ -133,7 +239,7 @@ for a in bpy.data.actions:
 def action_for(arm, clip):
     """The import of <clip> made for this armature: the one whose bones it animates."""
     for a in clips.get(clip, []):
-        if any(f'pose.bones["' in c.data_path for c in fcurves(a)) and a.name.startswith(arm.name.split(".")[0]):
+        if any('pose.bones["' in c.data_path for c in fcurves(a)) and a.name.startswith(arm.name.split(".")[0]):
             return a
     # Props share the scene root's name, so fall back to the clip's only import.
     found = clips.get(clip, [])
@@ -162,9 +268,6 @@ def formation(arm):
         elif fc.data_path == 'pose.bones["root"].rotation_quaternion':
             rot[fc.array_index] = fc.keyframe_points[0].co.y
     return Vector(loc), rot
-
-
-places = {}
 
 
 # Leaf empties carry their own copies of every take. They deform nothing, so they stay still.
@@ -305,7 +408,7 @@ def sling(obj, prop, how):
     points along "dir". A Child Of constraint on the bone then holds that relation, so the prop
     rides her body."""
     arm = members[how["carrier"]]
-    bone = how.get("bone", "Spine2_M")
+    bone = how.get("bone", spine_bone)
     scene.frame_set(1)
     obj.matrix_parent_inverse = Matrix.Identity(4)
     obj.location, obj.rotation_mode, obj.rotation_euler = (0, 0, 0), "XYZ", (0, 0, 0)
@@ -339,8 +442,8 @@ def sling(obj, prop, how):
         turn = axis.rotation_difference(direction).to_matrix().to_4x4()
     if how.get("facing"):
         # "at" and the turn are taken in her own facing at frame 1 rather than the team's, for a
-        # member whose take turns her (Tarkhun in the ult): the way the bone it rides points (the
-        # spine bones point forward at rest), level. Her hips can face elsewhere while she points.
+        # member whose take turns her: the way the bone it rides points (the spine bones point
+        # forward at rest), level. Her hips can face elsewhere while she points.
         ride = arm.pose.bones[bone]
         ahead = arm.matrix_world.to_3x3() @ (ride.tail - ride.head)
         ahead.z = 0.0
@@ -395,10 +498,10 @@ def sling(obj, prop, how):
 
 
 def on_ground(obj, how):
-    """Stand a prop on the ground beside a crew member, facing her (the laptop set down open while
-    Tarkhun points): "distance" metres from her root, "angle" degrees round from the way her
-    spine points at frame 1 (positive to her left), its own +Z turned towards her and its +Y up.
-    "lid" opens the lid that many degrees past its rest about the hinge."""
+    """Stand a prop on the ground beside a crew member, facing her: "distance" metres from her
+    root, "angle" degrees round from the way her spine points at frame 1 (positive to her left),
+    its own +Z turned towards her and its +Y up. "lid" opens "lid_bone" that many degrees past
+    its rest about the hinge."""
     g = how["ground"]
     arm = members[how["carrier"]]
     scene.frame_set(1)
@@ -411,10 +514,10 @@ def on_ground(obj, how):
     if key in grounded:
         obj.matrix_basis = grounded[key][0].copy()
         if grounded[key][1] is not None:
-            obj.pose.bones["Lid"].matrix_basis = grounded[key][1].copy()
+            obj.pose.bones[g["lid_bone"]].matrix_basis = grounded[key][1].copy()
         bpy.context.view_layer.update()
         return
-    spine = arm.pose.bones["Spine2_M"]
+    spine = arm.pose.bones[spine_bone]
     ahead = arm.matrix_world.to_3x3() @ (spine.tail - spine.head)
     ahead.z = 0.0
     ahead.normalize()
@@ -423,18 +526,15 @@ def on_ground(obj, how):
     spot = Vector((base.x, base.y, 0.0)) + out * g.get("distance", 0.5)
     up, toward = Vector((0, 0, 1)), -out
     turn = Matrix((up.cross(toward), up, toward)).transposed().to_4x4()
-    pivot = Vector(g.get("pivot", (0.0, 0.003, 0.015)))
+    pivot = Vector(g.get("pivot", (0.0, 0.0, 0.0)))
     obj.matrix_basis = Matrix.Translation(spot) @ turn @ Matrix.Translation(-pivot)
     if "lid" in g:
-        # The hinge runs along the laptop's X through the Lid bone's head.
-        lid = obj.pose.bones["Lid"]
+        # The hinge runs along the prop's X through the lid bone's head.
+        lid = obj.pose.bones[g["lid_bone"]]
         hinge = lid.head.copy()
         lid.matrix = Matrix.Translation(hinge) @ Matrix.Rotation(math.radians(-g["lid"]), 4, "X") @ Matrix.Translation(-hinge) @ lid.matrix
     bpy.context.view_layer.update()
-    grounded[key] = (obj.matrix_basis.copy(), obj.pose.bones["Lid"].matrix_basis.copy() if "lid" in g else None)
-
-
-grounded = {}
+    grounded[key] = (obj.matrix_basis.copy(), obj.pose.bones[g["lid_bone"]].matrix_basis.copy() if "lid" in g else None)
 
 
 def steady(obj, how, arm, bone, desired, pivot):
@@ -579,26 +679,25 @@ def turn_about(pb, q, pivot):
     bpy.context.view_layer.update()
 
 
-# The coat's skirt hangs in three chains a side from Spine1_M: front, side and back. A donor clip
-# does not move them (it animates the donor's own cloth), so the thighs go through the coat.
-COAT = {"L": (("Cloth_L01", "front"), ("Cloth_L04", "side"), ("Cloth_L07", "back")),
-        "R": (("Cloth_R01", "front"), ("Cloth_R04", "side"), ("Cloth_R07", "back"))}
-# How much of the thigh's swing a chain takes, for a thigh going forward and going back: a flap
-# the leg pushes into follows it closely, the one it swings away from only a little.
-COAT_FOLLOW = {"front": (1.0, 0.3), "side": (0.7, 0.6), "back": (0.3, 0.9)}
+def is_donor(action):
+    """A donor clip animates the donor's own cloth, not the coat (spec "coat"), so the thighs go
+    through the coat unless swing_coat moves it."""
+    return coat is not None and not animates(action, coat["chains"]["L"][0][0])
 
 
 def swing_coat(arm, length):
-    """Swing each coat chain about its root with its thigh, frame by frame, in Spine1_M's frame
-    (the chains' parent): the thigh's swing from rest, a share of it by the chain's side."""
+    """Swing each coat chain about its root with its thigh, frame by frame, in the coat parent's
+    frame: the thigh's swing from rest, a share of it by the chain's position. A flap the leg
+    pushes into follows it closely, the one it swings away from only a little."""
     bones = arm.data.bones
-    rest_s1 = bones["Spine1_M"].matrix_local.to_3x3()
+    parent = coat["parent"]
+    rest_s1 = bones[parent].matrix_local.to_3x3()
     forward = (rest_s1.inverted() @ Vector((0, 0, 1))).normalized()
     for f in range(1, length + 1):
         scene.frame_set(f)
-        s1 = arm.pose.bones["Spine1_M"].matrix.to_quaternion()
+        s1 = arm.pose.bones[parent].matrix.to_quaternion()
         to_s1 = s1.to_matrix().inverted()
-        for side, chains in COAT.items():
+        for side, chains in coat["chains"].items():
             hip, knee = arm.pose.bones[f"Hip_{side}"], arm.pose.bones[f"Knee_{side}"]
             now = (to_s1 @ (knee.head - hip.head)).normalized()
             rest = (rest_s1.inverted() @ (bones[f"Knee_{side}"].head_local - bones[f"Hip_{side}"].head_local)).normalized()
@@ -608,7 +707,7 @@ def swing_coat(arm, length):
                 pb = arm.pose.bones.get(name)
                 if pb is None:
                     continue
-                q_s1 = Quaternion().slerp(swing, COAT_FOLLOW[where][0 if ahead else 1])
+                q_s1 = Quaternion().slerp(swing, coat["follow"][where][0 if ahead else 1])
                 # The turn in Spine1's frame, carried to armature space.
                 turn_about(pb, s1 @ q_s1 @ s1.inverted(), pb.head.copy())
                 key_pose(pb, f)
@@ -771,9 +870,6 @@ def place(arm, mname, mode, in_place):
     return (arm.matrix_world @ arm.pose.bones["root"].matrix).translation - before
 
 
-review = []
-
-
 def build(state):
     name, loop = state["name"], state.get("loop", False)
     default_place = "native" if state.get("native") else "formation"
@@ -792,7 +888,7 @@ def build(state):
         action = action_for(arm, part["clip"])
         if action is None:
             raise SystemExit(f"{name}: no clip {part['clip']} on {member}")
-        if not animates(action, "Cloth_L01"):
+        if is_donor(action):
             donor.add(member)
         if "upper" in part:
             up = part["upper"]
@@ -948,9 +1044,6 @@ def prop_placement(ref, frame):
     return ref.matrix_world @ ref.pose.bones[moving.name].matrix @ moving.matrix_local.inverted()
 
 
-tracks = {}
-
-
 def read_tracks():
     """Read every reference placement the states ask for, then drop the reference objects."""
     for state in spec["states"]:
@@ -1006,11 +1099,10 @@ for mname, arm in members.items():
     places[mname] = formation(arm)
     print(f"formation {mname}: root at {tuple(round(v, 3) for v in places[mname][0])} turned {tuple(round(v, 3) for v in places[mname][1])}")
 
+
 def colour_maps():
     """Wire each material's colour map from the exported textures, by the material's name
     (member, part), the way the Unity bake maps them."""
-    import os
-    import re
     files = {}
     for d in spec.get("texture_dirs", []):
         for f in os.listdir(d):
@@ -1024,7 +1116,7 @@ def colour_maps():
         path = None
         if m:
             path = next((files.get(f"{m.group(1)}_{tex}") for key, tex in parts if m.group(2).startswith(key)), None)
-        elif base.startswith("cw_") or base.startswith("laptop") or base.startswith("binocle"):
+        elif base.startswith(tuple(spec.get("prop_materials", []))):
             stem = base.replace("_uber", "")
             path = files.get(f"{stem}_d") or next((p for k, p in files.items() if k.startswith(stem.split("_lod")[0]) and k.endswith("_d")), None)
         if not path or not mat.node_tree:

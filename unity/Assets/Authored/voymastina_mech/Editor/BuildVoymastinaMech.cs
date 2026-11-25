@@ -30,8 +30,7 @@ namespace WOMENACE.Editor
         // The doll shading. Ramps are per character with a global set in shared;
         // see the doll-shading skill for the split and why it follows the game's.
         private const string VoyRamps = "Assets/Authored/voymastina/ramps";
-        private const string SharedRamps = "Assets/Authored/shared/ramps";
-        private const string SharedFaceSdf = "Assets/Authored/shared/face_sdf.png";
+        private const string SharedRamps = Gfl2Materials.SharedRamps;
         private const string FaceSdfSidecars = SrcDir + "/face_sdf";
 
         public static void Build()
@@ -136,7 +135,7 @@ namespace WOMENACE.Editor
         {
             try
             {
-                EnsureFolder(AnimDir);
+                BakeAssets.EnsureFolder(AnimDir);
 
                 // Import: generic rig, animations on, skip GFL2 materials (they
                 // would render magenta; re-authored later).
@@ -354,7 +353,7 @@ namespace WOMENACE.Editor
         {
             try
             {
-                EnsureFolder("Assets/Prefabs/voymastina_mech/erwin");
+                BakeAssets.EnsureFolder("Assets/Prefabs/voymastina_mech/erwin");
                 var ac = AssetDatabase.LoadAssetAtPath<UnityEditor.Animations.AnimatorController>(ControllerPath);
                 if (ac == null) { Debug.LogError("erwin: shared controller missing"); return false; }
 
@@ -681,7 +680,7 @@ namespace WOMENACE.Editor
         {
             try
             {
-                EnsureFolder("Assets/Prefabs/voymastina_mech/default");
+                BakeAssets.EnsureFolder("Assets/Prefabs/voymastina_mech/default");
                 var ac = AssetDatabase.LoadAssetAtPath<UnityEditor.Animations.AnimatorController>(ControllerPath);
                 if (ac == null) { Debug.LogError("default: shared controller missing"); return false; }
                 var imp = (ModelImporter)AssetImporter.GetAtPath(DefaultFbx);
@@ -817,24 +816,10 @@ namespace WOMENACE.Editor
         }
 
         private const string TexDir = SrcDir + "/textures";
-        private static Texture2D _matteMask;
 
-        // A small linear matte mask: HDRP MaskMap layout R=metallic(0), G=AO(1), B=detail(0),
-        // A=smoothness(low). Kills the default chrome look.
-        private static Texture2D GetMatteMask()
-        {
-            if (_matteMask != null) return _matteMask;
-            const string path = AnimDir + "/voymastina_matte_mask.asset";
-            var existing = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-            if (existing != null) { _matteMask = existing; return _matteMask; }
-            var t = new Texture2D(4, 4, TextureFormat.RGBA32, false, true);
-            var px = new Color32[16];
-            for (int i = 0; i < px.Length; i++) px[i] = new Color32(0, 255, 0, 30);
-            t.SetPixels32(px); t.Apply();
-            AssetDatabase.CreateAsset(t, path);
-            _matteMask = t;
-            return t;
-        }
+        // HDRP mask layout, see Gfl2Materials.MatteMask. Kills the default chrome look.
+        private static Texture2D GetMatteMask() =>
+            Gfl2Materials.MatteMask(AnimDir + "/voymastina_matte_mask.asset", 30);
 
         // Map a mesh name to its GFL2 texture-set base name(s), one per submesh in order.
         private static string[] TextureSetsFor(string meshName)
@@ -871,26 +856,8 @@ namespace WOMENACE.Editor
                 || name.IndexOf("_lod3", StringComparison.OrdinalIgnoreCase) >= 0
                 || name.IndexOf("_lodm0", StringComparison.OrdinalIgnoreCase) >= 0);
 
-        // Import a texture (base+suffix.png) with the right colour-space/type, return it.
-        private static Texture2D LoadTex(string baseName, string[] suffixes, bool sRGB, bool isNormal)
-        {
-            foreach (var sfx in suffixes)
-                foreach (var ext in new[] { ".png", ".tga" })
-                {
-                    var path = TexDir + "/" + baseName + sfx + ext;
-                    if (!System.IO.File.Exists(path)) continue;
-                    if (AssetImporter.GetAtPath(path) is TextureImporter imp)
-                    {
-                        bool changed = false;
-                        var tt = isNormal ? TextureImporterType.NormalMap : TextureImporterType.Default;
-                        if (imp.textureType != tt) { imp.textureType = tt; changed = true; }
-                        if (imp.sRGBTexture != sRGB) { imp.sRGBTexture = sRGB; changed = true; }
-                        if (changed) imp.SaveAndReimport();
-                    }
-                    return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-                }
-            return null;
-        }
+        private static Texture2D LoadTex(string baseName, string[] suffixes, bool sRGB, bool isNormal) =>
+            BakeAssets.LoadTex(TexDir, baseName, suffixes, sRGB, isNormal);
 
         // The pilot's eye stack, transplanted from her infantry doll by
         // scripts/doll/transplant_eyes.py: the battle rip ships no eye geometry
@@ -969,18 +936,15 @@ namespace WOMENACE.Editor
                     return GetOrBuildMaterial("c_Voymastina_slg_face|body",
                         Shader.Find("Menace/character"), cache);
                 case "Eyes":
-                    mat = new Material(Shader.Find("Womenace/DollEye")) { name = "vmat_eye" };
-                    mat.SetTexture("_BaseMap",
+                    mat = Gfl2Materials.Eye("Womenace/DollEye", "vmat_eye",
                         LoadTex("c_Voymastina_slg_eye", new[] { "_d" }, sRGB: true, isNormal: false));
                     break;
                 case "EyeShadow":
-                    mat = new Material(Shader.Find("Womenace/DollEyeShadow")) { name = "vmat_eyemul" };
-                    mat.SetTexture("_BaseMap",
+                    mat = Gfl2Materials.Eye("Womenace/DollEyeShadow", "vmat_eyemul",
                         LoadTex("c_Voymastina_slg_eyeblend", new[] { "" }, sRGB: true, isNormal: false));
                     break;
                 default:
-                    mat = new Material(Shader.Find("Womenace/DollEyeHighlight")) { name = "vmat_eyeadd" };
-                    mat.SetTexture("_BaseMap",
+                    mat = Gfl2Materials.Eye("Womenace/DollEyeHighlight", "vmat_eyeadd",
                         LoadTex("c_Voymastina_slg_eyeblend", new[] { "" }, sRGB: true, isNormal: false));
                     break;
             }
@@ -1085,89 +1049,22 @@ namespace WOMENACE.Editor
             string texBase = marker < 0 ? baseName : baseName.Substring(0, marker);
             var route = DollRouteFor(texBase);
             var mat = route.shader != null
-                ? BuildDollMaterial(baseName, texBase, route.shader, route.ramp)
+                // The |body split keeps the SDF sweep off the body skin, whose mesh has none
+                // of the sweep's lookup coordinates.
+                ? Gfl2Materials.Doll(route.shader, "vmat_" + baseName.Replace('|', '_'), TexDir, texBase, route.ramp,
+                    baseName.Contains("_slg_face") && !baseName.Contains("|") ? Gfl2Materials.SharedFaceSdf : null)
                 : BuildMenaceMaterial(texBase, shader);
             AssetDatabase.CreateAsset(mat, AnimDir + "/vmat_" + baseName.Replace('|', '_') + ".mat");
             cache[baseName] = mat;
             return mat;
         }
 
-        // A material on the doll shaders, textured with the GFL2 set as shipped:
-        // albedo, tangent normal, RMO in the game's own packing (the shader reads
-        // R rough, G metal, B occlusion directly, so the HDRP repack and the matte
-        // placeholder both stay out of this path), and the ramp. The doll shaders
-        // sample no decal buffer, so they need no decal opt-out to keep road
-        // decals off the mech.
-        private static Material BuildDollMaterial(string baseName, string texBase, string shaderName, string rampPath)
-        {
-            var shader = Shader.Find(shaderName);
-            if (shader == null)
-            {
-                Debug.LogError("missing shader " + shaderName + ", falling back to Standard");
-                shader = Shader.Find("Standard");
-            }
-            var mat = new Material(shader) { name = "vmat_" + baseName.Replace('|', '_') };
-            var alb = LoadTex(texBase, new[] { "_d", "_da" }, sRGB: true, isNormal: false);
-            if (alb != null) mat.SetTexture("_BaseMap", alb);
-            var nrm = LoadTex(texBase, new[] { "_n" }, sRGB: false, isNormal: true);
-            if (nrm != null) mat.SetTexture("_NormalMap", nrm);
-            // The GFL2 _rmo is data, not colour: linear, and bound to the slot the
-            // shader reads in the game's packing.
-            var rmo = LoadTex(texBase, new[] { "_rmo" }, sRGB: false, isNormal: false);
-            if (rmo != null) mat.SetTexture("_MaskMap", rmo);
-            var spc = LoadTex(texBase, new[] { "_spc" }, sRGB: true, isNormal: false);
-            if (spc != null)
-            {
-                mat.SetTexture("_SpecularMap", spc);
-                // The hair path, on. The doll bakes keep this at 0 because a PMX
-                // source has no real TEXCOORD1 to sample the streak with, but the
-                // ripped game meshes here carry the game's own strip UV (verified:
-                // the hair's TEXCOORD1 spans strip coordinates well outside 0..1).
-                // A non-zero intensity is also what routes the material off GGX
-                // and onto the anisotropic hair term.
-                mat.SetFloat("_MatCapIntensity", 1f);
-            }
-            var ramp = AssetDatabase.LoadAssetAtPath<Texture2D>(rampPath);
-            if (ramp == null) Debug.LogError("missing ramp " + rampPath);
-            else mat.SetTexture("_RampMap", ramp);
-            // The SDF sweep belongs to the face mesh alone: its lookup coordinates
-            // exist only there, which is what the |body split guards.
-            if (baseName.Contains("_slg_face") && !baseName.Contains("|"))
-            {
-                mat.SetFloat("_UseBlendTex", 1f);
-                var sdf = AssetDatabase.LoadAssetAtPath<Texture2D>(SharedFaceSdf);
-                if (sdf == null) Debug.LogError("missing face SDF map " + SharedFaceSdf);
-                else mat.SetTexture("_SdfMap", sdf);
-            }
-            Debug.Log($"doll material {baseName}: shader={shaderName} ramp={System.IO.Path.GetFileName(rampPath)} "
-                + $"albedo={(alb ? alb.name : "-")} normal={(nrm ? nrm.name : "-")} rmo={(rmo ? rmo.name : "-")}");
-            return mat;
-        }
-
-        // The Menace/character fallback for anything the doll route does not
-        // claim. Sets every candidate property name so the runtime shader rebind
-        // picks up whichever it uses.
+        // The Menace/character fallback for anything the doll route does not claim.
         private static Material BuildMenaceMaterial(string baseName, Shader shader)
         {
             var alb = LoadTex(baseName, new[] { "_d", "_da", "_spc" }, sRGB: true, isNormal: false);
             var nrm = LoadTex(baseName, new[] { "_n" }, sRGB: false, isNormal: true);
-            var mat = new Material(shader) { name = "vmat_" + baseName };
-            if (alb != null) foreach (var p in new[] { "_BaseMap", "_BaseColorMap", "_MainTex" }) if (mat.HasProperty(p)) mat.SetTexture(p, alb);
-            if (nrm != null) foreach (var p in new[] { "_NormalMap", "_BumpMap", "_Normal" }) if (mat.HasProperty(p)) mat.SetTexture(p, nrm);
-            // Without a mask the shader defaults to a white mask = full metallic + full
-            // smoothness = chrome. Assign a matte mask (HDRP layout R=metallic 0, G=AO 1,
-            // A=smoothness low) so surfaces read matte.
-            var mask = GetMatteMask();
-            foreach (var p in new[] { "_MaskMap", "_Mask", "_MetallicGlossMap" }) if (mat.HasProperty(p)) mat.SetTexture(p, mask);
-            if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", Color.white);
-            if (mat.HasProperty("_Metallic")) mat.SetFloat("_Metallic", 0f);
-            if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0.15f);
-            if (mat.HasProperty("_Glossiness")) mat.SetFloat("_Glossiness", 0.15f);
-            // Match native units: opt out of receiving decals so road and other ground decals do not
-            // project onto the mech. The native character material carries _SupportDecals 0 and the
-            // _DISABLE_DECALS shader keyword, so set both for the serialised material to match.
-            if (mat.HasProperty("_SupportDecals")) mat.SetFloat("_SupportDecals", 0f);
-            mat.EnableKeyword("_DISABLE_DECALS");
+            var mat = Gfl2Materials.Menace(shader, "vmat_" + baseName, alb, nrm, GetMatteMask(), smoothness: 0.15f);
             Debug.Log($"material {baseName}: albedo={(alb ? alb.name : "-")} normal={(nrm ? nrm.name : "-")}");
             return mat;
         }
@@ -1226,15 +1123,6 @@ namespace WOMENACE.Editor
             AssetDatabase.CreateAsset(copy, AnimDir + "/" + assetName + ".anim");
             Debug.Log($"in-place {assetName}: stripped {removed} planar-travel curves, loop={loop}");
             return copy;
-        }
-
-        private static void EnsureFolder(string path)
-        {
-            if (AssetDatabase.IsValidFolder(path)) return;
-            var parent = System.IO.Path.GetDirectoryName(path).Replace('\\', '/');
-            var leaf = System.IO.Path.GetFileName(path);
-            if (!AssetDatabase.IsValidFolder(parent)) EnsureFolder(parent);
-            AssetDatabase.CreateFolder(parent, leaf);
         }
     }
 }

@@ -74,16 +74,18 @@ public sealed class SoloSquadSystem : JiangyuSystem
         return overrides;
     }
 
+    // A solo leader needs no squaddies: SquaddieCap holds her at zero, so the deploy validation
+    // (the "needs at least N squaddies" gate) passes with her alone, auto-fill treats her squad as
+    // full at one, and any add is undone at the source. The min getter runs on every validation
+    // pass, which makes it the point no flow can skip: a leader hired and deployed without ever
+    // being SELECTED never goes through the unit window, but cannot reach a mission without being
+    // validated, so her attributes are reconciled there too.
+    private SquaddieCap _cap;
+
     public override void OnInit()
     {
-        // The patch targets are the CONCRETE SquadLeader overrides.
-        // Detouring the virtuals on BaseUnitLeader crashes the game during
-        // boot, before the main menu; the derived implementations detour
-        // cleanly. TryAddSquaddie is non-virtual on the base, so it is safe
-        // to patch where it lives.
-        Context.Patches.Postfix("Il2CppMenace.Strategy.SquadLeader", "GetMinValidSquaddies", OnGetMinValidSquaddies);
-        Context.Patches.Postfix("Il2CppMenace.Strategy.SquadLeader", "GetMaxValidSquaddies", OnGetMaxValidSquaddies);
-        Context.Patches.Postfix("Il2CppMenace.Strategy.BaseUnitLeader", "TryAddSquaddie", OnTryAddSquaddie);
+        _cap = new SquaddieCap("solo squad", leader => IsSolo(leader) ? 0 : null, leader => ReconcileAttributes(leader));
+        _cap.Install(Context);
         Context.Patches.Postfix(VanillaUi.Targets.UnitWindowSetLeader.Type, VanillaUi.Targets.UnitWindowSetLeader.Method, OnWindowChanged);
         Context.Patches.Postfix(VanillaUi.Targets.UnitWindowRefresh.Type, VanillaUi.Targets.UnitWindowRefresh.Method, OnWindowChanged);
         // Selection screens (initial squad hire, armoury, mission prep)
@@ -214,26 +216,6 @@ public sealed class SoloSquadSystem : JiangyuSystem
         }
     }
 
-    // TryRemoveSquaddie can re-enter the valid-range getters mid-strip.
-    private static bool _stripping;
-
-    // A solo leader needs no squaddies: the deploy validation (the "needs at
-    // least N squaddies" gate) reads this and passes at zero. The getters
-    // run on every validation pass, which makes them the enforcement point
-    // no flow can skip: a leader hired and deployed without ever being
-    // SELECTED never goes through the unit window, but cannot reach a
-    // mission without being validated.
-    private void OnGetMinValidSquaddies(PatchInfo info)
-    {
-        var leader = (info.Instance as Il2CppObjectBase)?.TryCast<BaseUnitLeader>();
-        if (leader == null || !IsSolo(leader))
-            return;
-        info.Result = 0;
-        if (!_stripping)
-            StripSquaddies(leader);
-        ReconcileAttributes(leader);
-    }
-
     // The strategy scene coming up (new game, load) reconciles the hired
     // roster before any screen can draw a clamped value. Unhired preview
     // leaders (hiring screens mint temporaries; the hirable pool itself
@@ -344,38 +326,6 @@ public sealed class SoloSquadSystem : JiangyuSystem
         }
     }
 
-    // Max collapses to zero too, so the game's own squaddie validation and
-    // any auto-fill logic treat her squad as full at one.
-    private void OnGetMaxValidSquaddies(PatchInfo info)
-    {
-        var leader = (info.Instance as Il2CppObjectBase)?.TryCast<BaseUnitLeader>();
-        if (leader == null || !IsSolo(leader))
-            return;
-        info.Result = 0;
-    }
-
-    // Belt and braces at the source: an add on a solo leader is undone on
-    // the spot and reported as refused, whatever path issued it.
-    private void OnTryAddSquaddie(PatchInfo info)
-    {
-        try
-        {
-            var leader = (info.Instance as Il2CppObjectBase)?.TryCast<BaseUnitLeader>();
-            if (leader == null || !IsSolo(leader))
-                return;
-            var added = info.Result is bool ok && ok;
-            var squaddieId = info.Args != null && info.Args.Count > 0 && info.Args[0] is int id ? id : (int?)null;
-            if (added && squaddieId.HasValue)
-                leader.TryRemoveSquaddie(squaddieId.Value);
-            info.Result = false;
-            Context.Log.Debug($"solo squad: refused squaddie add on {leader.GetTemplate()?.GetID()}");
-        }
-        catch (Exception ex)
-        {
-            Context.Log.Warn($"solo squad: add refusal failed: {ex.GetType().Name}: {ex.Message}");
-        }
-    }
-
     // Shared prefix for every UI entry point that receives a leader about to
     // be drawn: repair first, then let the native code render.
     private void OnSelectSlotInit(PatchInfo info)
@@ -414,37 +364,12 @@ public sealed class SoloSquadSystem : JiangyuSystem
             if (solo)
             {
                 Context.Log.Debug($"solo squad: window shows {leader.GetTemplate()?.GetID()}, minValid={leader.GetMinValidSquaddies()}, maxValid={leader.GetMaxValidSquaddies()}, assigned={leader.m_SquaddieIds?.Count ?? -1}");
-                StripSquaddies(leader);
+                _cap.Strip(leader);
             }
         }
         catch (Exception ex)
         {
             Context.Log.Warn($"solo squad: window update failed: {ex.GetType().Name}: {ex.Message}");
-        }
-    }
-
-    private void StripSquaddies(BaseUnitLeader leader)
-    {
-        try
-        {
-            var current = leader.m_SquaddieIds;
-            if (current == null || current.Count == 0)
-                return;
-            _stripping = true;
-            var ids = new List<int>();
-            for (var i = 0; i < current.Count; i++)
-                ids.Add(current[i]);
-            foreach (var id in ids)
-                leader.TryRemoveSquaddie(id);
-            Context.Log.Debug($"solo squad: stripped {ids.Count} squaddie(s) from {leader.GetTemplate()?.GetID()}");
-        }
-        catch (Exception ex)
-        {
-            Context.Log.Warn($"solo squad: squaddie strip failed: {ex.GetType().Name}: {ex.Message}");
-        }
-        finally
-        {
-            _stripping = false;
         }
     }
 

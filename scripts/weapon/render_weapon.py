@@ -1,21 +1,31 @@
-"""Render a weapon GLB to a transparent PNG for icon use.
+"""Render a weapon GLB or FBX to a transparent PNG for icon use.
 
-Two shading modes:
+Three shading modes:
 
 * `--mode flat` (default) uses Blender's Workbench render engine with the
   Texture shading mode so the output shows just the BaseColor texture with
-  no PBR shininess. Fastest path; best for clean inventory icons.
+  no PBR shininess. Fastest path, best for clean inventory icons.
 * `--mode shaded` uses Eevee with the GLB's Principled BSDF material plus a
   three-point light rig. Produces a PBR-shaded image with rim highlights.
+* `--mode studio` uses Workbench with the Texture colour type under studio
+  light with cavity shading, so a flat diffuse still shows the model's form.
+
+`--diffuse` replaces every material with one showing that texture, for a model
+whose own materials do not import (a GFL2 FBX export). `--lod0-only` drops
+every mesh whose name lacks `lod0`, which keeps a model's lower LODs out of
+the render. `--axis` lays the model's longest dimension along X about its
+centre and looks at it from that axis in place of `--view`, for a model whose
+import orientation is not known in advance: `minus_y` and `plus_y` look from
+either side, `plus_z` from above.
 
 In both modes the background renders as alpha=0 (transparent PNG).
 
 Run as:
     blender --background --python render_weapon.py -- \\
-        --glb <path.glb> --out <path.png> \\
+        (--glb <path.glb> | --fbx <path.fbx>) --out <path.png> \\
         [--width 912] [--height 318] [--padding 0.05] \\
-        [--view side|front|back|top|three_quarter] \\
-        [--mode flat|shaded]
+        [--view side|front|back|top|three_quarter | --axis minus_y|plus_y|plus_z] \\
+        [--mode flat|shaded|studio] [--diffuse <texture.png>] [--lod0-only]
 """
 
 import argparse
@@ -42,23 +52,62 @@ def reset_scene() -> None:
         bpy.data.objects.remove(obj, do_unlink=True)
 
 
-def import_glb(glb_path: Path) -> list[bpy.types.Object]:
-    if not glb_path.exists():
-        raise SystemExit(f"GLB not found: {glb_path}")
+def import_model(path: Path) -> list[bpy.types.Object]:
+    if not path.exists():
+        raise SystemExit(f"Model not found: {path}")
     pre = set(bpy.data.objects)
-    bpy.ops.import_scene.gltf(filepath=str(glb_path))
+    if path.suffix.lower() == ".fbx":
+        bpy.ops.import_scene.fbx(filepath=str(path))
+    else:
+        bpy.ops.import_scene.gltf(filepath=str(path))
     return [o for o in bpy.data.objects if o not in pre]
+
+
+def keep_lod0(objects: list[bpy.types.Object]) -> list[bpy.types.Object]:
+    for obj in [o for o in objects if o.type == "MESH" and "lod0" not in o.name]:
+        bpy.data.objects.remove(obj, do_unlink=True)
+    return [o for o in bpy.data.objects if o in set(objects)]
+
+
+def force_diffuse(objects: list[bpy.types.Object], texture: Path) -> None:
+    mat = bpy.data.materials.new("diffuse")
+    mat.use_nodes = True
+    tex = mat.node_tree.nodes.new("ShaderNodeTexImage")
+    tex.image = bpy.data.images.load(str(texture))
+    bsdf = mat.node_tree.nodes["Principled BSDF"]
+    mat.node_tree.links.new(tex.outputs["Color"], bsdf.inputs["Base Color"])
+    for obj in objects:
+        if obj.type == "MESH":
+            obj.data.materials.clear()
+            obj.data.materials.append(mat)
+
+
+def lay_along_x(objects: list[bpy.types.Object]) -> None:
+    """Turn the model about its centre so its longest dimension runs along X."""
+    lo, hi = _mesh_bounds_world(objects)
+    size = hi - lo
+    longest = max(range(3), key=lambda i: size[i])
+    pivot = bpy.data.objects.new("pivot", None)
+    bpy.context.scene.collection.objects.link(pivot)
+    pivot.location = (lo + hi) * 0.5
+    for obj in [o for o in bpy.data.objects if o.parent is None and o is not pivot]:
+        obj.parent = pivot
+        obj.matrix_parent_inverse = pivot.matrix_world.inverted()
+    pivot.rotation_euler = {0: (0, 0, 0), 1: (0, 0, -1.5708), 2: (0, 1.5708, 0)}[longest]
+    bpy.context.view_layer.update()
 
 
 def _mesh_bounds_world(objects: list[bpy.types.Object]) -> tuple[mathutils.Vector, mathutils.Vector]:
     INF = float("inf")
     lo = mathutils.Vector((INF, INF, INF))
     hi = mathutils.Vector((-INF, -INF, -INF))
+    # The evaluated mesh, so a skinned model is measured in the pose it renders in.
+    depsgraph = bpy.context.evaluated_depsgraph_get()
     for obj in objects:
         if obj.type != "MESH" or obj.data is None:
             continue
         m = obj.matrix_world
-        for v in obj.data.vertices:
+        for v in obj.evaluated_get(depsgraph).data.vertices:
             w = m @ v.co
             lo.x = min(lo.x, w.x); hi.x = max(hi.x, w.x)
             lo.y = min(lo.y, w.y); hi.y = max(hi.y, w.y)
@@ -82,18 +131,60 @@ _VIEWS = {
     "three_quarter": (mathutils.Vector(( 1.0, -0.7,  0.5)), mathutils.Vector((0.0, 0.0, 1.0))),
 }
 
+# --axis name -> camera direction, for a model laid along X by lay_along_x.
+_AXES = {
+    "minus_y": mathutils.Vector((0.0, -1.0, 0.0)),
+    "plus_y":  mathutils.Vector((0.0,  1.0, 0.0)),
+    "plus_z":  mathutils.Vector((0.0,  0.0, 1.0)),
+}
+
+
+Basis = tuple[mathutils.Vector, mathutils.Matrix, mathutils.Vector]
+
+
+def _view_basis(view: str) -> Basis:
+    """Camera direction, rotation and the up the lights are placed by, for a --view name."""
+    if view not in _VIEWS:
+        raise SystemExit(f"Unknown view {view!r}, valid: {list(_VIEWS)}")
+    direction, up = _VIEWS[view]
+    direction = direction.normalized()
+    # Build a rotation that maps Blender's camera-forward (-Z) onto
+    # `-direction`, with `up` aligned to camera-up (+Y).
+    forward = -direction
+    cam_z = -forward                # camera looks down -Z, so Z basis is -forward
+    cam_x = up.cross(forward).normalized()
+    if cam_x.length == 0:
+        # Up and forward are parallel, so pick an alternate up.
+        cam_x = mathutils.Vector((1.0, 0.0, 0.0)) if abs(forward.z) > 0.9 else mathutils.Vector((0.0, 0.0, 1.0))
+        cam_x = cam_x.cross(forward).normalized()
+    cam_y = forward.cross(cam_x).normalized()
+    return direction, mathutils.Matrix((
+        (cam_x.x, cam_y.x, cam_z.x),
+        (cam_x.y, cam_y.y, cam_z.y),
+        (cam_x.z, cam_y.z, cam_z.z),
+    )), up
+
+
+def _axis_basis(axis: str) -> Basis:
+    """Camera direction, rotation and up for an --axis name. The image's up is +Z, or +Y from above."""
+    direction = _AXES[axis]
+    if axis == "plus_z":
+        rotation = mathutils.Matrix.Identity(3)
+    else:
+        rotation = (-direction).to_track_quat("-Z", "Y").to_matrix()
+    return direction, rotation, rotation.col[1].copy()
+
 
 def add_orthographic_camera(
     objects: list[bpy.types.Object],
-    view: str,
+    basis: Basis,
     width_px: int,
     height_px: int,
     padding: float,
 ) -> bpy.types.Object:
-    if view not in _VIEWS:
-        raise SystemExit(f"Unknown view {view!r}; valid: {list(_VIEWS)}")
-    direction, up = _VIEWS[view]
-    direction = direction.normalized()
+    direction, rotation, _ = basis
+    cam_x = rotation.col[0].copy()
+    cam_y = rotation.col[1].copy()
 
     lo, hi = _mesh_bounds_world(objects)
     centre = (lo + hi) * 0.5
@@ -109,25 +200,7 @@ def add_orthographic_camera(
     cam = bpy.data.objects.new(name="render_cam", object_data=cam_data)
     bpy.context.collection.objects.link(cam)
 
-    cam.location = camera_pos
-    # Aim the camera at the mesh centre using a track-to constraint pattern:
-    # build a rotation that maps Blender's camera-forward (-Z) onto
-    # `-direction`, with `up` aligned to camera-up (+Y).
-    forward = -direction
-    cam_z = -forward                # camera looks down -Z; so Z basis is -forward
-    cam_x = up.cross(forward).normalized()
-    if cam_x.length == 0:
-        # Up and forward are parallel; pick an alternate up.
-        cam_x = mathutils.Vector((1.0, 0.0, 0.0)) if abs(forward.z) > 0.9 else mathutils.Vector((0.0, 0.0, 1.0))
-        cam_x = cam_x.cross(forward).normalized()
-    cam_y = forward.cross(cam_x).normalized()
-    rot_matrix = mathutils.Matrix((
-        (cam_x.x, cam_y.x, cam_z.x, 0.0),
-        (cam_x.y, cam_y.y, cam_z.y, 0.0),
-        (cam_x.z, cam_y.z, cam_z.z, 0.0),
-        (0.0,     0.0,     0.0,     1.0),
-    ))
-    cam.matrix_world = mathutils.Matrix.Translation(camera_pos) @ rot_matrix
+    cam.matrix_world = mathutils.Matrix.Translation(camera_pos) @ rotation.to_4x4()
 
     cam_data.type = "ORTHO"
     # Project the bbox onto the camera plane to figure out width/height in
@@ -161,7 +234,7 @@ def add_orthographic_camera(
 # -----------------------------------------------------------------------------
 
 
-def add_three_point_lights(objects: list[bpy.types.Object], view: str) -> None:
+def add_three_point_lights(objects: list[bpy.types.Object], basis: Basis) -> None:
     """Three-point rig in world space, sized by the mesh's bounding sphere.
     Key light from upper-front, fill from opposite-lower for ambient lift,
     rim from behind for silhouette pop."""
@@ -169,8 +242,8 @@ def add_three_point_lights(objects: list[bpy.types.Object], view: str) -> None:
     centre = (lo + hi) * 0.5
     radius = max((hi - lo).length, 0.3)
 
-    view_dir = _VIEWS[view][0].normalized()
-    up = _VIEWS[view][1].normalized()
+    view_dir = basis[0].normalized()
+    up = basis[2].normalized()
     side = up.cross(view_dir).normalized()
     if side.length == 0:
         side = mathutils.Vector((1.0, 0.0, 0.0))
@@ -239,15 +312,22 @@ def configure_eevee_render(width_px: int, height_px: int) -> None:
     world.node_tree.links.new(bg.outputs["Background"], out.inputs["Surface"])
 
 
-def configure_workbench_render(width_px: int, height_px: int) -> None:
+def configure_workbench_render(width_px: int, height_px: int, studio: bool) -> None:
     """Workbench engine in Texture shading mode shows the BaseColor texture
     with no PBR shininess. Flat film + transparent background output as a
-    clean RGBA PNG suitable for UI icons."""
+    clean RGBA PNG suitable for UI icons. `studio` lights it with studio light
+    and cavity shading instead of flat light."""
     scene = bpy.context.scene
     scene.render.engine = "BLENDER_WORKBENCH"
 
     workbench = scene.display
-    if hasattr(workbench, "shading"):
+    if studio:
+        workbench.shading.light = "STUDIO"
+        workbench.shading.color_type = "TEXTURE"
+        workbench.shading.show_cavity = True
+        workbench.shading.cavity_type = "BOTH"
+        scene.view_settings.view_transform = "Standard"
+    elif hasattr(workbench, "shading"):
         workbench.shading.light = "FLAT"
         workbench.shading.color_type = "TEXTURE"
         workbench.shading.show_specular_highlight = False
@@ -273,35 +353,52 @@ def parse_args() -> argparse.Namespace:
     argv = sys.argv
     argv = argv[argv.index("--") + 1:] if "--" in argv else []
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--glb", required=True, type=Path)
+    source = parser.add_mutually_exclusive_group(required=True)
+    source.add_argument("--glb", type=Path)
+    source.add_argument("--fbx", type=Path)
     parser.add_argument("--out", required=True, type=Path)
     parser.add_argument("--width", type=int, default=912)
     parser.add_argument("--height", type=int, default=318)
     parser.add_argument("--padding", type=float, default=0.05,
                         help="Fraction of bbox added as margin on each side.")
     parser.add_argument("--view", choices=list(_VIEWS.keys()), default="side")
-    parser.add_argument("--mode", choices=["flat", "shaded"], default="flat",
-                        help="flat = Workbench/no lighting; shaded = Eevee + three-point rig.")
+    parser.add_argument("--axis", choices=list(_AXES.keys()),
+                        help="Lay the longest dimension along X and look from this axis, in place of --view.")
+    parser.add_argument("--mode", choices=["flat", "shaded", "studio"], default="flat",
+                        help="flat = Workbench/no lighting, shaded = Eevee + three-point rig, "
+                             "studio = Workbench with studio light and cavity.")
+    parser.add_argument("--diffuse", type=Path, help="Texture to show on every mesh in place of its materials.")
+    parser.add_argument("--lod0-only", action="store_true", help="Drop meshes whose name lacks lod0.")
     return parser.parse_args(argv)
 
 
 def main() -> None:
     args = parse_args()
     reset_scene()
-    objects = import_glb(args.glb)
-    print(f"[info] imported {len(objects)} object(s) from {args.glb.name}")
+    model = args.glb or args.fbx
+    objects = import_model(model)
+    print(f"[info] imported {len(objects)} object(s) from {model.name}")
+    if args.lod0_only:
+        objects = keep_lod0(objects)
+    if args.diffuse:
+        force_diffuse(objects, args.diffuse)
+    if args.axis:
+        lay_along_x(objects)
+        basis = _axis_basis(args.axis)
+    else:
+        basis = _view_basis(args.view)
 
-    add_orthographic_camera(objects, args.view, args.width, args.height, args.padding)
+    add_orthographic_camera(objects, basis, args.width, args.height, args.padding)
     if args.mode == "shaded":
-        add_three_point_lights(objects, args.view)
+        add_three_point_lights(objects, basis)
         configure_eevee_render(args.width, args.height)
     else:
-        configure_workbench_render(args.width, args.height)
+        configure_workbench_render(args.width, args.height, args.mode == "studio")
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
     bpy.context.scene.render.filepath = str(args.out)
     bpy.ops.render.render(write_still=True)
-    print(f"[done] {args.mode} render, {args.view} view ({args.width}×{args.height}) -> {args.out}")
+    print(f"[done] {args.mode} render, {args.axis or args.view} view ({args.width}×{args.height}) -> {args.out}")
 
 
 if __name__ == "__main__":

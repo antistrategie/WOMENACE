@@ -28,8 +28,8 @@ frame.
 outfit is `NemesisGnosis`). `--list` prints every rig. `--info` prints a rig's skins and
 animations.
 
-The client stores its archives end to end inside `.bundle` pack files, each XOR-encrypted over
-its first 32 KB. The first run walks every pack to find the rigs, which takes a few minutes,
+The client stores its archives end to end inside `.bundle` pack files (scripts/gfl2/client.py
+reads them). The first run walks every pack to find the rigs, which takes a few minutes,
 and keeps what it found in the work folder (`--work`, a folder in the system's temporary
 files by default). After a client update, delete `rigs.json` there to walk them again.
 
@@ -48,62 +48,21 @@ import math
 import os
 import re
 import shutil
-import struct
 import subprocess
 import sys
 import tempfile
 import urllib.request
-from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 
 import UnityPy
 from PIL import Image
 
 REPO = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO / "scripts"))
+from gfl2.client import UNITY_VERSION, archives, read_archive, scan_packs  # noqa: E402
+
 WORK = Path(tempfile.gettempdir()) / "womenace-chibi"
-# The client is built on 2019.4. Its archives strip the engine version, so UnityPy needs it
-# supplied to read the type trees.
-UnityPy.config.FALLBACK_UNITY_VERSION = "2019.4.29f1"
-
-SIGNATURE = b"UnityFS\0\0\0\0\x075.x."
-ENCRYPTED_SPAN = 32768
-
-
-def decrypt(data: bytes) -> bytes:
-    if data.startswith(b"UnityFS\0"):
-        return data
-    key = bytes(a ^ b for a, b in zip(data[:16], SIGNATURE))
-    count = min(len(data), ENCRYPTED_SPAN)
-    return bytes(data[i] ^ key[i % 16] for i in range(count)) + data[count:]
-
-
-def archives(path: Path):
-    """Yield (offset, decrypted archive bytes) for every archive in a pack."""
-    size = path.stat().st_size
-    offset = 0
-    with path.open("rb") as stream:
-        while offset + 64 < size:
-            stream.seek(offset)
-            header = decrypt(stream.read(256))
-            if not header.startswith(b"UnityFS\0"):
-                return
-            position = 12
-            for _ in range(2):
-                position = header.index(b"\0", position) + 1
-            length = struct.unpack_from(">q", header, position)[0]
-            if not 0 < length <= size - offset:
-                return
-            stream.seek(offset)
-            yield offset, decrypt(stream.read(length))
-            offset += length
-
-
-def archive_at(path: Path, offset: int) -> bytes:
-    for start, data in archives(path):
-        if start == offset:
-            return data
-    raise KeyError(f"no archive at {path.name}:{offset}")
-
+UnityPy.config.FALLBACK_UNITY_VERSION = UNITY_VERSION
 
 def scan_pack(path: Path):
     """Every Spine rig in a pack, as (name, pack, offset)."""
@@ -132,15 +91,10 @@ def rigs(bundles: Path, work: Path) -> dict:
     cache = work / "rigs.json"
     if cache.is_file():
         return {name: tuple(place) for name, place in json.loads(cache.read_text()).items()}
-    files = sorted(p for p in bundles.iterdir() if p.suffix == ".bundle")
     table = {}
-    with ProcessPoolExecutor(max(2, (os.cpu_count() or 4) - 2)) as pool:
-        futures = [pool.submit(scan_pack, p) for p in files]
-        for done, future in enumerate(as_completed(futures), 1):
-            for name, pack, offset in future.result():
-                table.setdefault(name, (pack, offset))
-            if done % 1000 == 0 or done == len(files):
-                print(f"walked {done}/{len(files)} packs", file=sys.stderr, flush=True)
+    for found in scan_packs(bundles, scan_pack):
+        for name, pack, offset in found:
+            table.setdefault(name, (pack, offset))
     work.mkdir(parents=True, exist_ok=True)
     cache.write_text(json.dumps(table, indent=1))
     return table
@@ -181,7 +135,7 @@ def extract(name: str, bundles: Path, work: Path) -> Path:
         close = [n for n in table if name.lower() in n.lower()]
         raise SystemExit(f"no rig '{name}' in the client" + (f", near matches: {', '.join(close)}" if close else ""))
     pack, offset = table[name]
-    env = UnityPy.load(archive_at(bundles / pack, offset))
+    env = UnityPy.load(read_archive(bundles / pack, offset))
 
     target = work / "spine" / name
     target.mkdir(parents=True, exist_ok=True)
