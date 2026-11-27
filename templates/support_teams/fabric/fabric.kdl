@@ -1,0 +1,262 @@
+clone "TagTemplate" from="unique" id="wmgfl_team_fabric"
+
+// Team Fabric, GFL2's MTR01 Armed Echelon. One element whose body is the whole crew and
+// mortar (SupportTeamSystem loads fabric/default/main), on the construct animator contract.
+// Its body, clips and sprites are built by scripts/support_team/prepare_team.py. The speaker's Tags carry no wmgfl token, so the Doll systems
+// keyed on that marker leave the team alone.
+clone "SpeakerTemplate" from="sy" id="wmgfl_fabric_speaker" {
+    set "Tags" "female infantry"
+    set "Nickname" {
+        set "m_DefaultTranslation" "Fabric"
+    }
+    // The full name heads the unit window and the mission's unit panel, so it names the team.
+    // Chiffon, the crew's leader, is the first of the crew listed under it.
+    set "Forename" {
+        set "m_DefaultTranslation" "Team Fabric"
+    }
+    set "Surname" {
+        set "m_DefaultTranslation" ""
+    }
+    set "Description" {
+        set "m_DefaultTranslation" """
+            Name: Team Fabric
+
+            Role: Mortar Team
+
+            Members: Chiffon (team leader), Cashmere (loader), Taffeta (gunner)
+            """
+    }
+
+    // The bark and slot portraits are the leader's face, as the roster's other portraits are a
+    // Doll's head, and the stand image is the whole crew with Chiffon in front
+    // (scripts/support_team/make_team_sprites.py).
+    set "BarkImage" asset="fabric/bark"
+    set "StandLookLeftImage" asset="fabric/stand_look_left"
+    set "StandLookRightImage" asset="fabric/stand_look_right"
+    set "StandLookRightInactiveImage" asset="fabric/stand_look_right_inactive"
+}
+
+clone "ElementAnimatorTemplate" from="animator.construct_soldier" id="animator.fabric" {
+    set "DeathBehaviour" enum="AnimatorDeathBehaviour" "DeathAnimations"
+}
+
+clone "ArmorTemplate" from="armor.player_fatigues" id="armor.fabric_default" {
+    set "Title" {
+        set "m_DefaultTranslation" "Fabric Field Kit"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Field Kit"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Team Fabric's own field gear. It cannot be swapped out."
+    }
+    append "OnlyEquipableBy" "wmgfl_team_fabric"
+    append "Tags" "jy_no_sell"
+}
+
+// The Kingpost M8 Medium Mortar's stats, deploy step and encumbrance, as the team's main weapon.
+clone "WeaponTemplate" from="specialweapon.tripod_medium_mortar_80mm" id="weapon.fabric" {
+    set "Title" {
+        set "m_DefaultTranslation" "Fabric Mortar"
+    }
+    set "ShortName" {
+        set "m_DefaultTranslation" "Mortar"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "Team Fabric's mortar. It has to be set up to be fired and slows the team down while carried."
+    }
+    // The team's main weapon. Its mortar is part of the team's body, so the weapon carries no
+    // model of its own for the back or the hand.
+    set "SlotType" enum="ItemSlot" "InfantryWeapon"
+    set "Model" #null
+    set "ModelSecondary" #null
+
+    set "Icon" asset="weapon/fabric/Icon"
+    set "IconEquipment" asset="weapon/fabric/IconEquipment"
+    set "IconEquipmentDisabled" asset="weapon/fabric/IconEquipmentDisabled"
+    set "IconSkillBar" asset="weapon/fabric/IconSkillBar"
+    set "IconSkillBarDisabled" asset="weapon/fabric/IconSkillBarDisabled"
+    append "OnlyEquipableBy" "wmgfl_team_fabric"
+    append "Tags" "jy_no_sell"
+    // The fire skill is the team's own clone. The deploy skill and the encumbrance stay as the
+    // M8 has them.
+    set "SkillsGranted" index=0 "active.fabric_launch_mortar_frag"
+}
+
+// The mortar's frag shell, with the team's own uses and skill icon. A clone, so vanilla's M8
+// keeps its own. Every ImpactOnSurface entry stays as cloned (the preloader indexes all 14).
+clone "SkillTemplate" from="active.launch_medium_mortar_frag" id="active.fabric_launch_mortar_frag" {
+    set "Icon" asset="weapon/fabric/SkillIcon"
+    set "IconDisabled" asset="weapon/fabric/SkillIconDisabled"
+    set "Uses" 10
+    // The shell leaves, with its muzzle flash and both launch sounds, as the team's Fire clip
+    // kicks the tube: frame 36 at 60 frames a second. The loader lets the round go at 0.13 seconds
+    // and it is down the tube by 0.32. Vanilla's 1.5 seconds suits the M8's own clip.
+    set "DelayAfterAnimationTrigger" 0.57
+}
+
+clone "EntityTemplate" from="player_squad.carda" id="player_squad.fabric" {
+    append "Tags" "wmgfl_team_fabric"
+    append "Tags" "jy_armor_restricted"
+    append "Tags" "jy_weapon_restricted"
+    append "Tags" "jy_special_restricted"
+    append "Tags" "jy_vehicle_restricted"
+
+    set "OverrideAnimatorController" #null
+    set "AnimatorTemplate" "animator.fabric"
+    // Carda's squad aims with its Animation slot, which leaves the element's facing alone and
+    // hands the turn to the human soldier controller's rotation parameters. The team's own
+    // controller has no turning states, so it aims as vanilla's constructs do, by turning the
+    // whole element to the target (Element.AimAt).
+    set "AimWithVisualSlot" enum="VisualAlterationSlot" "EntireModel"
+
+    // The emblem: the team's mortar skill icon over the Underground Broker Association's logo.
+    set "Badge" asset="fabric/badge_unit_window"
+    set "BadgeWhite" asset="fabric/badge_white"
+
+    // The affiliation, which the header shows after the rank, as a Doll's squad does.
+    set "Title" {
+        set "m_DefaultTranslation" "Doll Community"
+    }
+    set "Description" {
+        set "m_DefaultTranslation" "An Armed Echelon mortar team: Chiffon leads, Cashmere loads, Taffeta fires."
+    }
+
+    clear "Items"
+    append "Items" "armor.fabric_default"
+    append "Items" "weapon.fabric"
+
+    set "Properties" {
+        set "MinElements" 1
+        set "MaxElements" 1
+    }
+
+    set "Scale" {
+        set "x" 1.0
+        set "y" 1.0
+    }
+    set "OverrideScaleForSquadLeader" #false
+}
+
+clone "UnitLeaderTemplate" from="squad_leader.carda" id="squad_leader.fabric" {
+    set "InfantryUnitTemplate" "player_squad.fabric"
+    set "SpeakerTemplate" "wmgfl_fabric_speaker"
+    set "CustomHead" #null
+    set "UnitTitle" {
+        set "m_DefaultTranslation" "Armed Echelon"
+    }
+    set "UnitDescription" {
+        set "m_DefaultTranslation" "Team Fabric, a mortar team: Chiffon leads, Cashmere loads, Taffeta fires."
+    }
+
+    set "Slot" asset="fabric/slot"
+    set "SlotInactive" asset="fabric/slot_inactive"
+    set "SlotBadge" asset="fabric/slot_badge"
+
+    set "BadgeDragged" asset="fabric/badge_dragged"
+    set "BigBadge" asset="fabric/big_badge"
+    set "BadgeUnitWindow" asset="fabric/badge_unit_window"
+    set "BadgeMini" asset="fabric/badge_mini"
+
+    // The crew are Doll Community, so the portraits stand on its disc, as a Doll's do.
+    set "FactionBackground" asset="factions/background_doll_community_1180x1040"
+    set "BigBackground" asset="factions/background_doll_community_972x906"
+    set "SlotFactionBackground" asset="factions/background_doll_community_162x162"
+
+    // GFL2 gives the team no voice but its skill call-out, so every bark the leader inherits is
+    // silent, and the moods are blank, as Carda's lines are her own.
+    set "HiringSelectBarkSound" {
+        set "bankId" 0
+        set "itemId" 0
+    }
+    set "HiredBarkSound" {
+        set "bankId" 0
+        set "itemId" 0
+    }
+    set "PromotionBarkSounds" index=0 {
+        set "Sound" {
+            set "bankId" 0
+            set "itemId" 0
+        }
+    }
+    set "PromotionBarkSounds" index=1 {
+        set "Sound" {
+            set "bankId" 0
+            set "itemId" 0
+        }
+    }
+    set "PromotionBarkSounds" index=2 {
+        set "Sound" {
+            set "bankId" 0
+            set "itemId" 0
+        }
+    }
+    set "PromotionBarkSounds" index=3 {
+        set "Sound" {
+            set "bankId" 0
+            set "itemId" 0
+        }
+    }
+
+    clear "EmotionalStateResponses"
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Eager"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Determined"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Overconfident"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Euphoric"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Hesitant"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Frustrated"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Disheartened"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "Miserable"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "GoodwillTowards"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+    append "EmotionalStateResponses" {
+        set "EmotionalState" enum="EmotionalStateType" "AnimosityTowards"
+        set "Text" {
+            set "m_DefaultTranslation" ""
+        }
+    }
+}

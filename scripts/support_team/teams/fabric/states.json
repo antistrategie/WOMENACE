@@ -1,0 +1,1757 @@
+{
+  "team": "fabric",
+  "preview": false,
+  "out_dir": "states",
+  "review": "states/fabric_review.blend",
+  "members": [
+    "export/states/MTR01_MemberA/MTR01_MemberA.fbx",
+    "export/states/MTR01_MemberB/MTR01_MemberB.fbx",
+    "export/states/MTR01_MemberC/MTR01_MemberC.fbx"
+  ],
+  "props": [
+    "export/states/MTR01_WL/MTR01_WL.fbx",
+    "export/states/Binocle/Binocle.fbx",
+    "export/states/Flag/Flag.fbx"
+  ],
+  "extra_sources": [
+    "export/ult/MTR01_MemberA/MTR01_MemberA.fbx",
+    "export/ult/MTR01_MemberB/MTR01_MemberB.fbx",
+    "export/ult/MTR01_MemberC/MTR01_MemberC.fbx",
+    "export/ult/MTR01_WL/MTR01_WL.fbx",
+    "export/ult/Binocle/Binocle.fbx",
+    "export/ult/Flag/Flag.fbx"
+  ],
+  "texture_dirs": [
+    "export/states/MTR01_MemberA",
+    "export/states/MTR01_MemberB",
+    "export/states/MTR01_MemberC",
+    "export/states/MTR01_WL",
+    "export/states/Binocle",
+    "export/states/Flag"
+  ],
+  "crew": [
+    "MTR01_MemberA",
+    "MTR01_MemberB",
+    "MTR01_MemberC"
+  ],
+  "prop_names": [
+    "MTR01_WL",
+    "fabric_Binocle",
+    "fabric_Flag"
+  ],
+  "formation_clip": {
+    "MTR01_MemberA": "c_MTR01_MemberA_slg_Idle",
+    "MTR01_MemberB": "c_MTR01_MemberB_slg_Idle",
+    "MTR01_MemberC": "c_MTR01_MemberC_slg_Idle"
+  },
+  "prop_idle": {
+    "MTR01_WL": "c_MTR01_slg_Idle_Waepon",
+    "fabric_Binocle": "c_MTR01_slg_Idle_Binocle",
+    "fabric_Flag": "c_MTR01_slg_Idle_Flag"
+  },
+  "spine_bone": "Spine2_M",
+  "prop_materials": [
+    "cw_",
+    "binocle",
+    "flag"
+  ],
+  "coat": {
+    "chains": {
+      "L": [
+        [
+          "Cloth_L01",
+          "front"
+        ],
+        [
+          "Cloth_L04",
+          "side"
+        ],
+        [
+          "Cloth_L07",
+          "back"
+        ]
+      ],
+      "R": [
+        [
+          "Cloth_R01",
+          "front"
+        ],
+        [
+          "Cloth_R04",
+          "side"
+        ],
+        [
+          "Cloth_R07",
+          "back"
+        ]
+      ]
+    },
+    "follow": {
+      "front": [
+        1.0,
+        0.3
+      ],
+      "side": [
+        0.7,
+        0.6
+      ],
+      "back": [
+        0.3,
+        0.9
+      ]
+    },
+    "parent": "Spine1_M"
+  },
+  "split": [
+    {
+      "prop": "MTR01_WL",
+      "bone": "Baseplate",
+      "from": "Mortar02_M",
+      "below": 0.2
+    },
+    {
+      "prop": "MTR01_WL",
+      "bone": "Mortar02_M",
+      "from": "Baseplate",
+      "above": 0.12
+    },
+    {
+      "prop": "MTR01_WL",
+      "bone": "BipodLeg_L",
+      "from": "Mortar01_M",
+      "axis": 0,
+      "mid_below": -0.03,
+      "head": "top",
+      "y_below": 0.65
+    },
+    {
+      "prop": "MTR01_WL",
+      "bone": "BipodLeg_R",
+      "from": "Mortar01_M",
+      "axis": 0,
+      "mid_above": 0.03,
+      "head": "top",
+      "y_below": 0.65
+    },
+    {
+      "prop": "MTR01_WL",
+      "bone": "Mortar01_M",
+      "from": "Mortar02_M",
+      "above": 0.58,
+      "y_below": 0.85
+    },
+    {
+      "prop": "MTR01_WL",
+      "bone": "BipodHead",
+      "from": "Mortar01_M",
+      "above": 0.58
+    }
+  ],
+  "states": [
+    {
+      "name": "Idle",
+      "crew": {
+        "MTR01_MemberA": {
+          "clip": "c_MTR01_MemberC_slg_Idle",
+          "of": "MTR01_MemberC",
+          "upper": [
+            {
+              "clip": "c_LindSSR01_slg_Idle",
+              "frame": 1,
+              "from": [
+                "Scapula_L",
+                "Scapula_R"
+              ]
+            },
+            {
+              "clip": "c_MTR01_MemberB_slg_Idle",
+              "of": "MTR01_MemberB",
+              "frame": 1,
+              "from": [
+                "IndexFinger1_L",
+                "MiddleFinger1_L",
+                "RingFinger1_L",
+                "PinkyFinger1_L",
+                "ThumbFinger1_L",
+                "Cup_L",
+                "IndexFinger1_R",
+                "MiddleFinger1_R",
+                "RingFinger1_R",
+                "PinkyFinger1_R",
+                "ThumbFinger1_R",
+                "Cup_R"
+              ]
+            }
+          ]
+        },
+        "MTR01_MemberB": {
+          "clip": "c_MTR01_MemberB_slg_Idle",
+          "place": "native"
+        },
+        "MTR01_MemberC": {
+          "clip": "c_MTR01_MemberC_slg_Idle",
+          "place": "native"
+        }
+      },
+      "props": {
+        "MTR01_WL": {
+          "carrier": "MTR01_MemberA",
+          "bone": "Chest_M",
+          "ride": {
+            "at": [
+              -0.2968,
+              0.2174,
+              0.0516
+            ],
+            "rot": [
+              7.175,
+              14.113,
+              -103.792
+            ]
+          },
+          "grip_space": "prop",
+          "grips": {
+            "R": {
+              "at": [
+                0.0391,
+                0.1054,
+                -0.1821
+              ],
+              "fingers": [
+                -0.5531,
+                -0.7876,
+                0.2716
+              ],
+              "palm": [
+                -0.7281,
+                0.2991,
+                -0.6167
+              ],
+              "pole": [
+                0.3438,
+                0.2801,
+                -0.3034
+              ],
+              "hinge": true,
+              "twist_limit": 70
+            },
+            "L": {
+              "at": [
+                -0.1235,
+                0.2977,
+                -0.0121
+              ],
+              "fingers": [
+                -0.228,
+                -0.4004,
+                -0.8875
+              ],
+              "palm": [
+                0.5752,
+                0.68,
+                -0.4546
+              ],
+              "pole": [
+                -0.0587,
+                0.5068,
+                0.3325
+              ],
+              "hinge": true,
+              "twist_limit": 70
+            }
+          },
+          "hide": {
+            "Missile_Bnd01": 1,
+            "Missile_Bnd02": 1,
+            "Missile_Bnd03": 1
+          },
+          "bone_sling": {
+            "Mortar01_M": {
+              "carrier": "MTR01_MemberB",
+              "bone": "Spine2_M",
+              "local": true,
+              "at": [
+                -0.1896,
+                0.3667,
+                -0.0391
+              ],
+              "rot": [
+                22.334,
+                83.774,
+                -94.721
+              ]
+            },
+            "Mortar02_M": {
+              "stay": true
+            },
+            "BipodLeg_L": {
+              "turn": [
+                0.0,
+                0.0,
+                25.0
+              ]
+            },
+            "BipodLeg_R": {
+              "turn": [
+                0.0,
+                0.0,
+                -25.0
+              ]
+            },
+            "Baseplate": {
+              "carrier": "MTR01_MemberA",
+              "bone": "Chest_M",
+              "local": true,
+              "at": [
+                -0.04,
+                -0.165,
+                0.0
+              ],
+              "rot": [
+                -175.179,
+                -90.0,
+                0.0
+              ],
+              "pivot": [
+                0.0,
+                0.0,
+                -0.146
+              ]
+            },
+            "BipodHead": {
+              "turn": [
+                90.0,
+                0.0,
+                90.0
+              ],
+              "shift": [
+                0.0,
+                -0.32,
+                0.24
+              ]
+            }
+          },
+          "bone_match": {
+            "Missile_Bnd04": {
+              "carrier": "MTR01_MemberB",
+              "bone": "Wrist_R",
+              "frame": 1
+            }
+          }
+        },
+        "fabric_Binocle": "idle",
+        "fabric_Flag": "idle"
+      },
+      "idle_hair": true,
+      "loop": true,
+      "in_place": true
+    },
+    {
+      "name": "IdleDeployed",
+      "loop": true,
+      "native": true,
+      "crew": {
+        "MTR01_MemberA": {
+          "clip": "c_MTR01_MemberA_slg_Idle"
+        },
+        "MTR01_MemberB": {
+          "clip": "c_MTR01_MemberB_slg_Idle"
+        },
+        "MTR01_MemberC": {
+          "clip": "c_MTR01_MemberC_slg_Idle"
+        }
+      },
+      "props": {
+        "MTR01_WL": "idle",
+        "fabric_Binocle": "idle",
+        "fabric_Flag": "idle"
+      }
+    },
+    {
+      "name": "Run",
+      "crew": {
+        "MTR01_MemberA": {
+          "clip": "c_LindSSR01_slg_Run",
+          "offset": 0,
+          "upper": {
+            "clip": "c_MTR01_MemberB_slg_Idle",
+            "of": "MTR01_MemberB",
+            "frame": 1,
+            "from": [
+              "IndexFinger1_L",
+              "MiddleFinger1_L",
+              "RingFinger1_L",
+              "PinkyFinger1_L",
+              "ThumbFinger1_L",
+              "Cup_L",
+              "IndexFinger1_R",
+              "MiddleFinger1_R",
+              "RingFinger1_R",
+              "PinkyFinger1_R",
+              "ThumbFinger1_R",
+              "Cup_R"
+            ]
+          }
+        },
+        "MTR01_MemberB": {
+          "clip": "c_LindSSR01_slg_Run",
+          "offset": 11,
+          "upper": {
+            "clip": "c_MTR01_MemberB_slg_Idle",
+            "frame": 1,
+            "from": [
+              "Scapula_L",
+              "Scapula_R"
+            ]
+          }
+        },
+        "MTR01_MemberC": {
+          "clip": "c_LindSSR01_slg_Run",
+          "offset": 22,
+          "upper": {
+            "clip": "c_MTR01_MemberC_slg_Idle",
+            "frame": 1,
+            "from": [
+              "Scapula_L",
+              "Scapula_R"
+            ]
+          },
+          "sway": {
+            "bone": "Shoulder_R",
+            "child": "Elbow_R",
+            "hand": "Wrist_R",
+            "swing": 30.0,
+            "hang": 0.0,
+            "bend": 70.0,
+            "bend_swing": 20.0
+          }
+        }
+      },
+      "props": {
+        "MTR01_WL": {
+          "carrier": "MTR01_MemberA",
+          "bone": "Chest_M",
+          "from_bone": "Shoulder_L",
+          "rot": [
+            85.651,
+            -0.0,
+            141.34
+          ],
+          "pivot": [
+            0.0,
+            0.602,
+            0.105
+          ],
+          "at": [
+            0.0287,
+            -0.0947,
+            0.1029
+          ],
+          "grips": {
+            "R": {
+              "at": [
+                0.0406,
+                0.0762,
+                -0.1633
+              ],
+              "fingers": [
+                -0.5531,
+                -0.7876,
+                0.2716
+              ],
+              "palm": [
+                -0.582,
+                0.5986,
+                0.5504
+              ],
+              "pole": [
+                0.38,
+                0.1848,
+                -0.0803
+              ],
+              "hinge": true,
+              "twist_limit": 70
+            },
+            "L": {
+              "at": [
+                -0.056,
+                0.3294,
+                -0.0154
+              ],
+              "fingers": "forearm",
+              "palm": [
+                0.8308,
+                0.0693,
+                0.5523
+              ],
+              "pole": [
+                -0.1399,
+                0.2826,
+                0.4052
+              ],
+              "hinge": true,
+              "twist_limit": 70
+            }
+          },
+          "hide": {
+            "Missile_Bnd01": 1,
+            "Missile_Bnd02": 1,
+            "Missile_Bnd03": 1
+          },
+          "bone_sling": {
+            "Mortar01_M": {
+              "carrier": "MTR01_MemberB",
+              "bone": "Spine2_M",
+              "from_bone": "Chest_M",
+              "at": [
+                0.0,
+                0.12,
+                0.05
+              ],
+              "rot": [
+                110.4,
+                0.0,
+                180.0
+              ],
+              "along": [
+                "Spine1_M",
+                "Neck_M"
+              ],
+              "pivot": [
+                0.0,
+                0.4,
+                0.35
+              ]
+            },
+            "Mortar02_M": {
+              "stay": true
+            },
+            "BipodLeg_L": {
+              "turn": [
+                0.0,
+                0.0,
+                25.0
+              ]
+            },
+            "BipodLeg_R": {
+              "turn": [
+                0.0,
+                0.0,
+                -25.0
+              ]
+            },
+            "Baseplate": {
+              "carrier": "MTR01_MemberA",
+              "bone": "Chest_M",
+              "local": true,
+              "at": [
+                -0.04,
+                -0.165,
+                0.0
+              ],
+              "rot": [
+                -175.179,
+                -90.0,
+                0.0
+              ],
+              "pivot": [
+                0.0,
+                0.0,
+                -0.146
+              ]
+            },
+            "BipodHead": {
+              "turn": [
+                90.0,
+                0.0,
+                90.0
+              ],
+              "shift": [
+                0.0,
+                -0.32,
+                0.24
+              ]
+            }
+          },
+          "bone_match": {
+            "Missile_Bnd04": {
+              "carrier": "MTR01_MemberB",
+              "bone": "Wrist_R",
+              "frame": 1
+            }
+          },
+          "tilt": [
+            -9.79,
+            19.38,
+            -34.12
+          ],
+          "grip_space": "prop"
+        },
+        "fabric_Binocle": {
+          "carrier": "MTR01_MemberC",
+          "bone": "Wrist_L",
+          "match": {
+            "prop_ref": "idle:fabric_Binocle",
+            "carrier_ref": "idle:MTR01_MemberC",
+            "frame": 1
+          }
+        },
+        "fabric_Flag": {
+          "carrier": "MTR01_MemberC",
+          "bone": "Wrist_R",
+          "match": {
+            "prop_ref": "idle:fabric_Flag",
+            "carrier_ref": "idle:MTR01_MemberC",
+            "frame": 1
+          }
+        }
+      },
+      "idle_hair": true,
+      "loop": true,
+      "in_place": true,
+      "lower_knees": 0.35
+    },
+    {
+      "name": "SetUp",
+      "anchor": {
+        "prop": "MTR01_WL",
+        "ref": "MTR01_WL",
+        "frame": 1
+      },
+      "crew": {
+        "MTR01_MemberA": {
+          "clip": "c_MTR01_MemberA_slg_UltraSkill",
+          "range": [
+            2,
+            3
+          ],
+          "place": "anchor",
+          "breathe": {
+            "bones": [
+              "Spine1_M",
+              "Spine2_M",
+              "Chest_M",
+              "Neck_M",
+              "Head_M"
+            ],
+            "scale": 1.0
+          }
+        },
+        "MTR01_MemberB": {
+          "clip": "c_MTR01_MemberB_slg_UltraSkill",
+          "range": [
+            2,
+            3
+          ],
+          "place": "anchor",
+          "breathe": {
+            "bones": [
+              "Spine1_M",
+              "Spine2_M",
+              "Chest_M",
+              "Neck_M",
+              "Head_M"
+            ],
+            "scale": 1.0
+          }
+        },
+        "MTR01_MemberC": {
+          "clip": "c_MTR01_MemberC_slg_UltraSkill",
+          "range": [
+            2,
+            3
+          ],
+          "place": "anchor",
+          "breathe": {
+            "bones": [
+              "Spine1_M",
+              "Spine2_M",
+              "Chest_M",
+              "Neck_M",
+              "Head_M"
+            ],
+            "scale": 1.0
+          }
+        }
+      },
+      "props": {
+        "MTR01_WL": {
+          "follow": "MTR01_MemberA",
+          "prop_ref": "MTR01_WL",
+          "range": [
+            2,
+            3
+          ],
+          "bones": [
+            "Missile_Bnd04",
+            "Mortar01_M",
+            "Mortar02_M"
+          ]
+        },
+        "fabric_Binocle": {
+          "follow": "MTR01_MemberC",
+          "prop_ref": "Binocle",
+          "range": [
+            2,
+            3
+          ]
+        },
+        "fabric_Flag": {
+          "follow": "MTR01_MemberC",
+          "prop_ref": "Flag",
+          "range": [
+            2,
+            3
+          ],
+          "bones": [
+            "Flag_Bnd",
+            "Flag_Bnd1"
+          ]
+        }
+      },
+      "loop": true,
+      "length": 121
+    },
+    {
+      "name": "Deploy",
+      "between": ["Idle", "IdleDeployed"],
+      "length": 180,
+      "crew": {
+        "MTR01_MemberA": {
+          "keys": [
+            {"at": 0.0, "pose": "from"},
+            {"at": 0.42, "pose": "to", "shift": [-0.1, -0.02]},
+            {"at": 0.47, "pose": "to", "shift": [-0.1, -0.02]},
+            {"at": 0.6, "pose": "to"}
+          ],
+          "coat": true,
+          "twist": {"degrees": 70, "window": [0.0, 0.2, 0.52, 0.64], "toward": ["MTR01_WL", "Mortar02_M"]},
+          "bend": {"degrees": 25, "window": [0.3, 0.4, 0.45, 0.58]},
+          "hands": {"prop": "MTR01_WL", "bone": "Mortar02_M", "slide": [0.05, 0.3], "wrap": [0.02, 0.15], "fingers": "from", "sides": {"L": [0.44, 0.51], "R": [0.46, 0.53]}}
+        },
+        "MTR01_MemberB": {
+          "coat": true,
+          "walks": [
+            {"from": 0.04, "to": 0.5, "steps": 4, "settle": 0.66, "turn": 0.1, "turn_out": 0.3, "turn_end": 0.62, "lead": "L", "first": 0.55},
+            {"from": 0.68, "to": 0.95, "steps": 4, "settle": 0.7, "turn_in": 0.45, "turn_out": 0.5, "lead": "R"}
+          ],
+          "look": {"at": ["MTR01_WL", "Mortar01_M"], "level": true, "window": [0.05, 0.45, 0.6, 0.75]},
+          "twist": {"degrees": 35, "side": 1, "window": [0.38, 0.45, 0.6, 0.68], "toward": ["MTR01_WL", "Mortar01_M"]},
+          "grab": {"prop": "MTR01_WL", "fingers": "from", "window": [0.41, 0.45, 0.6, 0.66], "hands": {"L": ["BipodLeg_L", 0.15], "R": ["BipodLeg_R", 0.15]}},
+          "keys": [
+            {"at": 0.0, "pose": "from"},
+            {"at": 0.04, "pose": "from"},
+            {"at": 0.5, "pose": ["SetUp", 1], "shift": [0.05, -0.19]},
+            {"at": 0.6, "pose": ["SetUp", 1], "shift": [0.05, -0.19]},
+            {"at": 0.68, "pose": "from", "turn": 46, "shift": [-0.507, -0.5], "steps": 1},
+            {"at": 0.95, "pose": "to"}
+          ]
+        },
+        "MTR01_MemberC": {
+          "coat": true,
+          "walks": [{"from": 0.02, "to": 0.3, "steps": 2, "face": false}, {"from": 0.7, "to": 0.95, "steps": 2}],
+          "keys": [
+            {"at": 0.0, "pose": "from"},
+            {"at": 0.02, "pose": "from"},
+            {"at": 0.3, "pose": "from", "shift": [0.0, 0.45]},
+            {"at": 0.7, "pose": "from", "shift": [0.0, 0.45]},
+            {"at": 0.95, "pose": "to"}
+          ]
+        }
+      },
+      "props": {
+        "MTR01_WL": {
+          "bones": {
+            "Mortar02_M": {"carrier": "MTR01_MemberA", "bone": "Chest_M", "lands": true, "clear": {"of": "MTR01_MemberA", "by": 0.3, "fade": [0.0, 0.12]}, "path": [[0.0, 0.0], [0.24, 0.35], [0.3, 0.35], [0.44, 1.0]]},
+            "Baseplate": {"phases": [{"until": 0.0, "place": "from"}, {"place": "to"}]},
+            "Mortar01_M": {"phases": [
+              {"until": 0.0, "place": "from"},
+              {"until": 0.45, "carrier": "MTR01_MemberB", "bone": "Wrist_R", "upright": true, "lift": -0.45},
+              {"until": 0.6, "opens": true},
+              {"place": "to"}
+            ]},
+            "Missile_Bnd01": {"hide_between": true},
+            "Missile_Bnd02": {"hide_between": true},
+            "Missile_Bnd03": {"hide_between": true},
+            "Missile_Bnd04": {"hide_between": true}
+          }
+        },
+        "fabric_Binocle": {"carrier": "MTR01_MemberC", "bone": "Chest_M"},
+        "fabric_Flag": {"carrier": "MTR01_MemberC", "bone": "Chest_M"}
+      }
+    },
+    {
+      "name": "Man",
+      "between": ["IdleDeployed", "SetUp"],
+      "length": 150,
+      "crew": {
+        "MTR01_MemberA": {"move": [0.3, 0.9]},
+        "MTR01_MemberB": {
+          "coat": true,
+          "look": {"at": ["MTR01_WL", "Mortar02_M"], "level": true, "window": [0.0, 0.1, 0.8, 0.92]},
+          "walks": [{"from": 0.18, "to": 0.92, "steps": 4, "settle": 0.72, "turn": 0.1, "turn_out": 0.3, "turn_end": 0.8}],
+          "keys": [
+            {"at": 0.0, "pose": "from"},
+            {"at": 0.18, "pose": "from"},
+            {"at": 0.92, "pose": "to"}
+          ]
+        },
+        "MTR01_MemberC": {
+          "coat": true,
+          "walks": [{"from": 0.0, "to": 0.8, "steps": 4, "settle": 0.7, "turn": 0.1}],
+          "keys": [
+            {"at": 0.0, "pose": "from"},
+            {"at": 0.8, "pose": "to"}
+          ]
+        }
+      },
+      "props": {
+        "MTR01_WL": {
+          "window": [0.2, 0.8],
+          "bones": {"Missile_Bnd04": {"carrier": "MTR01_MemberB", "bone": "Wrist_R", "window": [0.8, 0.92]}}
+        },
+        "fabric_Binocle": {"carrier": "MTR01_MemberC", "bone": "Chest_M", "window": [0.56, 0.8]},
+        "fabric_Flag": {"carrier": "MTR01_MemberC", "bone": "Chest_M", "window": [0.56, 0.8]}
+      }
+    },
+    {
+      "name": "AimIn",
+      "anchor": {
+        "prop": "MTR01_WL",
+        "ref": "MTR01_WL",
+        "frame": 1
+      },
+      "crew": {
+        "MTR01_MemberA": {
+          "clip": "c_MTR01_MemberA_slg_UltraSkill",
+          "range": [
+            1,
+            73
+          ],
+          "place": "anchor"
+        },
+        "MTR01_MemberB": {
+          "clip": "c_MTR01_MemberB_slg_UltraSkill",
+          "range": [
+            1,
+            73
+          ],
+          "place": "anchor"
+        },
+        "MTR01_MemberC": {
+          "clip": "c_MTR01_MemberC_slg_UltraSkill",
+          "range": [
+            1,
+            73
+          ],
+          "place": "anchor"
+        }
+      },
+      "props": {
+        "MTR01_WL": {
+          "follow": "MTR01_MemberA",
+          "prop_ref": "MTR01_WL",
+          "range": [
+            1,
+            73
+          ],
+          "bones": [
+            "Missile_Bnd04",
+            "Mortar01_M",
+            "Mortar02_M"
+          ]
+        },
+        "fabric_Binocle": {
+          "follow": "MTR01_MemberC",
+          "prop_ref": "Binocle",
+          "range": [
+            1,
+            73
+          ]
+        },
+        "fabric_Flag": {
+          "follow": "MTR01_MemberC",
+          "prop_ref": "Flag",
+          "range": [
+            1,
+            73
+          ],
+          "bones": [
+            "Flag_Bnd",
+            "Flag_Bnd1"
+          ]
+        }
+      },
+      "length_from": "MTR01_MemberB"
+    },
+    {
+      "name": "AimHold",
+      "anchor": {
+        "prop": "MTR01_WL",
+        "ref": "MTR01_WL",
+        "frame": 1
+      },
+      "crew": {
+        "MTR01_MemberA": {
+          "clip": "c_MTR01_MemberA_slg_UltraSkill",
+          "range": [
+            73,
+            81
+          ],
+          "place": "anchor"
+        },
+        "MTR01_MemberB": {
+          "clip": "c_MTR01_MemberB_slg_UltraSkill",
+          "range": [
+            73,
+            81
+          ],
+          "place": "anchor"
+        },
+        "MTR01_MemberC": {
+          "clip": "c_MTR01_MemberC_slg_UltraSkill",
+          "range": [
+            73,
+            81
+          ],
+          "place": "anchor"
+        }
+      },
+      "props": {
+        "MTR01_WL": {
+          "follow": "MTR01_MemberA",
+          "prop_ref": "MTR01_WL",
+          "range": [
+            73,
+            81
+          ],
+          "bones": [
+            "Missile_Bnd04",
+            "Mortar01_M",
+            "Mortar02_M"
+          ]
+        },
+        "fabric_Binocle": {
+          "follow": "MTR01_MemberC",
+          "prop_ref": "Binocle",
+          "range": [
+            73,
+            81
+          ]
+        },
+        "fabric_Flag": {
+          "follow": "MTR01_MemberC",
+          "prop_ref": "Flag",
+          "range": [
+            73,
+            81
+          ],
+          "bones": [
+            "Flag_Bnd",
+            "Flag_Bnd1"
+          ]
+        }
+      },
+      "length_from": "MTR01_MemberB",
+      "loop": true,
+      "pingpong": true
+    },
+    {
+      "name": "Fire",
+      "anchor": {
+        "prop": "MTR01_WL",
+        "ref": "MTR01_WL",
+        "frame": 1
+      },
+      "crew": {
+        "MTR01_MemberA": {
+          "clip": "c_MTR01_MemberA_slg_UltraSkill",
+          "range": [
+            73,
+            212
+          ],
+          "place": "anchor"
+        },
+        "MTR01_MemberB": {
+          "clip": "c_MTR01_MemberB_slg_UltraSkill",
+          "range": [
+            73,
+            212
+          ],
+          "place": "anchor"
+        },
+        "MTR01_MemberC": {
+          "clip": "c_MTR01_MemberC_slg_UltraSkill",
+          "range": [
+            73,
+            212
+          ],
+          "place": "anchor"
+        }
+      },
+      "props": {
+        "MTR01_WL": {
+          "follow": "MTR01_MemberA",
+          "prop_ref": "MTR01_WL",
+          "range": [
+            73,
+            212
+          ],
+          "bones": [
+            "Missile_Bnd04",
+            "Mortar01_M",
+            "Mortar02_M"
+          ],
+          "hide": {
+            "Missile_Bnd04": 36
+          }
+        },
+        "fabric_Binocle": {
+          "follow": "MTR01_MemberC",
+          "prop_ref": "Binocle",
+          "range": [
+            73,
+            212
+          ]
+        },
+        "fabric_Flag": {
+          "follow": "MTR01_MemberC",
+          "prop_ref": "Flag",
+          "range": [
+            73,
+            212
+          ],
+          "bones": [
+            "Flag_Bnd",
+            "Flag_Bnd1"
+          ]
+        }
+      },
+      "length_from": "MTR01_MemberB"
+    },
+    {
+      "name": "Hit",
+      "crew": {
+        "MTR01_MemberA": {
+          "clip": "c_LindSSR01_slg_KnockBack",
+          "offset": 0,
+          "upper": {
+            "clip": "c_MTR01_MemberB_slg_Idle",
+            "of": "MTR01_MemberB",
+            "frame": 1,
+            "from": [
+              "IndexFinger1_L",
+              "MiddleFinger1_L",
+              "RingFinger1_L",
+              "PinkyFinger1_L",
+              "ThumbFinger1_L",
+              "Cup_L",
+              "IndexFinger1_R",
+              "MiddleFinger1_R",
+              "RingFinger1_R",
+              "PinkyFinger1_R",
+              "ThumbFinger1_R",
+              "Cup_R"
+            ]
+          }
+        },
+        "MTR01_MemberB": {
+          "clip": "c_LindSSR01_slg_KnockBack",
+          "offset": 3,
+          "upper": {
+            "clip": "c_MTR01_MemberB_slg_Idle",
+            "frame": 1,
+            "from": [
+              "Scapula_L",
+              "Scapula_R"
+            ]
+          }
+        },
+        "MTR01_MemberC": {
+          "clip": "c_LindSSR01_slg_KnockBack",
+          "offset": 6,
+          "upper": {
+            "clip": "c_MTR01_MemberC_slg_Idle",
+            "frame": 1,
+            "from": [
+              "Scapula_L",
+              "IndexFinger1_R",
+              "MiddleFinger1_R",
+              "RingFinger1_R",
+              "PinkyFinger1_R",
+              "ThumbFinger1_R",
+              "Cup_R"
+            ]
+          }
+        }
+      },
+      "props": {
+        "MTR01_WL": {
+          "carrier": "MTR01_MemberA",
+          "bone": "Chest_M",
+          "from_bone": "Shoulder_L",
+          "rot": [
+            85.651,
+            -0.0,
+            141.34
+          ],
+          "pivot": [
+            0.0,
+            0.602,
+            0.105
+          ],
+          "at": [
+            0.0619,
+            -0.0906,
+            0.1401
+          ],
+          "grips": {
+            "R": {
+              "at": [
+                0.0387,
+                0.0768,
+                -0.1656
+              ],
+              "fingers": [
+                -0.5531,
+                -0.7876,
+                0.2716
+              ],
+              "palm": [
+                -0.5278,
+                0.5835,
+                0.6171
+              ],
+              "pole": [
+                0.3903,
+                0.1597,
+                -0.099
+              ],
+              "hinge": true,
+              "twist_limit": 70
+            },
+            "L": {
+              "at": [
+                -0.056,
+                0.2844,
+                -0.0371
+              ],
+              "fingers": "forearm",
+              "palm": [
+                0.8308,
+                0.0693,
+                0.5523
+              ],
+              "pole": [
+                -0.1399,
+                0.2376,
+                0.3835
+              ],
+              "hinge": true,
+              "twist_limit": 70
+            }
+          },
+          "hide": {
+            "Missile_Bnd01": 1,
+            "Missile_Bnd02": 1,
+            "Missile_Bnd03": 1
+          },
+          "bone_sling": {
+            "Mortar01_M": {
+              "carrier": "MTR01_MemberB",
+              "bone": "Spine2_M",
+              "from_bone": "Chest_M",
+              "at": [
+                0.0,
+                0.12,
+                0.05
+              ],
+              "rot": [
+                110.4,
+                0.0,
+                180.0
+              ],
+              "along": [
+                "Spine1_M",
+                "Neck_M"
+              ],
+              "pivot": [
+                0.0,
+                0.4,
+                0.35
+              ]
+            },
+            "Mortar02_M": {
+              "stay": true
+            },
+            "BipodLeg_L": {
+              "turn": [
+                0.0,
+                0.0,
+                25.0
+              ]
+            },
+            "BipodLeg_R": {
+              "turn": [
+                0.0,
+                0.0,
+                -25.0
+              ]
+            },
+            "Baseplate": {
+              "carrier": "MTR01_MemberA",
+              "bone": "Chest_M",
+              "local": true,
+              "at": [
+                -0.04,
+                -0.165,
+                0.0
+              ],
+              "rot": [
+                -175.179,
+                -90.0,
+                0.0
+              ],
+              "pivot": [
+                0.0,
+                0.0,
+                -0.146
+              ]
+            },
+            "BipodHead": {
+              "turn": [
+                90.0,
+                0.0,
+                90.0
+              ],
+              "shift": [
+                0.0,
+                -0.32,
+                0.24
+              ]
+            }
+          },
+          "bone_match": {
+            "Missile_Bnd04": {
+              "carrier": "MTR01_MemberB",
+              "bone": "Wrist_R",
+              "frame": 1
+            }
+          },
+          "tilt": [
+            -9.79,
+            19.38,
+            -34.12
+          ],
+          "grip_space": "prop"
+        },
+        "fabric_Binocle": {
+          "carrier": "MTR01_MemberC",
+          "bone": "Wrist_L",
+          "match": {
+            "prop_ref": "idle:fabric_Binocle",
+            "carrier_ref": "idle:MTR01_MemberC",
+            "frame": 1
+          }
+        },
+        "fabric_Flag": {
+          "carrier": "MTR01_MemberC",
+          "bone": "Wrist_R",
+          "match": {
+            "prop_ref": "idle:fabric_Flag",
+            "carrier_ref": "idle:MTR01_MemberC",
+            "frame": 1
+          }
+        }
+      },
+      "idle_hair": true
+    },
+    {
+      "name": "Death",
+      "crew": {
+        "MTR01_MemberA": {
+          "clip": "c_LindSSR01_slg_Die",
+          "offset": 0,
+          "upper": {
+            "clip": "c_MTR01_MemberB_slg_Idle",
+            "of": "MTR01_MemberB",
+            "frame": 1,
+            "from": [
+              "IndexFinger1_L",
+              "MiddleFinger1_L",
+              "RingFinger1_L",
+              "PinkyFinger1_L",
+              "ThumbFinger1_L",
+              "Cup_L",
+              "IndexFinger1_R",
+              "MiddleFinger1_R",
+              "RingFinger1_R",
+              "PinkyFinger1_R",
+              "ThumbFinger1_R",
+              "Cup_R"
+            ]
+          }
+        },
+        "MTR01_MemberB": {
+          "clip": "c_LindSSR01_slg_Die",
+          "offset": 10,
+          "upper": {
+            "clip": "c_MTR01_MemberB_slg_Idle",
+            "frame": 1,
+            "from": [
+              "Scapula_L",
+              "Scapula_R"
+            ]
+          }
+        },
+        "MTR01_MemberC": {
+          "clip": "c_LindSSR01_slg_Die",
+          "offset": 20,
+          "upper": {
+            "clip": "c_MTR01_MemberC_slg_Idle",
+            "frame": 1,
+            "from": [
+              "Scapula_L",
+              "IndexFinger1_R",
+              "MiddleFinger1_R",
+              "RingFinger1_R",
+              "PinkyFinger1_R",
+              "ThumbFinger1_R",
+              "Cup_R"
+            ]
+          }
+        }
+      },
+      "props": {
+        "MTR01_WL": {
+          "carrier": "MTR01_MemberA",
+          "bone": "Chest_M",
+          "from_bone": "Shoulder_L",
+          "rot": [
+            85.651,
+            -0.0,
+            141.34
+          ],
+          "pivot": [
+            0.0,
+            0.602,
+            0.105
+          ],
+          "at": [
+            0.0686,
+            -0.0898,
+            0.1475
+          ],
+          "grips": {
+            "R": {
+              "at": [
+                0.0387,
+                0.0768,
+                -0.1656
+              ],
+              "fingers": [
+                -0.5531,
+                -0.7876,
+                0.2716
+              ],
+              "palm": [
+                -0.5278,
+                0.5835,
+                0.6171
+              ],
+              "pole": [
+                0.3897,
+                0.1538,
+                -0.1045
+              ],
+              "hinge": true,
+              "twist_limit": 70
+            },
+            "L": {
+              "at": [
+                -0.056,
+                0.2754,
+                -0.0415
+              ],
+              "fingers": "forearm",
+              "palm": [
+                0.8308,
+                0.0693,
+                0.5523
+              ],
+              "pole": [
+                -0.1399,
+                0.2286,
+                0.3791
+              ],
+              "hinge": true,
+              "twist_limit": 70
+            }
+          },
+          "hide": {
+            "Missile_Bnd01": 1,
+            "Missile_Bnd02": 1,
+            "Missile_Bnd03": 1
+          },
+          "bone_sling": {
+            "Mortar01_M": {
+              "carrier": "MTR01_MemberB",
+              "bone": "Spine2_M",
+              "from_bone": "Chest_M",
+              "at": [
+                0.0,
+                0.12,
+                0.05
+              ],
+              "rot": [
+                110.4,
+                0.0,
+                180.0
+              ],
+              "along": [
+                "Spine1_M",
+                "Neck_M"
+              ],
+              "pivot": [
+                0.0,
+                0.4,
+                0.35
+              ]
+            },
+            "Mortar02_M": {
+              "stay": true
+            },
+            "BipodLeg_L": {
+              "turn": [
+                0.0,
+                0.0,
+                25.0
+              ]
+            },
+            "BipodLeg_R": {
+              "turn": [
+                0.0,
+                0.0,
+                -25.0
+              ]
+            },
+            "Baseplate": {
+              "carrier": "MTR01_MemberA",
+              "bone": "Chest_M",
+              "local": true,
+              "at": [
+                -0.04,
+                -0.165,
+                0.0
+              ],
+              "rot": [
+                -175.179,
+                -90.0,
+                0.0
+              ],
+              "pivot": [
+                0.0,
+                0.0,
+                -0.146
+              ]
+            },
+            "BipodHead": {
+              "turn": [
+                90.0,
+                0.0,
+                90.0
+              ],
+              "shift": [
+                0.0,
+                -0.32,
+                0.24
+              ]
+            }
+          },
+          "bone_match": {
+            "Missile_Bnd04": {
+              "carrier": "MTR01_MemberB",
+              "bone": "Wrist_R",
+              "frame": 1
+            }
+          },
+          "tilt": [
+            -9.79,
+            19.38,
+            -34.12
+          ],
+          "grip_space": "prop"
+        },
+        "fabric_Binocle": {
+          "carrier": "MTR01_MemberC",
+          "bone": "Wrist_L",
+          "match": {
+            "prop_ref": "idle:fabric_Binocle",
+            "carrier_ref": "idle:MTR01_MemberC",
+            "frame": 1
+          }
+        },
+        "fabric_Flag": {
+          "carrier": "MTR01_MemberC",
+          "bone": "Wrist_R",
+          "match": {
+            "prop_ref": "idle:fabric_Flag",
+            "carrier_ref": "idle:MTR01_MemberC",
+            "frame": 1
+          }
+        }
+      },
+      "idle_hair": true
+    },
+    {
+      "name": "Vault",
+      "crew": {
+        "MTR01_MemberA": {
+          "clip": "c_LindSSR01_slg_MoveOverCover",
+          "offset": 0,
+          "upper": {
+            "clip": "c_MTR01_MemberB_slg_Idle",
+            "of": "MTR01_MemberB",
+            "frame": 1,
+            "from": [
+              "IndexFinger1_L",
+              "MiddleFinger1_L",
+              "RingFinger1_L",
+              "PinkyFinger1_L",
+              "ThumbFinger1_L",
+              "Cup_L",
+              "IndexFinger1_R",
+              "MiddleFinger1_R",
+              "RingFinger1_R",
+              "PinkyFinger1_R",
+              "ThumbFinger1_R",
+              "Cup_R"
+            ]
+          }
+        },
+        "MTR01_MemberB": {
+          "clip": "c_LindSSR01_slg_MoveOverCover",
+          "offset": 0,
+          "upper": {
+            "clip": "c_MTR01_MemberB_slg_Idle",
+            "frame": 1,
+            "from": [
+              "Scapula_L",
+              "Scapula_R"
+            ]
+          }
+        },
+        "MTR01_MemberC": {
+          "clip": "c_LindSSR01_slg_MoveOverCover",
+          "offset": 0,
+          "upper": {
+            "clip": "c_MTR01_MemberC_slg_Idle",
+            "frame": 1,
+            "from": [
+              "Scapula_L",
+              "IndexFinger1_R",
+              "MiddleFinger1_R",
+              "RingFinger1_R",
+              "PinkyFinger1_R",
+              "ThumbFinger1_R",
+              "Cup_R"
+            ]
+          }
+        }
+      },
+      "props": {
+        "MTR01_WL": {
+          "carrier": "MTR01_MemberA",
+          "bone": "Chest_M",
+          "from_bone": "Shoulder_L",
+          "rot": [
+            85.651,
+            -0.0,
+            141.34
+          ],
+          "pivot": [
+            0.0,
+            0.602,
+            0.105
+          ],
+          "at": [
+            0.0686,
+            -0.0898,
+            0.1475
+          ],
+          "grips": {
+            "R": {
+              "at": [
+                0.0387,
+                0.0768,
+                -0.1656
+              ],
+              "fingers": [
+                -0.5531,
+                -0.7876,
+                0.2716
+              ],
+              "palm": [
+                -0.5278,
+                0.5835,
+                0.6171
+              ],
+              "pole": [
+                0.3898,
+                0.1539,
+                -0.1048
+              ],
+              "hinge": true,
+              "twist_limit": 70
+            },
+            "L": {
+              "at": [
+                -0.056,
+                0.2754,
+                -0.0415
+              ],
+              "fingers": "forearm",
+              "palm": [
+                0.8308,
+                0.0693,
+                0.5523
+              ],
+              "pole": [
+                -0.1399,
+                0.2286,
+                0.3791
+              ],
+              "hinge": true,
+              "twist_limit": 70
+            }
+          },
+          "hide": {
+            "Missile_Bnd01": 1,
+            "Missile_Bnd02": 1,
+            "Missile_Bnd03": 1
+          },
+          "bone_sling": {
+            "Mortar01_M": {
+              "carrier": "MTR01_MemberB",
+              "bone": "Spine2_M",
+              "from_bone": "Chest_M",
+              "at": [
+                0.0,
+                0.12,
+                0.05
+              ],
+              "rot": [
+                110.4,
+                0.0,
+                180.0
+              ],
+              "along": [
+                "Spine1_M",
+                "Neck_M"
+              ],
+              "pivot": [
+                0.0,
+                0.4,
+                0.35
+              ]
+            },
+            "Mortar02_M": {
+              "stay": true
+            },
+            "BipodLeg_L": {
+              "turn": [
+                0.0,
+                0.0,
+                25.0
+              ]
+            },
+            "BipodLeg_R": {
+              "turn": [
+                0.0,
+                0.0,
+                -25.0
+              ]
+            },
+            "Baseplate": {
+              "carrier": "MTR01_MemberA",
+              "bone": "Chest_M",
+              "local": true,
+              "at": [
+                -0.04,
+                -0.165,
+                0.0
+              ],
+              "rot": [
+                -175.179,
+                -90.0,
+                0.0
+              ],
+              "pivot": [
+                0.0,
+                0.0,
+                -0.146
+              ]
+            },
+            "BipodHead": {
+              "turn": [
+                90.0,
+                0.0,
+                90.0
+              ],
+              "shift": [
+                0.0,
+                -0.32,
+                0.24
+              ]
+            }
+          },
+          "bone_match": {
+            "Missile_Bnd04": {
+              "carrier": "MTR01_MemberB",
+              "bone": "Wrist_R",
+              "frame": 1
+            }
+          },
+          "tilt": [
+            -9.79,
+            19.38,
+            -34.12
+          ],
+          "grip_space": "prop"
+        },
+        "fabric_Binocle": {
+          "carrier": "MTR01_MemberC",
+          "bone": "Wrist_L",
+          "match": {
+            "prop_ref": "idle:fabric_Binocle",
+            "carrier_ref": "idle:MTR01_MemberC",
+            "frame": 1
+          }
+        },
+        "fabric_Flag": {
+          "carrier": "MTR01_MemberC",
+          "bone": "Wrist_R",
+          "match": {
+            "prop_ref": "idle:fabric_Flag",
+            "carrier_ref": "idle:MTR01_MemberC",
+            "frame": 1
+          }
+        }
+      },
+      "idle_hair": true,
+      "travel": "MTR01_MemberA"
+    }
+  ],
+  "markers": [
+    {
+      "name": "launcher_muzzle",
+      "prop": "MTR01_WL",
+      "bone": "Mortar02_M",
+      "at": [
+        0.0,
+        0.9411,
+        0.2876
+      ]
+    }
+  ]
+}

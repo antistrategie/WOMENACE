@@ -1,0 +1,163 @@
+{
+  "team": "fabric",
+  "code": "MTR01",
+  "archives": {
+    "crew_idle_scene": "292c17bd0f4b909515ec4905b4a22657.bundle:0",
+    "idle_clips": "dc8532dcfc5a4bb1b827c369309d1260.bundle:0",
+    "crew_weapon_ultraskill": "1ea89dcead516e17cb0ec3942ae46695.bundle:0",
+    "mortar_mesh": "dca54a1cbdd2ccc9e24744c165c1e9cb.bundle:0",
+    "mortar_textures": "fdb9c4ef3cb37f08b2f5be91093994d5.bundle:0",
+    "mortar_material": "28e17ced7ff731128668a27033e1d42d.bundle:3654151",
+    "lind_clips": "1a476fe52d06a2ce8e173e5ae076f667.bundle:0"
+  },
+  "exports": [
+    {
+      "out": "export/states",
+      "scene_root": "c_MTR01_Idle",
+      "archives": [
+        "crew_idle_scene",
+        "idle_clips",
+        "mortar_mesh",
+        "mortar_textures",
+        "mortar_material",
+        "lind_clips"
+      ],
+      "objects": {
+        "MTR01_MemberA": [
+          "c_MTR01_MemberA_slg_Idle",
+          "@lind"
+        ],
+        "MTR01_MemberB": [
+          "c_MTR01_MemberB_slg_Idle",
+          "@lind"
+        ],
+        "MTR01_MemberC": [
+          "c_MTR01_MemberC_slg_Idle",
+          "@lind"
+        ],
+        "MTR01_WL": [
+          "c_MTR01_slg_Idle_Waepon"
+        ],
+        "Binocle": [
+          "c_MTR01_slg_Idle_Binocle"
+        ],
+        "Flag": [
+          "c_MTR01_slg_Idle_Flag"
+        ]
+      }
+    },
+    {
+      "out": "export/ult",
+      "scene_root": "MTR01_UltraSkill",
+      "archives": [
+        "crew_weapon_ultraskill",
+        "mortar_mesh",
+        "mortar_textures",
+        "mortar_material"
+      ],
+      "objects": {
+        "MTR01_MemberA": [
+          "c_MTR01_MemberA_slg_UltraSkill"
+        ],
+        "MTR01_MemberB": [
+          "c_MTR01_MemberB_slg_UltraSkill"
+        ],
+        "MTR01_MemberC": [
+          "c_MTR01_MemberC_slg_UltraSkill"
+        ],
+        "MTR01_WL": [
+          "c_MTR01_slg_UltraSkill_Weapon"
+        ],
+        "Binocle": [
+          "c_MTR01_slg_UltraSkill_Binocle"
+        ],
+        "Flag": [
+          "c_MTR01_slg_UltraSkill_Flag"
+        ]
+      }
+    }
+  ],
+  "clip_sets": {
+    "lind": [
+      "c_LindSSR01_slg_Run",
+      "c_LindSSR01_slg_RunStart",
+      "c_LindSSR01_slg_RunStop",
+      "c_LindSSR01_slg_Idle",
+      "c_LindSSR01_slg_Fire",
+      "c_LindSSR01_slg_KnockBack",
+      "c_LindSSR01_slg_Die",
+      "c_LindSSR01_slg_MoveOverCover"
+    ]
+  },
+  "art": {
+    "Support_Whole_GuildWar_MTR01": "594fe376fa7175a31ff91609ffc4f101.bundle:0",
+    "Support_Card_GuildWar_MTR01": "594fe376fa7175a31ff91609ffc4f101.bundle:0",
+    "Skill_MTR01_Active": "9405364c5f0c1f4a8bcb6fd5fd6e4113.bundle:0",
+    "Img_GuildWarChapter_Team_MTR01": "dec79686b3c2cd1d42cc3477969cc949.bundle:0",
+    "Img_Guild_Faction_Logo_1": "dec79686b3c2cd1d42cc3477969cc949.bundle:0",
+    "Img_Guild_Faction_Logo_2": "dec79686b3c2cd1d42cc3477969cc949.bundle:0",
+    "Img_Guild_Faction_Logo_3": "dec79686b3c2cd1d42cc3477969cc949.bundle:0",
+    "Img_Guild_Faction_Logo_5": "dec79686b3c2cd1d42cc3477969cc949.bundle:0",
+    "Img_Guild_Faction_Logo_6": "dec79686b3c2cd1d42cc3477969cc949.bundle:0",
+    "Support_Ammo_MRT_01_1": "ee6abb5ab82bbfd899333c1b219e4804.bundle:0",
+    "Support_Ammo_MRT_01_2": "ee6abb5ab82bbfd899333c1b219e4804.bundle:0",
+    "Support_Ammo_MRT_01_3": "ee6abb5ab82bbfd899333c1b219e4804.bundle:0",
+    "Img_Guild_Faction_Logo_4": "dec79686b3c2cd1d42cc3477969cc949.bundle:0"
+  },
+  "weapon_render": {
+    "fbx": "export/states/MTR01_WL/MTR01_WL.fbx",
+    "diffuse": "export/states/MTR01_WL/cw_MTR01_WL_d.png",
+    "size": [
+      2400,
+      1200
+    ],
+    "hide_groups": [
+      "Missile_Bnd01",
+      "Missile_Bnd02",
+      "Missile_Bnd03",
+      "Missile_Bnd04"
+    ],
+    "fold": {
+      "prop": "MTR01_WL",
+      "tube": "Mortar02_M",
+      "base": "Baseplate",
+      "legs": [
+        "BipodLeg_L",
+        "BipodLeg_R"
+      ],
+      "strut": "Mortar01_M",
+      "short": 0.26,
+      "gap": 0.06,
+      "spread": 0,
+      "roll": 90,
+      "tilt": 5,
+      "yaw": 10,
+      "base_turn": 90,
+      "base_bend": 35
+    }
+  },
+  "sprites": {
+    "whole": "Support_Whole_GuildWar_MTR01",
+    "heads": [
+      "595,818,107",
+      "815,1000,137",
+      "1280,997,140"
+    ],
+    "lead": 0,
+    "front_outline": ["274,867", "399,790", "419,867", "406,937", "454,917", "544,950", "589,937", "589,862", "604,817", "699,817", "714,882", "716,942", "764,992", "792,1042", "790,1092", "774,1110", "734,1117", "726,1172", "722,1232", "696,1254", "690,1332", "666,1384", "656,1472", "626,1504", "594,1494", "588,1382", "582,1247", "506,1234", "498,1192", "518,1102", "544,1012", "514,986", "450,986", "404,972", "374,940"],
+    "logo": "Img_Guild_Faction_Logo_4",
+    "icon": "Skill_MTR01_Active",
+    "items": {
+      "standard_mortar_ammo": "Support_Ammo_MRT_01_2"
+    },
+    "straighten": false,
+    "weapon_zoom": 1.25
+  },
+  "install": {
+    "textures_from": "export/states",
+    "skip_textures": [
+      "RampMap_Linear_RGBAHalf.png",
+      "c_AGL01_MemberA_slg_hair_spc.png"
+    ]
+  }
+}
