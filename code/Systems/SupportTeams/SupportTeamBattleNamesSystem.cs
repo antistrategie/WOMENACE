@@ -14,11 +14,52 @@ namespace WOMENACE.Code;
 // A pool button keeps the tooltip and the click and hover actions vanilla gave it for whichever
 // squaddie last used it. A crew member is no squaddie to describe or select, so the crew's buttons
 // have all of them taken off.
+//
+// The hover tooltip over a unit on the map is headed by UnitActor.GetTitle, the squad template's
+// Title, which for a team is its affiliation. While Actor.AppendTooltipData builds that tooltip a
+// team's title reads as the team's name (its speaker's Forename) instead. Everywhere else the
+// title stays the affiliation, as the unit panel shows it under the team's name.
 public sealed class SupportTeamBattleNamesSystem : JiangyuSystem
 {
+    // The team actor whose tooltip is being built, or zero.
+    private IntPtr _tooltipActor;
+
     public override void OnInit()
     {
         Context.Patches.Postfix("Il2CppMenace.UI.Tactical.SelectedUnitPanel", "SetActor", OnSetActor);
+        Context.Patches.Prefix("Il2CppMenace.Tactical.Actor", "AppendTooltipData", OnTooltipStart);
+        Context.Patches.Postfix("Il2CppMenace.Tactical.Actor", "AppendTooltipData", OnTooltipEnd);
+        Context.Patches.Postfix("Il2CppMenace.Tactical.UnitActor", "GetTitle", OnGetTitle);
+    }
+
+    private void OnTooltipStart(PatchInfo info)
+    {
+        _tooltipActor = IntPtr.Zero;
+        try
+        {
+            var actor = (info.Instance as Il2CppSystem.Object)?.TryCast<UnitActor>();
+            if (actor != null && SupportTeams.Of(actor.GetLeader()) != null)
+                _tooltipActor = actor.Pointer;
+        }
+        catch (Exception ex) { Context.Log.Warn($"support team: tooltip title failed: {ex.Message}"); }
+    }
+
+    private void OnTooltipEnd(PatchInfo info) => _tooltipActor = IntPtr.Zero;
+
+    private void OnGetTitle(PatchInfo info)
+    {
+        if (_tooltipActor == IntPtr.Zero)
+            return;
+        try
+        {
+            var actor = (info.Instance as Il2CppSystem.Object)?.TryCast<UnitActor>();
+            if (actor == null || actor.Pointer != _tooltipActor)
+                return;
+            var name = actor.GetSpeakerTemplate()?.Forename;
+            if (name != null)
+                info.Result = name;
+        }
+        catch (Exception ex) { Context.Log.Warn($"support team: tooltip title failed: {ex.Message}"); }
     }
 
     private void OnSetActor(PatchInfo info)

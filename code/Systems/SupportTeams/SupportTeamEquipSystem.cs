@@ -32,6 +32,11 @@ namespace WOMENACE.Code;
 // call's result loses every item the team does not accept. The team is cleared in a finalizer, which
 // runs however UpdateEquipmentAlternatives ends, so a list that throws never leaves the cut on for
 // the lists other screens build after it.
+//
+// Every other leader's list loses the items made for teams in the same call. Vanilla's own list
+// asks the leader's squad template for every tag in an item's OnlyEquipableBy
+// (EntityTemplate.HasAllTags, UnitWindowEquipment.UpdateEquipmentAlternatives at RVA 0x54A9B0),
+// and Dolls were still offered the teams' weapons and ammo, so the rule is held here as well.
 public sealed class SupportTeamEquipSystem : JiangyuSystem
 {
     // Unequip buttons this system hid, so only those are shown again for another leader. Vanilla
@@ -41,7 +46,9 @@ public sealed class SupportTeamEquipSystem : JiangyuSystem
     private static SupportTeamEquipSystem Instance;
     // The patches the SDK cannot place: overloads it cannot tell apart, and a finalizer.
     private HarmonyPatcher _harmony;
-    // The team whose slot list is being built, for the length of UpdateEquipmentAlternatives.
+    // Whose slot list is being built, for the length of UpdateEquipmentAlternatives: a team, or
+    // anyone else while _listing is set.
+    private bool _listing;
     private SupportTeams.Team _listingFor;
 
     public override void OnInit()
@@ -90,37 +97,43 @@ public sealed class SupportTeamEquipSystem : JiangyuSystem
         => AccessTools.DeclaredMethod(typeof(ItemContainer), nameof(ItemContainer.Remove), parameters)
            ?? throw new MissingMethodException(typeof(ItemContainer).FullName, nameof(ItemContainer.Remove));
 
-    // Set on every list, so a list for anyone else is never cut.
+    // Set on every list, so the sorted list is cut only while a slot list is being built.
     private static void OnListStart(UnitWindowEquipment __instance)
     {
-        if (Instance != null)
-            Instance._listingFor = SupportTeams.Of(__instance?.m_Leader);
+        if (Instance == null)
+            return;
+        Instance._listing = true;
+        Instance._listingFor = SupportTeams.Of(__instance?.m_Leader);
     }
 
     // A finalizer that takes no exception leaves any exception to go on as it was.
     private static void OnListEnd()
     {
-        if (Instance != null)
-            Instance._listingFor = null;
+        if (Instance == null)
+            return;
+        Instance._listing = false;
+        Instance._listingFor = null;
     }
 
     private static void OnSortedList(TemplateList __1)
     {
-        var team = Instance?._listingFor;
-        if (team == null || __1 == null)
+        if (Instance is not { _listing: true } || __1 == null)
             return;
+        var team = Instance._listingFor;
         try
         {
             var removed = 0;
             for (var i = __1.Count - 1; i >= 0; i--)
             {
-                if (team.Accepts(__1[i]))
+                if (team != null ? team.Accepts(__1[i]) : !SupportTeams.ForTeams(__1[i]))
                     continue;
                 __1.RemoveAt(i);
                 removed++;
             }
             if (removed > 0)
-                Instance.Context.Log.Debug($"support team: '{team.Name}' slot list left out {removed} item(s) not made for teams");
+                Instance.Context.Log.Debug(team != null
+                    ? $"support team: '{team.Name}' slot list left out {removed} item(s) not made for teams"
+                    : $"support team: slot list left out {removed} item(s) made for teams");
         }
         catch (Exception ex) { Instance.Context.Log.Warn($"support team: slot list filter failed: {ex.Message}"); }
     }

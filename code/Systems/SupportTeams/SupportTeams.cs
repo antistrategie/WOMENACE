@@ -62,6 +62,15 @@ public static class SupportTeams
     // An item any team may take.
     public const string SupportItemTag = "wmgfl_support_item";
 
+    // Whether an item is made for support teams, for every team or for one, and so for no one else.
+    public static bool ForTeams(Il2CppMenace.Items.BaseItemTemplate template)
+    {
+        foreach (var team in All)
+            if (team.Accepts(template))
+                return true;
+        return false;
+    }
+
     private static bool HasTag(Il2CppSystem.Collections.Generic.List<Il2CppMenace.Tags.TagTemplate> tags, string id)
     {
         if (tags == null)
@@ -78,6 +87,12 @@ public static class SupportTeams
             new Member("ATG01_MemberA", "Tarkhun"),
             new Member("ATG01_MemberC", "Citro"),
             new Member("ATG01_MemberB", "Bakhmaro")),
+        // Chiffon spots with the flag and binoculars, Cashmere loads the round, and Taffeta
+        // carries and fires the mortar.
+        new("MTR01", "fabric",
+            new Member("MTR01_MemberC", "Chiffon"),
+            new Member("MTR01_MemberB", "Cashmere"),
+            new Member("MTR01_MemberA", "Taffeta")),
     };
 
     private static readonly Dictionary<string, Team> BySquadId = new(StringComparer.Ordinal);
