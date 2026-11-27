@@ -22,6 +22,11 @@ namespace WOMENACE.Editor
     // the spec build_team_states.py bakes from. What only this bake needs is in bake.json beside
     // it (BakeSpec below).
     //
+    // Deployed, a team either holds one Kneel take, cross-faded in and out, or goes along a line of
+    // still states joined by bridges ("line" in bake.json): Fabric carries its mortar, puts it down
+    // (Deploy, IdleDeployed) and mans it (Man, SetUp). A bridge is a states.json state "between"
+    // two of the line's, and played backwards (Un<bridge>) it is the way back.
+    //
     //   Unity -batchmode -nographics -quit -projectPath unity \
     //     -executeMethod WOMENACE.Editor.BuildSupportTeam.Build -team limonad
     public static class BuildSupportTeam
@@ -30,8 +35,9 @@ namespace WOMENACE.Editor
         private const float WorldFactor = 1.2f;
         private const string MotionNode = "motion";
         private const string HeadBone = "Head_M";
-        // The controller's states the takes must fill, on top of the body's Idle.
-        private static readonly string[] ControllerStates = { "Run", "Kneel", "AimIn", "AimHold", "Fire", "Hit", "Vault", "Death" };
+        // The controller's states the takes must fill, on top of the body's Idle, and Kneel for a
+        // team without a line.
+        private static readonly string[] ControllerStates = { "Run", "AimIn", "AimHold", "Fire", "Hit", "Vault", "Death" };
         // The takes in which the team aims and fires. AimOut is AimIn reversed, so it inherits
         // whatever AimIn carries.
         private static readonly string[] AimStates = { "AimIn", "AimHold", "Fire" };
@@ -52,6 +58,8 @@ namespace WOMENACE.Editor
             public bool loop;
             // The crew member whose travel the state carries, empty when it stays in place.
             public string travel;
+            // A bridge's two still states, the first it starts on and the second it ends on.
+            public string[] between;
         }
 
         [Serializable]
@@ -77,6 +85,25 @@ namespace WOMENACE.Editor
             // Vanilla clips whose events a state's take carries, so the game hears the sprint's
             // footsteps or the vault's completion.
             public EventSource[] events;
+            // The deployed line, Idle first: each later still state is where the team goes while
+            // its condition holds and no later one's does. Empty for a team that kneels.
+            public LineStep[] line;
+            // The line's still state AimIn starts on and AimOut ends on (the last by default).
+            public string aim_from;
+            // Where Fire hands back to the held aim, and how long that blend takes.
+            public float fire_exit = 0.9f;
+            public float fire_blend = 0.15f;
+        }
+
+        [Serializable]
+        private class LineStep
+        {
+            public string state;
+            // The Animator parameter that asks for this state, "if" (a bool set) or "greater"
+            // (above value).
+            public string param;
+            public string mode;
+            public float value;
         }
 
         [Serializable]
@@ -178,7 +205,10 @@ namespace WOMENACE.Editor
                 Debug.Log(team.Log($"{state.name} <- {file}: {clip.length:0.00}s loop={state.loop} events={AnimationUtility.GetAnimationEvents(clip).Length}"
                           + $" motionNode='{((ModelImporter)AssetImporter.GetAtPath($"{team.SrcDir}/{file}")).motionNodeName}'"));
             }
-            var absent = ControllerStates.Where(s => !takes.ContainsKey(s)).ToList();
+            var needed = ControllerStates.Concat(spec.line is { Length: > 0 }
+                ? spec.line.Skip(1).Select(l => l.state).Concat(team.States.states.Where(s => s.between is { Length: 2 }).Select(s => s.name))
+                : new[] { "Kneel" });
+            var absent = needed.Where(s => !takes.ContainsKey(s)).ToList();
             if (absent.Count > 0) { Debug.LogError(team.Log("states.json has no " + string.Join(", ", absent))); return false; }
 
             ForwardTravel(team, takes["Vault"]);
@@ -207,6 +237,7 @@ namespace WOMENACE.Editor
                 }
 
             var ac = BuildController(team, idle, takes);
+            if (ac == null) return false;
 
             var inst = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(team.Fbx));
             inst.name = $"{team.Name}_default";
@@ -293,7 +324,6 @@ namespace WOMENACE.Editor
 
             var idleS = sm.AddState("Idle"); idleS.motion = idle; sm.defaultState = idleS;
             var run = sm.AddState("Run"); run.motion = takes["Run"];
-            var kneelS = sm.AddState("Kneel"); kneelS.motion = takes["Kneel"];
             var aimIn = sm.AddState("AimIn"); aimIn.motion = takes["AimIn"];
             var aimHold = sm.AddState("AimHold"); aimHold.motion = takes["AimHold"];
             var aimOut = sm.AddState("AimOut"); aimOut.motion = Reversed(team, takes["AimIn"], "aimout");
@@ -307,15 +337,15 @@ namespace WOMENACE.Editor
                 var t = a.AddTransition(b); t.hasExitTime = false; t.duration = 0.2f;
                 t.AddCondition(m, v, p);
             }
-            void Back(AnimatorState a, AnimatorState b, float exit)
+            void Back(AnimatorState a, AnimatorState b, float exit, float blend)
             {
-                var t = a.AddTransition(b); t.hasExitTime = true; t.exitTime = exit; t.duration = 0.15f;
+                var t = a.AddTransition(b); t.hasExitTime = true; t.exitTime = exit; t.duration = blend;
             }
-            void Any(AnimatorState s, string trigger, AnimatorState after, float exit)
+            void Any(AnimatorState s, string trigger, AnimatorState after, float exit, float blend = 0.15f)
             {
                 var t = sm.AddAnyStateTransition(s); t.hasExitTime = false; t.duration = 0.08f; t.canTransitionToSelf = false;
                 t.AddCondition(AnimatorConditionMode.If, 0, trigger);
-                if (after != null) Back(s, after, exit);
+                if (after != null) Back(s, after, exit, blend);
             }
 
             T(idleS, run, AnimatorConditionMode.Greater, 0.1f, "Speed");
@@ -328,30 +358,133 @@ namespace WOMENACE.Editor
             T(aimIn, aimOut, AnimatorConditionMode.IfNot, 0, "Aiming");
             T(aimHold, aimOut, AnimatorConditionMode.IfNot, 0, "Aiming");
             T(aimHold, run, AnimatorConditionMode.Greater, 0.1f, "Speed");
-            // Deployed (or pinned down) the team holds its Kneel take, and the cross-fade is the
-            // move into it and back out. Kneel starts on AimIn's first pose, so aiming from it
-            // moves only what AimIn moves, and lowering the aim settles back into whichever stance
-            // the team is in.
-            void Stance(AnimatorState a, AnimatorState b, AnimatorConditionMode m)
+            if (team.Spec.line is { Length: > 0 })
             {
-                var t = a.AddTransition(b); t.hasExitTime = false; t.duration = 0.45f;
-                t.AddCondition(m, 0.5f, "Stance");
+                if (!BuildLine(team, ac, sm, idleS, run, aimIn, aimOut, takes)) return null;
             }
-            Stance(idleS, kneelS, AnimatorConditionMode.Greater);
-            Stance(kneelS, idleS, AnimatorConditionMode.Less);
-            T(kneelS, aimIn, AnimatorConditionMode.If, 0, "Aiming");
-            T(kneelS, run, AnimatorConditionMode.Greater, 0.1f, "Speed");
-            foreach (var (after, mode) in new[] { (kneelS, AnimatorConditionMode.Greater), (idleS, AnimatorConditionMode.Less) })
+            else
             {
-                var t = aimOut.AddTransition(after); t.hasExitTime = true; t.exitTime = 0.95f; t.duration = 0.15f;
-                t.AddCondition(mode, 0.5f, "Stance");
+                // Deployed (or pinned down) the team holds its Kneel take, and the cross-fade is the
+                // move into it and back out. Kneel starts on AimIn's first pose, so aiming from it
+                // moves only what AimIn moves, and lowering the aim settles back into whichever stance
+                // the team is in.
+                void Stance(AnimatorState a, AnimatorState b, AnimatorConditionMode m)
+                {
+                    var t = a.AddTransition(b); t.hasExitTime = false; t.duration = 0.45f;
+                    t.AddCondition(m, 0.5f, "Stance");
+                }
+                var kneelS = sm.AddState("Kneel"); kneelS.motion = takes["Kneel"];
+                Stance(idleS, kneelS, AnimatorConditionMode.Greater);
+                Stance(kneelS, idleS, AnimatorConditionMode.Less);
+                T(kneelS, aimIn, AnimatorConditionMode.If, 0, "Aiming");
+                T(kneelS, run, AnimatorConditionMode.Greater, 0.1f, "Speed");
+                foreach (var (after, mode) in new[] { (kneelS, AnimatorConditionMode.Greater), (idleS, AnimatorConditionMode.Less) })
+                {
+                    var t = aimOut.AddTransition(after); t.hasExitTime = true; t.exitTime = 0.95f; t.duration = 0.15f;
+                    t.AddCondition(mode, 0.5f, "Stance");
+                }
             }
-            Any(fire, "Shoot_Single", aimHold, 0.9f);
-            Any(fire, "Special_Attack_1", aimHold, 0.9f);
+            Any(fire, "Shoot_Single", aimHold, team.Spec.fire_exit, team.Spec.fire_blend);
+            Any(fire, "Special_Attack_1", aimHold, team.Spec.fire_exit, team.Spec.fire_blend);
             Any(hit, "Hit", idleS, 0.95f);
             Any(vaultS, "Vault", run, 0.95f);
             Any(death, "OnDeath", null, 0f);
             return ac;
+        }
+
+        // The deployed line: still states L0 (Idle) to Ln, each next pair joined by a bridge and
+        // its reverse. The team wants the last state whose condition holds (L0 when none does) and
+        // goes along the line towards it. A still state goes into a bridge at any point of its loop,
+        // which a short blend covers. A bridge starts on the last frame of the state before it and
+        // ends on the first frame of the next, so at its end it hands over with no blend: on along
+        // the line while the team still wants further, into the still state it reached, or back the
+        // way it came.
+        private static bool BuildLine(Team team, AnimatorController ac, AnimatorStateMachine sm, AnimatorState idleS,
+            AnimatorState run, AnimatorState aimIn, AnimatorState aimOut, Dictionary<string, AnimationClip> takes)
+        {
+            var line = team.Spec.line;
+            if (line[0].state != "Idle") { Debug.LogError(team.Log("the line must start at Idle")); return false; }
+            var n = line.Length;
+            var stills = new AnimatorState[n];
+            stills[0] = idleS;
+            for (var k = 1; k < n; k++) { stills[k] = sm.AddState(line[k].state); stills[k].motion = takes[line[k].state]; }
+            var ahead = new AnimatorState[n - 1];
+            var back = new AnimatorState[n - 1];
+            for (var k = 0; k < n - 1; k++)
+            {
+                var row = team.States.states.FirstOrDefault(s => s.between is { Length: 2 } && s.between[0] == line[k].state && s.between[1] == line[k + 1].state);
+                if (row == null) { Debug.LogError(team.Log($"no state between {line[k].state} and {line[k + 1].state}")); return false; }
+                ahead[k] = sm.AddState(row.name); ahead[k].motion = takes[row.name];
+                var reverse = "Un" + row.name.ToLowerInvariant();
+                back[k] = sm.AddState(reverse); back[k].motion = Reversed(team, takes[row.name], reverse.ToLowerInvariant());
+            }
+            foreach (var step in line.Skip(1))
+                if (!ac.parameters.Any(p => p.name == step.param))
+                    ac.AddParameter(step.param, step.mode == "if" ? AnimatorControllerParameterType.Bool : AnimatorControllerParameterType.Float);
+
+            (AnimatorConditionMode Mode, float Value, string Param) Asks(int k, bool holds)
+            {
+                var step = line[k];
+                return step.mode == "if"
+                    ? (holds ? AnimatorConditionMode.If : AnimatorConditionMode.IfNot, 0f, step.param)
+                    : (holds ? AnimatorConditionMode.Greater : AnimatorConditionMode.Less, step.value, step.param);
+            }
+            // Wanting state k or further: any of their conditions, one transition each.
+            IEnumerable<(AnimatorConditionMode, float, string)[]> AtLeast(int k) =>
+                Enumerable.Range(k, n - k).Select(j => new[] { Asks(j, true) });
+            // Wanting state k or nearer: none of the further conditions.
+            (AnimatorConditionMode, float, string)[] AtMost(int k) =>
+                Enumerable.Range(k + 1, n - k - 1).Reverse().Select(j => Asks(j, false)).ToArray();
+            (AnimatorConditionMode, float, string)[] Exactly(int k) =>
+                AtMost(k).Concat(k > 0 ? new[] { Asks(k, true) } : Array.Empty<(AnimatorConditionMode, float, string)>()).ToArray();
+
+            void Go(AnimatorState src, AnimatorState dst, bool atEnd, (AnimatorConditionMode Mode, float Value, string Param)[] conditions)
+            {
+                var t = src.AddTransition(dst);
+                t.hasExitTime = atEnd; t.duration = atEnd ? 0f : 0.15f;
+                if (atEnd) t.exitTime = 1f;
+                foreach (var (mode, value, param) in conditions) t.AddCondition(mode, value, param);
+            }
+            for (var k = 0; k < n; k++)
+            {
+                if (k < n - 1) foreach (var c in AtLeast(k + 1)) Go(stills[k], ahead[k], false, c);
+                if (k > 0) Go(stills[k], back[k - 1], false, AtMost(k - 1));
+            }
+            for (var k = 0; k < n - 1; k++)
+            {
+                // Forward, ending on state k + 1.
+                if (k + 1 < n - 1) foreach (var c in AtLeast(k + 2)) Go(ahead[k], ahead[k + 1], true, c);
+                Go(ahead[k], stills[k + 1], true, Exactly(k + 1));
+                Go(ahead[k], back[k], true, AtMost(k));
+                // Back, ending on state k.
+                if (k > 0) Go(back[k], back[k - 1], true, AtMost(k - 1));
+                Go(back[k], stills[k], true, Exactly(k));
+                foreach (var c in AtLeast(k + 1)) Go(back[k], ahead[k], true, c);
+            }
+
+            void T(AnimatorState src, AnimatorState dst, AnimatorConditionMode m, float v, string p)
+            {
+                var t = src.AddTransition(dst); t.hasExitTime = false; t.duration = 0.2f;
+                t.AddCondition(m, v, p);
+            }
+            foreach (var still in stills.Skip(1))
+                T(still, aimIn, AnimatorConditionMode.If, 0, "Aiming");
+            // Moving off never waits for a bridge: the game moves the team at once.
+            foreach (var st in stills.Skip(1).Concat(ahead).Concat(back))
+                T(st, run, AnimatorConditionMode.Greater, 0.1f, "Speed");
+            // AimOut ends where AimIn starts, so it hands back to that still state or goes along the
+            // line from there.
+            var aimAt = string.IsNullOrEmpty(team.Spec.aim_from) ? n - 1 : Array.FindIndex(line, l => l.state == team.Spec.aim_from);
+            if (aimAt < 0) { Debug.LogError(team.Log($"aim_from {team.Spec.aim_from} is not on the line")); return false; }
+            void Out(AnimatorState after, (AnimatorConditionMode Mode, float Value, string Param)[] conditions)
+            {
+                var t = aimOut.AddTransition(after); t.hasExitTime = true; t.exitTime = 0.95f; t.duration = 0.15f;
+                foreach (var (mode, value, param) in conditions) t.AddCondition(mode, value, param);
+            }
+            Out(stills[aimAt], Exactly(aimAt));
+            if (aimAt > 0) Out(back[aimAt - 1], AtMost(aimAt - 1));
+            if (aimAt < n - 1) foreach (var c in AtLeast(aimAt + 1)) Out(ahead[aimAt], c);
+            return true;
         }
 
         // The highest head bone over the FBX root, scaled up by the head's share of the crew's
@@ -519,6 +652,17 @@ namespace WOMENACE.Editor
         {
             var built = new Dictionary<string, Material>(StringComparer.Ordinal);
             var crew = new Regex($@"^(c_(?:{string.Join("|", team.States.crew.Select(Regex.Escape))})_slg)_(\w+?)(_?uber)?$");
+
+            // Every material is built before any is assigned. Building one imports its textures,
+            // and the FBX's own materials search for those textures by name, so an import can
+            // reimport the FBX and revert this instance's earlier assignments.
+            foreach (var r in inst.GetComponentsInChildren<Renderer>(true))
+                foreach (var m in r.sharedMaterials)
+                {
+                    var set = TextureSet(team, crew, Regex.Replace(m != null ? m.name : "", @"\.\d+$", ""));
+                    if (set != null && !built.ContainsKey(set))
+                        built[set] = BuildMaterial(team, set);
+                }
 
             foreach (var r in inst.GetComponentsInChildren<Renderer>(true))
             {

@@ -85,10 +85,22 @@ def render(team, work, args):
     w, h = r["size"]
     # Studio light with cavity, and a margin of an eighth of the weapon's length each side, which
     # leaves make_team_sprites.py room to straighten a weapon that runs at an angle to its axes.
-    run([args.blender, "--background", "--factory-startup", "--python", REPO / "scripts" / "weapon" / "render_weapon.py",
-         "--", "--fbx", work / r["fbx"], "--diffuse", work / r["diffuse"], "--lod0-only", "--axis", r["axis"],
-         "--mode", "studio", "--padding", "0.125", "--width", w, "--height", h,
-         "--out", work / "art" / "weapon_render.png"])
+    cmd = [args.blender, "--background", "--factory-startup", "--python", REPO / "scripts" / "weapon" / "render_weapon.py",
+           "--", "--fbx", work / r["fbx"], "--diffuse", work / r["diffuse"], "--lod0-only",
+           "--mode", "studio", "--padding", "0.125", "--width", w, "--height", h,
+           "--out", work / "art" / "weapon_render.png"]
+    if r.get("hide_groups"):
+        cmd += ["--hide-groups", ",".join(r["hide_groups"])]
+    if r.get("fold"):
+        # The fold parts the prop as the states do, so it takes their split rules with it, and a
+        # folded weapon is framed by the fold rather than by an axis.
+        spec = json.loads((HERE / "teams" / team["team"] / "states.json").read_text())
+        fold = work / "art" / "weapon_fold.json"
+        fold.write_text(json.dumps({"fold": r["fold"], "split": spec.get("split", [])}))
+        cmd += ["--fold", fold]
+    else:
+        cmd += ["--axis", r["axis"]]
+    run(cmd)
 
 
 def art_png(work, name):
@@ -100,6 +112,10 @@ def sprites(team, work, args):
     cmd = ["uv", "run", HERE / "make_team_sprites.py", "--team", team["team"], "--whole", art_png(work, s["whole"]),
            "--heads", *s["heads"], "--lead", str(s["lead"]), "--front-outline", *s["front_outline"], "--logo", art_png(work, s["logo"]), "--icon", art_png(work, s["icon"]),
            "--weapon-render", work / "art" / "weapon_render.png"]
+    if s.get("straighten") is False:
+        cmd += ["--no-straighten"]
+    if s.get("weapon_zoom"):
+        cmd += ["--weapon-zoom", str(s["weapon_zoom"])]
     if s.get("items"):
         cmd += ["--item", *[f"{n}={art_png(work, a)}" for n, a in s["items"].items()]]
     run(cmd)

@@ -18,6 +18,19 @@ centre and looks at it from that axis in place of `--view`, for a model whose
 import orientation is not known in advance: `minus_y` and `plus_y` look from
 either side, `plus_z` from above.
 
+`--hide-groups` leaves out the pieces whose strongest vertex group is named (a
+mortar's rounds, which lie beside it and hang above it at rest). `--fold`
+folds a weapon that stands at rest for carrying, as vanilla's mortar icons
+show it, from a JSON of the `fold` block of a support team's `weapon_render`
+and the `split` rules of its states.json, which part the prop's shared bones as
+the animation states do. The legs swing on their hinge at the top until their
+feet come in beside the tube short of its base, the strut between them halfway
+between their two turns, and the whole is framed with the base to the left, the
+tube rising `tilt` degrees to the right, turned `yaw` degrees to show the base's
+face. `roll` turns it about the tube first: at 90 degrees the folded legs lie
+straight behind the barrel, which hides them and the bipod's joint that stands
+off the tube. A folded weapon is framed already and seen from above.
+
 In both modes the background renders as alpha=0 (transparent PNG).
 
 Run as:
@@ -25,16 +38,20 @@ Run as:
         (--glb <path.glb> | --fbx <path.fbx>) --out <path.png> \\
         [--width 912] [--height 318] [--padding 0.05] \\
         [--view side|front|back|top|three_quarter | --axis minus_y|plus_y|plus_z] \\
-        [--mode flat|shaded|studio] [--diffuse <texture.png>] [--lod0-only]
+        [--mode flat|shaded|studio] [--diffuse <texture.png>] [--lod0-only] \\
+        [--hide-groups <group,...>] [--fold <fold.json>]
 """
 
 import argparse
+import json
+import math
 import sys
 from pathlib import Path
 
 try:
     import bpy  # type: ignore
     import mathutils  # type: ignore
+    from mathutils import Matrix, Vector  # type: ignore
 except ImportError as exc:  # pragma: no cover - Blender-only entry point
     raise SystemExit("This script must be run inside Blender.") from exc
 
@@ -80,6 +97,137 @@ def force_diffuse(objects: list[bpy.types.Object], texture: Path) -> None:
         if obj.type == "MESH":
             obj.data.materials.clear()
             obj.data.materials.append(mat)
+
+
+def hide_groups(meshes: list, groups: set) -> None:
+    """Leave out every vertex whose strongest group is named (a mortar's rounds, which lie on the
+    ground beside it and hang in the air above it in its rest pose)."""
+    import bmesh
+    for o in meshes:
+        names = {g.index: g.name for g in o.vertex_groups}
+        gone = {v.index for v in o.data.vertices
+                if v.groups and names[max(v.groups, key=lambda g: g.weight).group] in groups}
+        bm = bmesh.new()
+        bm.from_mesh(o.data)
+        bm.verts.ensure_lookup_table()
+        bmesh.ops.delete(bm, geom=[bm.verts[i] for i in gone], context="VERTS")
+        bm.to_mesh(o.data)
+        bm.free()
+        print(f"[info] left out {len(gone)} vertices of {sorted(groups)} from {o.name}")
+
+
+def pieces_of(mesh) -> list:
+    """The mesh's loose pieces, as lists of vertex indices."""
+    import bmesh
+    bm = bmesh.new()
+    bm.from_mesh(mesh.data)
+    seen, out = set(), []
+    for start in bm.verts:
+        if start.index in seen:
+            continue
+        piece, stack = [], [start]
+        seen.add(start.index)
+        while stack:
+            v = stack.pop()
+            piece.append(v.index)
+            for e in v.link_edges:
+                w = e.other_vert(v)
+                if w.index not in seen:
+                    seen.add(w.index)
+                    stack.append(w)
+        out.append(piece)
+    bm.free()
+    return out
+
+
+def fold(meshes: list, spec: dict) -> None:
+    """Bake the folded pose into the meshes, in framed space, and drop the armature."""
+    f = spec["fold"]
+    arm = next(o for o in bpy.data.objects if o.type == "ARMATURE")
+    co, part = {}, {}
+    for mesh in meshes:
+        rel = arm.matrix_world.inverted() @ mesh.matrix_world
+        names = {g.index: g.name for g in mesh.vertex_groups}
+        for v in mesh.data.vertices:
+            co[mesh, v.index] = rel @ v.co
+            if v.groups:
+                part[mesh, v.index] = names[max(v.groups, key=lambda g: g.weight).group]
+        # The same cuts as build_team_states.split_part, on the prop's rest.
+        pieces = pieces_of(mesh)
+        for cut in (c for c in spec["split"] if c["prop"] == f["prop"]):
+            for piece in pieces:
+                if not all(part.get((mesh, i)) == cut["from"] for i in piece):
+                    continue
+                along = [co[mesh, i][cut.get("axis", 1)] for i in piece]
+                mid = sum(along) / len(along)
+                if ("below" in cut and max(along) >= cut["below"]) or ("above" in cut and min(along) <= cut["above"]) \
+                        or ("mid_below" in cut and mid >= cut["mid_below"]) or ("mid_above" in cut and mid <= cut["mid_above"]):
+                    continue
+                if "y_below" in cut and max(co[mesh, i].y for i in piece) >= cut["y_below"]:
+                    continue
+                for i in piece:
+                    part[mesh, i] = cut["bone"]
+
+    def pts(name):
+        return [co[k] for k, p in part.items() if p == name]
+
+    base = sum(pts(f["base"]), Vector()) / len(pts(f["base"]))
+    tube = pts(f["tube"])
+    muzzle = max(tube, key=lambda p: (p - base).length)
+    axis = (base - muzzle).normalized()
+    breech = max(tube, key=lambda p: (p - muzzle).dot(axis))
+    turns, hinges, sides = {}, [], []
+    for leg in f["legs"]:
+        ps = pts(leg)
+        top = max(p.y for p in ps)
+        crown = [p for p in ps if p.y > top - 0.03]
+        hinge = sum(crown, Vector()) / len(crown)
+        foot = max(ps, key=lambda p: (p - hinge).length)
+        off = hinge - muzzle
+        side = (off - axis * off.dot(axis)).normalized()
+        # `spread` keeps that share of the leg's own distance out to the side (0 closes the legs).
+        target = breech - axis * f.get("short", 0.25) + side * f.get("gap", 0.06) \
+            + Vector((off.x * f.get("spread", 1.0), 0.0, 0.0))
+        q = (foot - hinge).normalized().rotation_difference((target - hinge).normalized())
+        turns[leg] = Matrix.Translation(hinge) @ q.to_matrix().to_4x4() @ Matrix.Translation(-hinge)
+        hinges.append((hinge, q))
+        sides.append(side)
+    # The base turns in its socket about the tube, `base_turn` degrees: a quarter turn stands a
+    # long, narrow base plate edge on where the roll would show its whole breadth.
+    if f.get("base_turn"):
+        q = Matrix.Rotation(math.radians(f["base_turn"]), 4, axis)
+        turns[f["base"]] = Matrix.Translation(breech) @ q @ Matrix.Translation(-breech)
+    if f.get("strut"):
+        hinge = (hinges[0][0] + hinges[-1][0]) / 2
+        q = hinges[0][1].slerp(hinges[-1][1], 0.5)
+        turns[f["strut"]] = Matrix.Translation(hinge) @ q.to_matrix().to_4x4() @ Matrix.Translation(-hinge)
+    right = -axis
+    down = sum(sides, Vector()).normalized()
+    up = -(down - right * down.dot(right)).normalized()
+    framed = Matrix((right, up, right.cross(up))).to_4x4() @ Matrix.Translation(-(muzzle + base) / 2)
+    frame = Matrix.Rotation(math.radians(f.get("tilt", 20)), 4, "Z") \
+        @ Matrix.Rotation(math.radians(f.get("yaw", 20)), 4, "Y") \
+        @ Matrix.Rotation(math.radians(f.get("roll", 0)), 4, "X") @ framed
+    # Seen from +Z the base goes to the left: half a turn in the picture keeps the tube's slope.
+    if (frame @ base).x > (frame @ muzzle).x:
+        frame = Matrix.Rotation(math.pi, 4, "Z") @ frame
+    # `base_bend` hinges the base at the breech in the picture's plane, so a base that stands
+    # square across the tube leans back along it and the weapon is drawn longer and lower.
+    bent = {}
+    if f.get("base_bend"):
+        at = frame @ breech
+        bent[f["base"]] = Matrix.Translation(at) @ Matrix.Rotation(math.radians(f["base_bend"]), 4, "Z") \
+            @ Matrix.Translation(-at)
+    for mesh in meshes:
+        for v in mesh.data.vertices:
+            p = part.get((mesh, v.index))
+            v.co = bent.get(p, Matrix.Identity(4)) @ frame @ (turns.get(p, Matrix.Identity(4)) @ co[mesh, v.index])
+        mesh.parent = None
+        mesh.matrix_world = Matrix.Identity(4)
+        for m in list(mesh.modifiers):
+            mesh.modifiers.remove(m)
+    bpy.data.objects.remove(arm, do_unlink=True)
+    print("folded", sorted(turns), "about the tube from", tuple(round(v, 3) for v in muzzle))
 
 
 def lay_along_x(objects: list[bpy.types.Object]) -> None:
@@ -369,6 +517,8 @@ def parse_args() -> argparse.Namespace:
                              "studio = Workbench with studio light and cavity.")
     parser.add_argument("--diffuse", type=Path, help="Texture to show on every mesh in place of its materials.")
     parser.add_argument("--lod0-only", action="store_true", help="Drop meshes whose name lacks lod0.")
+    parser.add_argument("--hide-groups", default="", help="Comma-separated vertex groups whose pieces are left out.")
+    parser.add_argument("--fold", type=Path, help="Fold the weapon for carrying (a JSON of its fold block and split rules).")
     return parser.parse_args(argv)
 
 
@@ -380,9 +530,18 @@ def main() -> None:
     print(f"[info] imported {len(objects)} object(s) from {model.name}")
     if args.lod0_only:
         objects = keep_lod0(objects)
+    meshes = [o for o in objects if o.type == "MESH"]
+    if args.fold:
+        fold(meshes, json.loads(args.fold.read_text()))
+        objects = [o for o in bpy.data.objects if o in set(objects)]
+    groups = set(filter(None, args.hide_groups.split(",")))
+    if groups:
+        hide_groups(meshes, groups)
     if args.diffuse:
         force_diffuse(objects, args.diffuse)
-    if args.axis:
+    if args.fold:
+        basis = _axis_basis("plus_z")
+    elif args.axis:
         lay_along_x(objects)
         basis = _axis_basis(args.axis)
     else:
@@ -398,7 +557,7 @@ def main() -> None:
     args.out.parent.mkdir(parents=True, exist_ok=True)
     bpy.context.scene.render.filepath = str(args.out)
     bpy.ops.render.render(write_still=True)
-    print(f"[done] {args.mode} render, {args.axis or args.view} view ({args.width}×{args.height}) -> {args.out}")
+    print(f"[done] {args.mode} render, {'folded' if args.fold else args.axis or args.view} view ({args.width}×{args.height}) -> {args.out}")
 
 
 if __name__ == "__main__":

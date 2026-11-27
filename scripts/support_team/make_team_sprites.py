@@ -276,10 +276,20 @@ def straighten(render):
     return out[ys.min():ys.max() + 1, xs.min():xs.max() + 1]
 
 
-def weapon_icons(weapon):
+def trimmed(render):
+    """Cut the weapon to its outline at the render's own angle."""
+    ys, xs = np.where(render[..., 3] > 12)
+    return render[ys.min():ys.max() + 1, xs.min():xs.max() + 1]
+
+
+def weapon_icons(weapon, zoom=1.0):
+    """The weapon fitted into each icon's box. `zoom` scales it past that fit, up to the box's
+    width, so a weapon drawn tall at one end (a mortar's base plate) is cut at the icon's top and
+    bottom and its length fills the card."""
     out = {}
     for name, ((w, h), (x0, x1, y0, y1)) in WEAPON_ICONS.items():
-        fitted = doll.fit(weapon, x1 - x0, y1 - y0)
+        s = min(zoom * min((x1 - x0) / weapon.shape[1], (y1 - y0) / weapon.shape[0]), (x1 - x0) / weapon.shape[1])
+        fitted = doll.fit(weapon, weapon.shape[1] * s, weapon.shape[0] * s)
         icon = doll.over(np.zeros((h, w, 4), np.uint8), fitted, (x0 + x1) / 2, (y0 + y1) / 2)
         out[name] = icon
         if name != "Icon":
@@ -337,6 +347,10 @@ def main():
     ap.add_argument("--logo", required=True, help="the faction's logo (Img_Guild_Faction_Logo_<n>.png)")
     ap.add_argument("--icon", required=True, help="the team's active skill icon (Skill_<Team>_Active.png)")
     ap.add_argument("--weapon-render", help="side render of the team's weapon on a transparent background")
+    ap.add_argument("--weapon-zoom", type=float, default=1.0,
+                    help="scale the weapon past its icon box, up to the box's width (the rest is cut)")
+    ap.add_argument("--no-straighten", action="store_true",
+                    help="keep the render's own angle (a weapon that stands, such as a deployed mortar)")
     ap.add_argument("--emblem-out", help="also save the composed emblem here, for review")
     ap.add_argument("--item", nargs="+", default=[], metavar="NAME=PATH",
                     help="an accessory's art, written as sprites/<team>/items/<NAME>.png and <NAME>_disabled.png")
@@ -378,7 +392,8 @@ def main():
         write(sprites / "items" / f"{name}_disabled.png", disabled)
 
     if args.weapon_render:
-        for name, im in weapon_icons(straighten(doll.load_rgba(args.weapon_render))).items():
+        render = doll.load_rgba(args.weapon_render)
+        for name, im in weapon_icons(trimmed(render) if args.no_straighten else straighten(render), args.weapon_zoom).items():
             write(doll.ASSETS / "sprites" / "weapon" / args.team / f"{name}.png", im)
 
 
