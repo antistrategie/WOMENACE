@@ -11,12 +11,12 @@ clone "AccessoryTemplate" from="accessory.ammo_hollow_points" id="accessory.fabr
     }
     set "Description" {
         set "m_DefaultTranslation" """
-            Standard supplies for mortar teams. Only available in limited quantities, but they produce better results on the battlefield.
+            Standard supplies used by mortar teams. Can be used by mortars of various calibres. While it is only available in limited quantities, it can produce better results on the battlefield.
 
-            <style="Highlight">• +$1% Damage
+            <style="Highlight">+$1% Damage
 
             • Only one ammo accessory can be equipped
-            • Only for Team Fabric</style>
+            • Only applies to Team Fabric</style>
             """
         clear "m_Placeholders"
         append "m_Placeholders" bind="SkillTemplate" "passive.fabric_standard_mortar_ammo" path="EventHandlers[0].Properties[0].AmountMult" format="bonus-percent"

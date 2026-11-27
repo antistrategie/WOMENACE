@@ -2,7 +2,8 @@
 
 Every crew member was exported with the same set of clips (her native idle and the donor Doll
 clips). For each state the crew play their clip a little out of step, the props either play
-their native idle or ride their carrier, and the result is baked into one take.
+their native idle or ride their carrier, and the result is baked into one take. A transition
+(a state with "between") is built instead from the poses of the two states it joins.
 
     blender --background --factory-startup --python build_team_states.py --
         <spec.json> <work_dir> [<state>...]
@@ -38,10 +39,25 @@ so on). Every option:
                      clip that leaves the first chain's bone unkeyed is a donor clip
         follow       per position, [share of the thigh's swing taken going forward, going back]
         parent       the bone the chains hang from, in whose frame the swing is measured
+    split            cuts that move loose pieces of a prop's mesh off a bone they share onto a
+                     bone of their own, so a state can place them apart. GFL2 builds a weapon
+                     from loose pieces, each on one bone, and several pieces can share one.
+                     prop_cuts.py holds the rule, which render_weapon.py's fold reads too:
+        prop, from, bone   the prop armature, the bone the pieces are weighted to, and the bone
+                     they move onto: new, a child of "from" at rest, so it plays every GFL2 take
+                     as "from" does, or one the prop already has, which takes them as they are
+        below, above        pieces lying wholly below or above this, in metres along "axis"
+        mid_below, mid_above  pieces whose centre lies below or above it
+        axis         the prop's own axis at rest the cut measures along (0, 1, 2 for X, Y, Z,
+                     Y by default)
+        y_below      leaves out any piece reaching this high on Y
+        head         "top" puts a new bone's head at the middle of the pieces' top 3 cm on Y, a
+                     hinge for a part that folds, and otherwise at their centre
     markers          empties hung on a prop's bone that ride every take, so the Unity bake can
                      hang a skill point on one: name, prop, bone, and "at" (the prop armature's
                      space at rest)
-    states           the states, in order
+    states           the states, in order. The cuts are made first, so a state names the new
+                     bones as any other
 
 A state:
 
@@ -61,21 +77,47 @@ A state:
                      frame, where a donor clip leaves them in a bind pose that cuts the face
     lower_knees      a share (0 to 1) of each donor-clip thigh's forward swing taken back, so
                      the knees rise no higher than the coat can follow
+    anchor           {prop, ref, frame}: the turn and shift that take the prop from where the
+                     extra source "ref" has it at "frame" (1 by default) to where its native
+                     idle has it at frame 1. A member placed "anchor" is carried by it, so a
+                     weapon that stands on the ground keeps its place between states and the
+                     crew keep theirs round it
     crew             per member, what she plays:
         clip         the clip
+        of           the member whose clip it is (the crew share one rig), herself by default
         range        [first, last] frames of it, or the whole clip
         offset       frames she runs ahead (loop) or starts late, so the crew are out of step
         place        "formation" (default unless native): her root on her formation spot plus
                      the clip's own travel unless in_place, facing the team's way. "shift": the
                      clip's own motion and facing, moved to start on her formation spot (a take
-                     from another scene). "native": as the clip has it
-        upper        {clip, frame, from}: the bones under "from" (one bone or a list, Spine1_M
-                     by default) hold that clip's pose at that frame for the whole take
+                     from another scene). "anchor": the whole take carried by the state's
+                     anchor. "native": as the clip has it
+        nudge        with "anchor", [x, y] metres in the team's frame added to the carry, for a
+                     member who touches no anchored prop
+        upper        {clip, frame, from, of}: the bones under "from" (one bone or a list,
+                     Spine1_M by default) hold that clip's pose at that frame for the whole
+                     take, "of" taking the clip from another member. A list of holds is applied
+                     in order, so a later hold wins on the bones both name
+        sway         {bone, child, hand, frame, hang, scale | swing, bend, bend_swing}: an arm
+                     held by "upper" swung forward and back with the donor's run. "bone" to
+                     "child" is the upper arm, turned about her side axis (read off "frame",
+                     Chest_M by default) to "hang" degrees forward of straight down (10) plus
+                     "scale" (0.25) of the donor arm's swing about its mean, or the donor's
+                     swing paced to an amplitude of "swing" degrees either way. With "hand" the
+                     elbow keeps "bend" degrees (20), deeper by up to "bend_swing" (10) as the
+                     arm swings forward
+        raise        {shoulder bone: degrees}: upper arms swung forward about her side axis
+        open         {elbow bone: degrees}: elbows opened, so held hands move out from the body
+        breathe      {bones, scale}: a held pose laid over with her native idle, each named bone
+                     turning from the held pose as it turns from the idle's first frame, by
+                     "scale" (1). Rotation only, so she keeps her spot. The state's "length"
+                     sets how much of the idle plays
     props            per prop, one of:
         "idle"       it plays its native idle, in step with a pingpong when there is one
-        follow       {follow: member, prop_ref, range}: keyed frame by frame where the extra
-                     source <prop_ref> has it over that range, moved as the member's "shift"
-                     moved her
+        follow       {follow: member, prop_ref, range, bones}: keyed frame by frame where the
+                     extra source <prop_ref> has it over that range, moved as the member's
+                     placement moved her. The bones named in "bones" play the reference's own
+                     take too, and the rest hold the prop's native idle at frame 1
         match        {carrier, bone (Wrist_R by default), match: {prop_ref, carrier_ref,
                      frame}}: held on the carrier's bone as the reference holds it at that
                      frame. "idle:<name>" names the team's own prop or member in its native idle
@@ -100,15 +142,113 @@ A state:
             steady          keyed frame by frame, taking only this share of the bone's turn
                             since frame 1, so a donor run's chest sway is not copied in full.
                             Without it a Child Of constraint holds the prop rigidly
+            tilt            degrees (XYZ, her frame) turning the placed prop and its grips about
+                            "at", so a lean can be tried without working the grips out again
+            ride            {at, rot}: placed in the ride bone's own frame at frame 1 instead,
+                            so a carry worked out in one state sits the same on her in a state
+                            whose pose differs. Takes no "tilt", and its grips are in the
+                            prop's space
             idle_pose       prop bones posed as its native idle has them at frame 1
+            fold            [{bone, about, angle, axis, keep}]: a bone turned "angle" degrees
+                            about "axis" (X by default) through "about" (the prop's space at
+                            rest), the bones in "keep" held where they were, so a part folds
+                            for the carry while its child stays put
             grips           per side ("L", "R"), where her hand goes, kept in the prop's space:
                             a point from "at" in her frame, or {at, fingers, thumb | palm} with
                             the way the knuckles point ("forearm" carries on along the forearm)
-                            and the way the thumb side or the palm faces
+                            and the way the thumb side or the palm faces. "pole" is where the
+                            elbow bends towards, from "at"'s origin. "hinge": true rolls the
+                            upper arm first, so the forearm folds the way the rig's elbow folds
+                            at rest, where the IK's shortest turn leaves the roll to chance.
+                            "twist_limit" (degrees) turns the hand about its knuckles by the
+                            least that keeps the forearm's twist within it, and gives the
+                            forearm's twist bone half the roll, so the wrist is not wrung
+            grip_space      "prop": the grips are given in the prop's own space, as read off
+                            another state's carry
             grips_ref       {prop_ref, carrier_ref, frame, shift, elbow_push}: each wrist's
                             whole placement and elbow read from a reference scene at a frame.
                             "shift" moves a hand along the prop (its own space), "elbow_push"
                             moves an elbow's bend target (the team's frame)
+        with any rule but "idle", single bones of the prop can go their own way after it is
+        placed:
+            bone_sling      {bone: how}: the bone carried on a crew member's bone as a sling
+                            carries a whole prop: "carrier", "bone" (spine_bone by default),
+                            "at" from "from_bone"'s head (root by default) in the team's frame
+                            at frame 1, "rot" (degrees, XYZ) from the bone's own axes and
+                            "pivot" in the prop's space. "along" [low, high] tilts it with the
+                            line between two of her bones, and "at_spine" [across, out, up]
+                            measures "at" along that line instead, so it keeps its place on her
+                            back however far a state leans her. "local" takes "at" and "rot" in
+                            the ride bone's own frame, read off the rig. "as" {bone, holder,
+                            wrist, frame, from, from_axis, to, to_axis} holds it as the team's
+                            idle has "holder" hold another bone of the prop, the line "from"
+                            "from_axis" set along "to" "to_axis". "turn" (degrees, XYZ, its rest
+                            axes) with "shift" (metres, the prop's rest frame) is a constant
+                            pose on its parent instead, and "stay" holds it at its rest on the
+                            prop while its parent is carried elsewhere
+            bone_match      {bone: {carrier, bone, frame}}: the prop's bone held on the
+                            carrier's bone as the team's idle holds it at that frame
+            hide            {bone: frame}: the bone shrunk away from that frame of the state
+
+A transition's take runs from one built state's last frame to the next one's first, so a
+cross-fade does not slide the crew or fly the props. build_transition's docstring describes how
+each option moves her. The states it reads are built in the same run, and naming it builds them:
+
+    name, length     as for a state, and the length must be given
+    between          [<from>, <to>], the two states it joins
+    crew             per member:
+        keys         [{at, pose, turn, shift, steps}]: poses at shares of the take, "pose"
+                     "from", "to" or [<state>, 1 | "end"], turned "turn" degrees about her feet
+                     or moved "shift" metres across the ground. "steps" counts the steps that
+                     bring her to the key
+        move         [<start>, <end>]: short for keys from the one end to the other
+        stride, steps, still, overlap   key-to-key steps: as many as strides of "stride"
+                     metres (0.5) cover, or "steps" per foot, a foot with less than "still"
+                     metres (0.03) to go left planted, each step's slot overlapping the next by
+                     "overlap" (0.25)
+        lift, crouch metres a key-to-key step lifts its foot (0.08) and her hips sink while she
+                     steps (0.05)
+        coat         true turns the coat's chains with how far the leg IK moved her thighs
+        walks        [{from, to, steps, ...}]: a planned walk from one key to another, which
+                     needs a key at each end. Its timing and shape: "settle" (0.6), "accel"
+                     (0.3), "turn_in", "turn_out" (0.35 each), "turn_end" (1.0), "face" (false
+                     keeps her own facing), "lead" (the first foot), "first" (0.8) and "closing"
+                     (0.6) for the first and last steps' time in the air, "turn" (0.25 metres a
+                     radian), "vary" (0.1), "stride" (0.42), "lift" (0.06), "track" (0.04),
+                     "roll" ([25, 15] degrees toe-off and heel strike) and "pivot" (20 degrees)
+        bend         {degrees, window}: her spine bent forward from the waist
+        look         {at: [<prop>, <bone>], window, limit, level}: neck and head turned towards
+                     where the second state has that bone, up to "limit" degrees (70), about the
+                     vertical only with "level"
+        twist        {degrees, window, side | toward}: her spine turned about the vertical,
+                     "side" 1 or -1, or towards a [<prop>, <bone>] of the second state, the side
+                     chosen once as the turn begins
+        hands        {prop, bone, until, release, sides, slide, wrap, fingers}: her hands kept
+                     on a prop's bone as the first state holds it, letting go over [until,
+                     release] or per side ("sides"), sliding along the part over the "slide"
+                     window and closing round it over "wrap". "fingers": "from" keeps the first
+                     state's closed fingers
+        grab         {prop, hands: {<side>: [<bone>, <share>]}, window, fingers}: her hands put
+                     on points of the placed prop, a share of the way from the bone's head to
+                     the part's far end
+        A window of bend, look, twist or grab is two shares (rising and settling again) or
+        four (rising, holding and falling). Every other window is a start and an end share,
+        eased from the one end to the other.
+    props            per prop, {window, bones, <rule>}: the object goes from end to end over
+                     "window", and "bones" gives a bone (and those under it) its own rule. A
+                     rule:
+        carrier, bone  rides her bone (Chest_M by default), its hold changing over "window"
+        path         [[<share of the take>, <share of the way>], ...] in place of "window"
+        lands        with a carrier, goes from her hold to where the second state has it
+        clear        {of, by, fade}: a landing part pushed out flat from her torso until its
+                     long axis keeps "by" metres from her spine, faded in over "fade"
+        phases       [{until, ...}]: rules in turn, each until its "until". "place" "from" or
+                     "to" holds an end's placement, "hide" shrinks it away, "opens" goes from
+                     the phase before to the second state's placement, a "carrier" ("bone")
+                     holds it as it was when the phase began, and with "upright" ("lift"
+                     metres) it goes whole on her bone, stood as the second state stands it
+        hide_between true shows it only on the first and last frames
+        With no carrier or phases it goes straight from the one placement to the other.
 
 swing_coat is not an option. With "coat" set, every member on a donor clip has her coat chains
 swung with her thighs frame by frame: each chain turns about its root by its "follow" share of
@@ -123,6 +263,9 @@ import sys
 
 import bpy
 from mathutils import Euler, Matrix, Quaternion, Vector
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from prop_cuts import cut_takes, pieces_of  # noqa: E402
 
 _args = sys.argv[sys.argv.index("--") + 1:]
 spec = json.load(open(_args[0], encoding="utf-8"))
@@ -144,6 +287,10 @@ os.makedirs(spec["out_dir"], exist_ok=True)
 team = spec["team"]
 out_dir = spec["out_dir"]
 spine_bone = spec["spine_bone"]
+# The bone a transition carries a prop on unless its rule names one. A carry in a state rides the
+# spine (spine_bone) like a sling, but a prop passed from hand to hand during a transition goes
+# with the chest, which the arms reach from.
+transition_carry_bone = "Chest_M"
 coat = spec.get("coat")
 
 # Built up as the script runs: each member's formation spot, each grounded prop's placement,
@@ -172,7 +319,7 @@ def fcurves(action):
 
 
 # ---- fold the per-object exports into one team ----
-def load(src, name):
+def load(src, name, free=False):
     """Import one AssetStudio export and fold its 0.01 scene root into the team root. Returns the
     objects it added and its armature."""
     before = set(bpy.data.objects)
@@ -197,9 +344,10 @@ def load(src, name):
         bpy.data.objects.remove(old)
     arm = next(o for o in kept if o.type == "ARMATURE")
     # The importer connects a bone whose head sits on its parent's tail, and a connected bone
-    # ignores its location keys. GFL2 prop takes move the Prop bone by location (Fabric's
-    # binoculars and flag), so every bone is freed. Its rest stays where it was.
-    if any(b.use_connect for b in arm.data.bones):
+    # ignores its location keys. GFL2 prop takes move a prop's bones by location, so a prop's
+    # bones are freed (<free>). Its rest stays where it was. A crew rig stays connected: donor
+    # clips key its arms at the donor's bone lengths, which the connection ignores.
+    if free and any(b.use_connect for b in arm.data.bones):
         bpy.context.view_layer.objects.active = arm
         bpy.ops.object.mode_set(mode="EDIT")
         for eb in arm.data.edit_bones:
@@ -212,8 +360,10 @@ def stem_of(src):
     return src.replace("\\", "/").rsplit("/", 1)[-1].rsplit(".", 1)[0]
 
 
-for src in spec["members"] + spec["props"]:
+for src in spec["members"]:
     load(src, f"{team}_{stem_of(src)}")
+for src in spec["props"]:
+    load(src, f"{team}_{stem_of(src)}", free=True)
 for o in list(bpy.data.objects):
     if o.type == "MESH" and o.name.endswith("_lod1"):
         bpy.data.objects.remove(o)
@@ -228,8 +378,8 @@ def split_part(cut):
     mortar from loose pieces, each on one bone, but its barrel and baseplate share one, and so
     do the bipod's legs, and the carry parts them. A child of "from" at rest plays every GFL2
     take as the shared bone did, so only a state that places it moves it. "y_below" also leaves
-    out any piece reaching that high on Y."""
-    import bmesh
+    out any piece reaching that high on Y (the traverse handwheels, out at the bipod's sides
+    above its legs, which must not fold away with a leg)."""
     arm = bpy.data.objects[cut["prop"]]
     picked = {}
     for mesh in (o for o in arm.children_recursive if o.type == "MESH"):
@@ -238,36 +388,11 @@ def split_part(cut):
             continue
         rel = arm.matrix_world.inverted() @ mesh.matrix_world
         owner = {v.index: max(v.groups, key=lambda g: g.weight).group for v in mesh.data.vertices if v.groups}
-        bm = bmesh.new()
-        bm.from_mesh(mesh.data)
-        seen, chosen = set(), []
-        for start in bm.verts:
-            if start.index in seen:
-                continue
-            piece, stack = [], [start]
-            seen.add(start.index)
-            while stack:
-                v = stack.pop()
-                piece.append(v.index)
-                for e in v.link_edges:
-                    w = e.other_vert(v)
-                    if w.index not in seen:
-                        seen.add(w.index)
-                        stack.append(w)
-            if not all(owner.get(i) == source.index for i in piece):
-                continue
-            k = cut.get("axis", 1)
-            along = [(rel @ mesh.data.vertices[i].co)[k] for i in piece]
-            mid = sum(along) / len(along)
-            if ("below" in cut and max(along) >= cut["below"]) or ("above" in cut and min(along) <= cut["above"]) \
-                    or ("mid_below" in cut and mid >= cut["mid_below"]) or ("mid_above" in cut and mid <= cut["mid_above"]):
-                continue
-            # "y_below" also keeps out what reaches above a height (the traverse handwheels, out
-            # at the bipod's sides above its legs, which must not fold away with a leg).
-            if "y_below" in cut and max((rel @ mesh.data.vertices[i].co).y for i in piece) >= cut["y_below"]:
-                continue
-            chosen += piece
-        bm.free()
+        chosen = []
+        for piece in pieces_of(mesh):
+            if all(owner.get(i) == source.index for i in piece) \
+                    and cut_takes(cut, [rel @ mesh.data.vertices[i].co for i in piece]):
+                chosen += piece
         picked[mesh] = (rel, chosen)
     pts = [rel @ m.data.vertices[i].co for m, (rel, ids) in picked.items() for i in ids]
     centre = sum(pts, Vector()) / len(pts)
@@ -302,7 +427,7 @@ for cut in spec.get("split", []):
 extras, extra_objects = {}, []
 for src in spec.get("extra_sources", []):
     before_actions = set(bpy.data.actions)
-    added, arm = load(src, f"ref_{stem_of(src)}")
+    added, arm = load(src, f"ref_{stem_of(src)}", free=True)
     for a in set(bpy.data.actions) - before_actions:
         a.use_fake_user = True
     extras[stem_of(src)] = arm
@@ -545,6 +670,9 @@ def sling(obj, prop, how):
     tilt = Euler([math.radians(v) for v in how.get("tilt", (0.0, 0.0, 0.0))], "XYZ").to_matrix()
     desired = Matrix.Translation(spot) @ tilt.to_4x4() @ Matrix.Translation(-spot) @ desired
     if "ride" in how:
+        # Tilt and grips in the carrier's frame are worked out from "at", which a ride replaces.
+        if "tilt" in how or (how.get("grips") and how.get("grip_space") != "prop"):
+            raise SystemExit(f"{how['carrier']}: a ride takes no tilt, and its grips are in the prop's space")
         # "ride" places the prop on the ride bone itself ("at" metres and "rot" degrees XYZ in
         # the bone's frame at frame 1), so a carry worked out in one state sits the same on her
         # body in another whose pose differs (the barrel from the run, on her chest as she stands).
@@ -1307,7 +1435,7 @@ def place(arm, mname, mode, in_place, part=None, anchor=None):
 baked = {}
 
 
-def breathe(arm, member, how, length):
+def breathe(arm, member, how):
     """Lay the member's own idle over a held pose: each named bone turns from the held pose as
     it turns from the idle's first frame, by <scale>. A set-up crew holds its places and only
     breathes and looks about. Rotation only, so nobody shifts off her spot."""
@@ -1321,24 +1449,24 @@ def breathe(arm, member, how, length):
             if fc.data_path == f'pose.bones["{bone}"].rotation_quaternion':
                 found[fc.array_index] = fc
         return found if all(found) else None
-    baked = arm.animation_data.action
+    posed = arm.animation_data.action
     for bone in how["bones"]:
-        own, held = curves(idle, bone), curves(baked, bone)
-        if own is None or held is None:
+        own, still = curves(idle, bone), curves(posed, bone)
+        if own is None or still is None:
             continue
         first = Quaternion([fc.evaluate(f0) for fc in own]).inverted()
-        frames = sorted({kp.co.x for fc in held for kp in fc.keyframe_points})
+        frames = sorted({kp.co.x for fc in still for kp in fc.keyframe_points})
         for frame in frames:
             at = f0 + (int(frame) - 1) % span
             turn = Quaternion().slerp(first @ Quaternion([fc.evaluate(at) for fc in own]), scale)
-            q = Quaternion([fc.evaluate(frame) for fc in held]) @ turn
-            for i, fc in enumerate(held):
+            q = Quaternion([fc.evaluate(frame) for fc in still]) @ turn
+            for i, fc in enumerate(still):
                 for kp in fc.keyframe_points:
                     if kp.co.x == frame:
                         kp.co.y = kp.handle_left.y = kp.handle_right.y = q[i]
-        for fc in held:
+        for fc in still:
             fc.update()
-    print(f"breathe: {member} on her idle over {length} frames")
+    print(f"breathe: {member} on her idle")
 
 
 def build(state):
@@ -1444,7 +1572,7 @@ def build(state):
         if mname in hair:
             hold_bones(arm, *hair[mname])
         if "breathe" in part:
-            breathe(arm, mname, part["breathe"], length)
+            breathe(arm, mname, part["breathe"])
 
 
     if "travel" in state:
@@ -1594,9 +1722,10 @@ def basis_of(pb, pose, parent_pose):
 
 
 def key_basis(pb, m, frame, hidden=False):
-    """Key a pose bone's basis, shrunk to nothing if <hidden>."""
+    """Key a pose bone's basis, shrunk to a thousandth if <hidden>: a bone at no scale makes its
+    matrix singular for the visual bake."""
     loc, rot, scl = m.decompose()
-    pb.location, pb.rotation_quaternion, pb.scale = loc, rot, Vector((0.0, 0.0, 0.0)) if hidden else scl
+    pb.location, pb.rotation_quaternion, pb.scale = loc, rot, Vector((0.001, 0.001, 0.001)) if hidden else scl
     pb.keyframe_insert("location", frame=frame)
     pb.keyframe_insert("rotation_quaternion", frame=frame)
     pb.keyframe_insert("scale", frame=frame)
@@ -1736,7 +1865,7 @@ def build_transition(state):
         if "carrier" not in rule:
             return mix(w0, w1, s)
         carrier = members[rule["carrier"]]
-        cb = rule.get("bone", "Chest_M")
+        cb = rule.get("bone", transition_carry_bone)
         c_now = carrier.matrix_world @ carrier.pose.bones[cb].matrix
         c0 = carrier.matrix_world @ a[carrier.name]["pose"][cb]
         c1 = carrier.matrix_world @ b[carrier.name]["pose"][cb]
@@ -2265,7 +2394,7 @@ def build_transition(state):
                     for bone in spine:
                         turn_about(arm.pose.bones[bone], q, arm.pose.bones[bone].head.copy())
             if bend:
-                k = held(bend["window"], t)
+                k = window_weight(bend["window"], t)
                 if k > 0.0:
                     # Forward from the waist: the spine turns about her side axis, so her chest
                     # and arms go down and ahead (the gunner bending to set the barrel down).
@@ -2276,7 +2405,7 @@ def build_transition(state):
                     for bone in spine:
                         turn_about(arm.pose.bones[bone], q, arm.pose.bones[bone].head.copy())
             if look:
-                k = held(look["window"], t)
+                k = window_weight(look["window"], t)
                 if k > 0.0:
                     # Neck and head turn her face towards where the second state has a prop's
                     # bone, the neck taking half the turn.
@@ -2392,7 +2521,7 @@ def build_transition(state):
                             before, _ = phase_world(k - 1)
                             return mix(before, w1, ease(t, (phases[k - 1].get("until", 0.0), ph.get("until", 1.0)))), False
                         carrier = members[ph["carrier"]]
-                        c_now = carrier.matrix_world @ carrier.pose.bones[ph.get("bone", "Chest_M")].matrix
+                        c_now = carrier.matrix_world @ carrier.pose.bones[ph.get("bone", transition_carry_bone)].matrix
                         if ph.get("upright"):
                             # The part goes whole, in its first state's shape, its owning bone's
                             # head on the carrier's bone (and "lift" metres up), turned as the
@@ -2434,7 +2563,7 @@ def build_transition(state):
         worst = 0.0
         for f in range(1, length + 1):
             t = (f - 1) / span
-            k = held(grab["window"], t)
+            k = window_weight(grab["window"], t)
             if k <= 0.0:
                 continue
             scene.frame_set(f)
@@ -2486,7 +2615,7 @@ def glide(x, accel):
     return 1.0 - top * (1.0 - x) ** 2 / (2.0 * accel)
 
 
-def held(window, t):
+def window_weight(window, t):
     """A weight over a window of shares: two rise and settle again, four rise over the first two,
     hold, and fall over the last two."""
     if len(window) == 4:

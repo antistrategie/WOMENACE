@@ -21,9 +21,11 @@ clone "SpeakerTemplate" from="sy" id="wmgfl_fabric_speaker" {
         set "m_DefaultTranslation" """
             Name: Team Fabric
 
-            Role: Mortar Team
+            Proficiency: Mortar Team
 
-            Members: Chiffon (team leader), Cashmere (loader), Taffeta (gunner)
+            Members: Chiffon (leader), Cashmere (loader), Taffeta (gunner)
+
+            Affiliation(s): Doll Community
             """
     }
 
@@ -48,7 +50,7 @@ clone "ArmorTemplate" from="armor.player_fatigues" id="armor.fabric_default" {
         set "m_DefaultTranslation" "Field Kit"
     }
     set "Description" {
-        set "m_DefaultTranslation" "Team Fabric's own field gear. It cannot be swapped out."
+        set "m_DefaultTranslation" "The crew's own field gear, restyled on a budget from what they pick up after each battle."
     }
     append "OnlyEquipableBy" "wmgfl_team_fabric"
     append "Tags" "jy_no_sell"
@@ -63,7 +65,7 @@ clone "WeaponTemplate" from="specialweapon.tripod_medium_mortar_80mm" id="weapon
         set "m_DefaultTranslation" "Mortar"
     }
     set "Description" {
-        set "m_DefaultTranslation" "Team Fabric's mortar. It has to be set up to be fired and slows the team down while carried."
+        set "m_DefaultTranslation" "Supplied by Poludnitsa. Selling hot-potato items like these to the Varjagers violates her principles, but holding on to them would put her under scrutiny, so she gave them to the Commander. Team Fabric spends a lot of time caring for them each day."
     }
     // The team's main weapon. Its mortar is part of the team's body, so the weapon carries no
     // model of its own for the back or the hand.
@@ -119,7 +121,7 @@ clone "EntityTemplate" from="player_squad.carda" id="player_squad.fabric" {
         set "m_DefaultTranslation" "Doll Community"
     }
     set "Description" {
-        set "m_DefaultTranslation" "An Armed Echelon mortar team: Chiffon leads, Cashmere loads, Taffeta fires."
+        set "m_DefaultTranslation" "A trio who pay close attention to their clothing and constantly chase fashion trends. Its members are the leader Chiffon, the loader Cashmere and the gunner Taffeta. While they love fashion and stylish things, the Doll Community is just too low on resources. Thus, they have chosen to pursue the path of \"budget fashion\". This is also why they hurry to clean up the battlefield after each battle, so they can find supplies to make accessories and clothing."
     }
 
     clear "Items"
@@ -146,7 +148,7 @@ clone "UnitLeaderTemplate" from="squad_leader.carda" id="squad_leader.fabric" {
         set "m_DefaultTranslation" "Armed Echelon"
     }
     set "UnitDescription" {
-        set "m_DefaultTranslation" "Team Fabric, a mortar team: Chiffon leads, Cashmere loads, Taffeta fires."
+        set "m_DefaultTranslation" "A trio who pay close attention to their clothing and constantly chase fashion trends. Its members are the leader Chiffon, the loader Cashmere and the gunner Taffeta. While they love fashion and stylish things, the Doll Community is just too low on resources. Thus, they have chosen to pursue the path of \"budget fashion\". This is also why they hurry to clean up the battlefield after each battle, so they can find supplies to make accessories and clothing."
     }
 
     set "Slot" asset="fabric/slot"

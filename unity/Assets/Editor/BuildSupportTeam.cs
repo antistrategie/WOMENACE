@@ -341,10 +341,11 @@ namespace WOMENACE.Editor
             {
                 var t = a.AddTransition(b); t.hasExitTime = true; t.exitTime = exit; t.duration = blend;
             }
-            void Any(AnimatorState s, string trigger, AnimatorState after, float exit, float blend = 0.15f)
+            void Any(AnimatorState s, string trigger, AnimatorState after, float exit, float blend = 0.15f, (AnimatorConditionMode Mode, float Value, string Param)[] also = null)
             {
                 var t = sm.AddAnyStateTransition(s); t.hasExitTime = false; t.duration = 0.08f; t.canTransitionToSelf = false;
                 t.AddCondition(AnimatorConditionMode.If, 0, trigger);
+                foreach (var (mode, value, param) in also ?? Array.Empty<(AnimatorConditionMode, float, string)>()) t.AddCondition(mode, value, param);
                 if (after != null) Back(s, after, exit, blend);
             }
 
@@ -353,17 +354,20 @@ namespace WOMENACE.Editor
             // Aiming raises the weapon (AimIn) into the held aim, a shot plays Fire and comes back
             // to the hold, and lowering it plays AimIn backwards (AimOut). build_team_states.py
             // cuts AimIn, AimHold and Fire so they meet on one pose, so that hand-over has no blend.
-            T(idleS, aimIn, AnimatorConditionMode.If, 0, "Aiming");
             var raised = aimIn.AddTransition(aimHold); raised.hasExitTime = true; raised.exitTime = 1f; raised.duration = 0f;
             T(aimIn, aimOut, AnimatorConditionMode.IfNot, 0, "Aiming");
             T(aimHold, aimOut, AnimatorConditionMode.IfNot, 0, "Aiming");
             T(aimHold, run, AnimatorConditionMode.Greater, 0.1f, "Speed");
+            // The conditions under which the team stands at rest in Idle, the only stance its Hit take
+            // starts from. None for a team without a line, which is always at rest.
+            (AnimatorConditionMode Mode, float Value, string Param)[] atRest = null;
             if (team.Spec.line is { Length: > 0 })
             {
-                if (!BuildLine(team, ac, sm, idleS, run, aimIn, aimOut, takes)) return null;
+                if (!BuildLine(team, ac, sm, idleS, run, aimIn, aimOut, takes, out atRest)) return null;
             }
             else
             {
+                T(idleS, aimIn, AnimatorConditionMode.If, 0, "Aiming");
                 // Deployed (or pinned down) the team holds its Kneel take, and the cross-fade is the
                 // move into it and back out. Kneel starts on AimIn's first pose, so aiming from it
                 // moves only what AimIn moves, and lowering the aim settles back into whichever stance
@@ -386,7 +390,7 @@ namespace WOMENACE.Editor
             }
             Any(fire, "Shoot_Single", aimHold, team.Spec.fire_exit, team.Spec.fire_blend);
             Any(fire, "Special_Attack_1", aimHold, team.Spec.fire_exit, team.Spec.fire_blend);
-            Any(hit, "Hit", idleS, 0.95f);
+            Any(hit, "Hit", idleS, 0.95f, also: atRest);
             Any(vaultS, "Vault", run, 0.95f);
             Any(death, "OnDeath", null, 0f);
             return ac;
@@ -400,8 +404,9 @@ namespace WOMENACE.Editor
         // the line while the team still wants further, into the still state it reached, or back the
         // way it came.
         private static bool BuildLine(Team team, AnimatorController ac, AnimatorStateMachine sm, AnimatorState idleS,
-            AnimatorState run, AnimatorState aimIn, AnimatorState aimOut, Dictionary<string, AnimationClip> takes)
+            AnimatorState run, AnimatorState aimIn, AnimatorState aimOut, Dictionary<string, AnimationClip> takes, out (AnimatorConditionMode Mode, float Value, string Param)[] atRest)
         {
+            atRest = null;
             var line = team.Spec.line;
             if (line[0].state != "Idle") { Debug.LogError(team.Log("the line must start at Idle")); return false; }
             var n = line.Length;
@@ -467,8 +472,6 @@ namespace WOMENACE.Editor
                 var t = src.AddTransition(dst); t.hasExitTime = false; t.duration = 0.2f;
                 t.AddCondition(m, v, p);
             }
-            foreach (var still in stills.Skip(1))
-                T(still, aimIn, AnimatorConditionMode.If, 0, "Aiming");
             // Moving off never waits for a bridge: the game moves the team at once.
             foreach (var st in stills.Skip(1).Concat(ahead).Concat(back))
                 T(st, run, AnimatorConditionMode.Greater, 0.1f, "Speed");
@@ -476,6 +479,18 @@ namespace WOMENACE.Editor
             // line from there.
             var aimAt = string.IsNullOrEmpty(team.Spec.aim_from) ? n - 1 : Array.FindIndex(line, l => l.state == team.Spec.aim_from);
             if (aimAt < 0) { Debug.LogError(team.Log($"aim_from {team.Spec.aim_from} is not on the line")); return false; }
+            // AimIn starts on that state's pose, so the team aims only from there. Aiming elsewhere on
+            // the line waits until the line has brought the team to it.
+            T(stills[aimAt], aimIn, AnimatorConditionMode.If, 0, "Aiming");
+            // The Hit take starts from Idle's carry pose, so further along the line a hit plays nothing.
+            // Each still state there takes the trigger itself, which a trigger left set would
+            // otherwise keep until the team is back in Idle and play late.
+            atRest = AtMost(0);
+            foreach (var still in stills.Skip(1))
+            {
+                var t = still.AddTransition(still); t.hasExitTime = false; t.duration = 0.1f;
+                t.AddCondition(AnimatorConditionMode.If, 0, "Hit");
+            }
             void Out(AnimatorState after, (AnimatorConditionMode Mode, float Value, string Param)[] conditions)
             {
                 var t = aimOut.AddTransition(after); t.hasExitTime = true; t.exitTime = 0.95f; t.duration = 0.15f;

@@ -55,6 +55,10 @@ try:
 except ImportError as exc:  # pragma: no cover - Blender-only entry point
     raise SystemExit("This script must be run inside Blender.") from exc
 
+# A folded support-team prop is parted by the same cuts its states are.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "support_team"))
+from prop_cuts import cut_takes, pieces_of  # noqa: E402
+
 
 # -----------------------------------------------------------------------------
 # Scene reset + GLB import
@@ -116,30 +120,6 @@ def hide_groups(meshes: list, groups: set) -> None:
         print(f"[info] left out {len(gone)} vertices of {sorted(groups)} from {o.name}")
 
 
-def pieces_of(mesh) -> list:
-    """The mesh's loose pieces, as lists of vertex indices."""
-    import bmesh
-    bm = bmesh.new()
-    bm.from_mesh(mesh.data)
-    seen, out = set(), []
-    for start in bm.verts:
-        if start.index in seen:
-            continue
-        piece, stack = [], [start]
-        seen.add(start.index)
-        while stack:
-            v = stack.pop()
-            piece.append(v.index)
-            for e in v.link_edges:
-                w = e.other_vert(v)
-                if w.index not in seen:
-                    seen.add(w.index)
-                    stack.append(w)
-        out.append(piece)
-    bm.free()
-    return out
-
-
 def fold(meshes: list, spec: dict) -> None:
     """Bake the folded pose into the meshes, in framed space, and drop the armature."""
     f = spec["fold"]
@@ -152,18 +132,12 @@ def fold(meshes: list, spec: dict) -> None:
             co[mesh, v.index] = rel @ v.co
             if v.groups:
                 part[mesh, v.index] = names[max(v.groups, key=lambda g: g.weight).group]
-        # The same cuts as build_team_states.split_part, on the prop's rest.
+        # The cuts build_team_states.py parts the prop with, on the prop's rest.
         pieces = pieces_of(mesh)
         for cut in (c for c in spec["split"] if c["prop"] == f["prop"]):
             for piece in pieces:
-                if not all(part.get((mesh, i)) == cut["from"] for i in piece):
-                    continue
-                along = [co[mesh, i][cut.get("axis", 1)] for i in piece]
-                mid = sum(along) / len(along)
-                if ("below" in cut and max(along) >= cut["below"]) or ("above" in cut and min(along) <= cut["above"]) \
-                        or ("mid_below" in cut and mid >= cut["mid_below"]) or ("mid_above" in cut and mid <= cut["mid_above"]):
-                    continue
-                if "y_below" in cut and max(co[mesh, i].y for i in piece) >= cut["y_below"]:
+                if not all(part.get((mesh, i)) == cut["from"] for i in piece) \
+                        or not cut_takes(cut, [co[mesh, i] for i in piece]):
                     continue
                 for i in piece:
                     part[mesh, i] = cut["bone"]

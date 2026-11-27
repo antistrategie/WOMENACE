@@ -34,7 +34,6 @@ public sealed class SupportTeamStanceSystem : JiangyuSystem
         Context.Patches.Prefix("Il2CppMenace.Tactical.Skills.Effects.DeployHeavyWeaponHandler", "OnUse", OnDeployHeavyWeapon);
         Context.Patches.Postfix("Il2CppMenace.Tactical.Skills.Skill", "OnUse", OnSkillUsed);
         Context.Patches.Prefix("Il2CppMenace.Tactical.ElementAnimator", "SetMovementParams", OnMovement);
-        Context.Patches.Postfix("Il2CppMenace.Tactical.Actor", "SetHeavyWeaponDeployed", OnActorChanged);
         Context.Patches.Postfix("Il2CppMenace.Tactical.Actor", "SetStance", OnActorChanged);
         Context.Patches.Postfix("Il2CppMenace.Tactical.Element", "OnStanceChanged", OnElementChanged);
     }

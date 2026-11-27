@@ -13,6 +13,8 @@ namespace WOMENACE.Code;
 // remembered here, to warn about it once. TransmogSystem patches
 // the same method for Dolls and returns early for any entity that is not one, so the two never
 // both write a result.
+//
+// ArmoryControllerSystem puts the body's own controller back on the armoury preview.
 public sealed class SupportTeamSystem : JiangyuSystem
 {
     private readonly HashSet<string> _missingBodies = new(StringComparer.Ordinal);
