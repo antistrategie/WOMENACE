@@ -34,6 +34,12 @@ internal sealed class SpringBody
     // The hanging chains and the chains they branch off, in step order.
     private readonly SpringChain[] _hangChains;
 
+    // The chains the legs push aside (skirts, gowns, coats) and the chains they branch off, in
+    // step order. A body too far for its other chains keeps these moving, since a garment held
+    // at rest lets the legs show through it on every stride.
+    internal readonly SpringChain[] LegChains;
+    private readonly HashSet<SpringChain> _legChains = new();
+
     // `present` says whether the live body carries a bone (SpringChainBuilder).
     internal SpringBody(SpringBodyProfile profile, SpringBindPose bind, float scale, Predicate<string> present, List<string> missing)
     {
@@ -94,7 +100,14 @@ internal sealed class SpringBody
         HangBones = hang.Distinct().ToArray();
         foreach (var chain in Chains)
             HasHanging |= chain.Spec.HangDown;
+        foreach (var chain in Chains)
+            if ((chain.Spec.Colliders & SpringColliderGroup.Legs) != 0 && !chain.Spec.HangDown)
+                for (var c = chain; c != null; c = c.Trunk)
+                    _legChains.Add(c);
+        LegChains = Chains.Where(_legChains.Contains).ToArray();
     }
+
+    internal bool IsLegChain(SpringChain chain) => _legChains.Contains(chain);
 
     // The animated bones read each frame, each named once, by index.
     private sealed class BoneList
@@ -158,12 +171,13 @@ internal sealed class SpringBody
     // Restarts every chain from rest and lets it settle on the body as posed
     // this frame, with no velocity. Every layer forgets where it stood first,
     // so no garment settles against another's place from before.
-    internal void Reset()
+    internal void Reset(SpringChain[] only = null)
     {
-        foreach (var chain in Chains)
+        var chains = only ?? Chains;
+        foreach (var chain in chains)
             chain.LayerCached = false;
         var pose = Pose;
-        foreach (var chain in Chains)
+        foreach (var chain in chains)
         {
             if (chain.Trunk != null)
                 chain.Attach = FromTrunk(chain);
@@ -194,16 +208,17 @@ internal sealed class SpringBody
     // carries the chains straight along by the travel beyond that, so a
     // stall cannot cram the whole frame's travel into a short simulation and
     // fling them. The frame must be longer than zero. Returns the steps taken.
-    internal int Advance(float deltaTime)
+    internal int Advance(float deltaTime, SpringChain[] only = null)
     {
+        var chains = only ?? Chains;
         var clamped = SpringSolver.ClampFrame(deltaTime);
         if (clamped < deltaTime)
         {
             // A branch goes with the chain at the base of its trunks.
             var excess = 1f - clamped / deltaTime;
-            foreach (var chain in Chains)
+            foreach (var chain in chains)
                 SpringSolver.Shift(chain, Travel(chain) * excess);
-            foreach (var chain in Chains)
+            foreach (var chain in chains)
             {
                 if (chain.Trunk != null)
                     continue;
@@ -219,7 +234,7 @@ internal sealed class SpringBody
         for (var s = 1; s <= steps; s++)
         {
             var t = s / (float)steps;
-            foreach (var chain in Chains)
+            foreach (var chain in chains)
             {
                 var attach = chain.Trunk != null ? FromTrunk(chain)
                     : s == steps ? chain.Attach
@@ -232,12 +247,13 @@ internal sealed class SpringBody
     }
 
     // Eases every chain that is not hanging toward its rest rotation, by
-    // `blend`, 0 to 1. Called while the body is out of range, without Read.
-    internal void Relax(float blend)
+    // `blend`, 0 to 1, leaving the leg chains moving when told to. Called while
+    // the body is out of range, without Read.
+    internal void Relax(float blend, bool keepLegChains = false)
     {
         foreach (var chain in Chains)
         {
-            if (chain.Spec.HangDown)
+            if (chain.Spec.HangDown || (keepLegChains && _legChains.Contains(chain)))
                 continue;
             foreach (var j in chain.Joints)
                 j.LastLocal = NQuaternion.Slerp(j.LastLocal, j.RestLocalRotation, blend);

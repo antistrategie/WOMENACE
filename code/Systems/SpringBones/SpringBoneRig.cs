@@ -17,6 +17,23 @@ namespace WOMENACE.Code;
 // the game is touched as little as possible: each animated bone the chains
 // need is read once a frame, everything below them is worked out from the
 // bind pose, and each spring bone's local rotation is written once a frame.
+// What a rig needs to choose its own LOD this frame: the camera's position, and the screen
+// height a body of size one has at distance one (1 / (2 tan(fov / 2))). Inactive where the game
+// picks LODs itself.
+internal readonly struct LodView
+{
+    internal readonly bool Active;
+    internal readonly NVector3 Camera;
+    internal readonly float HeightPerSize;
+
+    internal LodView(NVector3 camera, float heightPerSize)
+    {
+        Active = true;
+        Camera = camera;
+        HeightPerSize = heightPerSize;
+    }
+}
+
 internal sealed partial class SpringBoneRig
 {
     // How long the body may stay past the simulated LODs, or off screen,
@@ -44,6 +61,16 @@ internal sealed partial class SpringBoneRig
     internal readonly SpringBodyProfile Profile;
     private readonly Renderer[] _lods;
     private readonly SpringBody _body;
+
+    // The body's LOD group, read once, for choosing its LOD where the game's bias would pin it
+    // to LOD0 (SpringBoneSystem.ChoosesLod). The reference point is kept as an offset from the
+    // root without the root's turn: it sits near the middle of an upright body, so the turn
+    // moves it by a few centimetres against a camera tens of metres away.
+    private LODGroup _group;
+    private float _groupSize;
+    private NVector3 _groupCentre;
+    private float[] _transitions;
+    private int _forced = -1;
     private readonly RigChain[] _chains;
 
     // The transforms behind SpringBody.Bones, read each frame.
@@ -56,6 +83,15 @@ internal sealed partial class SpringBoneRig
     private float _relaxSeconds = RelaxSeconds;
     private NVector3 _lastRootPosition;
     private bool _needsReset = true;
+
+    // Past the springs' range but still drawn, the leg chains step on every other frame (Far).
+    // Rigs alternate which frames they take, so the cost spreads evenly. _farLive says the leg
+    // chains have carried on from the last frame they stepped, so need no reset.
+    private static int _built;
+    private readonly int _farPhase = _built++ & 1;
+    private int _farFrame;
+    private float _farDelta;
+    private bool _farLive;
 
     internal int ChainCount => _chains.Length;
     internal int JointCount { get; }
@@ -134,6 +170,7 @@ internal sealed partial class SpringBoneRig
             error = "unresolved: " + string.Join(", ", missing);
         PairedReadsWork(reads[0]);
         var rig = new SpringBoneRig(animator, profile, lods.ToArray(), body, chains, reads);
+        rig.ReadGroup(animator);
         rig._head = byName.GetValueOrDefault("Head");
         rig._humanoid = HumanoidBones.Select(name => byName.GetValueOrDefault(name)).ToArray();
         return rig;
@@ -179,22 +216,32 @@ internal sealed partial class SpringBoneRig
     // every chain over many steps at once, so bodies coming into range
     // together (a squad on a zoom) reset on successive frames, each holding
     // its rest pose until its turn.
-    internal void Tick(float deltaTime, ref int resets)
+    internal void Tick(float deltaTime, ref int resets, in LodView view)
     {
         // Only the closer LODs simulate (SpringBoneSystem.MaxSimulatedLod).
         // Further out the motion does not read, and the cost is per joint per
         // body. Once out of range for a moment, the chains ease back to rest
         // rather than freezing mid-swing (every LOD shares these bones, so a
         // frozen swing stays on screen), and coming back starts from rest.
-        Lod = DrawnLod();
+        Lod = view.Active && _group != null ? ChosenLod(view) : DrawnLod();
         var inRange = Lod >= 0 && Lod <= SpringBoneSystem.MaxSimulatedLod;
         _awaySeconds = inRange ? 0f : _awaySeconds + deltaTime;
         Simulating = _awaySeconds < OutOfRangeGraceSeconds;
         if (!Simulating)
         {
-            Relax(deltaTime);
+            if (Lod > SpringBoneSystem.MaxSimulatedLod && _body.LegChains.Length > 0)
+                Far(deltaTime, ref resets);
+            else
+            {
+                _farLive = false;
+                Relax(deltaTime, keepLegChains: false);
+            }
             return;
         }
+        // The full step below carries the leg chains too, so a body that goes out of range
+        // next frame carries on with them where they are.
+        _farLive = true;
+        _farDelta = 0f;
 
         if (_needsReset)
         {
@@ -292,6 +339,53 @@ internal sealed partial class SpringBoneRig
         }
     }
 
+    private void ReadGroup(Animator animator)
+    {
+        var group = animator.GetComponentInChildren<LODGroup>(true);
+        if (group == null)
+            return;
+        var lods = group.GetLODs();
+        if (lods.Length == 0 || lods.Length != _lods.Length)
+            return;
+        var t = group.transform;
+        var scale = t.lossyScale;
+        var largest = MathF.Max(MathF.Abs(scale.x), MathF.Max(MathF.Abs(scale.y), MathF.Abs(scale.z)));
+        _groupSize = group.size * largest;
+        _groupCentre = N(t.TransformPoint(group.localReferencePoint)) - N(Root.position);
+        if (lods.Length == SpringBoneSystem.MissionTransitions.Length)
+            _transitions = SpringBoneSystem.MissionTransitions;
+        else
+        {
+            _transitions = new float[lods.Length];
+            for (var i = 0; i < lods.Length; i++)
+                _transitions[i] = lods[i].screenRelativeTransitionHeight;
+        }
+        _group = group;
+    }
+
+    // The LOD Unity would pick at a LOD bias of 1 with the mission's transitions, forced on the
+    // group, and then whether the body
+    // is drawn at all. Past the last transition Unity would cull the body, which here keeps the
+    // last LOD instead, so a squad at the far zoom stays on the map as it does at the game's bias.
+    private int ChosenLod(in LodView view)
+    {
+        var distance = NVector3.Distance(view.Camera, N(Root.position) + _groupCentre);
+        var height = distance > 0f ? _groupSize * view.HeightPerSize / distance : 1f;
+        var lod = _transitions.Length - 1;
+        for (var i = 0; i < _transitions.Length - 1; i++)
+            if (height >= _transitions[i])
+            {
+                lod = i;
+                break;
+            }
+        if (lod != _forced)
+        {
+            _group.ForceLOD(lod);
+            _forced = lod;
+        }
+        return _lods[lod].isVisible ? lod : -1;
+    }
+
     private int DrawnLod()
     {
         if (_lods.Length == 0)
@@ -307,7 +401,7 @@ internal sealed partial class SpringBoneRig
     // Hanging chains are not eased toward their rest pose, which lies along
     // the T-posed arm: while the body is drawn they hang where they are
     // pinned, and off screen they are left alone.
-    private void Relax(float deltaTime)
+    private void Relax(float deltaTime, bool keepLegChains)
     {
         _needsReset = true;
         // Paused, the Animator holds the body still too.
@@ -317,11 +411,64 @@ internal sealed partial class SpringBoneRig
         {
             _relaxSeconds += deltaTime;
             var blend = _relaxSeconds >= RelaxSeconds ? 1f : 1f - MathF.Exp(-deltaTime / RelaxTimeConstant);
-            _body.Relax(blend);
+            _body.Relax(blend, keepLegChains);
             Write(hanging: false);
         }
         if (Lod >= 0)
             Hang();
+    }
+
+    // A body drawn past the springs' range: its other chains ease to rest as in Relax, and its
+    // leg chains keep stepping, on every other frame while frames are shorter than a solver
+    // step. Two frames then still fit in the two steps a frame may take, so no step grows past
+    // SpringSolver.MaxStepSeconds. The full simulation starts again from a reset on return
+    // (Relax raises _needsReset).
+    private void Far(float deltaTime, ref int resets)
+    {
+        Relax(deltaTime, keepLegChains: true);
+        if (deltaTime <= 0f)
+            return;
+        _farDelta += deltaTime;
+        var everyOther = deltaTime <= SpringSolver.MaxStepSeconds;
+        if (everyOther && (++_farFrame & 1) != _farPhase)
+            return;
+        var rootPosition = N(Root.position);
+        if (!_farLive)
+        {
+            if (resets <= 0)
+                return;
+            resets--;
+        }
+        ReadBones(null);
+        _body.Read();
+        if (!_farLive)
+        {
+            _body.Reset(_body.LegChains);
+            _farLive = true;
+        }
+        else
+        {
+            if (SpringSolver.IsTeleport(_lastRootPosition, rootPosition, _farDelta))
+                _body.Shift(rootPosition - _lastRootPosition);
+            _body.Advance(_farDelta, _body.LegChains);
+        }
+        _farDelta = 0f;
+        _lastRootPosition = rootPosition;
+        WriteLegChains();
+    }
+
+    private void WriteLegChains()
+    {
+        foreach (var rc in _chains)
+        {
+            if (!_body.IsLegChain(rc.Chain))
+                continue;
+            if (rc.Chain.Mounted)
+                rc.Bones[0].position = U(rc.Chain.Attach.Origin);
+            var joints = rc.Chain.Joints;
+            for (var k = 0; k < joints.Length; k++)
+                rc.Bones[k].localRotation = U(joints[k].LastLocal);
+        }
     }
 
     // Keeps the hanging chains hanging, and mounted roots on their anchors,
