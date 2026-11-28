@@ -1,5 +1,6 @@
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace WOMENACE.Code;
 
@@ -65,14 +66,25 @@ internal static class BodySlots
         // Read every submesh before the count changes, with the base vertex applied, so each
         // joined submesh indexes the vertex buffer from zero.
         var indices = new int[materials.Length][];
+        var highest = 0;
         for (var i = 0; i < materials.Length; i++)
         {
             var source = mesh.GetIndices(i, true);
             var copy = new int[source.Length];
             for (var k = 0; k < copy.Length; k++)
+            {
                 copy[k] = source[k];
+                if (copy[k] > highest)
+                    highest = copy[k];
+            }
             indices[i] = copy;
         }
+
+        // A body of more than 65,536 vertices fits 16-bit indices only through each submesh's
+        // base vertex. Indexed from zero, its later vertices need 32-bit indices, or they wrap
+        // round onto the start of the buffer.
+        if (highest > ushort.MaxValue && mesh.indexFormat == IndexFormat.UInt16)
+            mesh.indexFormat = IndexFormat.UInt32;
 
         var joined = new Material[slots.Count];
         mesh.subMeshCount = slots.Count;
