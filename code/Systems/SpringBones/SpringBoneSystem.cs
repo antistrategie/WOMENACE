@@ -48,13 +48,29 @@ public sealed class SpringBoneSystem : JiangyuSystem
 
     internal IReadOnlyCollection<SpringBoneRig> Rigs => _rigs.Values;
 
-    // Bodies drawn at this LOD or closer simulate. The baked LODs switch at
-    // 50, 25, 10 and 2 per cent of screen height, so LOD1 is a body filling a
-    // quarter of the screen or more.
+    // Bodies drawn at this LOD or closer simulate. In a mission LOD1 is a body
+    // a tenth of the screen high or more (MissionTransitions), which only the
+    // camera's closer zoom reaches.
     internal static int MaxSimulatedLod { get; set; } = DefaultSimulatedLod;
     private const int DefaultSimulatedLod = 1;
 
     internal static void ResetSimulatedLod() => MaxSimulatedLod = DefaultSimulatedLod;
+
+    // MENACE runs with a LOD bias of 100, so every body is drawn at LOD0 at any distance. That
+    // costs vanilla little, whose LOD0 is a few thousand triangles, but a Doll's LOD0 is tens of
+    // thousands, and the springs, gated on the drawn LOD, run on every Doll on screen. In a
+    // mission each rig picks its LOD as Unity would at a bias of 1, from MissionTransitions, and
+    // forces it on its group.
+    // The strategy rooms keep the game's choice: their Dolls stand close enough for LOD0.
+    private const string TacticalScene = "Tactical";
+
+    // The screen heights a body's LODs start at in a mission, in place of the baked ones. The
+    // mission camera's closest zoom draws a Doll at about a fifth of the screen, which is LOD0
+    // here, and its default zoom at 3 to 5 per cent, which is LOD3. A body with another number of
+    // LODs keeps its baked transitions.
+    internal static readonly float[] MissionTransitions = { 0.15f, 0.1f, 0.06f, 0.02f };
+    private bool _choosesLod;
+    private Camera _lodCamera;
 
     // Set by the Springs.Record dev verb: rigs built afterwards start
     // recording straight away, so a mission loaded later is covered too.
@@ -71,6 +87,8 @@ public sealed class SpringBoneSystem : JiangyuSystem
         // explicitly rather than orphaned beside fresh ones.
         // The strategy rooms raise the limit for their few dolls. A mission starts from the default.
         MaxSimulatedLod = DefaultSimulatedLod;
+        _choosesLod = sceneName == TacticalScene;
+        _lodCamera = null;
         StopRoutine(ref _loopHandle);
         StopRoutine(ref _scanHandle);
         _rigs.Clear();
@@ -236,6 +254,7 @@ public sealed class SpringBoneSystem : JiangyuSystem
         if (checkDead)
             _deadCheck = 0;
         var resets = 1;
+        var view = _choosesLod ? LodView() : default;
         foreach (var pair in _rigs)
         {
             var rig = pair.Value;
@@ -246,7 +265,7 @@ public sealed class SpringBoneSystem : JiangyuSystem
             }
             try
             {
-                rig.Tick(dt, ref resets);
+                rig.Tick(dt, ref resets, view);
             }
             catch (Exception ex)
             {
@@ -261,6 +280,18 @@ public sealed class SpringBoneSystem : JiangyuSystem
             _rigs.Remove(key);
         _dead.Clear();
         TickMilliseconds = TickMilliseconds * 0.95 + _tickWatch.Elapsed.TotalMilliseconds * 0.05;
+    }
+
+    // The mission camera, found once and again only after it is gone.
+    private LodView LodView()
+    {
+        if (_lodCamera == null)
+            _lodCamera = Camera.main;
+        if (_lodCamera == null)
+            return default;
+        var halfTan = MathF.Tan(_lodCamera.fieldOfView * (MathF.PI / 360f));
+        var p = _lodCamera.transform.position;
+        return new LodView(new System.Numerics.Vector3(p.x, p.y, p.z), 0.5f / halfTan);
     }
 
     private IEnumerator SimulateLoop()

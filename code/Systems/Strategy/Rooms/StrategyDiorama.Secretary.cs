@@ -248,6 +248,7 @@ public sealed partial class StrategyDiorama
             return null;
         // Her hair and cloth move: the spring system hears of bodies the outfit system hands out,
         // and the room places its dolls itself.
+        BodySlots.Join(prefab, Context.Log.Warn);
         SpringBoneSystem.Instance?.NoteBodyPrefab(prefab);
         var doll = UnityEngine.Object.Instantiate(prefab, _scene.Room.transform, false);
         doll.name = name + ":" + asset.Split('/')[0];
